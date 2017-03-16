@@ -3,15 +3,13 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CrearTablaServidores extends Migration
-{
+class CrearTablaServidores extends Migration{
     /**
      * Run the migrations.
      *
      * @return void
      */
-    public function up()
-    {        
+    public function up(){
         Schema::create('servidores', function (Blueprint $table) {            
             $table->string('id',4); // 0001, 0002, ..., NNNN
             $table->string('nombre');
@@ -41,8 +39,7 @@ class CrearTablaServidores extends Migration
      *
      * @return void
      */
-    public function down()
-    {        
+    public function down(){
         Schema::drop('sincronizaciones');
         Schema::drop('servidores');
     }

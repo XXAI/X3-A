@@ -3,16 +3,14 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreatePedidoProveedorInsumosTable extends Migration
-{
+class CreatePedidoProveedorInsumosTable extends Migration{
     /**
      * Run the migrations.
      * @table pedido_proveedor_insumos
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
         Schema::create('pedido_proveedor_insumos', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 		
@@ -36,7 +34,7 @@ class CreatePedidoProveedorInsumosTable extends Migration
 		    $table->foreign('proveedor_id')->references('id')->on('proveedores');
 		
 		    $table->timestamps();
-		
+			$table->softDeletes();
 		});
     }
 
@@ -45,8 +43,7 @@ class CreatePedidoProveedorInsumosTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('pedido_proveedor_insumos');
      }
 }

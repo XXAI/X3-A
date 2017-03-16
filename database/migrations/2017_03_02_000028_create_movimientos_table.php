@@ -3,18 +3,15 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateMovimientosTable extends Migration
-{
+class CreateMovimientosTable extends Migration{
     /**
      * Run the migrations.
      * @table movimientos
      *
      * @return void
      */
-    public function up()
-    {
-        Schema::create('movimientos', function(Blueprint $table) 
-		{
+    public function up(){
+        Schema::create('movimientos', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 
 		    $table->string('id', 255);
@@ -56,9 +53,8 @@ class CreateMovimientosTable extends Migration
 		    $table->foreign('tipo_movimiento_id')->references('id')->on('tipos_movimientos');
 
 		    $table->timestamps();
-		
+			$table->softDeletes();
 		});
-
     }
 
     /**
@@ -66,8 +62,7 @@ class CreateMovimientosTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('movimientos');
      }
 }

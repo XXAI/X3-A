@@ -3,26 +3,24 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateUnidadesMedidaTable extends Migration
-{
+class CreateUnidadesMedidaTable extends Migration{
     /**
      * Run the migrations.
      * @table unidades_medida
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
         Schema::create('unidades_medida', function(Blueprint $table) {
-		    $table->engine = 'InnoDB';
-		
-		    $table->increments('id');
-        $table->string('clave', 10)->nullable();
-		    $table->string('nombre', 255)->nullable()->default(null);
-		
-		    $table->timestamps();
-		
-		});
+            $table->engine = 'InnoDB';
+        
+            $table->increments('id');
+            $table->string('clave', 10)->nullable();
+            $table->string('nombre', 255)->nullable()->default(null);
+        
+            $table->timestamps();
+            $table->softDeletes();
+        });
     }
 
     /**
@@ -30,8 +28,7 @@ class CreateUnidadesMedidaTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('unidades_medida');
      }
 }

@@ -3,16 +3,14 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreatePersonalCluesTable extends Migration
-{
+class CreatePersonalCluesTable extends Migration{
     /**
      * Run the migrations.
      * @table personal_clues
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
         Schema::create('personal_clues', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 		
@@ -38,9 +36,8 @@ class CreatePersonalCluesTable extends Migration
 		    $table->foreign('servicio_id')->references('id')->on('clues_servicios');
 		
 		    $table->timestamps();
-		
+			$table->softDeletes();
 		});
-
     }
 
     /**
@@ -48,8 +45,7 @@ class CreatePersonalCluesTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('personal_clues');
      }
 }

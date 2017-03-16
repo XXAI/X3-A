@@ -3,16 +3,14 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreatePedidosTable extends Migration
-{
+class CreatePedidosTable extends Migration{
     /**
      * Run the migrations.
      * @table pedidos
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
         Schema::create('pedidos', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 		
@@ -60,7 +58,7 @@ class CreatePedidosTable extends Migration
 		    $table->foreign('proveedor_id')->references('id')->on('proveedores');
 		
 		    $table->timestamps();
-		
+			$table->softDeletes();
 		});
     }
 
@@ -69,8 +67,7 @@ class CreatePedidosTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('pedidos');
      }
 }

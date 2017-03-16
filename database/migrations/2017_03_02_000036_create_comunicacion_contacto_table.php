@@ -3,16 +3,14 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateComunicacionContactoTable extends Migration
-{
+class CreateComunicacionContactoTable extends Migration{
     /**
      * Run the migrations.
      * @table comunicacion_contacto
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
         Schema::create('comunicacion_contacto', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 		
@@ -31,7 +29,7 @@ class CreateComunicacionContactoTable extends Migration
 		    $table->foreign('contacto_id')->references('id')->on('contactos');
 		
 		    $table->timestamps();
-		
+            $table->softDeletes();
 		});
     }
 
@@ -40,8 +38,7 @@ class CreateComunicacionContactoTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('comunicacion_contacto');
      }
 }

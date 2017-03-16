@@ -3,26 +3,23 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateViasAdministracionTable extends Migration
-{
+class CreateViasAdministracionTable extends Migration{
     /**
      * Run the migrations.
      * @table vias_administracion
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
         Schema::create('vias_administracion', function(Blueprint $table) {
-		    $table->engine = 'InnoDB';
-		
-		    $table->increments('id');
-		    $table->string('nombre', 255)->nullable()->default(null);
-		
-		    $table->timestamps();
-		
-		});
-
+            $table->engine = 'InnoDB';
+        
+            $table->increments('id');
+            $table->string('nombre', 255)->nullable()->default(null);
+        
+            $table->timestamps();
+            $table->softDeletes();
+        });
     }
 
     /**
@@ -30,8 +27,7 @@ class CreateViasAdministracionTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('vias_administracion');
      }
 }

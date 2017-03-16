@@ -3,16 +3,14 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateActasTable extends Migration
-{
+class CreateActasTable extends Migration{
     /**
      * Run the migrations.
      * @table actas
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
         Schema::create('actas', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 		
@@ -44,7 +42,7 @@ class CreateActasTable extends Migration
 		    $table->string('usuario_id', 255);
 
 			$table->timestamps();
-
+			$table->softDeletes();
 
 		    $table->primary('id');
 		/*
@@ -64,9 +62,6 @@ class CreateActasTable extends Migration
 		    $table->foreign('firma_organismo_id')->references('id')->on('firmas_organismos');
 		
 		    $table->foreign('proveedor_id')->references('id')->on('proveedores');
-		 
-		    
-		
 		});
     }
 
@@ -75,8 +70,7 @@ class CreateActasTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('actas');
      }
 }

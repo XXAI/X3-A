@@ -3,16 +3,14 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateMedicamentosTable extends Migration
-{
+class CreateMedicamentosTable extends Migration{
     /**
      * Run the migrations.
      * @table medicamentos
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
         Schema::create('medicamentos', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 		
@@ -43,9 +41,8 @@ class CreateMedicamentosTable extends Migration
 		    $table->foreign('via_administracion_id')->references('id')->on('vias_administracion');
 		
 		    $table->timestamps();
-		
+			$table->softDeletes();
 		});
-
     }
 
     /**
@@ -53,8 +50,7 @@ class CreateMedicamentosTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('medicamentos');
      }
 }

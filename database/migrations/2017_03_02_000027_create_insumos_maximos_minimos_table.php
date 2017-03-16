@@ -3,16 +3,14 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateInsumosMaximosMinimosTable extends Migration
-{
+class CreateInsumosMaximosMinimosTable extends Migration{
     /**
      * Run the migrations.
      * @table insumos_maximos_minimos
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
         Schema::create('insumos_maximos_minimos', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 		
@@ -33,7 +31,7 @@ class CreateInsumosMaximosMinimosTable extends Migration
 		        ->references('id')->on('almacenes');
 		
 		    $table->timestamps();
-		
+            $table->softDeletes();
 		});
     }
 
@@ -42,8 +40,7 @@ class CreateInsumosMaximosMinimosTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('insumos_maximos_minimos');
      }
 }

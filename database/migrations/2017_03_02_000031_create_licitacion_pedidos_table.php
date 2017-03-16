@@ -3,16 +3,14 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateLicitacionPedidosTable extends Migration
-{
+class CreateLicitacionPedidosTable extends Migration{
     /**
      * Run the migrations.
      * @table licitacion_pedidos
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
        Schema::create('licitacion_pedidos', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 		
@@ -33,7 +31,7 @@ class CreateLicitacionPedidosTable extends Migration
 		        ->references('id')->on('contratos');
 		
 		    $table->timestamps();
-		
+            $table->softDeletes();
 		});
     }
 
@@ -42,8 +40,7 @@ class CreateLicitacionPedidosTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('licitacion_pedidos');
      }
 }

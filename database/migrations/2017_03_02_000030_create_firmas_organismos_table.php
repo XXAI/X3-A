@@ -3,16 +3,14 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateFirmasOrganismosTable extends Migration
-{
+class CreateFirmasOrganismosTable extends Migration{
     /**
      * Run the migrations.
      * @table firmas_organismos
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
        Schema::create('firmas_organismos', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 		
@@ -33,10 +31,8 @@ class CreateFirmasOrganismosTable extends Migration
 		    $table->foreign('puesto_id')->references('id')->on('puestos');
 		
 		    $table->timestamps();
-		
+            $table->softDeletes();
 		});
-
-
     }
 
     /**
@@ -44,8 +40,7 @@ class CreateFirmasOrganismosTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('firmas_organismos');
      }
 }

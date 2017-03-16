@@ -3,18 +3,15 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateExtensionesContratosTable extends Migration
-{
+class CreateExtensionesContratosTable extends Migration{
     /**
      * Run the migrations.
      * @table extensiones_contratos
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
         Schema::create('extensiones_contratos', function(Blueprint $table) {
-
             $table->engine = 'InnoDB';
 
 		    $table->increments('id');
@@ -24,9 +21,8 @@ class CreateExtensionesContratosTable extends Migration
 
 		
 		    $table->timestamps();
-		
+            $table->softDeletes();
 		});
-
     }
 
     /**
@@ -34,8 +30,7 @@ class CreateExtensionesContratosTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('extensiones_contratos');
      }
 }

@@ -3,26 +3,23 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateEspecialidadesTable extends Migration
-{
+class CreateEspecialidadesTable extends Migration{
     /**
      * Run the migrations.
      * @table especialidades
      *
      * @return void
      */
-    public function up()
-    {
+    public function up(){
         Schema::create('especialidades', function(Blueprint $table) {
-		    $table->engine = 'InnoDB';
-		
-		    $table->increments('id');
-		    $table->string('nombre', 255)->nullable()->default(null);
-		
-		    $table->timestamps();
-		
-		});
-
+            $table->engine = 'InnoDB';
+        
+            $table->increments('id');
+            $table->string('nombre', 255)->nullable()->default(null);
+        
+            $table->timestamps();
+            $table->softDeletes();
+        });
     }
 
     /**
@@ -30,8 +27,7 @@ class CreateEspecialidadesTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('especialidades');
      }
 }

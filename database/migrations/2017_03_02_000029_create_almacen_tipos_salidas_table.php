@@ -3,18 +3,15 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateAlmacenTiposSalidasTable extends Migration
-{
+class CreateAlmacenTiposSalidasTable extends Migration{
     /**
      * Run the migrations.
      * @table almacen_tipos_salidas
      *
      * @return void
      */
-    public function up()
-    {
-        Schema::create('almacen_tipos_salidas', function(Blueprint $table)
-        {
+    public function up(){
+        Schema::create('almacen_tipos_salidas', function(Blueprint $table){
 		    $table->engine = 'InnoDB';
 		
 		    $table->string('id', 255);
@@ -33,9 +30,8 @@ class CreateAlmacenTiposSalidasTable extends Migration
 		    $table->foreign('tipo_movimiento_id')->references('id')->on('tipos_movimientos');
 		
 		    $table->timestamps();
-		
+            $table->softDeletes();
 		});
-
     }
 
     /**
@@ -43,8 +39,7 @@ class CreateAlmacenTiposSalidasTable extends Migration
      *
      * @return void
      */
-     public function down()
-     {
+     public function down(){
        Schema::dropIfExists('almacen_tipos_salidas');
      }
 }
