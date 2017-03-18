@@ -1,0 +1,448 @@
+﻿id,insumo_medico_clave,presentacion_id,es_controlado,es_surfactante,es_anestesia,descripcion,cantidad_x_envase,unidad_medida_id,indicaciones,via_administracion_id,dosis,created_at,updated_at,deleted_at
+1,010.000.0101.00,47,0,0,0,Cada contiene: Ácido acetilsalicílico 500 mg. Envase con 20 tabletas,20,2,Artritis reumatoide. Osteoartritis. Espondilitis anquilosante. Fiebre reumática aguda. Dolor o fiebre.,26,"Adultos: Dolor o fiebre: 250-500 mg cada 4 horas. Artritis: 500-1000 mg cada 4 ó 6 horas. 
+Niños: Dolor o fiebre: 30-65 mg/kg de peso corporal/ día fraccionar dosis cada 6 ó 8 horas. 
+Fiebre reumática: 65 mg/kg de peso corporal/ día fraccionar dosis cada 6 ó 8 horas.",NULL,NULL,NULL
+2,010.000.0103.00,47,0,0,0,Cada soluble o efervescente contiene: Ácido acetilsalicílico 300 mg. Envase con 20 tabletas solubles o efervescentes,20,1,Artritis reumatoide. Osteoartritis. Espondilitis anquilosante. Fiebre reumática aguda. Dolor o fiebre.,26,"Adultos: Dolor o fiebre: 250-500 mg cada 4 horas. Artritis: 500-1000 mg cada 4 ó 6 horas. 
+Niños: Dolor o fiebre: 30-65 mg/kg de peso corporal/ día fraccionar dosis cada 6 ó 8 horas. 
+Fiebre reumática: 65 mg/kg de peso corporal/ día fraccionar dosis cada 6 ó 8 horas.",NULL,NULL,NULL
+3,010.000.5940.00,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 200 mg. Envase con 10 tabletas o cápsulas.,10,1,Dolor de leve a moderado. Fiebre.,26,"Adultos y niños mayores de 12 años. 200 a 400 mg cada 4 a 6 horas, dependiendo de la intensidad de los síntomas, sin sobrepasar 1200 mg al día.",NULL,NULL,NULL
+4,010.000.5940.01,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 200 mg. Envase con 12 tabletas.,12,1,Dolor de leve a moderado. Fiebre.,26,"Adultos y niños mayores de 12 años. 200 a 400 mg cada 4 a 6 horas, dependiendo de la intensidad de los síntomas, sin sobrepasar 1200 mg al día.",NULL,NULL,NULL
+5,010.000.5940.02,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 200 mg. Envase con 20 tabletas o cápsulas.,20,1,Dolor de leve a moderado. Fiebre.,26,"Adultos y niños mayores de 12 años. 200 a 400 mg cada 4 a 6 horas, dependiendo de la intensidad de los síntomas, sin sobrepasar 1200 mg al día.",NULL,NULL,NULL
+6,010.000.5940.03,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 200 mg. Envase con 30 cápsulas.,30,1,Dolor de leve a moderado. Fiebre.,26,"Adultos y niños mayores de 12 años. 200 a 400 mg cada 4 a 6 horas, dependiendo de la intensidad de los síntomas, sin sobrepasar 1200 mg al día.",NULL,NULL,NULL
+7,010.000.5941.00,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 400 mg. Envase con 10 tabletas o cápsulas.,10,1,Dolor de leve a moderado. Fiebre.,26,"Adultos y niños mayores de 12 años. 400 mg cada 6 a 8 horas, dependiendo de la intensidad de los síntomas, sin sobrepasar 1200 mg al día.",NULL,NULL,NULL
+8,010.000.5941.01,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 400 mg. Envase con 12 tabletas.,12,1,Dolor de leve a moderado. Fiebre.,26,"Adultos y niños mayores de 12 años. 400 mg cada 6 a 8 horas, dependiendo de la intensidad de los síntomas, sin sobrepasar 1200 mg al día.",NULL,NULL,NULL
+9,010.000.5941.02,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 400 mg. Envase con 20 cápsulas.,20,1,Dolor de leve a moderado. Fiebre.,26,"Adultos y niños mayores de 12 años. 400 mg cada 6 a 8 horas, dependiendo de la intensidad de los síntomas, sin sobrepasar 1200 mg al día.",NULL,NULL,NULL
+10,010.000.5941.03,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 400 mg. Envase con 30 cápsulas.,30,1,Dolor de leve a moderado. Fiebre.,26,"Adultos y niños mayores de 12 años. 400 mg cada 6 a 8 horas, dependiendo de la intensidad de los síntomas, sin sobrepasar 1200 mg al día.",NULL,NULL,NULL
+11,010.000.5941.04,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 400 mg. Envase con 36 tabletas.,36,1,Dolor de leve a moderado. Fiebre.,26,"Adultos y niños mayores de 12 años. 400 mg cada 6 a 8 horas, dependiendo de la intensidad de los síntomas, sin sobrepasar 1200 mg al día.",NULL,NULL,NULL
+12,010.000.5942.00,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 600 mg. Envase con 10 cápsulas.,10,1,Dolor de leve a moderado. Fiebre.,26,Adultos y niños mayores de 14 años. 600 mg cada 6 a 8 horas dependiendo de la intensidad del cuadro y de la respuesta al tratamiento.,NULL,NULL,NULL
+13,010.000.5942.01,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 600 mg. Envase con 12 tabletas.,12,1,Dolor de leve a moderado. Fiebre.,26,Adultos y niños mayores de 14 años. 600 mg cada 6 a 8 horas dependiendo de la intensidad del cuadro y de la respuesta al tratamiento.,NULL,NULL,NULL
+14,010.000.5942.02,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 600 mg. Envase con 20 cápsulas.,20,1,Dolor de leve a moderado. Fiebre.,26,Adultos y niños mayores de 14 años. 600 mg cada 6 a 8 horas dependiendo de la intensidad del cuadro y de la respuesta al tratamiento.,NULL,NULL,NULL
+15,010.000.5942.03,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 600 mg. Envase con 24 tabletas.,24,1,Dolor de leve a moderado. Fiebre.,26,Adultos y niños mayores de 14 años. 600 mg cada 6 a 8 horas dependiendo de la intensidad del cuadro y de la respuesta al tratamiento.,NULL,NULL,NULL
+16,010.000.5942.04,48,0,0,0,Cada o cápsula contiene: Ibuprofeno 600 mg. Envase con 30 tabletas o cápsulas.,30,1,Dolor de leve a moderado. Fiebre.,26,Adultos y niños mayores de 14 años. 600 mg cada 6 a 8 horas dependiendo de la intensidad del cuadro y de la respuesta al tratamiento.,NULL,NULL,NULL
+17,010.000.5943.00,36,0,0,0,Cada 100 ml contienen: Ibuprofeno 2 g. Envase con 120 ml y medida dosificadora.,120,2,Dolor de leve a moderado. Fiebre.,26,"Niños de 6 meses a 12 años de edad: De 5 a 10 mg/kg de peso corporal / dosis, dependiendo de la intensidad del dolor y fiebre administrado cada 6 u 8 horas.",NULL,NULL,NULL
+18,010.000.5944.00,36,0,0,0,"Cada mililitro contiene: Ibuprofeno 40 mg. Envase con 15 ml con gotero calibrado, integrado o adjunto al envase que le sirve de tapa.",15,2,Dolor de leve a moderado. Fiebre.,26,"Niños de 6 meses a 12 años de edad: De 5 a 10 mg/kg de peso corporal / dosis, dependiendo de la intensidad del dolor y fiebre administrado cada 6 u 8 horas.",NULL,NULL,NULL
+19,010.000.0108.00,6,0,0,0,Cada comprimido contiene: Metamizol sódico 500 mg. Envase con 10 comprimidos.,10,1,"Fiebre. Dolor agudo o crónico. Algunos casos de dolor
+visceral.",26,Adultos: De 500-1000 mg cada 6 u 8 horas.,NULL,NULL,NULL
+20,010.000.0109.00,33,0,0,0,Cada ampolleta contiene: Metamizol sódico 1 g. Envase con 3 ampolletas con 2 ml.,10,2,"Fiebre. Dolor agudo o crónico. Algunos casos de dolor
+visceral.",12,Adultos: 1 g cada 6 u 8 horas por vía intramuscular profunda. 1 a 2 g cada 12 horas por vía intravenosa.,NULL,NULL,NULL
+21,010.000.0104.00,47,0,0,0,Cada contiene: Paracetamol 500 mg. Envase con 10 tabletas.,10,1,Fiebre. Dolor agudo o crónico.,26,Adultos: 250-500 mg cada 4 ó 6 horas.,NULL,NULL,NULL
+22,010.000.0106.00,36,0,0,0,"Cada ml contiene: Paracetamol 100 mg. Envase con 15 ml, gotero calibrado a 0.5 y 1 ml, integrado o adjunto a al envase que sirve de tapa.",15,2,Fiebre. Dolor agudo o crónico.,26,"Niños: De 10 a 30 mg/kg de peso corporal, cada 4 ó 6 horas.",NULL,NULL,NULL
+23,010.000.0105.00,40,0,0,0,Cada supositorio contiene: Paracetamol 300 mg. Envase con 3 supositorios.,3,1,Fiebre. Dolor agudo o crónico.,29,"Adultos: 300-600 mg cada 4 ó 6 horas. 
+Niños: De 6 a 12 años: 300 mg cada 4 ó 6 horas. 
+De 2 a 6 años: 100 mg cada 6 u 8 horas. 
+Mayores de 6 meses a un año: 100 mg cada 12 horas.",NULL,NULL,NULL
+24,010.000.0514.00,40,0,0,0,Cada supositorio contiene: Paracetamol 100 mg. Envase con 3 supositorios.,3,1,Fiebre. Dolor agudo o crónico.,29,"Adultos: 300-600 mg cada 4 ó 6 horas. 
+Niños: De 6 a 12 años: 300 mg cada 4 ó 6 horas. 
+De 2 a 6 años: 100 mg cada 6 u 8 horas. 
+Mayores de 6 meses a un año: 100 mg cada 12 horas.",NULL,NULL,NULL
+25,010.000.0514.01,40,0,0,0,Cada supositorio contiene: Paracetamol 100 mg. Envase con 6 supositorios.,6,1,Fiebre. Dolor agudo o crónico.,29,"Adultos: 300-600 mg cada 4 ó 6 horas. 
+Niños: De 6 a 12 años: 300 mg cada 4 ó 6 horas. 
+De 2 a 6 años: 100 mg cada 6 u 8 horas. 
+Mayores de 6 meses a un año: 100 mg cada 12 horas.",NULL,NULL,NULL
+26,010.000.0514.02,40,0,0,0,Cada supositorio contiene: Paracetamol 100 mg. Envase con 10 supositorios.,10,1,Fiebre. Dolor agudo o crónico.,29,"Adultos: 300-600 mg cada 4 ó 6 horas. 
+Niños: De 6 a 12 años: 300 mg cada 4 ó 6 horas. 
+De 2 a 6 años: 100 mg cada 6 u 8 horas. 
+Mayores de 6 meses a un año: 100 mg cada 12 horas.",NULL,NULL,NULL
+27,040.000.2100.00,47,0,0,0,Cada sublingual contiene: Clorhidrato de buprenorfina equivalente a 0.2 mg de buprenorfina. Envase con 10 tabletas.,10,1,Dolor de intensidad moderada a severa secundario a: Infarto agudo del miocardio. Neoplasias. Enfermedad terminal. Traumatismos.,30,"Adultos: 0.2 a 0.4 mg cada 6 a 8 hrs. 
+Niños: 3 a 6 µg/kg de peso cada 6 a 8 horas.",NULL,NULL,NULL
+28,040.000.2100.01,47,0,0,0,Cada sublingual contiene: Clorhidrato de buprenorfina equivalente a 0.2 mg de buprenorfina. Envase con 20 tabletas.,20,1,Dolor de intensidad moderada a severa secundario a: Infarto agudo del miocardio. Neoplasias. Enfermedad terminal. Traumatismos.,30,"Adultos: 0.2 a 0.4 mg cada 6 a 8 hrs. 
+Niños: 3 a 6 µg/kg de peso cada 6 a 8 horas.",NULL,NULL,NULL
+29,040.000.4026.00,33,0,0,0,Cada ampolleta o frasco ámpula contiene: Clorhidrato de buprenorfina equivalente a 0.3 mg de buprenorfina. Envase con 6 ampolletas o frascos ámpula con 1 ml.,1,2,Dolor de intensidad moderada a severa secundario a: Infarto agudo del miocardio. Neoplasias. Enfermedad terminal. Traumatismos.,12,"Adultos: 0.3 a 0.6 mg/día, fraccionar dosis cada 6 horas. Dosis máxima de 0.9 mg/día.",NULL,NULL,NULL
+30,040.000.2098.00,27,0,0,0,Cada parche contiene:  Buprenorfina 20 mg. Envase con 4 parches.,4,1,Dolor crónico de intensidad moderada a severa secundario a: Neoplasias. Enfermedad terminal. Traumatismos. Dolor neuropático.,31,"Adultos: La dosis debe regularse y ajustarse individualmente evaluando la intensidad del dolor. 
+Dosis inicial de 17.5 a 35 µg/hora de buprenorfina Velocidad de liberación 35 µg/hora de buprenorfina.",NULL,NULL,NULL
+31,040.000.2097.00,27,0,0,0,Cada parche contiene: Buprenorfina 30 mg. Envase con 4 parches.,4,1,Dolor crónico de intensidad moderada a severa secundario a: Neoplasias. Enfermedad terminal. Traumatismos. Dolor neuropático.,31,"Adultos: La dosis debe regularse y ajustarse individualmente evaluando la intensidad del dolor. 
+Velocidad de liberación 52.5 µg/hora de buprenorfina.",NULL,NULL,NULL
+32,010.000.4031.00,8,0,0,0,Cada 100 gramos contiene: Extracto de oleoresina del Capsicum annuuna equivalente a 0.035 g de capsaicina. Envase con 40 g.,40,5,Dolor de leve a moderada intensidad en: Artritis reumatoide. Artrosis. Neuralgia post-herpética. Neuropatía diabética. Miembro fantasma.,2,Adultos y mayores de 12 años: Administrar de acuerdo al caso y a juicio del especialista.,NULL,NULL,NULL
+33,010.000.4028.00,33,0,0,0,Cada ampolleta contiene: Clonixinato de Lisina 100 mg. Envase con 5 ampolletas de 2 ml.,2,2,Dolor de leve a moderada intensidad.,12,"Adultos: 100 mg cada 4 a 6 horas, dosis máxima 200 mg cada 6 horas.",NULL,NULL,NULL
+34,010.000.0247.00,33,0,0,0,Cada frasco ámpula contiene: Clorhidrato de dexmedetomidina 200 µg. Envase con 1 frasco ámpula.,1,1,Dolor postoperatorio.,8,"Adultos: Inicial: 1.0 µg/kg de peso corporal durante 10 minutos. 
+Mantenimiento: 0.2 a 0.7 µg/kg de peso corporal; la velocidad deberá ajustarse de acuerdo con la respuesta clínica. 
+Administrar diluido en solución intravenosa envasadas en frascos de vidrio.",NULL,NULL,NULL
+35,010.000.0247.01,33,0,0,0,Cada frasco ámpula contiene: Clorhidrato de dexmedetomidina 200 µg. Envase con 5 frascos ámpula.,5,1,Dolor postoperatorio.,8,"Adultos: Inicial: 1.0 µg/kg de peso corporal durante 10 minutos. 
+Mantenimiento: 0.2 a 0.7 µg/kg de peso corporal; la velocidad deberá ajustarse de acuerdo con la respuesta clínica. 
+Administrar diluido en solución intravenosa envasadas en frascos de vidrio.",NULL,NULL,NULL
+36,010.000.0247.02,33,0,0,0,Cada frasco ámpula contiene: Clorhidrato de dexmedetomidina 200 µg. Envase con 25 frascos ámpula.,25,1,Dolor postoperatorio.,8,"Adultos: Inicial: 1.0 µg/kg de peso corporal durante 10 minutos. 
+Mantenimiento: 0.2 a 0.7 µg/kg de peso corporal; la velocidad deberá ajustarse de acuerdo con la respuesta clínica. 
+Administrar diluido en solución intravenosa envasadas en frascos de vidrio.",NULL,NULL,NULL
+37,040.000.0107.00,2,0,0,0,Cada cápsula o comprimido contiene: Clorhidrato de dextropropoxifeno 65 mg. Envase con 20 cápsulas o comprimidos.,20,1,Dolor leve a moderado.,26,"Adultos: 65 mg cada 6 a 8 horas, dosis máxima diaria 390 mg.",NULL,NULL,NULL
+38,010.000.4036.00,33,0,0,0,Cada ampolleta contiene: Etofenamato 1 g. Envase con una ampolleta de 2 ml.,2,2,Artritis reumatoide. Espondilitis anquilosante. Osteoartrosis y espondiloartrosis. Hombro doloroso. Lumbago. Ciática. Tortícolis. Tenosinovitis. Bursitis. Ataque agudo de gota.,11,"Adultos: Una ampolleta de 1 g cada 24 horas, hasta un máximo de tres.",NULL,NULL,NULL
+39,040.000.4027.00,27,0,0,0,Cada parche contiene: Fentanilo 4.2 mg. Envase con 5 parches.,5,1,Dolor crónico. Síndrome doloroso. Dolor intratable que requiera de analgesia opioide.,31,"Adultos: 4.2 mg cada 72 horas. Dosis máxima 10 mg. 
+Requiere receta de narcóticos.",NULL,NULL,NULL
+40,040.000.2113.00,47,0,0,0,Cada contiene: Clorhidrato de hidromorfona 2 mg. Envase con 100 tabletas.,100,1,Dolor de moderado a severo por: Cirugía mayor. Cáncer. Quemaduras. Cólico renoureteral y biliar. Infarto agudo al miocardio. Pacientes politraumatizados.,26,Adultos: 2 mg a 4 mg cada 4 a 6 horas de acuerdo a la respuesta del paciente.,NULL,NULL,NULL
+42,040.000.5910.00,32,0,0,0,Cada mililitro contiene: Clorhidrato de Metadona 10 mg. Envase con 30 ml y gotero de 1 ml.,30,2,Alivio del dolor severo. ,26,"Adultos. Dosis 5 a 20 mg cada 4 a 8 horas, pudiendo modificar la dosis así como el intervalo de tiempo de administración de acuerdo a las necesidades analgésicas del paciente de cada 8 a 12 horas.",NULL,NULL,NULL
+43,040.000.2099.00,33,0,0,0,Cada ampolleta contiene: Sulfato de morfina Pentahidratada 2.5 mg. Envase con 5 ampolletas con 2.5 ml.,2.5,2,Dolor agudo o crónico de moderado a intenso ocasionado por: Cáncer (fase preterminal y terminal). Infarto agudo al miocardio. En el control del dolor posquirúrgico en pacientes politraumatizados y en aquellos con quemaduras.,22,"Adultos: 5 a 20 mg cada 4 horas, según la respuesta terapéutica. 
+Epidural: 0.5 mg, seguido de 1-2 mg hasta 10 mg/día. 
+Niños: 0.05-0.2 mg/kg cada 4 horas hasta 15 mg. Requiere receta de narcóticos.",NULL,NULL,NULL
+44,040.000.2102.00,33,0,0,0,Cada ampolleta contiene: Sulfato de morfina pentahidratada 50 mg. Envase con 1 ampolleta con 2.0 ml.,2,2,Dolor agudo o crónico de moderado a intenso ocasionado por: Cáncer (fase preterminal y terminal). Infarto agudo al miocardio. En el control del dolor posquirúrgico en pacientes politraumatizados y en aquellos con quemaduras.,22,"Adultos: 5 a 20 mg cada 4 horas, según la respuesta terapéutica. 
+Epidural: 0.5 mg, seguido de 1-2 mg hasta 10 mg/día. 
+Niños: 0.05-0.2 mg/kg cada 4 horas hasta 15 mg. Requiere receta de narcóticos.",NULL,NULL,NULL
+45,040.000.2103.00,33,0,0,0,Cada ampolleta contiene: Sulfato de morfina 10 mg. Envase con 5 ampolletas.,5,1,Dolor agudo o crónico de moderado a intenso ocasionado por: Cáncer (fase preterminal y terminal). Infarto agudo al miocardio. En el control del dolor posquirúrgico en pacientes politraumatizados y en aquellos con quemaduras.,22,"Adultos: 5 a 20 mg cada 4 horas, según la respuesta terapéutica. 
+Epidural: 0.5 mg, seguido de 1-2 mg hasta 10 mg/día. 
+Niños: 0.05-0.2 mg/kg cada 4 horas hasta 15 mg. Requiere receta de narcóticos.",NULL,NULL,NULL
+46,040.000.2104.00,48,0,0,0,Cada o cápsula de liberación prolongada contiene: Sulfato de morfina 100 mg. Envase con 14 tabletas o cápsulas de liberación prolongada.,14,1,Dolor agudo o crónico de moderado a intenso ocasionado por: Cáncer (fase preterminal y terminal). Infarto agudo al miocardio. En el control del dolor posquirúrgico en pacientes politraumatizados y en aquellos con quemaduras.,26,Adultos: 30 a 60 mg cada 8 a 12 horas.,NULL,NULL,NULL
+47,040.000.2104.01,48,0,0,0,Cada o cápsula de liberación prolongada contiene: Sulfato de morfina 100 mg. Envase con 20 tabletas o cápsulas de liberación prolongada.,20,1,Dolor agudo o crónico de moderado a intenso ocasionado por: Cáncer (fase preterminal y terminal). Infarto agudo al miocardio. En el control del dolor posquirúrgico en pacientes politraumatizados y en aquellos con quemaduras.,26,Adultos: 30 a 60 mg cada 8 a 12 horas.,NULL,NULL,NULL
+48,040.000.2104.02,48,0,0,0,Cada o cápsula de liberación prolongada contiene: Sulfato de morfina 100 mg. Envase con 40 tabletas o cápsulas de liberación prolongada.,40,1,Dolor agudo o crónico de moderado a intenso ocasionado por: Cáncer (fase preterminal y terminal). Infarto agudo al miocardio. En el control del dolor posquirúrgico en pacientes politraumatizados y en aquellos con quemaduras.,26,Adultos: 30 a 60 mg cada 8 a 12 horas.,NULL,NULL,NULL
+49,040.000.2105.00,48,0,0,0,Cada o cápsula de liberación prolongada contiene: Sulfato de morfina 60 mg. Envase con 14 tabletas o cápsulas de liberación prolongada.,14,1,Dolor agudo o crónico de moderado a intenso ocasionado por: Cáncer (fase preterminal y terminal). Infarto agudo al miocardio. En el control del dolor posquirúrgico en pacientes politraumatizados y en aquellos con quemaduras.,26,Adultos: 30 a 60 mg cada 8 a 12 horas.,NULL,NULL,NULL
+50,040.000.2105.01,48,0,0,0,Cada o cápsula de liberación prolongada contiene: Sulfato de morfina 60 mg. Envase con 20 tabletas o cápsulas de liberación prolongada.,20,1,Dolor agudo o crónico de moderado a intenso ocasionado por: Cáncer (fase preterminal y terminal). Infarto agudo al miocardio. En el control del dolor posquirúrgico en pacientes politraumatizados y en aquellos con quemaduras.,26,Adultos: 30 a 60 mg cada 8 a 12 horas.,NULL,NULL,NULL
+51,040.000.2105.02,48,0,0,0,Cada o cápsula de liberación prolongada contiene: Sulfato de morfina 60 mg. Envase con 40 tabletas o cápsulas de liberación prolongada.,40,1,Dolor agudo o crónico de moderado a intenso ocasionado por: Cáncer (fase preterminal y terminal). Infarto agudo al miocardio. En el control del dolor posquirúrgico en pacientes politraumatizados y en aquellos con quemaduras.,26,Adultos: 30 a 60 mg cada 8 a 12 horas.,NULL,NULL,NULL
+52,040.000.0132.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de Nalbufina 10 mg. Envase con 3 ampolletas de 1 ml.,1,2,Dolor de intensidad moderada a severa asociado a: Infarto agudo del miocardio. Procedimientos de exploración diagnóstica que puedan ser molestos o doloroso.,16,Adultos: 10 a 20 mg cada 4 a 6 horas. Dosis máxima: 160 mg/ día. Dosis máxima por aplicación: 20 mg.,NULL,NULL,NULL
+53,040.000.0132.01,33,0,0,0,Cada ampolleta contiene: Clorhidrato de Nalbufina 10 mg. Envase con 5 ampolletas de 1 ml.,1,2,Dolor de intensidad moderada a severa asociado a: Infarto agudo del miocardio. Procedimientos de exploración diagnóstica que puedan ser molestos o doloroso.,16,Adultos: 10 a 20 mg cada 4 a 6 horas. Dosis máxima: 160 mg/ día. Dosis máxima por aplicación: 20 mg.,NULL,NULL,NULL
+54,040.000.4032.00,47,0,0,0,Cada contiene: Clorhidrato de Oxicodona 20 mg. Envase con 30 tabletas de liberación prolongada.,30,1,Dolor grave secundario a padecimientos: O steoarticulares. Músculares crónicos. Cáncer.,26,Adultos: Tomar 10 a 20 mg cada 12 horas. Incrementar la dosis de acuerdo a la intensidad del dolor y a juicio del especialista.,NULL,NULL,NULL
+55,040.000.4032.01,47,0,0,0,Cada contiene: Clorhidrato de Oxicodona 20 mg. Envase con 100 tabletas de liberación prolongada.,100,1,Dolor grave secundario a padecimientos: O steoarticulares. Músculares crónicos. Cáncer.,26,Adultos: Tomar 10 a 20 mg cada 12 horas. Incrementar la dosis de acuerdo a la intensidad del dolor y a juicio del especialista.,NULL,NULL,NULL
+56,040.000.4033.00,47,0,0,0,Cada contiene: Clorhidrato de Oxicodona 10 mg. Envase con 30 tabletas de liberación prolongada.,30,1,Dolor grave secundario a padecimientos: O steoarticulares. Músculares crónicos. Cáncer.,26,Adultos: Tomar 10 a 20 mg cada 12 horas. Incrementar la dosis de acuerdo a la intensidad del dolor y a juicio del especialista.,NULL,NULL,NULL
+57,040.000.4033.01,47,0,0,0,Cada contiene: Clorhidrato de Oxicodona 10 mg. Envase con 100 tabletas de liberación prolongada.,100,1,Dolor grave secundario a padecimientos: O steoarticulares. Músculares crónicos. Cáncer.,26,Adultos: Tomar 10 a 20 mg cada 12 horas. Incrementar la dosis de acuerdo a la intensidad del dolor y a juicio del especialista.,NULL,NULL,NULL
+58,010.000.5720.00,33,0,0,0,Cada frasco ámpula contiene: Paracetamol 500 mg. Envase con un frasco ámpula con 50 ml.,50,2,Dolor postoperatorio moderado a grave en niños y adultos en coadyuvancia con opioides en quienes el uso de AINE´s está contraindicado.,18,"Adultos, adolescentes y niños con peso mayor a 50 kg: 1g por dosis cada 4 h hasta cuatro veces al día. 
+Adultos, adolescentes y niños con peso menor a 50 kg. 15 mg/kg de peso corporal por dosis hasta cuatro veces al día. 
+Recién nacidos a término y niños hasta 10 kg de peso. 7.5 mg/kg de peso corporal por dosis hasta cuatro veces al día.",NULL,NULL,NULL
+59,010.000.5720.01,33,0,0,0,Cada frasco ámpula contiene: Paracetamol 500 mg. Envase con cuatro frascos ámpula con 50 ml.,50,2,Dolor postoperatorio moderado a grave en niños y adultos en coadyuvancia con opioides en quienes el uso de AINE´s está contraindicado.,18,"Adultos, adolescentes y niños con peso mayor a 50 kg: 1g por dosis cada 4 h hasta cuatro veces al día. 
+Adultos, adolescentes y niños con peso menor a 50 kg. 15 mg/kg de peso corporal por dosis hasta cuatro veces al día. 
+Recién nacidos a término y niños hasta 10 kg de peso. 7.5 mg/kg de peso corporal por dosis hasta cuatro veces al día.",NULL,NULL,NULL
+60,010.000.5721.00,33,0,0,0,Cada frasco ámpula contiene: Paracetamol 1 g. Envase con un frasco ámpula con 100 ml.,100,2,Dolor postoperatorio moderado a grave en niños y adultos en coadyuvancia con opioides en quienes el uso de AINE´s está contraindicado.,18,"Adultos, adolescentes y niños con peso mayor a 50 kg: 1g por dosis cada 4 h hasta cuatro veces al día. 
+Adultos, adolescentes y niños con peso menor a 50 kg. 15 mg/kg de peso corporal por dosis hasta cuatro veces al día. 
+Recién nacidos a término y niños hasta 10 kg de peso. 7.5 mg/kg de peso corporal por dosis hasta cuatro veces al día.",NULL,NULL,NULL
+61,010.000.5721.01,33,0,0,0,Cada frasco ámpula contiene: Paracetamol 1 g. Envase con cuatro frascos ámpula con 100 ml.,50,2,Dolor postoperatorio moderado a grave en niños y adultos en coadyuvancia con opioides en quienes el uso de AINE´s está contraindicado.,18,"Adultos, adolescentes y niños con peso mayor a 50 kg: 1g por dosis cada 4 h hasta cuatro veces al día. 
+Adultos, adolescentes y niños con peso menor a 50 kg. 15 mg/kg de peso corporal por dosis hasta cuatro veces al día. 
+Recién nacidos a término y niños hasta 10 kg de peso. 7.5 mg/kg de peso corporal por dosis hasta cuatro veces al día.",NULL,NULL,NULL
+62,040.000.5915.00,47,0,0,0,Cada de liberación prolongada contiene: Clorhidrato de tapentadol equivalente a 50 mg de tapentadol. Envase con 30 tabletas de liberación prolongada.,30,1,"Analgésico narcótico. Tratamiento de dolor crónico moderado a severo de origen no oncológico, que requiera analgesia opioide.",26,"Adultos: Titulación: iniciar tratamiento con dosis de 50 mg cada 12 horas, incrementando en 50 mg cada 3 días hasta lograr un adecuado control del dolor. 
+Mantenimiento: Continuar con la dosis efectiva determinada durante la titulación cada 12 horas. Dosis máxima: 500 mg/día.",NULL,NULL,NULL
+63,040.000.5916.00,47,0,0,0,Cada de liberación prolongada contiene: Clorhidrato de tapentadol equivalente a 100 mg de tapentadol. Envase con 30 tabletas de liberación prolongada.,30,1,"Analgésico narcótico. Tratamiento de dolor crónico moderado a severo de origen no oncológico, que requiera analgesia opioide.",26,"Adultos: Titulación: iniciar tratamiento con dosis de 50 mg cada 12 horas, incrementando en 50 mg cada 3 días hasta lograr un adecuado control del dolor. 
+Mantenimiento: Continuar con la dosis efectiva determinada durante la titulación cada 12 horas. Dosis máxima: 500 mg/día.",NULL,NULL,NULL
+64,040.000.2106.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de Tramadol 100 mg. Envase con 5 ampolletas de 2 ml.,2,2,Dolor de moderado a severo de origen agudo o crónico por: Fracturas. Luxaciones. Infarto agudo del miocardio. Cáncer,12,Adultos y niños mayores de 14 años: 50 a 100 mg cada 8 horas. Dosis máxima 400 mg/día.,NULL,NULL,NULL
+65,040.000.2096.00,47,0,0,0,Cada contiene: Clorhidrato de Tramadol 37.5 mg. Paracetamol 325.0 mg. Envase con 20 tabletas.,20,1,"Dolor de moderado a severo, agudo o crónico.",26,"Adultos y mayores de 16 años de edad: 37.5 mg /325 mg a 75 mg / 650 mg cada 6 a 8 horas, hasta un máximo de 300 mg / 2600 mg por día",NULL,NULL,NULL
+66,010.000.0204.00,33,0,0,0,Cada ampolleta contiene: Sulfato de atropina 1 mg. Envase con 50 ampolletas con 1 ml.,1,2,Preanestesia. Arritmias cardiacas. Bradicardia. Bloqueo A-V.,12,"Adultos: 0.5 a 1 mg. Dosis máxima 2 mg.
+Niños: 0.01 mg/kg de peso corporal cada 6 horas.
+Preanestesia: 0.01 mg/kg de peso corporal, 45 a 60 minutos antes de la anestesia. Dosis máxima 0.4 mg.",NULL,NULL,NULL
+67,010.000.0261.00,33,0,0,0,Cada frasco ámpula contiene: Clorhidrato de lidocaína 500 mg. Envase con 5 frascos ámpula de 50 ml. ,50,2,NULL,18,"Adultos: Antiarrítmico: 1 a 1.5 mg/kg/ dosis administrar lentamente.
+Mantenimiento: de 1 a 4 mg/ min. Solo administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.
+Infiltración.
+Niños y adultos: Dosis máxima 4.5 mg/kg de peso corporal ó 300 mg. Anestesia caudal o epidural de 200 a 300 mg. Anestesia regional de 225 a 300 mg.
+No repetir la dosis en el transcurso de 2 horas.",NULL,NULL,NULL
+68,010.000.0262.00,33,0,0,0,Cada frasco ámpula contiene: Clorhidrato de lidocaína 1 g. Envase con 5 frascos ámpula con 50 ml.,50,2,"Anestesia local. Anestesia epidural caudal. Anestesia regional. Arritmia ventricular (extrasístoles, taquicardia, fibrilación, ectopia).",18,"Adultos: Antiarrítmico: 1 a 1.5 mg/kg/ dosis administrar lentamente.
+Mantenimiento: de 1 a 4 mg/ min. Solo administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.
+Infiltración.
+Niños y adultos: Dosis máxima 4.5 mg/kg de peso corporal ó 300 mg. Anestesia caudal o epidural de 200 a 300 mg. Anestesia regional de 225 a 300 mg.
+No repetir la dosis en el transcurso de 2 horas.",NULL,NULL,NULL
+69,010.000.0263.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de lidocaína 100 mg. Glucosa monohidratada 150 mg. Envase con 50 ampolletas con 2 ml.,2,2,"Anestesia local. Anestesia epidural caudal. Anestesia regional. Arritmia ventricular (extrasístoles, taquicardia, fibrilación, ectopia).",18,"Adultos:
+Antiarrítmico: 1 a 1.5 mg/kg/ dosis administrar lentamente.
+Mantenimiento: de 1 a 4 mg/ min. Solo administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.
+Infiltración.
+Niños y adultos: Dosis máxima 4.5 mg/kg de peso corporal ó 300 mg. Anestesia caudal o epidural de 200 a 300 mg. Anestesia regional de 225 a 300 mg.
+No repetir la dosis en el transcurso de 2 horas.",NULL,NULL,NULL
+70,010.000.0264.00,32,0,0,0,Cada 100 ml contiene: Lidocaína 10.0 g. Envase con 115 ml con atomizador manual. ,115,2,"Anestesia local. Anestesia epidural caudal. Anestesia regional. Arritmia ventricular (extrasístoles, taquicardia, fibrilación, ectopia).",25,"Adultos: Antiarrítmico: 1 a 1.5 mg/kg/ dosis administrar lentamente.
+Mantenimiento: de 1 a 4 mg/ min. Solo administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.
+Infiltración.
+Niños y adultos: Dosis máxima 4.5 mg/kg de peso corporal ó 300 mg. Anestesia caudal o epidural de 200 a 300 mg. Anestesia regional de 225 a 300 mg.
+No repetir la dosis en el transcurso de 2 horas.",NULL,NULL,NULL
+71,010.000.0265.00,33,0,0,0,Cada frasco ámpula contiene: Clorhidrato de lidocaína 1 g. Epinefrina (1:200000) 0.25 mg. Envase con 5 frascos ámpula con 50 ml.,50,2,Anestesia local. Anestesia epidural y caudal. Anestesia regional.,5,Adultos: 7 mg/kg de peso corporal ó 500 mg. No repetir la dosis en el transcurso de 2 horas. ,NULL,NULL,NULL
+72,010.000.0267.00,33,0,0,0,Cada cartucho dental contiene: Clorhidrato de lidocaína 36 mg Epinefrina (1:100000) 0.018 mg Envase con 50 cartuchos dentales con 1.8 ml.,1.8,2,Anestesia dental. ,5,Adultos y niños: 20 a 100 mg.,NULL,NULL,NULL
+73,010.000.0271.00,33,0,0,0,Cada ml contiene: Clorhidrato de bupivacaína 5 mg. Envase con 30 ml.,30,2,Anestesia epidural y caudal Anestesia local.,5,"Adultos y niños mayores de 12 años: Anestesia caudal: 75 a 150 mg repetir cada 3 horas de acuerdo al procedimiento anestésico. 
+Anestesia regional 25 a 50 mg. 
+La dosis única no debe exceder de 175 mg y la dosis total de 400 mg/día.",NULL,NULL,NULL
+74,010.000.4055.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de bupivacaína 15 mg. Dextrosa anhídra o glucosa anhídra 240 mg. ó Glucosa monohidratada equivalente a 240 mg de glucosa anhídra. Envase con 5 ampolletas con 3 ml.,3,2,Anestesia local.Bloqueo subaracnoideo.,6,"Adultos y niños mayores de 12 años: Dosis inicial de 10 a 15 mg. Dosis subsecuente de acuerdo a peso y talla del paciente. 
+Cada dosis no debe exceder de 175 mg y la dosis total de 400 mg/día.",NULL,NULL,NULL
+75,010.000.4061.00,33,0,0,0,Cada ml contiene: Besilato de cisatracurio equivalente a 2 mg de cisatracurio Envase con 1 ampolleta con 5 ml.,5,2,Relajación neuromuscular.,18,"Adultos: Inducción 0.15 mg/kg de peso corporal, mantenimiento: 0.03 mg/kg de peso corporal. 
+Niños: Inducción: 0.1 mg/kg de peso corporal, mantenimiento: 0.02 mg/kg de peso corporal. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+76,010.000.0234.00,22,0,0,0,Cada envase contiene: Desflurano 240 ml. Envase con 240 ml.,240,2,Inducción y mantenimiento de la anestesia general.,10,Adultos: 2-12%,NULL,NULL,NULL
+77,040.000.0202.00,33,0,0,0,Cada ampolleta contiene: Diazepam 10 mg. Envase con 50 ampolletas de 2 ml.,2,2,Medicación preanestésica. Sedación. Ansiedad. Síndrome convulsivo. Contractura de músculo estriado.,12,"Adultos: 0.2 a 0.3 mg por kg de peso corporal. 
+Niños con peso mayor de 10 kg de peso corporal: 0.1 mg por kg de peso corporal. 
+Dosis única. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+78,040.000.2107.00,33,0,0,0,Cada ampolleta contiene: Sulfato de efedrina 50 mg. Envase con 100 ampolletas con 2 ml. (25 mg/ml).,2,2,Hipotensión arterial. Broncoespasmo agudo durante la anestesia.,16,"Adultos: Broncoespasmo: 12.5 a 25 mg. 
+Hipotensión: Intramuscular o subcutánea de 25 a 50 mg. Intravenosa lenta 10 a 25 mg. 
+Dosis máxima: 150 mg/día. 
+Niños: Intravenosa 100 mg/m2 de superficie corporal o subcutánea 3 mg/kg de peso corporal/día; fraccionar para cada 6 horas. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+79,040.000.0243.00,33,0,0,0,Cada ampolleta contiene: Etomidato 20 mg. Envase con 5 ampolletas con 10 ml.,10,2,Inducción anestésica. ,18,"Adultos y niños mayores de 10 años: 0.2 a 0.6 mg/kg de peso corporal. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+80,040.000.0242.00,33,0,0,0,Cada ampolleta o frasco ámpula contiene: Citrato de fentanilo equivalente a 0.5 mg de fentanilo. Envase con 6 ampolletas o frascos ámpula con 10 ml. ,10,2,Anestesia general o local. Dolor de moderada intensidad durante la cirugía.,18,"Adultos: 0.05 a 0.15 mg/kg de peso corporal. 
+Niños: Dosis inicial: 10 a 20 µg/kg de peso corporal. 
+Dosis de mantenimiento a juicio del especialista. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio",NULL,NULL,NULL
+81,040.000.4054.00,33,0,0,0,Cada ampolleta contiene: Flumazenil 0.5 mg. Envase con una ampolleta con 5 ml (0.1 mg/ml). ,5,2,Intoxicación y otros efectos adversos por benzodiazepinas.,18,"Adultos: 0.5 a 1 mg, cada 3 minutos. Dosis máxima: 5 mg. Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+82,040.000.0206.00,33,0,0,0,Cada ampolleta contiene: Flunitrazepam 2 mg. Envase con 3 ampolletas y 3 ampolletas con diluyente.,3,1,Inducción anestésica. Sedación.,12,"Adultos mayores: 10 a 20 µg/kg de peso corporal. 
+Adultos: 15 a 30 µg/kg de peso corporal. 
+Niños: Recién nacidos 70 µg/kg. 
+Menores de 2 años: 70 a 80 µg/kg de peso corporal. 
+De 2 a 6 años: 80 a 100 µg/kg de peso corporal. 
+De 6 a 12 años: 40 a 50 µg/kg de peso corporal. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+83,040.000.0206.01,33,0,0,0,Cada ampolleta contiene: Flunitrazepam 2 mg. Envase con 5 ampolletas y 5 ampolletas con diluyente.,5,1,Inducción anestésica. Sedación.,12,"Adultos mayores: 10 a 20 µg/kg de peso corporal. 
+Adultos: 15 a 30 µg/kg de peso corporal. 
+Niños: Recién nacidos 70 µg/kg. 
+Menores de 2 años: 70 a 80 µg/kg de peso corporal. 
+De 2 a 6 años: 80 a 100 µg/kg de peso corporal. 
+De 6 a 12 años: 40 a 50 µg/kg de peso corporal. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+84,010.000.0232.00,23,0,0,0,Cada envase contiene: Isoflurano   100 ml. Envase con 100 ml.,100,2,Inducción y mantenimiento de la anestesia general.,10,"Adultos: Inducción con 0.5 %. Anestesia quirúrgica 1.5 a 2 %.
+Mantenimiento: 0.5 a 2.5 %. Niños: 1.5%",NULL,NULL,NULL
+85,040.000.0226.00,33,0,0,0,Cada frasco ámpula contiene: Clorhidrato de ketamina equivalente a 500 mg de ketamina. Envase con un frasco ámpula de 10 ml.,10,2,Inducción de la anestesia general.,12,"Adultos y niños: Intravenosa: 1 a 4.5 mg/ kg de peso corporal. 
+Intramuscular: 5 a 10 mg/ kg de peso corporal.
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+86,040.000.2108.00,33,0,0,0,"Cada ampolleta contiene: Clorhidrato de midazolam equivalente a               5 mg de midazolam.
+o
+Midazolam                   5 mg.
+Envase con 5 ampolletas con 5 ml. Cada ampolleta contiene Clorhidrato de midazolam equivalente a  50 mg de midazolam o Midazolam  50 mg. Envase con 5 ampolletas con 10 ml.",10,2,Inducción anestésica. Sedación.,15,"Adultos: Intramuscular:   70  a  80  µg/kg  de   peso  corporal. 
+Intravenosa:  35  µg/  kg  de  peso  corporal  una  hora antes del procedimiento quirúrgico.
+Dosis total: 2.5 mg. 
+Niños: Intramuscular profunda o intravenosa: 
+Inducción: 150 a 200 µg/ kg de peso corporal, seguido de 50 µg/ kg de peso corporal, de acuerdo al grado de inducción deseado.
+Administrar diluido   en    soluciones    intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+87,040.000.4057.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de midazolam equivalente a  15 mg de midazolam o Midazolam 15 mg. Envase con 5 ampolletas con 3 ml.,3,2,Inducción anestésica. Sedación.,15,"Adultos: Intramuscular:   70  a  80  µg/kg  de   peso  corporal. 
+Intravenosa:  35  µg/  kg  de  peso  corporal  una  hora antes del procedimiento quirúrgico.
+Dosis total: 2.5 mg. 
+Niños: Intramuscular profunda o intravenosa: 
+Inducción: 150 a 200 µg/ kg de peso corporal, seguido de 50 µg/ kg de peso corporal, de acuerdo al grado de inducción deseado.
+Administrar diluido   en    soluciones    intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+88,040.000.4060.00,33,0,0,0,Cada ampolleta contiene Clorhidrato de midazolam equivalente a 50 mg de midazolam o Midazolam  50 mg. Envase con 5 ampolletas con 10 ml.,10,2,Inducción anestésica. Sedación.,15,"Adultos: Intramuscular:   70  a  80  µg/kg  de   peso  corporal. 
+Intravenosa:  35  µg/  kg  de  peso  corporal  una  hora antes del procedimiento quirúrgico.
+Dosis total: 2.5 mg. 
+Niños: Intramuscular profunda o intravenosa: 
+Inducción: 150 a 200 µg/ kg de peso corporal, seguido de 50 µg/ kg de peso corporal, de acuerdo al grado de inducción deseado.
+Administrar diluido   en    soluciones    intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+89,040.000.2109.00,47,0,0,0,Cada contiene: Maleato de midazolam equivalente a 7.5 mg de midazolam. Envase con 30 tabletas.,30,1,Insomnio. ,26,"Adultos: 7.5 a 15 mg, antes de dormir. 21",NULL,NULL,NULL
+90,010.000.0302.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de naloxona 0.4 mg. Envase con 10 ampolletas con 1 ml.,1,2,Intoxicación por opioides. ,16,"Adultos: 0.4 a 2 mg cada 3 minutos, hasta obtener el efecto terapéutico. Dosis máxima 10 mg/día. 
+Niños: 0.1 mg/kg de peso corporal/dosis. Aplicar dosis cada 3 minutos, hasta obtener respuesta clínica.",NULL,NULL,NULL
+91,010.000.0291.00,33,0,0,0,Cada ampolleta contiene: Metilsulfato de neostigmina 0.5 mg. Envase con 6 ampolletas con 1 ml.,1,2,Intoxicación y efectos adversos de agentes  bloqueadores neuromusculares no despolarizantes. Distensión abdominal. Atonía vesical postoperatoria.,14,"Adultos: 0.5 a 2.5 mg, hasta obtener la respuesta. Previamente administrar 0.6 a 1.2 mg de atropina. Niños: 0.07 a 0.08 mg/kg de peso corporal, hasta obtener la respuesta. Previamente administrar 0.01 mg de atropina.",NULL,NULL,NULL
+92,010.000.2110.00,47,0,0,0,Cada contiene: Bromuro de neostigmina 15 mg. Envase con 20 tabletas.,20,1,Intoxicación y efectos adversos de agentes  bloqueadores neuromusculares no despolarizantes. Distensión abdominal. Atonía vesical postoperatoria.,26,"Adultos: 15 a 30 mg cada 8 horas. Niños: 2 mg/kg de peso corporal /día, fraccionar cada 6 a 8 horas.",NULL,NULL,NULL
+93,010.000.4058.00,33,0,0,0,Cada cartucho dental contiene: Clorhidrato de Prilocaína 54 mg. Felipresina 0.054 UI. Envase con 1 cartucho con 1.8 ml.,1.8,2,Anestesia local por infiltración para:  Dolor durante procedimientos odontológicos.,5,Adultos: Uno o dos cartuchos. Niños: Medio o un cartucho.,NULL,NULL,NULL
+94,010.000.4058.01,33,0,0,0,Cada cartucho dental contiene: Clorhidrato de Prilocaína 54 mg. Felipresina 0.054 UI. Envase con 50 cartuchos con 1.8 ml.,1.8,2,Anestesia local por infiltración para:  Dolor durante procedimientos odontológicos.,5,Adultos: Uno o dos cartuchos. Niños: Medio o un cartucho.,NULL,NULL,NULL
+95,010.000.0246.00,12,0,0,0,Cada ampolleta o frasco ámpula contiene: Propofol 200 mg. En emulsión con edetato disódico (dihidratado). Envase con 5 ampolletas o frascos ámpula de 20 ml.,20,2,Inducción y mantenimiento de la anestesia general.,20,"Adultos: Inducción: 2 a 2.5 mg/ kg (40 mg cada 10 minutos). 
+Mantenimiento: 4 a 12 mg/ kg/ hora. 
+Niños mayores de 8 años: Inducción: 2.5 mg/kg. 
+Mantenimiento: 10 mg/kg/hora. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+96,010.000.0244.00,12,0,0,0,"Cada ampolleta o frasco ámpula contiene: Propofol 200 mg. En solución con aceite de soya, fosfátido de huevo o lecitina de huevo y glicerol. Envase con 5 ampolletas o frascos ámpula de 20 ml.",20,2,Inducción y mantenimiento de la anestesia general.,20,"Adultos: Inducción: 2 a 2.5 mg/ kg (40 mg cada 10 minutos). 
+Mantenimiento: 4 a 12 mg/ kg/ hora. 
+Niños mayores de 8 años: Inducción: 2.5 mg/kg. 
+Mantenimiento: 10 mg/kg/hora. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+97,040.000.0248.00,33,0,0,0,Cada frasco ámpula contiene: Clorhidrato de remifentanilo equivalente a 2 mg de remifentanilo. Envase con 5 frascos ámpula. ,5,1,Indicado como agente analgesico inductor o mantenimiento de la anestesia general en procedimientos quirúrgicos. Anestesia general y analgesia.,20,"Adultos y niños mayores de 1 año: Anestesia general: 0.5 a 1µg/kg de peso corporal/minuto.
+Analgesia: 0.1 µg/kg de peso corporal/minuto,ajustando la velocidad y dosis de la infusión cada 5 minutos con incrementos de 0.025 µg/kg de peso corporal / minuto.",NULL,NULL,NULL
+98,010.000.4059.00,33,0,0,0,Cada ampolleta o frasco ámpula contiene: Bromuro de rocuronio 50 mg. Envase con 12 ampolletas o frascos ámpula de 5 ml.,5,2,Relajacion muscular durante procedimientos quirúrgicos. ,18,"Adultos: Dosis a juicio del especialista.
+Administrara diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+99,010.000.0269.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de ropivacaína monohidratada equivalente a 40 mg de clorhidrato de ropivacaina. Envase con 5 ampolletas con 20 ml.,20,2,Anestesia local. Anestesia epidural.,17,"Adultos:Bloqueo epidural en bolo: 20 a 40 mg.
+Bloqueo epidural en infusión continua: 12 a 28 mg/hora.
+Infiltración y bloqueo de nervios: 2 a 200 mg.
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+100,010.000.0270.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de ropivacaína monohidratada equivalente a 150 mg de clorhidrato de ropivacaina. Envase con 5 ampolletas con 20 ml.,20,2,Anestesia local. Anestesia epidural.,17,"Adultos: Bloqueo epidural: 38 a 188 mg.
+Bloqueo de nervios: 7.5 a 300 mg.",NULL,NULL,NULL
+101,010.000.0233.00,23,0,0,0,Cada envase contiene: Sevoflurano 250 ml. Envase con 250 ml de líquido o solución.,250,2,Inducción y mantenimiento de la anestesia general. ,28,"Adultos: Inducción: iniciar con 1%. Concentraciones entre 2 y 3% producen anestesia quirúrgica.
+Mantenimiento: con concentraciones entre 1.5 a 2.5%.
+Niños: concentraciones al 2%.",NULL,NULL,NULL
+102,010.000.0252.00,33,0,0,0,Cada ampolleta contiene: Cloruro de suxametonio 40 mg. Envase con 5 ampolletas con 2 ml.,20,2,Relajante musculoesqueletico durante procedimientos quirúrgicos.,12,"Adultos:Intravenosa: 25 a 75 mg, si es necesaria otra dosis 2.5 mg/minuto.
+Niños: Inicial (intravenosa): 1 a 2 mg/kg de peso corporal 
+intramuscular: 2.5 a 4 mg/kg de peso corporal.
+Mantenimiento: Intravenosa: 0.3 a 0.6 mg/kg de peso corporal cada 5 a 10 minutos.
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+103,040.000.0221.00,33,0,0,0,Cada frasco ámpula con polvo contiene: Tiopental sódico 0.5 g. Envase con frasco ámpula y diluyente con 20 ml.,20,2,Agente anestésico en procedimientos quirúrgicos cortos.,18,"Adultos: 3 a 4 mg/kg de peso corporal.
+Niños: 2 a 3 mg/ kg de peso corporal.
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+104,010.000.0254.00,33,0,0,0,Cada frasco ámpula con liofilizado contiene: Bromuro de vecuronio 4 mg. Envase con 50 frascos ámpula y 50 ampolletas con 1 ml de diluyente (4 mg/ml).,1,2,Relajación neuromuscular durante procedimientos quirúrgicos.,18,"Adultos y niños mayores de 9 años: Inicial: 80 a 100 µg/kg de peso corporal.
+Mantenimiento: 10 a 15 µg/ kg de peso corporal, 25 a 40 minutos después de la dosis inicial.
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+105,010.000.2111.00,48,0,0,0,Cada o cápsula contiene: Besilato o Maleato de amlodipino equivalente a 5 mg de amlodipino. Envase con 10 tabletas o cápsulas.,10,1,Hipertensión arterial sistémica. Angina de pecho (estable y variante de Prinzmetal).,26,Adultos: 5 a 10 mg cada 24 horas.,NULL,NULL,NULL
+106,010.000.2111.01,48,0,0,0,Cada o cápsula contiene: Besilato o Maleato de amlodipino equivalente a 5 mg de amlodipino. Envase con 30 tabletas o cápsulas.,30,1,Hipertensión arterial sistémica. Angina de pecho (estable y variante de Prinzmetal).,26,Adultos: 5 a 10 mg cada 24 horas.,NULL,NULL,NULL
+107,010.000.0574.00,47,0,0,0,Cada contiene: Captopril 25 mg. Envase con 30 tabletas. Hipertensión arterial sistémica.,30,1,Insuficiencia cardiaca.,26,"Adultos: 25 a 50 mg cada 8 ó 12 horas. En Insuficiencia cardiaca administrar 25 mg cada 8 ó 12 horas.
+Dosis máxima: 450 mg/ día.
+Niños: Inicial de 1.3 a 2.2 mg/kg de peso corporal 0.15 a 0.30 mg/ kg de peso corporal/ cada 8 horas.
+Dosis máxima al día: 6.0 mg/kg de peso corporal.
+En Insuficiencia cardiaca iniciar con 0.25 mg/kg de peso corporal/día e ir incrementando hasta 3.5 mg/kg de peso corporal cada 8 h.",NULL,NULL,NULL
+108,010.000.0561.00,47,0,0,0,Cada contiene: Clortalidona 50 mg. Envase con 20 tabletas.,20,1,Edema periférico. Hipertensión arterial sistémica.,26,"Adultos: Diurético: 25 a 100 mg/ día. Antihipertensivo: 25 a 50 mg/ día.
+Niños: 1 a 2 mg/kg de peso corporal ó 60 mg/ m2 de superficie corporal cada 48 horas.",NULL,NULL,NULL
+109,010.000.0502.00,47,0,0,0,Cada contiene: Digoxina 0.25 mg. Envase con 20 tabletas. ELÍXIR,20,1,Edema pulmonar agudo. Insuficiencia cardíaca. Taquiarritmias supraventriculares. Fibrilación. Flutter auricular.,26,"Adultos: Carga: 0.4 a 0.6 mg.
+Subsecuentes 1er día: 0.1 a 0.3 mg cada 8 horas.
+Mantenimiento: 0.125 a 0.5 mg cada 8 horas.",NULL,NULL,NULL
+110,010.000.0503.00,10,0,0,0,Cada ml contiene: Digoxina 0.05 mg. Envase conteniendo 60 ml con gotero calibrado de 1 ml integrado o adjunto al frasco y le sirve de tapa.,60,2,Edema pulmonar agudo. Insuficiencia cardíaca. Taquiarritmias supraventriculares. Fibrilación. Flutter auricular.,26,"Niños: Prematuros: 15 a 40 µg/kg de peso corporal.
+Recién nacido: 30 a 50 µg/kg de peso corporal.
+Dos a cinco años: 25 a 35 µg/kg de peso corporal.
+Cinco a diez años: 15 a 30 µg/kg de peso corporal.
+Mayores de diez años: 8 a 12 µg/kg de peso corporal.
+Nota: La dosis de impregnación debe ser administrada en un lapso de 24 horas.
+La mitad de la dosis calculada se administra inmediatamente, una cuarta parte 8 horas después y la cuarta parte restante 16 horas después de la primera.
+La dosis diaria de mantenimiento corresponde a 1/3 de la dosis de impregnación y debe administrarse 24 horas después de la última dosis de impregnación.",NULL,NULL,NULL
+111,010.000.0504.00,33,0,0,0,Cada ampolleta contiene: Digoxina 0.5 mg. Envase con 6 ampolletas de 2 ml.,2,2,Edema pulmonar agudo. Insuficiencia cardíaca. Taquiarritmias supraventriculares. Fibrilación. Flutter auricular.,18,"Adultos: Inicial: 0.5 mg seguidos de 0.25 mg cada 8 horas, por uno o dos días.
+Mantenimiento: la mitad de la dosis de impregnación en una dosis cada 24 horas. Después, continuar con medicación oral.
+Niños: Usar 2/3 partes de la dosis calculada para la vía oral. El margen de seguridad es muy estrecho.",NULL,NULL,NULL
+112,010.000.2501.00,4,0,0,0,Cada cápsula o contiene: Maleato de enalapril 10 mg. o Lisinopril 10 mg. o Ramipril 10 mg. Envase con 30 cápsulas o tabletas.,30,1,Hipertensión arterial sistémica.,26,"Adultos: Inicial: 10 mg al día y ajustar de acuerdo a la respuesta.
+Dosis habitual: 10 a 40 mg al día.",NULL,NULL,NULL
+113,010.000.0611.00,33,0,0,0,Cada ampolleta contiene: Epinefrina 1 mg (1:1 000). Envase con 50 ampolletas con 1 ml.,1,2,Choque anafiláctico. Paro cardiaco. Hemorragia capilar. Broncoespasmo.,18,"Intravenosa lenta (5 a 10 minutos).
+Adultos: Intavenosa: 0.1 a 0.25 mg.
+Subcutánea o intramuscular: 0.1 a 0.5 mg.
+Niños: Subcutánea: 0.01 mg/kg de peso corporal ó 0.3 mg/ m2 de superficie corporal.
+Infusión: 0.1 a 1.5 µg/kg de peso corporal. No exceder de 0.5 mg.
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+114,010.000.2114.00,47,0,0,0,Cada contiene: Felodipino 5 mg. Envase con 10 tabletas de liberación prolongada.,10,1,Angina de pecho. Hipertensión arterial sistémica. Insuficiencia cardiaca congestiva.,26,Adultos: 5 a 10 mg/día. Máximo 20 mg/día.,NULL,NULL,NULL
+115,010.000.0570.00,47,0,0,0,Cada contiene: Clorhidrato de hidralazina 10 mg. Envase con 20 tabletas.,20,1,Hipertensión arterial sistémica. Insuficiencia cardiaca congestiva crónica. Preeclampsia o eclampsia. Crisis hipertensiva.,26,"Iniciar con 10 mg diarios cada 6 ó 12 horas, se puede incrementar la dosis hasta 150 mg/ día de acuerdo a respuesta terapéutica.
+Niños: 0.75 a 1 mg/kg de peso corporal/día, dividido en 4 tomas.
+Dosis máxima: 4.0 mg/kg de peso corporal/día.",NULL,NULL,NULL
+116,010.000.2116.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de hidralazina 10 mg. Envase con 5 ampolletas con 1.0 ml.,1,2,Hipertensión arterial sistémica. Insuficiencia cardiaca congestiva crónica. Preeclampsia o eclampsia. Crisis hipertensiva.,13,"Niños: 0.1 a 0.2 mg/kg de peso corporal/dosis, cada 4 ó 6 horas.",NULL,NULL,NULL
+117,010.000.4201.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de hidralazina 20 mg. Envase con 5 ampolletas con 1.0 ml.,1,2,Hipertensión arterial sistémica. Insuficiencia cardiaca congestiva crónica. Preeclampsia o eclampsia. Crisis hipertensiva.,13,"Adultos: 20 a 40 mg.
+Eclampsia: 5 a 10 mg cada 20 minutos, si no hay efecto con 20 mg emplear otro antihipertensivo.",NULL,NULL,NULL
+118,010.000.0592.00,47,0,0,0,Cada contiene: Dinitrato de isosorbida 5 mg. Envase con 20 tabletas sublinguales.,20,1,Angina de pecho. Cardiopatía isquémica crónica. Insuficiencia cardiaca.,30,"Adultos: 2.5 a 10 mg, repetir cada 5 a 15 minutos (máximo 3 dosis en 30 minutos).",NULL,NULL,NULL
+119,010.000.0593.00,47,0,0,0,Cada contiene: Dinitrato de isosorbida 10 mg. Envase con 20 tabletas.,20,1,Angina de pecho. Cardiopatía isquémica crónica. Insuficiencia cardiaca. Sublingual.,26,Adultos: 5 a 30 mg cada seis horas. Insuficiencia cardiaca: 20 a 40 mg cada 4 horas.,NULL,NULL,NULL
+120,010.000.0572.00,47,0,0,0,Cada contiene: Tartrato de metoprolol 100 mg. Envase con 20 tabletas.,20,1,Hipertensión arterial leve o moderada. Profilaxis en enfermedad isquémica miocárdica.,26,"Adultos: 100 a 400 mg cada 8 ó 12 horas.
+Profilaxis: 100 mg cada 12 horas.",NULL,NULL,NULL
+121,010.000.0597.00,1,0,0,0,Cada cápsula contiene: Nifedipino 10 mg. Envase con 20 cápsulas.,20,1,Angina de pecho. Hipertensión arterial esencial.,26,"Adultos: 30 a 90 mg/ día, fraccionada en tres tomas. 
+Aumentar la dosis en periodos de 7 a 14 días hasta alcanzar el efecto deseado. Dosis máxima 120 mg/ día.
+",NULL,NULL,NULL
+122,010.000.0599.00,6,0,0,0,Cada comprimido contiene: Nifedipino 30 mg. Envase con 30 comprimidos.,30,1,Angina de pecho. Hipertensión arterial esencial.,26,"Adultos: 30 mg cada 24 horas, dosis máxima 60 mg/día.",NULL,NULL,NULL
+123,010.000.4117.00,47,0,0,0,Cada o gragea contiene: Pentoxifilina 400 mg. Envase con 30 tabletas o grageas.,30,1,Claudicación intermitente. Insuficiencia vascular periférica. Insuficiencia cerebrovascular.,26,Adultos: 400 mg cada ocho o doce horas.,NULL,NULL,NULL
+124,010.000.0523.00,47,0,0,0,Cada contiene: Bicarbonato de Potasio 766 mg. Bitartrato de Potasio 460 mg. Ácido Cítrico 155 mg. Envase con 50 tabletas solubles.,50,1,Hipokalemia. Intoxicación digitálica.,26,"Adultos: Una a dos tabletas disueltas en 180 a 240 ml de agua cada 8 a 24 horas. La dosis total diaria no debe exceder de 150 mEq. Niños: 25 mEq/día, divididas cada 6 horas. La dosis total diaria no debe exceder de 3 mEq/kg de peso corporal. Cada tableta proporciona 10 mEq = 390 mg de potasio.",NULL,NULL,NULL
+125,010.000.0530.00,47,0,0,0,Cada contiene: Clorhidrato de propranolol 40 mg. Envase con 30 tabletas.,30,1,Hipertensión arterial sistémica. Angina de pecho. Profilaxis de la migraña. Arritmia supraventricular. Hipertensión portal. Feocromocitoma.,26,"Adultos: Antihipertensivo: 40 mg cada 12 horas. Antiarrítmico, hipertiroidismo y feocromocitoma: 10 a 80 mg cada 6 a 8 horas. Antianginoso: 180 a 240 mg divididos en tres o cuatro tomas. Migraña: 80 mg cada 8 a 12 horas. Niños: Antihipertensivo: 1 a 5 mg/ kg/ día, cada 6 a 12 horas. Antiarrítmico, hipertiroidismo y feocromocitoma: 0.5 a 5 mg/kg de peso corporal/ día, dividida la dosis cada 6 a 8 horas. Migraña: menores de 35 kg 10 a 20 mg cada 8 horas, más de 35 kg; 20 a 40 mg cada 8 horas.",NULL,NULL,NULL
+126,010.000.0539.00,47,0,0,0,Cada contiene: Clorhidrato de Propranolol 10 mg Envase con 30 tabletas.,30,1,Hipertensión arterial sistémica. Angina de pecho. Profilaxis de la migraña. Arritmia supraventricular. Hipertensión portal. Feocromocitoma.,26,"Adultos: Antihipertensivo: 40 mg cada 12 horas. Antiarrítmico, hipertiroidismo y feocromocitoma: 10 a 80 mg cada 6 a 8 horas. Antianginoso: 180 a 240 mg divididos en tres o cuatro tomas. Migraña: 80 mg cada 8 a 12 horas. Niños: Antihipertensivo: 1 a 5 mg/ kg/ día, cada 6 a 12 horas. Antiarrítmico, hipertiroidismo y feocromocitoma: 0.5 a 5 mg/kg de peso corporal/ día, dividida la dosis cada 6 a 8 horas. Migraña: menores de 35 kg 10 a 20 mg cada 8 horas, más de 35 kg; 20 a 40 mg cada 8 horas.",NULL,NULL,NULL
+127,010.000.0591.00,4,0,0,0,Cada cápsula o masticable contiene: Trinitrato de glicerol 0.8 mg. Envase con 24 cápsulas o tabletas masticables. ,24,1,Angina de pecho. Cardiopatía isquémica crónica. Insuficiencia cardiaca.,27,Adultos: 0.8 mg que pueden repetirse a los 5 ó 10 minutos.,NULL,NULL,NULL
+128,010.000.5099.00,33,0,0,0,Cada frasco ámpula contiene: Adenosina 6 mg. Envase con 6 frascos ámpula con 2 ml.,2,2,Taquicardia paroxistica supraventricular.,18,"Adultos: 3 a 6 mg, si no hay respuesta administrar 6 a 12 mg. Niños: 0.05 mg/kg de peso corporal, se puede administrar una dosis máxima de 0.25 mg/kg de peso corporal.",NULL,NULL,NULL
+129,010.000.5631.00,33,0,0,0,Cada ampolleta con liofilizado contiene: Alprostadil 20 µg. Envase con una ampolleta.,1,1,"Tratamiento de la enfermedad arterial oclusiva periférica, estadios III y IV cuando esté contraindicada la cirugía.",18,Adultos: 40 µg dos veces al día.,NULL,NULL,NULL
+130,010.000.5107.00,33,0,0,0,"Cada frasco ámpula con liofilizado contiene: Alteplasa (activador tisular del plasminógeno humano) 50 mg. Envase con 2 frascos ámpula con liofilizado, 2 frascos ámpula con disolvente y equipo esterilizado para su reconstitución. ",2,1,Infarto agudo del miocardio. Embolia pulmonar. Evento vascular cerebral. ,28,"Infarto agudo de miocardio (primeras 6 horas).
+Adultos: 15 mg en bolo y luego 50 mg en infusión durante 30 minutos, seguido de 35 mg en infusión durante 60 minutos (máximo 100 mg). 
+En pacientes con peso corporal <65 kg administrar 1.5 mg/kg de peso corporal.",NULL,NULL,NULL
+131,010.000.4107.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de amiodarona 150 mg. Envase con 6 ampolletas de 3 ml.,3,2,Arritmias cardíacas. Sindrome de Wolff-Parkinson-White. Sindrome de bradicardiataquicardia. Insuficiencia coronaria. ,9,"Adultos: Inyección intravenosa 5 mg/kg de peso corporal. 
+Dosis de carga: 5 mg/kg de peso corporal en 250 ml de solución glucosaza al 5%, en infusión intravenosa lenta. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+132,010.000.4110.00,47,0,0,0,Cada contiene: Clorhidrato de amiodarona 200 mg. Envase con 20 tabletas.,20,1,Arritmias cardíacas. Sindrome de Wolff-Parkinson-White. Sindrome de bradicardiataquicardia. Insuficiencia coronaria. ,26,"Adultos: Dosis de carga: 200 a 400 mg cada 8 horas, durante dos a tres semanas. 
+Sostén: 100 a 400 mg/día, durante cinco días a la semana. 
+Niños: 10-15 mg/kg de peso corporal/día por 4 a 14 días. 
+Sostén: 5 mg/kg de peso corporal/día, dividir cada 8 horas.",NULL,NULL,NULL
+133,010.000.5800.00,6,0,0,0,Cada comprimido contiene: Besilato de Amlodipino equivalente a 5 mg de Amlodipino Valsartán 160 mg. Hidroclorotiazida 12.5 mg. Envase con 28 comprimidos.,28,1,Para el tratamiento de la Hipertensión Arterial no controlada con dos antihipertensivos y que requieren 3 fármacos.,26,Adultos: 1 comprimido cada 24 hrs.,NULL,NULL,NULL
+134,010.000.5645.00,47,0,0,0,Cada contiene: Azilsartán medoxomilo de potasio equivalente a 80 mg de azilsartán medoxomilo. Envase con 14 tabletas.,14,1,Tratamiento de la hipertensión arterial sistémica.,26,Adultos: 80 mg cada 24 horas.,NULL,NULL,NULL
+135,010.000.5645.01,47,0,0,0,Cada contiene: Azilsartán medoxomilo de potasio equivalente a 80 mg de azilsartán medoxomilo. Envase con 28 tabletas.,28,1,Tratamiento de la hipertensión arterial sistémica.,26,Adultos: 80 mg cada 24 horas.,NULL,NULL,NULL
+137,010.000.2545.00,47,0,0,0,Cada contiene: Carvedilol 6.250 mg. Envase con 14 tabletas.,14,1,Insuficiencia cardiaca. ,26,"Adultos: Dosis inicial 3.125 mg cada 12 horas durante dos semanas. 
+Si es bien tolerada incrementar a 6.25 mg cada 12 horas durante dos semanas, y si la tolerancia persiste, mantener esta dosis a largo plazo.",NULL,NULL,NULL
+138,010.000.4307.00,47,0,0,0,Cada contiene: Cilostazol 100 mg. Envase con 30 tabletas.,30,1,Claudicación intermitente en pacientes con enfermedad arterial periférica. Estenosis posterior a colocación de “stent” coronario.,26,"Adultos: 100 mg cada 12 horas, 30 minutos antes o 2 horas después de los alimentos.",NULL,NULL,NULL
+139,010.000.2101.00,6,0,0,0,Cada comprimido contiene: Clorhidrato de clonidina 0.1 mg. Envase con 30 comprimidos.,30,1,Hipertensión arterial sistémica. Medicación preanestésica.,26,"Adultos: De 0.1 a 0.4 mg/día, cada12 horas. Medicación preanestésica 200 a 300 µg, antes de la cirugía (90 minutos). 
+Niños mayores de 6 años: 0.10 mg/día, dividir la dosis cada 12 horas.",NULL,NULL,NULL
+140,010.000.4246.01,18,0,0,0,Cada gragea o contiene: Bisulfato de clopidogrel o Bisulfato de clopidogrel (Polimorfo forma 2) equivalente a 75 mg de clopidogrel. Envase con 14 grageas o tabletas.,14,1,"Estados de hipercoagulabilidad. Profilaxis y tratamiento de embolias aterotrombóticas, como infarto al miocardio y enfermedad vascular cerebral recientes. Enfermedad vascular periférica establecida Intervención coronaria percutánea.",26,Adultos:75 mg cada 24 horas.,NULL,NULL,NULL
+141,010.000.4246.00,18,0,0,0,Cada gragea o contiene: Bisulfato de clopidogrel o Bisulfato de clopidogrel (Polimorfo forma 2) equivalente a 75 mg de clopidogrel. Envase con 28 grageas o tabletas.,28,1,"Estados de hipercoagulabilidad. Profilaxis y tratamiento de embolias aterotrombóticas, como infarto al miocardio y enfermedad vascular cerebral recientes. Enfermedad vascular periférica establecida Intervención coronaria percutánea.",26,Adultos:75 mg cada 24 horas.,NULL,NULL,NULL
+142,010.000.0568.00,33,0,0,0,Cada ampolleta contiene: Diazóxido 300 mg. Envase con una ampolleta de 20 ml. (15 mg/ml).,20,2,Crisis hipertensiva. ,21,"Adultos: 1 a 3 mg/kg de peso corporal cada 5 a 15 min. 
+Dosis máxima 150 mg. 
+Niños: De 3 a 5 mg/kg de peso corporal, puede repetirse a los 30 minutos.",NULL,NULL,NULL
+143,010.000.2112.00,48,0,0,0,Cada contiene: Clorhidrato de diltiazem 30 mg. Envase con 30 tabletas o grageas.,30,1,Enfermedad isquémica coronaria. Angina de Prinzmetal. Hipertensión arterial sistémica.,26,Adultos: 30 mg cada 8 horas.,NULL,NULL,NULL
+144,010.000.0642.00,33,0,0,0,Cada ampolleta contiene: Dipiridamol 10 mg. Envase con 1 ampolletas con 2 ml (5 mg/ml).,2,2,Para ser utilizado en la realización de pruebas de esfuerzo con talio 201.,18,"0.142 mg/kg de peso/minuto (0.567 mg/kg de peso total) por infusión durante 4 minutos. 
+Dosis máxima 0.84 mg/kg de peso por infusión durante 6 a 10 minutos. Antes de su administración, diluir el medicamento con solución fisiológica de cloruro de sodio al 0.45% o 0.9% o glucosada al 5%, con una proporción de 1:2 obteniéndose un volumen total de aproximadamente 20 a 50 ml. 
+Inyectar Talio-201 en un lapso de 5 minutos después de la infusión de 4 minutos de dipiridamol.",NULL,NULL,NULL
+145,010.000.0642.01,33,0,0,0,Cada ampolleta contiene: Dipiridamol 10 mg. Envase con 3 ampolletas con 2 ml (5 mg/ml).,2,2,Para ser utilizado en la realización de pruebas de esfuerzo con talio 201.,18,"0.142 mg/kg de peso/minuto (0.567 mg/kg de peso total) por infusión durante 4 minutos. 
+Dosis máxima 0.84 mg/kg de peso por infusión durante 6 a 10 minutos. Antes de su administración, diluir el medicamento con solución fisiológica de cloruro de sodio al 0.45% o 0.9% o glucosada al 5%, con una proporción de 1:2 obteniéndose un volumen total de aproximadamente 20 a 50 ml. 
+Inyectar Talio-201 en un lapso de 5 minutos después de la infusión de 4 minutos de dipiridamol.",NULL,NULL,NULL
+146,010.000.0642.02,33,0,0,0,Cada ampolleta contiene: Dipiridamol 10 mg. Envase con 5 ampolletas con 2 ml (5 mg/ml).,2,2,Para ser utilizado en la realización de pruebas de esfuerzo con talio 201.,18,"0.142 mg/kg de peso/minuto (0.567 mg/kg de peso total) por infusión durante 4 minutos. 
+Dosis máxima 0.84 mg/kg de peso por infusión durante 6 a 10 minutos. Antes de su administración, diluir el medicamento con solución fisiológica de cloruro de sodio al 0.45% o 0.9% o glucosada al 5%, con una proporción de 1:2 obteniéndose un volumen total de aproximadamente 20 a 50 ml. 
+Inyectar Talio-201 en un lapso de 5 minutos después de la infusión de 4 minutos de dipiridamol.",NULL,NULL,NULL
+147,010.000.0642.03,33,0,0,0,Cada ampolleta contiene: Dipiridamol 10 mg. Envase con 10 ampolletas con 2 ml (5 mg/ml).,2,2,Para ser utilizado en la realización de pruebas de esfuerzo con talio 201.,18,"0.142 mg/kg de peso/minuto (0.567 mg/kg de peso total) por infusión durante 4 minutos. 
+Dosis máxima 0.84 mg/kg de peso por infusión durante 6 a 10 minutos. Antes de su administración, diluir el medicamento con solución fisiológica de cloruro de sodio al 0.45% o 0.9% o glucosada al 5%, con una proporción de 1:2 obteniéndose un volumen total de aproximadamente 20 a 50 ml. 
+Inyectar Talio-201 en un lapso de 5 minutos después de la infusión de 4 minutos de dipiridamol.",NULL,NULL,NULL
+148,010.000.0615.00,33,0,0,0,Cada frasco ámpula o ampolleta contiene: Clorhidrato de dobutamina equivalente a 250 mg de dobutamina.  Envase con 5 ampolletas con 5 ml cada una o con un frasco ámpula con 20 ml.,5,2,Insuficiencia cardíaca aguda y crónica. Choque cardiogénico.,7,"Adultos: 2.5 a 10 µg/kg/minuto, con incrementos graduales hasta alcanzar la respuesta terapéutica. 
+Niños: 2.5 a 15 µg/kg/minuto. 
+Dosis máxima: 40 µg/minuto. 
+Administrar diluido en soluciones intravenosas (glucosada al 5% o mixta) envasadas en frascos de vidrio.",NULL,NULL,NULL
+149,010.000.0614.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de dopamina 200 mg. Envase con 5 ampolletas con 5 ml.,5,2,Hipotensión arterial. Estado de choque. Corrección de desequilibrio hemodinámico. Insuficiencia renal aguda.,7,"Adultos y niños: 1 a 5 µg/kg de peso corporal/ minuto. 
+Dosis máxima 50 µg/kg de peso corporal / minuto. 
+Administrar diluido en soluciones intravenosas (glucosasa al 5%) envasadas en frascos de vidrio.",NULL,NULL,NULL
+151,010.000.5104.00,33,0,0,0,Cada frasco ámpula contiene: Clorhidrato de esmolol 100 mg. Envase con un frasco ámpula con 10 ml (10 mg/ ml).,10,2,Taquicardia supraventricular. ,7,"Adultos: Inicial: 500 µg/kg de peso corporal/ minuto, seguida de una dosis de sostén de 50 a 100 µg/kg de peso corporal/ minuto. 
+Dosis máxima: 300 µg/kg de peso corporal/ minuto. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+152,010.000.5105.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de esmolol 2.5 g. Envase con 2 ampolletas con 10 ml. (250 mg/ ml).,10,2,Taquicardia supraventricular. ,7,"Adultos: Inicial: 500 µg/kg de peso corporal/ minuto, seguida de una dosis de sostén de 50 a 100 µg/kg de peso corporal/ minuto. 
+Dosis máxima: 300 µg/kg de peso corporal/ minuto. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+153,010.000.1734.00,33,0,0,0,Cada frasco ámpula con liofilizado contiene: Estreptoquinasa 250 000 UI. Envase con un frasco ámpula.,1,1,Disolución de coágulos en: Infarto del miocardio. Trombosis arterial o venosa. Embolia pulmonar.,18,"Niños: Inicial: 1,000-5,000 UI/kg de peso corporal, seguido de una infusión de 400 a 1 200 UI/kg de peso corporal /h. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+154,010.000.1735.00,33,0,0,0,Cada frasco ámpula con liofilizado contiene: Estreptoquinasa natural o Estreptoquinasa recombinante 750 000 UI. Envase con un frasco ámpula.,1,1,Disolución de coágulos en: Infarto del miocardio. Trombosis arterial o venosa. Embolia pulmonar.,18,"Adultos: Inicial: 250,000 UI, seguido de una infusión de 100 000 UI/h durante 24-72 horas. 
+Niños: Inicial: 1,000-5,000 UI/kg de peso corporal, seguido de una infusión de 400 a 1,200 UI/kg de peso corporal/h. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+155,010.000.1736.00,33,0,0,0,"Cada frasco ámpula con liofilizado contiene: Estreptoquinasa 1,500,000 UI. Envase con un frasco ámpula.",1,1,Disolución de coágulos en: Infarto del miocardio. Trombosis arterial o venosa. Embolia pulmonar.,18,"Adultos: Trombosis arterial o venosa: Dosis inicial: 1,500,000 UI en 30 minutos, seguida de 1,500,000 UI/h durante 6 horas. 
+Infarto del miocardio: 1,500,000 UI en 60 minutos. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+156,010.000.4095.00,47,0,0,0,Cada contiene: Irbesartán 150 mg. Envase con 28 tabletas.,28,1,Hipertensión arterial sistémica.,26,Adultos: 150-300 mg una vez al día.,NULL,NULL,NULL
+157,010.000.4096.00,47,0,0,0,Cada contiene: Irbesartán 300 mg. Envase con 28 tabletas.,28,1,Disolución de coágulos en: Infarto del miocardio. Trombosis arterial o venosa. Embolia pulmonar.,18,"Adultos: Trombosis arterial o venosa: Dosis inicial: 1,500,000 UI en 30 minutos, seguida de 1,500,000 UI/h durante 6 horas. 
+Infarto del miocardio: 1,500,000 UI en 60 minutos. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+158,010.000.5801.00,47,0,0,0,Cada contiene: Irbesartán 150 mg. Besilato de amlodipino equivalente a 5 mg de amlodipino Envase con 28 tabletas.,28,1,Tratamiento de la hipertensión arterial esencial en pacientes adultos con insuficiencia renal crónica y macroalbuminuria cuya presión sanguínea no ha podido ser adecuadamente controlada con monoterapia.,26,Una tableta cada 24 horas. Se puede administrar con o sin alimentos.,NULL,NULL,NULL
+159,010.000.5802.00,47,0,0,0,Cada contiene: Irbesartán 300 mg. Besilato de amlodipino equivalente a 5 mg de amlodipino Envase con 28 tabletas.,28,1,Tratamiento de la hipertensión arterial esencial en pacientes adultos con insuficiencia renal crónica y macroalbuminuria cuya presión sanguínea no ha podido ser adecuadamente controlada con monoterapia.,26,Una tableta cada 24 horas. Se puede administrar con o sin alimentos.,NULL,NULL,NULL
+160,010.000.4097.00,47,0,0,0,Cada contiene: Irbesartán 150 mg. Hidroclorotiazida 12.5 mg. Envase con 28 tabletas.,28,1,Hipertensión arterial sistémica.,26,Adultos: 150mg –12.5 mg ó 300 mg – 12.5 mg una vez al día.,NULL,NULL,NULL
+161,010.000.4098.00,47,0,0,0,Cada contiene: Irbesartán 300 mg. Hidroclorotiazida 12.5 mg. Envase con 28 tabletas.,28,1,Hipertensión arterial sistémica.,26,Adultos: 150mg –12.5 mg ó 300 mg – 12.5 mg una vez al día.,NULL,NULL,NULL
+162,010.000.2115.00,33,0,0,0,Cada ml contiene: Clorhidrato de isoprenalina 0.2 mg. Envase con 2 ml.,2,2,Arritmias ventriculares. Choque.,28,"Adultos: Inicial: 0.02 a 0.06 mg. Sostén: 0.01 a 0.2 mg ó 5 µg/ minuto. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+164,010.000.4118.01,33,0,0,0,Cada ml contiene: Dinitrato de isosorbida 1 mg. Envase con 10 apolletas con 10 ml (10 mg/10 ml).,10,2,Angina de pecho. Cardiopatía isquémica crónica. Insuficiencia cardiaca.,7,"Adultos: De 2 a 7 mg/hora, hasta obtener la respuesta terapéutica. Dosis máxima 10 mg/hora. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+165,010.000.4120.00,47,0,0,0,Cada contiene: 5-mononitrato de isosorbida 20 mg. Envase con 20 tabletas.,20,1,Angina de pecho. Infarto del miocardio. Hipertensión arterial sistémica. Insuficiencia cardiaca congestiva.,26,Adultos: Tomar 20 ó 40 mg cada 8 horas. Iniciar con dosis bajas y no exceder de 80 mg al día.,NULL,NULL,NULL
+166,010.000.4121.00,47,0,0,0,Cada contiene: 5-mononitrato de isosorbida 40 mg. Envase con 20 tabletas,20,1,Angina de pecho. Infarto del miocardio. Hipertensión arterial sistémica. Insuficiencia cardiaca congestiva.,26,Adultos: Tomar 20 ó 40 mg cada 8 horas. Iniciar con dosis bajas y no exceder de 80 mg al día.,NULL,NULL,NULL
+167,010.000.5097.00,33,0,0,0,Cada ml contiene: Levosimendan 2.5 mg. Envase con 1 frasco ámpula con 5 ml.,5,2,Insuficiencia cardiaca congestiva grave.,19,"Adultos: Dosis de carga: 12 µg/kg de peso corporal durante 10 minutos. 
+Dosis de mantenimiento: 0.05 – 0.2 µg/kg de peso corporal, de acuerdo con la respuesta, durante 24 horas. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+168,010.000.5097.01,33,0,0,0,Cada ml contiene: Levosimendan 2.5 mg. Envase con 1 frasco ámpula con 10 ml.,10,2,Insuficiencia cardiaca congestiva grave.,19,"Adultos: Dosis de carga: 12 µg/kg de peso corporal durante 10 minutos. 
+Dosis de mantenimiento: 0.05 – 0.2 µg/kg de peso corporal, de acuerdo con la respuesta, durante 24 horas. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+170,010.000.0522.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de lidocaína 100 mg. Envase con 1 ampolleta de 5 ml.,5,2,Extrasístoles ventriculares. Fibrilación ventricular. Taquicardia ventricular. Ectopia ventricular causada por hipotensión.,18,"Adultos: Antiarrítmico: 1 a 1.5 mg/kg de peso corporal/ dosis administrar lentamente. 
+Mantenimiento: de 1 a 4 mg/ minuto. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+171,010.000.2520.00,17,0,0,0,Cada gragea o comprimido recubierto contiene: Losartán potásico 50 mg. Envase con 30 grageas o comprimidos recubiertos.,30,1,Hipertensión arterial sistémica.,26,Adultos: 50 mg cada 24 horas.,NULL,NULL,NULL
+172,010.000.2521.00,17,0,0,0,Cada gragea o comprimido recubierto contiene: Losartán potásico 50.0 mg. Hidroclorotiazida 12.5 mg. Envase con 30 grageas o comprimidos recubiertos.,30,1,Hipertensión arterial sistémica.,26,Adultos: Una gragea cada 24 horas.,NULL,NULL,NULL
+173,010.000.0566.00,47,0,0,0,Cada contiene: Metildopa 250 mg. Envase con 30 tabletas.,30,1,Hipertensión arterial.,26,"Adultos: 250 mg a 1 g/día, en una a tres tomas al día. 
+Niños: 10 a 40 mg/kg de peso corporal/ día, en tres tomas. 
+Dosis máxima: 65 mg/día.",NULL,NULL,NULL
+174,010.000.5100.00,33,0,0,0,Cada frasco ámpula contiene: Lactato de milrinona equivalente a 20 mg de milrinona. Envase con un frasco ámpula con 20 ml (1 mg/1 ml). Ó Cada ampolleta contiene: Lactato de milrinona equivalente a 10 mg de milrinona,20,2,"Insuficiencia cardiaca congestiva y la aguda postcirugía de corazón.",18,"Adultos: Inicial: 50 g/kg en 10 minutos. 
+Mantenimiento: 0.500 mg/kg/ minuto en infusión; no exceder 1.13 mg/kg/ minuto. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+175,010.000.5100.01,33,0,0,0,Cada frasco ámpula contiene: Lactato de milrinona equivalente a 20 mg de milrinona. Envase con tres ampolletas con 10 ml cada una (1 mg/1 ml).,10,2,Insuficiencia cardiaca congestiva y la aguda postcirugía de corazón.,18,"Adultos: Inicial: 50 g/kg en 10 minutos. 
+Mantenimiento: 0.500 mg/kg/ minuto en infusión; no exceder 1.13 mg/kg/ minuto. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+176,010.000.4200.00,33,0,0,0,Cada frasco ámpula con liofilizado contiene: Citrato de nesiritida a 1.58 mg de nesiritida. Envase con un frasco ámpula.,1,1,Insuficiencia cardiaca congestiva descompensada. Edema agudo pulmonar.,7,"Adultos y mayores de 18 años, con tensión arterial sistólica mayor de 110 mm Hg y creatinina menor de 1.7 mg/dL : 
+Bolo de 2 µg/kg de peso corporal, seguido de una infusión continua de 0.01 µg/kg de peso corporal /minuto. 
+La dosis inicial no debe ser mayor a 2 µg/kg de peso corporal. 
+Uso exclusivo en unidades coronarias y terapias intensivas de hospitales de alta especialidad.",NULL,NULL,NULL
+177,010.000.0569.00,33,0,0,0,Cada frasco ámpula con polvo o solución contiene: Nitroprusiato de sodio 50 mg. Envase con un frasco ámpula con o sin diluyente.,1,1,Crisis hipertensiva. Hipertensión arterial maligna. Insuficiencia ventricular izquierda.,7,"Adultos y niños: 0.25 a 1.5 µg/kg de peso corporal/ min, hasta obtener la respuesta terapéutica. 
+En casos excepcionales se puede aumentar la dosis hasta 10 µg/kg de peso corporal/ minuto. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+178,010.000.0612.00,33,0,0,0,Cada ampolleta contiene: Bitartrato de norepinefrina equivalente a 4 mg de norepinefrina. Envase con 50 ampolletas de 4 ml.,4,2,Hipotensión arterial. ,7,"Adultos y niños: 16 a 24 µg/ minuto, ajustar la dosis y el goteo según respuesta terapéutica. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+179,010.000.4122.00,33,0,0,0,Cada ampolleta contiene: Pentoxifilina 300 mg. Envase con 4 ampolletas con 15 ml.,15,2,Claudicación intermitente. Insuficiencia vascular. Insuficiencia cerebrovascular.,7,"Adultos: 300 mg cada 12 horas, no exceder de 1200 mg/día. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+180,010.000.4122.01,33,0,0,0,Cada ampolleta contiene: Pentoxifilina 300 mg.Envase con 5 ampolletas con15 ml.,15,2,Claudicación intermitente. Insuficiencia vascular. Insuficiencia cerebrovascular.,7,"Adultos: 300 mg cada 12 horas, no exceder de 1200 mg/día. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+181,010.000.0573.00,2,0,0,0,Cada cápsula o comprimido contiene: Clorhidrato de prazosina equivalente a 1 mg de prazosina. Envase con 30 cápsulas o comprimidos.,30,1,Hipertensión arterial. Insuficiencia cardiaca.,26,"Adultos: Inicial: 0.5 a 1 mg cada 8 ó 12 horas. 
+Sostén: 6 a 15 mg/ día, fraccionar en 2 a 3 tomas, ajustar de acuerdo a respuesta terapéutica. Dosis máxima: 20 mg/ día. 
+Niños: 25 a 40 µg/kg de peso corporal cada 6 horas, ajustar de acuerdo a respuesta terapéutica.",NULL,NULL,NULL
+182,010.000.0537.00,47,0,0,0,Cada contiene: Clorhidrato de Propafenona 150 mg. Envase con 20 tabletas.,20,1,Extrasístoles ventriculares. Taquicardia ventricular. Fibrilación ventricular.,26,"Adultos: Impregnación:150 mg cada 6 a 8 horas durante 7 días. 
+Mantenimiento: 150 a 300 mg cada 8 horas.",NULL,NULL,NULL
+183,010.000.2117.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de propranolol 1 mg. Envase con una ampolleta con 1 ml.,1,2,Taquiarritmias cardiacas. Hipertiroidismo. Feocromocitoma.,18,"Adultos: 1 a 3 mg, no exceder de 1 mg/ min. 
+Niños: 0.01 a 0.1 mg/kg de peso corporal/ dosis se puede repetir a las 6 a 8 horas. 
+Dosis máxima: 1 mg/ minuto. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+184,010.000.0527.00,47,0,0,0,Cada contiene: Sulfato de quinidina 200 mg. Envase con 20 tabletas.,20,1,Fibrilación o aleteo auricular. Taquicardia paroxística supraventricular. Extrasistole ventricular y auricular.,26,"Adultos: 200 a 400 mg cada 4 a 6 horas. 
+Niños: 25 mg/kg de peso corporal/ día, divididos cada 8 horas por 10 días.",NULL,NULL,NULL
+185,010.000.2540.00,47,0,0,0,Cada contiene: Telmisartán 40 mg. Envase con 30 tabletas.,30,1,Hipertensión arterial esencial.,26,Adultos: 40 mg cada 24 horas.,NULL,NULL,NULL
+186,010.000.2542.00,47,0,0,0,Cada contiene: Telmisartán 80.0 mg. Hidroclorotiazida 12.5 mg. Envase con 14 tabletas.,14,1,Hipertensión arterial esencial.,26,Adultos: 80 mg-12.5 mg cada 24 horas.,NULL,NULL,NULL
+187,010.000.5117.00,33,0,0,0,"Cada frasco ámpula contiene: Tenecteplasa 50 mg (10,000 U). Envase con frasco ámpula y jeringa prellenada con 10 ml de agua inyectable.",10,2,Infarto agudo del miocardio. Tratamiento trombolítico del infarto agudo del miocardio.,24,"Paciente mg U Volumen (ml) (kg peso corporal)
+< 60 30 6000          6.
+=60-<70 35 7000   7.
+=70-<80 40 8000   8.
+=80-<90 45 9000   9.
+=90 50 10000      10.",NULL,NULL,NULL
+188,010.000.4123.00,33,0,0,0,Cada frasco ámpula o bolsa contiene: Clorhidrato de tirofiban equivalente a 12.5 mg de tirofiban. Envase con un frasco ámpula con 50 ml.,50,2,Estados de hipercoagulabilidad. Profilaxis de trombosis postreperfusión vascular coronaria con trombolíticos.,7,"Adultos: Dosis inicial: 0.4 µg/kg/minuto, durante 30 minutos. 
+Dosis de mantenimiento: Al finalizar la dosis inicial continuar con 0.1 µg/kg/minuto.",NULL,NULL,NULL
+189,010.000.4123.01,33,0,0,0,Cada frasco ámpula o bolsa contiene: Clorhidrato de tirofiban equivalente a 12.5 mg de tirofiban. Envase con una bolsa con 250 ml.,1,1,Estados de hipercoagulabilidad. Profilaxis de trombosis postreperfusión vascular coronaria con trombolíticos.,7,"Adultos: Dosis inicial: 0.4 µg/kg/minuto, durante 30 minutos. 
+Dosis de mantenimiento: Al finalizar la dosis inicial continuar con 0.1 µg/kg/minuto.",NULL,NULL,NULL
+190,010.000.4114.00,33,0,0,0,Cada frasco ámpula contiene: Trinitrato de glicerilo 50 mg. Envase con un frasco ámpula de 10 ml.,10,2,Crisis hipertensiva. Tratamiento y profilaxis de la angina de pecho. Cardiopatía isquémica crónica. Insuficiencia cardiaca. ,7,"Adultos: 5 a 15 µg por minuto. Se incrementa la dosis hasta obtener disminución de la presión sistólica a límites normales. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+191,010.000.4111.00,27,0,0,0,Cada parche libera: Trinitrato de glicerilo 5 mg/día Envase con 7 parches.,7,1,Crisis hipertensiva. Tratamiento y profilaxis de la angina de pecho. Cardiopatía isquémica crónica. Insuficiencia cardiaca. Infusión intravenosa.,31,Adultos: 5 mg/ día.,NULL,NULL,NULL
+192,010.000.5111.00,6,0,0,0,Cada comprimido contiene 80 mg. Envase con 30 comprimidos.,30,1,Hipertensión arterial esencial.,26,Adulto: 80 mg cada 24 horas.,NULL,NULL,NULL
+193,010.000.0596.00,18,0,0,0,Cada gragea o recubierta contiene: Clorhidrato de verapamilo 80 mg. Envase con 20 grageas o tabletas recubiertas.,20,1,Arritmias auriculares. Angina de pecho. Hipertensión arterial.,26,Adultos: 80 mg cada 8 horas.,NULL,NULL,NULL
+194,010.000.0598.00,33,0,0,0,Cada ampolleta contiene: Clorhidrato de verapamilo 5 mg. Envase con 2 ml (2.5 mg/ ml).,2,2,Arritmias auriculares. Angina de pecho. Hipertensión arterial.,18,"Adultos: 0.075 a 0.15 mg/kg de peso corporal durante 2 minutos. 
+Niños de 1 a 15 años: 0.1 a 0.3 mg durante 2 minutos. 
+Niños menores de 1 año. 0.1 a 0.2 mg/kg de peso corporal. 
+En todos los casos se puede repetir la dosis 30 minutos después si no aparece el efecto deseado. 
+Administrar diluido en soluciones intravenosas envasadas en frascos de vidrio.",NULL,NULL,NULL
+195,010.000.0623.00,47,0,0,0,Cada contiene: Warfarina sódica 5 mg. Envase con 25 tabletas.,1,1,Profilaxis y tratamiento de afecciones tromboembólicas. Trombosis venosa profunda Tromboembolia pulmonar.,26,"Adultos y niños mayores de 12 años: Inicial: 2-5 mg/día 10 a 15 mg al día durante dos a cinco días después. 
+Mantenimiento: 2 a 10 mg al día, de acuerdo al tiempo de protrombina.",NULL,NULL,NULL
+196,010.000.0910.00,8,0,0,0,"Aceite de almendras dulces, lanolina, glicerina, propilenglicol, sorbitol. Envase con 235 ml.",235,2,Dermatitis por contacto. ,2,Adultos y niños: Aplicar en toda la piel afectada cuantas veces sea necesario.,NULL,NULL,NULL
+197,010.000.2118.00,8,0,0,0,Aceite de almendras dulces e hidróxido de calcio. Envase con 240 ml.,240,2,Dermatitis por contacto. ,2,Adultos y niños: Aplicar en toda la piel afectada cuantas veces sea necesario.,NULL,NULL,NULL
+201,010.000.0871.00,30,0,0,0,Cada gramo contiene: Sulfato de Cobre 177.0 mg. Sulfato de Zinc 619.5 mg. Alcanfor 26.5 mg. Envase con 12 sobres con 2.2 g.,2.2,5,Piodermitis. Dermatosis impetiginizadas. Dermatitis exfoliativa.,2,"Adultos y niños: Aplicar fomentos para descostrar, cada 8 a 24 horas.",NULL,NULL,NULL
+202,010.000.0801.00,30,0,0,0,Cada gramo contiene: Harina de soya 965 mg. (contenido proteico 45%) Polividona 20 mg. Envase con un sobre individual de 90 g.,90,5,Envase con dos sobres individuales de 90 g.,4,"Adultos:Disolver un sobre en el agua de la tina de baño. Permanecer en el agua durante 15 a 20 minutos, cada 12 a 24 horas. Para regiones limitadas: Disolver dos cucharadas de polvo en 4 litros de agua tibia. Aplicar cada 8 a 12 horas. Niños: Disolver 2 ó 3 cucharadas en el agua del baño. Dejar que la solución esté en contacto con la piel por 20 minutos.",NULL,NULL,NULL
+203,010.000.0801.01,30,0,0,0,Cada gramo contiene: Harina de soya 965 mg. (contenido proteico 45%) Polividona 20 mg. Envase con un sobre individual de 90 g.,90,5,Envase con dos sobres individuales de 90 g.,4,"Adultos:Disolver un sobre en el agua de la tina de baño. Permanecer en el agua durante 15 a 20 minutos, cada 12 a 24 horas. Para regiones limitadas: Disolver dos cucharadas de polvo en 4 litros de agua tibia. Aplicar cada 8 a 12 horas. Niños: Disolver 2 ó 3 cucharadas en el agua del baño. Dejar que la solución esté en contacto con la piel por 20 minutos.",NULL,NULL,NULL
+204,010.000.0861.00,11,0,0,0,Cada ml contiene: Benzoato de bencilo 300 mg. Envase con 120 ml.,120,2,Escabiasis. Pediculosis.,2,"Adultos y niños: Aplicación durante tres noches consecutivas; baño a la mañana siguiente con cambio de ropa. Repetir a juicio del médico.",NULL,NULL,NULL
+205,010.000.0822.00,24,0,0,0,Cada 100 mililitros o gramos contienen: Peróxido de benzoilo 5 g. Envase con 30 ml.,30,2,Acné vulgar. Antiseborreico.,2,"Adultos y niños mayores de 12 años: Previo aseo, aplicar sobre las zonas afectadas, por dos horas y lavar inmediatamente durante 4 días. Posteriormente, aplicar diariamente antes de acostarse y dejar toda la noche por 7 días más.",NULL,NULL,NULL
+206,010.000.0822.01,24,0,0,0,Cada 100 mililitros o gramos contienen: Peróxido de benzoilo 5 g. Envase con 50 ml.,50,2,Acné vulgar. Antiseborreico.,2,"Adultos y niños mayores de 12 años: Previo aseo, aplicar sobre las zonas afectadas, por dos horas y lavar inmediatamente durante 4 días. Posteriormente, aplicar diariamente antes de acostarse y dejar toda la noche por 7 días más.",NULL,NULL,NULL
+207,010.000.0822.02,24,0,0,0,Cada 100 mililitros o gramos contienen: Peróxido de benzoilo 5 g. Envase con 60 g.,60,5,Acné vulgar. Antiseborreico.,2,"Adultos y niños mayores de 12 años: Previo aseo, aplicar sobre las zonas afectadas, por dos horas y lavar inmediatamente durante 4 días. Posteriormente, aplicar diariamente antes de acostarse y dejar toda la noche por 7 días más.",NULL,NULL,NULL
+208,010.000.0872.00,8,0,0,0,Cada g contiene: Clioquinol 30 mg. Envase con 20 g.,20,5,Dermatomicosis. Dermatitis infecciosa.,2,"Adultos y niños: Aplicar en capa delgada cada 12 a 24 horas, durante 7 días.",NULL,NULL,NULL
+209,010.000.0811.00,8,0,0,0,Cada g contiene: Acetónido de fluocinolona 0.1 mg. Envase con 20 g.,20,5,Dermatitis agudas no infectadas.,2,Adultos: Aplicar cada 12 a 24 horas.,NULL,NULL,NULL
+210,010.000.0813.00,8,0,0,0,Cada g contiene: 17 Butirato de hidrocortisona 1 mg. Envase con 15 g.,15,5,Dermatitis agudas no infectadas.,2,Adultos y niños: Aplicar cada 8 a 24 horas.,NULL,NULL,NULL
+211,010.000.4134.01,8,0,0,0,Cada 100 gramos contienen: Hidroquinona 4.0 g. Envase con 15 g.,15,5,Cloasma. ,2,"Adultos: Debe aplicarse en las áreas afectadas, exclusivamente por las noches.",NULL,NULL,NULL
+213,010.000.2024.00,8,0,0,0,Cada 100 gramos contiene: Nitrato de isoconazol 1 g. Envase con 20 g.,20,5,Dermatomicosis,2,Adultos: Aplicar cada 24 horas.,NULL,NULL,NULL
