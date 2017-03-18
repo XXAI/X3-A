@@ -36,7 +36,7 @@ class CatalogoInsumoController extends Controller
         
 
         if(isset($parametros['page'])){
-            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
             $insumos = $insumos->paginate($resultadosPorPagina);
         } else {
             $insumos = $insumos->get();
