@@ -18,15 +18,27 @@ class Insumo extends BaseModel{
     protected $fillable = ["clave","tipo","generico_id","es_causes","descripcion"];
 
     //Este scope carga los datos de catalogos que utiliza insumos_medicos
-    public function scopeConDetalles($query){
+    public function scopeConDescripciones($query){
         return $query->select('insumos_medicos.*','genericos.nombre as generico_nombre','genericos.es_cuadro_basico','grupos_insumos.nombre as grupo_nombre')
                 ->leftjoin('genericos','genericos.id','=','insumos_medicos.generico_id')
                 ->leftjoin('grupos_insumos','grupos_insumos.id','=','genericos.grupo_insumo_id');
     }
 
     //Relacion con el Modelo Medicamento, usando un scope para cargar los datos de los catalogos utilizados por medicamentos
-    public function medicamentoDetalle(){
-        return $this->hasOne('App\Models\Medicamento','insumo_medico_clave','clave')->conDetalles();
+    public function informacion(){
+        if ($this->tipo = "ME"){
+            return $this->hasOne('App\Models\Medicamento','insumo_medico_clave','clave')->conDescripciones();
+        }
+        return null;
+        
+    }
+
+    //Relacion con el Modelo Medicamento, usando un scope para cargar los datos de los catalogos utilizados por medicamentos
+    public function informacionAmpliada(){
+        if ($this->tipo = "ME"){
+            return $this->hasOne('App\Models\Medicamento','insumo_medico_clave','clave')->conInformacionImportante();
+        }
+        return null;
     }
 
     //Relacion con el Modelo Medicamento

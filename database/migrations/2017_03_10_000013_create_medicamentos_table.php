@@ -19,9 +19,10 @@ class CreateMedicamentosTable extends Migration{
 		    $table->integer('presentacion_id')->unsigned();
 		    $table->boolean('es_controlado')->nullable()->default(null);
 		    $table->boolean('es_surfactante')->nullable()->default(null);
-		    $table->boolean('es_anestesia')->nullable()->default(null);
-		    $table->text('descripcion')->nullable();
-			//$table->string('concentracion', 45)->nullable();
+		    
+			$table->string('concentracion', 100)->nullable();
+			$table->string('contenido', 100)->nullable();
+
 		    $table->decimal('cantidad_x_envase', 15, 2)->nullable()->default(null);
 		    $table->integer('unidad_medida_id')->unsigned()->comment('Del contenido del envase');
 		    $table->text('indicaciones')->nullable();
