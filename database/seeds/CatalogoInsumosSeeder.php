@@ -16,6 +16,7 @@ class CatalogoInsumosSeeder extends Seeder
             'presentaciones-medicamentos'   =>'presentaciones_medicamentos',
             'grupos-insumos'                =>'grupos_insumos',
             'genericos'                     =>'genericos',
+            'generico-grupo-insumo'         =>'generico_grupo_insumo',
             'insumos-medicos'               =>'insumos_medicos',
             'medicamentos'                  =>'medicamentos',
         ];
