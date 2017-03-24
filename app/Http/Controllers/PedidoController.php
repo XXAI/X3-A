@@ -78,9 +78,7 @@ class PedidoController extends Controller
                 $reglas_insumos = [
                     'insumo_medico_clave'           => 'required',
                     'cantidad_calculada_sistema'    => 'required',
-                    'cantidad_solicitada_um'        => 'required',
-                    'cantidad_ajustada_js'          => 'required',
-                    'cantidad_ajustada_ca'          => 'required'
+                    'cantidad_solicitada_um'        => 'required'
                 ];  
 
                 $v = Validator::make($value, $reglas_insumos, $mensajes);
