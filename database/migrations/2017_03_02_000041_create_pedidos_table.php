@@ -17,16 +17,17 @@ class CreatePedidosTable extends Migration{
 		    $table->string('id', 255);
 		    $table->integer('incremento');
 		    $table->string('servidor_id', 4);
-		    $table->integer('tipo_insumo_id')->unsigned();
+		    $table->integer('tipo_insumo_id')->unsigned()->nullable();
 		    $table->integer('tipo_pedido_id')->unsigned();
-		    $table->string('pedido_padre', 255);
+		    $table->string('pedido_padre', 255)->nullable();
 		    $table->string('folio', 45);
 		    $table->string('almacen_solicitante', 255);
 		    $table->string('almacen_proveedor', 255);
-		    $table->integer('organismo_dirigido')->unsigned();
-		    $table->string('acta_id', 255);
+		    $table->integer('organismo_dirigido')->unsigned()->nullable();
+		    $table->string('acta_id', 255)->nullable();
 		    $table->string('status', 45)->comment('RE RECIBIDO\nPR PROCESO\nAP APROBADO\nNE NEGADO\n');
-		    $table->integer('usuario_validacion');
+			$table->text('observaciones')->nullable();
+		    $table->integer('usuario_validacion')->nullable();
 		    $table->integer('proveedor_id')->unsigned();
 		    $table->string('usuario_id', 255);
 		    
