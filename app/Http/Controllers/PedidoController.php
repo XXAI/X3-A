@@ -18,10 +18,25 @@ class PedidoController extends Controller
 {
     public function index()
     {
-        
-        $pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();
+        $parametros = Input::only('q','page','per_page');
 
-        return Response::json([ 'data' => $pedido],200);
+       if ($parametros['q']) {
+            $pedidos =  Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor")->where(function($query) use ($parametros) {
+                 $query->where('id','LIKE',"%".$parametros['q']."%");
+             });
+        } else {
+             $pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
+        }
+
+        //$pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();
+        if(isset($parametros['page'])){
+            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
+            $pedidos = $pedidos->paginate($resultadosPorPagina);
+        } else {
+            $pedidos = $pedidos->get();
+        }
+
+        return Response::json([ 'data' => $pedidos],200);
     }
 
     public function show($id)
@@ -32,7 +47,7 @@ class PedidoController extends Controller
             return Response::json(['error' => "No se encuentra el insumo que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }else
         {
-            $object = $object->with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();        
+            $object = $object->with("insumos", "acta", "tipoInsumo", "tipoPedido")->get();        
         }
 
         return Response::json([ 'data' => $object],200);
