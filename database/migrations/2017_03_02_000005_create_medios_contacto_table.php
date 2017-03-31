@@ -15,7 +15,6 @@ class CreateMediosContactoTable extends Migration{
             $table->engine = 'InnoDB';
         
             $table->integer('id');
-            $table->string('servidor_id', 4);
             $table->string('nombre', 45);
             $table->text('icon');
             $table->string('usuario_id', 255);

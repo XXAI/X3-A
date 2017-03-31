@@ -20,7 +20,7 @@ class CreateAlmacenesTable extends Migration{
           $table->string('tipo_almacen', 100)->comment('* ESTATAL\n* JURISDICCIONAL\n* UNIDAD_MEDICA\n* LABORATORIO\n* FARMACIA\n* CENDIS_UNIDOSIS');
           $table->string('clues', 45);
           $table->boolean('subrogado');
-          $table->integer('proveedor_id')->unsigned();
+          $table->integer('proveedor_id')->unsigned()->nullable();
           $table->boolean('unidosis');
           $table->string('clave', 45);
           $table->string('nombre', 255);
@@ -28,8 +28,7 @@ class CreateAlmacenesTable extends Migration{
           
           $table->primary('id');
       
-          $table->index('proveedor_id','fk_almacenes_proveedores1_idx');
-      
+          //$table->index('proveedor_id','fk_almacenes_proveedores1_idx');
           $table->foreign('proveedor_id')->references('id')->on('proveedores');
       
           $table->timestamps();

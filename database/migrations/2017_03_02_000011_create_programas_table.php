@@ -15,14 +15,14 @@ class CreateProgramasTable extends Migration{
             $table->engine = 'InnoDB';
         
             $table->increments('id');
-            $table->string('servidor_id', 4);
             $table->string('clave', 45);
             $table->string('nombre', 255);
             $table->boolean('status');
             $table->string('usuario_id', 255);
         
-            $table->unique('clave','clave_UNIQUE');
-        
+            //$table->unique('clave','clave_UNIQUE');
+            
+
             $table->timestamps();
             $table->softDeletes();
         });

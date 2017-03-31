@@ -17,26 +17,26 @@ class CreateMovimientosTable extends Migration{
 		    $table->string('id', 255);
 		    $table->string('servidor_id', 4);
 		    $table->integer('incremento');
-		    $table->string('almacenes_id', 255);
+		    $table->string('almacen_id', 255);
 		    $table->string('folio', 55);
-		    $table->integer('tipo_movimiento_id')->unsigned();
+		    $table->integer('tipo_movimiento_id');
 		    $table->string('almacen_origen', 255)->nullable();
 		    $table->string('almacen_destino', 255)->nullable();
-		    $table->integer('programas_id')->unsigned();
-		    $table->string('folio_pedido', 45)->nullable()->default(null);
-		    $table->string('factura', 45)->nullable()->default(null);
-		    $table->integer('proveedores_id')->unsigned();
-		    $table->date('fecha_factura')->nullable()->default(null);
-		    $table->string('referencia', 45)->nullable()->default(null);
-		    $table->date('fecha_referencia')->nullable()->default(null);
+		    $table->integer('programa_id')->unsigned()->nullable();
+		    $table->string('folio_pedido', 45)->nullable();
+		    $table->string('factura', 45)->nullable();
+		    $table->integer('proveedor_id')->unsigned()->nullable();
+		    $table->date('fecha_factura')->nullable();
+		    $table->string('referencia', 45)->nullable();
+		    $table->date('fecha_referencia')->nullable();
 		    $table->date('fecha_movimiento');
-		    $table->string('observaciones', 255)->nullable()->default(null);
+		    $table->string('observaciones', 255)->nullable();
 		    $table->boolean('cancelado');
 		    $table->string('observaciones_cancelacion', 255)->nullable();
 		    $table->string('usuario_id', 255);
 		    
 		    $table->primary('id');
-		    $table->unique('folio_pedido','numero_pedido_UNIQUE');
+		    //$table->unique('folio_pedido','numero_pedido_UNIQUE');
 	/*	
 		    $table->index('programas_id','fk_movimientos_programas1_idx');
 		    $table->index('almacenes_id','fk_movimientos_almacenes1_idx');
@@ -45,11 +45,11 @@ class CreateMovimientosTable extends Migration{
 		    $table->index('proveedores_id','fk_movimientos_proveedores1_idx');
 		    $table->index('tipo_movimiento_id','fk_movimientos_tipos_movimientos1_idx');
 	*/	
-		    $table->foreign('programas_id')->references('id')->on('programas');
-		    $table->foreign('almacenes_id')->references('id')->on('almacenes');
+		    $table->foreign('programa_id')->references('id')->on('programas');
+		    $table->foreign('almacen_id')->references('id')->on('almacenes');
 		    $table->foreign('almacen_origen')->references('id')->on('almacenes');
 		    $table->foreign('almacen_destino')->references('id')->on('almacenes');
-		    $table->foreign('proveedores_id')->references('id')->on('proveedores');
+		    $table->foreign('proveedor_id')->references('id')->on('proveedores');
 		    $table->foreign('tipo_movimiento_id')->references('id')->on('tipos_movimientos');
 
 		    $table->timestamps();
