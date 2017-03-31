@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateComunicacionContactoTable extends Migration{
+class CreateComunicacionContactosTable extends Migration{
     /**
      * Run the migrations.
      * @table comunicacion_contacto
@@ -11,13 +11,13 @@ class CreateComunicacionContactoTable extends Migration{
      * @return void
      */
     public function up(){
-        Schema::create('comunicacion_contacto', function(Blueprint $table) {
+        Schema::create('comunicacion_contactos', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 		
 		    $table->increments('id');
-		    $table->integer('incremento');
-		    $table->string('servidor_id',255);
-		    $table->integer('contacto_id')->unsigned();
+            $table->string('tipo', 45);
+		    $table->integer('contacto_id')->unsigned()->nullable();
+            $table->integer('proveedor_id')->unsigned()->nullable();
 		    $table->integer('medio_contacto_id');
 		    $table->string('valor', 255);
 		    $table->string('usuario_id', 255);
@@ -27,6 +27,7 @@ class CreateComunicacionContactoTable extends Migration{
 		*/
 		    $table->foreign('medio_contacto_id')->references('id')->on('medios_contacto');
 		    $table->foreign('contacto_id')->references('id')->on('contactos');
+            $table->foreign('proveedor_id')->references('id')->on('proveedores');
 		
 		    $table->timestamps();
             $table->softDeletes();
@@ -39,6 +40,6 @@ class CreateComunicacionContactoTable extends Migration{
      * @return void
      */
      public function down(){
-       Schema::dropIfExists('comunicacion_contacto');
+       Schema::dropIfExists('comunicacion_contactos');
      }
 }

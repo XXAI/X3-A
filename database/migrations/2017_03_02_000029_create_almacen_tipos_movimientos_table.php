@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateAlmacenTiposSalidasTable extends Migration{
+class CreateAlmacenTiposMovimientosTable extends Migration{
     /**
      * Run the migrations.
      * @table almacen_tipos_salidas
@@ -11,13 +11,13 @@ class CreateAlmacenTiposSalidasTable extends Migration{
      * @return void
      */
     public function up(){
-        Schema::create('almacen_tipos_salidas', function(Blueprint $table){
+        Schema::create('almacen_tipos_movimientos', function(Blueprint $table){
 		    $table->engine = 'InnoDB';
 		
 		    $table->string('id', 255);
 		    $table->integer('incremento');
 		    $table->string('servidor_id', 4);
-		    $table->integer('tipo_movimiento_id')->unsigned();
+		    $table->integer('tipo_movimiento_id');
 		    $table->string('almacen_id', 255);
 		    $table->string('usuario_id', 255);
 		    
@@ -40,6 +40,6 @@ class CreateAlmacenTiposSalidasTable extends Migration{
      * @return void
      */
      public function down(){
-       Schema::dropIfExists('almacen_tipos_salidas');
+       Schema::dropIfExists('almacen_tipos_movimientos');
      }
 }
