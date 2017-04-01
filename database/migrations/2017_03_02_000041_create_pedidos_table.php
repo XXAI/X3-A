@@ -19,6 +19,7 @@ class CreatePedidosTable extends Migration{
 		    $table->string('servidor_id', 4);
 		    $table->integer('tipo_insumo_id')->unsigned()->nullable();
 		    $table->integer('tipo_pedido_id')->unsigned();
+			$table->string('descripcion', 255);
 		    $table->string('pedido_padre', 255)->nullable();
 		    $table->string('folio', 45);
 		    $table->string('almacen_solicitante', 255);
@@ -28,7 +29,7 @@ class CreatePedidosTable extends Migration{
 		    $table->string('status', 45)->comment('RE RECIBIDO\nPR PROCESO\nAP APROBADO\nNE NEGADO\n');
 			$table->text('observaciones')->nullable();
 		    $table->integer('usuario_validacion')->nullable();
-		    $table->integer('proveedor_id')->unsigned();
+		    $table->integer('proveedor_id')->unsigned()->nullable();
 		    $table->string('usuario_id', 255);
 		    
 		    $table->primary('id');
