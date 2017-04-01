@@ -44,10 +44,10 @@ class PedidoController extends Controller
     	$object = Pedido::find($id);
         
         if(!$object){
-            return Response::json(['error' => "No se encuentra el insumo que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+            return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }else
         {
-            $object = $object->with("insumos", "acta", "tipoInsumo", "tipoPedido")->get();        
+            $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "acta", "tipoInsumo", "tipoPedido");
         }
 
         return Response::json([ 'data' => $object],200);
@@ -60,40 +60,47 @@ class PedidoController extends Controller
         ];
 
         $reglas = [
-            'tipo_insumo_id'        => 'required',
             'tipo_pedido_id'        => 'required',
-            'pedido_padre'          => 'required',
-            'folio'                 => 'required',
-            'almacen_solicitante'   => 'required',
+            'descripcion'           => 'required',
+            //'almacen_solicitante'   => 'required',
             'almacen_proveedor'     => 'required',
-            'organismo_dirigido'    => 'required',
-            'acta_id'               => 'required',
+            //'observaciones'         => 'required',
             'status'                => 'required',
-            'usuario_validacion'    => 'required',
-            'proveedor_id'          => 'required'
+            //'tipo_insumo_id'        => 'required',
+            //'pedido_padre'          => 'required',
+            //'folio'                 => 'required',
+            //'organismo_dirigido'    => 'required',
+            //'acta_id'               => 'required',
+            //'usuario_validacion'    => 'required',
+            //'proveedor_id'          => 'required'
         ];
 
         $parametros = Input::all();
-     
+
+        //return Response::json([ 'data' => $parametros ],500);
+        if(count($parametros) == 1){
+            $parametros = $parametros[0];
+        }
         
-        $v = Validator::make($parametros, $reglas, $mensajes);
+        $parametros['datos']['almacen_solicitante'] = '00011';
+        $parametros['datos']['status'] = 1;
+        $parametros['datos']['tipo_pedido_id'] = 1;
+        
+        $v = Validator::make($parametros['datos'], $reglas, $mensajes);
 
         if ($v->fails()) {
-
             return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
         }
 
         try {
             DB::beginTransaction();
             
-            $object = Pedido::create($parametros);
-
+            $object = Pedido::create($parametros['datos']);
 
             foreach ($parametros['insumos'] as $key => $value) {
                 $reglas_insumos = [
-                    'insumo_medico_clave'           => 'required',
-                    'cantidad_calculada_sistema'    => 'required',
-                    'cantidad_solicitada_um'        => 'required'
+                    'clave'           => 'required',
+                    'cantidad'        => 'required'
                 ];  
 
                 $v = Validator::make($value, $reglas_insumos, $mensajes);
@@ -102,10 +109,15 @@ class PedidoController extends Controller
                     DB::rollBack();
                     return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
                 }      
+                
+                $insumo = [
+                    'insumo_medico_clave' => $value['clave'],
+                    'cantidad_solicitada_um' => $value['cantidad'],
+                    'pedido_id' => $object->id
+                ];
+                //$value['pedido_id'] = $object->id;
 
-                $value['pedido_id'] = $object->id;
-
-                $object_insumo = PedidoInsumo::create($value);    
+                $object_insumo = PedidoInsumo::create($insumo);    
 
             }    
 
@@ -125,22 +137,32 @@ class PedidoController extends Controller
         ];
 
         $reglas = [
-            'tipo_insumo_id'        => 'required',
             'tipo_pedido_id'        => 'required',
-            'pedido_padre'          => 'required',
-            'folio'                 => 'required',
-            'almacen_solicitante'   => 'required',
+            'descripcion'           => 'required',
+            //'almacen_solicitante'   => 'required',
             'almacen_proveedor'     => 'required',
-            'organismo_dirigido'    => 'required',
-            'acta_id'               => 'required',
+            //'observaciones'         => 'required',
             'status'                => 'required',
-            'usuario_validacion'    => 'required',
-            'proveedor_id'          => 'required'
+            //'tipo_insumo_id'        => 'required',
+            //'pedido_padre'          => 'required',
+            //'folio'                 => 'required',
+            //'organismo_dirigido'    => 'required',
+            //'acta_id'               => 'required',
+            //'usuario_validacion'    => 'required',
+            //'proveedor_id'          => 'required'
         ];
 
         $parametros = Input::all();
+
+        if(count($parametros) == 1){
+            $parametros = $parametros[0];
+        }
         
-        $v = Validator::make($parametros, $reglas, $mensajes);
+        $parametros['datos']['almacen_solicitante'] = '00011';
+        $parametros['datos']['status'] = 1;
+        $parametros['datos']['tipo_pedido_id'] = 1;
+        
+        $v = Validator::make($parametros['datos'], $reglas, $mensajes);
 
         if ($v->fails()) {
             return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
@@ -151,19 +173,17 @@ class PedidoController extends Controller
 
              DB::beginTransaction();
 
-            $object->update($parametros);
+            $object->update($parametros['datos']);
 
             $arreglo_insumos = Array();
-
             
             PedidoInsumo::where("pedido_id", $id)->delete();
 
             foreach ($parametros['insumos'] as $key => $value) {
 
                 $reglas_insumos = [
-                    'insumo_medico_clave'           => 'required',
-                    'cantidad_calculada_sistema'    => 'required',
-                    'cantidad_solicitada_um'        => 'required'
+                    'clave'           => 'required',
+                    'cantidad'        => 'required'
                 ];  
 
                 $v = Validator::make($value, $reglas_insumos, $mensajes);
@@ -172,9 +192,15 @@ class PedidoController extends Controller
                     DB::rollBack();
                     return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
                 }      
-               
-                $value['pedido_id'] = $object->id;
-                $object_insumo = PedidoInsumo::create($value);
+                
+                $insumo = [
+                    'insumo_medico_clave' => $value['clave'],
+                    'cantidad_solicitada_um' => $value['cantidad'],
+                    'pedido_id' => $object->id
+                ];
+                //$value['pedido_id'] = $object->id;
+
+                $object_insumo = PedidoInsumo::create($insumo);  
             }   
 
              

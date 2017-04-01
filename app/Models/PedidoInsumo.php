@@ -14,4 +14,8 @@ class PedidoInsumo extends BaseModel
     protected $guardarIDUsuario = true;
     protected $fillable = [ "pedido_id", "insumo_medico_clave", "cantidad_calculada_sistema", "cantidad_solicitada_um", "cantidad_ajustada_js", "cantidad_ajustada_ca", "created_at","updated_at"];
     protected $table = 'pedidos_insumos';
+
+    public function insumosConDescripcion(){
+        return $this->hasOne('App\Models\Insumo','clave','insumo_medico_clave')->conDescripciones();        
+    }
 }
