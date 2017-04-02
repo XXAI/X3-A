@@ -27,6 +27,9 @@ Route::group(['middleware' => 'jwt'], function () {
     
     Route::resource('almacenes',    'AlmacenController',    ['only' => ['index']]);
     Route::resource('pedidos',      'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('entregas',     'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::get('entregas-stats',    'EntregaController@stats');     
+
 
     //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
     Route::resource('catalogo-insumos',  'CatalogoInsumoController',     ['only' => ['index', 'show']]);
