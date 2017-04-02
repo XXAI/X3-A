@@ -26,7 +26,7 @@ class CreatePedidosTable extends Migration{
 		    $table->string('almacen_proveedor', 255);
 		    $table->integer('organismo_dirigido')->unsigned()->nullable();
 		    $table->string('acta_id', 255)->nullable();
-		    $table->string('status', 45)->comment('RE RECIBIDO\nPR PROCESO\nAP APROBADO\nNE NEGADO\n');
+		    $table->string('status', 45)->comment('AB ABIERTO\n ES EN ESPERA\nPE PENDIENTE\nFI FINALIZADO\nAP APROBADO\nNE NEGADO\n');
 			$table->text('observaciones')->nullable();
 		    $table->integer('usuario_validacion')->nullable();
 		    $table->integer('proveedor_id')->unsigned()->nullable();

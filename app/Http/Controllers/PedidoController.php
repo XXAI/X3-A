@@ -15,10 +15,33 @@ use \Validator,\Hash, \Response, DB;
 
 
 class PedidoController extends Controller
-{
+{   
+    public function stats(){
+
+        // Hay que obtener la clues del usuario
+        $pedidos = Pedido::select(DB::raw(
+            '
+            count(
+                case when status = "AB" then 1 else null end
+            ) as abiertos,
+            count(
+                case when status = "ES" then 1 else null end
+            ) as en_espera,
+            count(
+                case when status = "PE" then 1 else null end
+            ) as pendientes,
+            count(
+                case when status = "FI" then 1 else null end
+            ) as finalizados
+            '
+        ))->first();
+
+        return Response::json($pedidos,200);
+    }
+
     public function index()
     {
-        $parametros = Input::only('q','page','per_page');
+        $parametros = Input::only('status','q','page','per_page');
 
        if ($parametros['q']) {
             $pedidos =  Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor")->where(function($query) use ($parametros) {
@@ -28,6 +51,10 @@ class PedidoController extends Controller
              $pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
         }
 
+        if(isset($parametros['status'])) {
+            $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
+        }
+        
         //$pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;

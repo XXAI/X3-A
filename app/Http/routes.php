@@ -27,6 +27,7 @@ Route::group(['middleware' => 'jwt'], function () {
     
     Route::resource('almacenes',    'AlmacenController',    ['only' => ['index']]);
     Route::resource('pedidos',      'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::get('pedidos-stats',     'PedidoController@stats');     
     Route::resource('entregas',     'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::get('entregas-stats',    'EntregaController@stats');     
 

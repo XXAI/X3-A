@@ -22,14 +22,14 @@ class EntregaController extends Controller
         $pedidos = Pedido::select(DB::raw(
             '
             count(
-                case when status = "PR" then 1 else null end
-            ) as en_proceso,
+                case when status = "ES" then 1 else null end
+            ) as en_espera,
             count(
                 case when status = "PE" then 1 else null end
             ) as pendientes,
             count(
-                case when status = "RE" then 1 else null end
-            ) as recibidos
+                case when status = "FI" then 1 else null end
+            ) as finalizados
             '
         ))->first();
 
