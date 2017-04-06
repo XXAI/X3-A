@@ -2,30 +2,37 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
-use App\Http\Requests;
-use Illuminate\Support\Facades\Input;
-use \Validator,\Hash, \Response, \DB, \Request;
 
-use App\Models\AlmacenUsuarios;
-use App\Models\Almacenes;
- 
+use App\Http\Requests;
+
+use Illuminate\Support\Facades\Input;
+use \Validator,\Hash, \Response, DB;
+
+
+use App\Models\Movimientos;
+use App\Models\Stock;
+use App\Models\MovimientoInsumos;
+use App\Models\TiposMovimientos;
+
+
 
 
 
 
 /** 
-* Controlador Almacen
+* Controlador Movimientos
 * 
 * @package    SIAL API
 * @subpackage Controlador
 * @author     Joram Roblero Pérez <joram.roblero@gmail.com>
 * @created    2017-03-22
 *
-* Controlador `Proveedor`: Controlador  para la administración de proveedores
+* Controlador `Movimientos`: Controlador  para el manejo de entradas y salidas
 *
 */
-class AlmacenController extends Controller
+class MovimientoController extends Controller
 {
     /**
 	 * Inicia el contructor para los permisos de visualizacion
@@ -67,11 +74,11 @@ class AlmacenController extends Controller
     {
         $parametros = Input::only('q','page','per_page');
         if ($parametros['q']) {
-             $data =  Almacenes::with('AlmacenUsuarios','AlmacenTiposMovimientos')->where(function($query) use ($parametros) {
-                 $query->where('nombre','LIKE',"%".$parametros['q']."%");
+             $data =  Movimientos::with('MovimientoInsumos')->where(function($query) use ($parametros) {
+                 $query->where('folio','LIKE',"%".$parametros['q']."%");
              });
         } else {
-                $data =  Almacenes::with('AlmacenUsuarios','AlmacenTiposMovimientos');
+                $data =  Movimientos::with('MovimientoInsumos');
         }
         if(isset($parametros['page'])){
 
@@ -101,21 +108,57 @@ class AlmacenController extends Controller
 	 */
     public function store(Request $request)
     {
-        var_dump(  $request  ); die();
-        /*
-        $validacion = $this->ValidarParametros("", NULL, Input::json()->all());
-		if($validacion != ""){
+        $errors = array();
+
+        $validacion = $this->ValidarMovimiento("", NULL, Input::json()->all());
+		if(!$validacion)
+        {
 			return Response::json(['error' => $validacion], HttpResponse::HTTP_CONFLICT);
 		}
         $datos = (object) Input::json()->all();	
         $success = false;
 
+        $tipo_movimiento = TiposMovimientos::Find($datos->tipo_movimiento_id);
+        $tipo = NULL;
+        if($tipo_movimiento)
+            $tipo = $tipo_movimiento->tipo;
+
+
+        if(property_exists($datos, "insumos"))
+        {
+            if(count($datos->insumos) > 0 )
+            {
+                $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
+
+                foreach ($detalle as $key => $value)
+                    {
+                        $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo);
+                        if($validacion_insumos != "")
+                            {
+                                array_push($errors, $validacion_insumos);
+                            }
+                    }
+            }else{
+                            array_push($errors, array(array('insumos' => array('no_items_insumos'))));
+            }
+            
+
+        }else{
+            array_push($errors, array(array('insumos' => array('no_exist_insumos'))));
+        }
+
+        if( count($errors) > 0 )
+        {
+            return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+        } 
+
+
+        
+         
         DB::beginTransaction();
         try{
-
-            $data = new Proveedores;
-
-            $success = $this->campos($datos, $data);
+                $data = new Movimientos;
+                $success = $this->ValidarMetadatos($datos, $data);
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -129,7 +172,7 @@ class AlmacenController extends Controller
             DB::rollback();
             return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
         }
-        */
+          
     }
 
     /**
@@ -235,154 +278,165 @@ class AlmacenController extends Controller
 
     /**
 	 * Funcion que recive todos los campos del formulario que se envia desde el cliente
-	 *
 	 * @param  Request  $datos que corresponde a los datos del form enviados por el cliente
      * @param  Request  $data que corresponde a el objeto ORM
-	 *
 	 * @return Response
 	 * <code> Respuesta Error json con los errores encontrados </code>
 	 */
 
-     /*
-    private function campos($datos, $data){
+     
+    private function ValidarMetadatos($datos, $data){
 		$success = false;
         //comprobar que el servidor id no me lo envian por parametro, si no poner el servidor por default de la configuracion local, si no seleccionar el servidor del parametro
         $servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
-        
+
         //agregar al modelo los datos
-        $data->razon_social      =  $datos->razon_social;
-        $data->rfc               =  $datos->rfc;
-        $data->direccion         =  property_exists($datos, "direccion")     ? $datos->direccion      : '';
-        $data->colonia           =  property_exists($datos, "colonia")       ? $datos->colonia        : '';
-        $data->codigo_postal     =  property_exists($datos, "codigo_postal") ? $datos->codigo_postal  : '';
-        $data->localidad         =  property_exists($datos, "localidad")     ? $datos->localidad      : '';
-        $data->municipio         =  property_exists($datos, "municipio")     ? $datos->municipio      : '';
-        $data->estado            =  property_exists($datos, "estado")        ? $datos->estado         : '';
-        $data->pais              =  property_exists($datos, "pais")          ? $datos->pais           : '';
-        $data->activo            =  property_exists($datos, "activo")        ? $datos->activo         : '';
+        $data->almacen_id                   =  $datos->almacen_id;
+        $data->tipo_movimiento_id           =  $datos->tipo_movimiento_id; 
+        $data->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")          ? $datos->fecha_movimiento          : '';
+        $data->observaciones                =  property_exists($datos, "observaciones")             ? $datos->observaciones             : '';
+        $data->cancelado                    =  property_exists($datos, "cancelado")                 ? $datos->cancelado                 : '';
+        $data->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion") ? $datos->observaciones_cancelacion : '';
 
-        // si se guarda el maestro tratar de guardar el detalle   
-        if( $data->save() ){
+        // si se guarda el maestro tratar de guardar el detalle  
+        if( $data->save() )
+        {
             $success = true;
-        
             //verificar si existe contacto, en caso de que exista proceder a guardarlo
-            if(property_exists($datos, "contactos")){
+            if(property_exists($datos, "insumos")){
+                 $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
+
+                MovimientoInsumos::where("movimiento_id", $data->id)->delete();
+
                 
-                //limpiar el arreglo de posibles nullos
-                $detalle = array_filter($datos->contactos, function($v){return $v !== null;});
 
-                //borrar los datos previos de articulo para no duplicar información
-                Contactos::where("proveedor_id", $data->id)->delete();
-
-                //recorrer cada elemento del arreglo
-                foreach ($detalle as $key => $value) {
-                    //validar que el valor no sea null
-                    if($value != null){
-                        //comprobar si el value es un array, si es convertirlo a object mas facil para manejar.
-                        if(is_array($value))
+         
+                 foreach ($detalle as $key => $value)
+                {
+                     if($value != null){
+                         if(is_array($value))
                             $value = (object) $value;
 
-                        //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
-                        DB::update("update contactos set deleted_at = null where proveedor_id = ".$data->id." and nombre = '".$value->nombre."' and puesto = '".$value->puesto."'");
-                        
-                        //si existe el elemento actualizar
-                        $item = Contactos::where("proveedor_id", $data->id)->where("nombre", $value->nombre)->where("puesto", $value->puesto)->first();
-                        //si no existe crear
-                        if(!$item)
-                            $item = new Contactos;
+                        $item_stock = new Stock;
 
-                        //llenar el modelo con los datos
+                        $item_stock->almacen_id             = $data->almacen_id;
+                        $item_stock->clave_insumo_medico    = $value->clave;
+                        $item_stock->lote                   = $value->lote;
+                        $item_stock->fecha_caducidad        = $value->fecha_caducidad;
+                        $item_stock->codigo_barras          = $value->codigo_barras;
+                        $item_stock->existencia             = $value->cantidad;
+                        $item_stock->existencia_unidosis    = ( $value->cantidad_x_envase * $value->cantidad );
 
-                        $item->nombre          = $value->nombre; 
-                        $item->proveedor_id    = $data->id; 
-                        $item->puesto          = $value->puesto; 
+                        if($item_stock->save()){
 
-                        $item->save();         
+                            $item_detalles = new MovimientoInsumos;
+
+                            $item_detalles->movimiento_id           = $data->id; 
+                            $item_detalles->stock_id                = $item_stock->id; 
+                            $item_detalles->cantidad                = $item_stock->existencia;
+                            $item_detalles->precio_unitario         = 0;
+                            $item_detalles->iva                     = 0; 
+                            $item_detalles->precio_total            = 0;
+
+                            $item_detalles->save();   
+                        }else{
+                                return Response::json(['error' => $validacion_insumos], HttpResponse::HTTP_CONFLICT);
+                             }
                     }
                 }
-            }
-
-            //verificar si existe comunicacion_contacto, en caso de que exista proceder a guardarlo
-            if(property_exists($datos, "comunicacion_contacto")){
-                
-                //limpiar el arreglo de posibles nullos
-                $detalle = array_filter($datos->comunicacion_contacto, function($v){return $v !== null;});
-
-                //borrar los datos previos de articulo para no duplicar información
-                ComunicacionContacto::where("proveedor_id", $data->id)->delete();
-
-                //recorrer cada elemento del arreglo
-                foreach ($detalle as $key => $value) {
-                    //validar que el valor no sea null
-                    if($value != null){
-                        //comprobar si el value es un array, si es convertirlo a object mas facil para manejar.
-                        if(is_array($value))
-                            $value = (object) $value;
-
-                        //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
-                        DB::update("update comunicacion_contactos set deleted_at = null where proveedor_id = ".$data->id." and contacto_id = ".$value->contacto_id." and medio_contacto_id = ".$value->medio_contacto_id." and valor = '".$value->valor."'");
-                        
-                        //si existe el elemento actualizar
-                        $item = ComunicacionContacto::where("proveedor_id", $data->id)->where("contacto_id", $value->contacto_id)->where("medio_contacto_id", $value->medio_contacto_id)->where("valor", $value->valor)->first();
-                        //si no existe crear
-                        if(!$item)
-                            $item = new ComunicacionContacto;
-
-                        //llenar el modelo con los datos
-
-                        $item->tipo                 = $value->tipo; 
-                        $item->proveedor_id         = $data->id; 
-                        $item->contacto_id          = $value->contacto_id; 
-                        $item->medio_contacto_id    = $value->medio_contacto_id; 
-                        $item->valor                = $value->valor; 
-
-                        $item->save();         
-                    }
-                }
-            }            
+            }               
         }
+        
         return $success;
     }
-*/
+ 
     /**
 	 * Validad los parametros recibidos, Esto no tiene ruta de acceso es un metodo privado del controlador.
-	 *
 	 * @param  Request  $request que corresponde a los parametros enviados por el cliente
-	 *
 	 * @return Response
 	 * <code> Respuesta Error json con los errores encontrados </code>
 	 */
-
-
-    /* 
-	private function ValidarParametros($key, $id, $request){ 
+	private function ValidarMovimiento($key, $id, $request){ 
+  
         $mensajes = [
-            'required'      => "required",
-            'email'         => "email",
-            'unique'        => "unique"
-        ];
+                        'required'      => "required",
+                        'email'         => "email",
+                        'unique'        => "unique"
+                    ];
 
         $reglas = [
-            'razon_social'  => 'required|min:3|max:255',
-            'rfc'           => 'required'
-        ];
+                    'tipo_movimiento_id'  => 'required|integer',
+                  ];
         
 		$v = \Validator::make($request, $reglas, $mensajes );
-
-			
-        if ($v->fails()){
+        if ($v->fails())
+        {
 			$mensages_validacion = array();
-            foreach ($v->errors()->messages() as $indice => $item) { // todos los mensajes de todos los campos
-			$msg_validacion = array();
-				foreach ($item as $msg) {
-					array_push($msg_validacion, $msg);
-				}
-				array_push($mensages_validacion, array($indice.''.$key => $msg_validacion));
+            foreach ($v->errors()->messages() as $indice => $item)  // todos los mensajes de todos los campos
+            {
+                $msg_validacion = array();
+                    foreach ($item as $msg)
+                    {
+                        array_push($msg_validacion, $msg);
+                    }
+                    array_push($mensages_validacion, array($indice.''.$key => $msg_validacion));
 			}
 			return $mensages_validacion;
         }else{
-            return ;
-        }
+                return true;
+             }
 	}
-    */
+
+    ///***************************************************************************************************************************
+    ///**************************************************************************************************************************
+    private function ValidarInsumos($key, $id, $request,$tipo){ 
+        $mensajes = [
+                        'required'      => "required",
+                        'email'         => "email",
+                        'unique'        => "unique",
+                        'integer'       => "integer",
+                        'min'           => "min"
+                    ];
+
+        if($tipo=='ENTRADA')
+                {
+                    $reglas = [
+                                'clave'                 => 'required',
+                                'cantidad'              => 'required|integer',
+                                'cantidad_x_envase'     => 'required|integer',
+                                'lote'                  => 'required',
+                                'fecha_caducidad'       => 'required',
+                                'codigo_barras'         => 'required|string',
+                              ];
+                }else{
+                        $reglas = [
+                                    'clave'                 => 'required',
+                                    'cantidad'              => 'required|integer',
+                                    'cantidad_x_envase'     => 'required|integer',
+                                  ];
+                     }
+                     
+    $v = \Validator::make($request, $reglas, $mensajes );
+        if ($v->fails())
+        {
+			$mensages_validacion = array(); 
+            foreach ($v->errors()->messages() as $indice => $item)  // todos los mensajes de todos los campos
+            {
+                $msg_validacion = array();
+                    foreach ($item as $msg)
+                    {
+                        array_push($msg_validacion, $msg);
+                    }
+                    array_push($mensages_validacion, array($indice.''.$key => $msg_validacion));
+			}
+			return $mensages_validacion;
+        }else{
+                return ;
+             }
+        
+		 
+	}
+    ///***************************************************************************************************************************
+    ///**************************************************************************************************************************
+    
 }

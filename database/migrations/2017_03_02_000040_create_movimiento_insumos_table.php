@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateMovimientosDetallesTable extends Migration{
+class CreateMovimientoInsumosTable extends Migration{
     /**
      * Run the migrations.
      * @table movimientos_detalles
@@ -11,7 +11,7 @@ class CreateMovimientosDetallesTable extends Migration{
      * @return void
      */
     public function up(){
-        Schema::create('movimientos_detalles', function(Blueprint $table) {
+        Schema::create('movimiento_insumos', function(Blueprint $table) {
             $table->engine = 'InnoDB';
         
             $table->string('id', 255);
@@ -44,6 +44,6 @@ class CreateMovimientosDetallesTable extends Migration{
      * @return void
      */
      public function down(){
-       Schema::dropIfExists('movimientos_detalles');
+       Schema::dropIfExists('movimiento_insumos');
      }
 }

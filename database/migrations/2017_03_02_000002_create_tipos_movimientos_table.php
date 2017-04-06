@@ -15,8 +15,8 @@ class CreateTiposMovimientosTable extends Migration{
             $table->engine = 'InnoDB';
         
             $table->integer('id',10);
-            $table->string('servicio_id', 4)->nullable();
-            $table->string('tipo_movimento', 45)->comment('* ENTRADA\n* SALIDA\n* AJUSTE\n\n(AJUSTE-> es la merma) ');
+            //$table->string('servicio_id', 4)->nullable();
+            $table->string('tipo', 45)->comment('* ENTRADA\n* SALIDA\n* AJUSTE\n\n(AJUSTE-> es la merma) ');
             $table->string('nombre', 255);
             $table->string('usuario_id', 255);
         

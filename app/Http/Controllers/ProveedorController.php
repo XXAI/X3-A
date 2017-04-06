@@ -7,15 +7,12 @@ use App\Http\Requests;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB, \Request;
 
-use App\Models\AlmacenUsuarios;
-use App\Models\Almacenes;
- 
+use App\Models\Proveedores;
+use App\Models\ComunicacionContacto;
+use App\Models\Contactos;
 
-
-
-
-/** 
-* Controlador Almacen
+/**
+* Controlador Proveedor
 * 
 * @package    SIAL API
 * @subpackage Controlador
@@ -25,7 +22,7 @@ use App\Models\Almacenes;
 * Controlador `Proveedor`: Controlador  para la administración de proveedores
 *
 */
-class AlmacenController extends Controller
+class ProveedorController extends Controller
 {
     /**
 	 * Inicia el contructor para los permisos de visualizacion
@@ -66,12 +63,13 @@ class AlmacenController extends Controller
     public function index()
     {
         $parametros = Input::only('q','page','per_page');
-        if ($parametros['q']) {
-             $data =  Almacenes::with('AlmacenUsuarios','AlmacenTiposMovimientos')->where(function($query) use ($parametros) {
-                 $query->where('nombre','LIKE',"%".$parametros['q']."%");
+        if ($parametros['q']) 
+        {
+             $data =  Proveedores::with('Contactos','ComunicacionContacto')->where(function($query) use ($parametros) {
+                 $query->where('razon_social','LIKE',"%".$parametros['q']."%")->orWhere('rfc','LIKE',"%".$parametros['q']."%");
              });
         } else {
-                $data =  Almacenes::with('AlmacenUsuarios','AlmacenTiposMovimientos');
+             $data =  Proveedores::with('Contactos','ComunicacionContacto');
         }
         if(isset($parametros['page'])){
 
@@ -101,12 +99,46 @@ class AlmacenController extends Controller
 	 */
     public function store(Request $request)
     {
-        var_dump(  $request  ); die();
-        /*
+        //$datos = (object) Input::json()->all();	
+
         $validacion = $this->ValidarParametros("", NULL, Input::json()->all());
 		if($validacion != ""){
 			return Response::json(['error' => $validacion], HttpResponse::HTTP_CONFLICT);
 		}
+
+
+
+
+
+        /*********** ARBEY *************/
+/*
+        $errors_contactos = array();
+
+        if(property_exists($datos, "contactos")){
+            //if(count($datos->contactos)<=0)
+              //  array_push($errors_contactos, array(array('contactos' => array('without_elements'))));
+
+            foreach ($datos->contactos as $key => $contacto) {
+                $validacion_contactos = $this->ValidarParametrosContactos($key, NULL, $contacto);
+                if($validacion_contactos != ""){
+                    array_push($errors_contactos, $validacion_contactos);
+                }
+            }
+        } else {
+            array_push($errors_contactos, array(array('contactos' => array('not_exist_attribute'))));
+        }
+
+        if(count($errors_contactos)>0){
+        	return Response::json(['error' => array_collapse($errors_contactos)], HttpResponse::HTTP_CONFLICT);
+        } 
+*/
+        /*********** ARBEY *************/
+
+
+
+
+
+        
         $datos = (object) Input::json()->all();	
         $success = false;
 
@@ -129,7 +161,6 @@ class AlmacenController extends Controller
             DB::rollback();
             return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
         }
-        */
     }
 
     /**
@@ -143,7 +174,6 @@ class AlmacenController extends Controller
 	 */
     public function show($id)
     {
-        /*
         $data = Proveedores::with('Contactos','ComunicacionContacto')->find($id);
         if(!$data){
 			return Response::json(array("status" => 404,"messages" => "No hay resultados"), 200);
@@ -151,7 +181,6 @@ class AlmacenController extends Controller
 		else{
 			return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $data), 200);
 		}
-        */
     }
 
     /**
@@ -167,8 +196,7 @@ class AlmacenController extends Controller
 	 */
     public function update(Request $request, $id)
     {
-/*
-        $validacion = $this->ValidarParametros("", NULL, Input::json()->all());
+        $validacion = $this->ValidarParametros("", $id, Input::json()->all());
 		if($validacion != ""){
 			return Response::json(['error' => $validacion], HttpResponse::HTTP_CONFLICT);
 		}
@@ -196,7 +224,7 @@ class AlmacenController extends Controller
 			DB::rollback();
 			return Response::json(array("status" => 304, "messages" => "No modificado"),200);
 		}
-        */
+
     }
     
      /**
@@ -210,7 +238,6 @@ class AlmacenController extends Controller
 	 */
     public function destroy($id)
     {
-        /*
         $success = false;
         DB::beginTransaction();
         try {
@@ -229,9 +256,11 @@ class AlmacenController extends Controller
 			DB::rollback();
 			return Response::json(array("status" => 404, "messages" => "No se encontro el registro"), 200);
 		}
-
-        */
     }
+
+
+
+
 
     /**
 	 * Funcion que recive todos los campos del formulario que se envia desde el cliente
@@ -242,8 +271,6 @@ class AlmacenController extends Controller
 	 * @return Response
 	 * <code> Respuesta Error json con los errores encontrados </code>
 	 */
-
-     /*
     private function campos($datos, $data){
 		$success = false;
         //comprobar que el servidor id no me lo envian por parametro, si no poner el servidor por default de la configuracion local, si no seleccionar el servidor del parametro
@@ -282,6 +309,9 @@ class AlmacenController extends Controller
                         if(is_array($value))
                             $value = (object) $value;
 
+                            /// 
+
+                        //var_dump($data); die();
                         //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
                         DB::update("update contactos set deleted_at = null where proveedor_id = ".$data->id." and nombre = '".$value->nombre."' and puesto = '".$value->puesto."'");
                         
@@ -319,6 +349,10 @@ class AlmacenController extends Controller
                         if(is_array($value))
                             $value = (object) $value;
 
+                        $validacion_comunicacion_contacto = ValidarParametrosComunicacionContactos($key,NULL,$value);    
+
+
+
                         //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
                         DB::update("update comunicacion_contactos set deleted_at = null where proveedor_id = ".$data->id." and contacto_id = ".$value->contacto_id." and medio_contacto_id = ".$value->medio_contacto_id." and valor = '".$value->valor."'");
                         
@@ -330,8 +364,21 @@ class AlmacenController extends Controller
 
                         //llenar el modelo con los datos
 
+                        if(property_exists($datos, "comunicacion_contacto")){
+
+                        }
+
+                        if($value->tipo == 'CON' && ($value->contacto_id!=NULL) ){
+                            $value->contacto_id = $value->contacto_id;
+                            $value->proveedor_id = NULL;
+                        }
+                        if( $value->tipo == 'PRO' && ($data->id!=NULL) ){
+                            $value->contacto_id = NULL;
+                            $value->proveedor_id = $data->id;
+                        }
+
                         $item->tipo                 = $value->tipo; 
-                        $item->proveedor_id         = $data->id; 
+                        $item->proveedor_id         = $value->proveedor_id; 
                         $item->contacto_id          = $value->contacto_id; 
                         $item->medio_contacto_id    = $value->medio_contacto_id; 
                         $item->valor                = $value->valor; 
@@ -343,7 +390,7 @@ class AlmacenController extends Controller
         }
         return $success;
     }
-*/
+
     /**
 	 * Validad los parametros recibidos, Esto no tiene ruta de acceso es un metodo privado del controlador.
 	 *
@@ -352,11 +399,9 @@ class AlmacenController extends Controller
 	 * @return Response
 	 * <code> Respuesta Error json con los errores encontrados </code>
 	 */
-
-
-    /* 
 	private function ValidarParametros($key, $id, $request){ 
-        $mensajes = [
+        $mensajes = 
+        [
             'required'      => "required",
             'email'         => "email",
             'unique'        => "unique"
@@ -364,8 +409,10 @@ class AlmacenController extends Controller
 
         $reglas = [
             'razon_social'  => 'required|min:3|max:255',
-            'rfc'           => 'required'
+            'rfc'           => 'required|unique:proveedores,rfc,'.$id.',id,deleted_at,NULL'
         ];
+
+        
         
 		$v = \Validator::make($request, $reglas, $mensajes );
 
@@ -374,7 +421,8 @@ class AlmacenController extends Controller
 			$mensages_validacion = array();
             foreach ($v->errors()->messages() as $indice => $item) { // todos los mensajes de todos los campos
 			$msg_validacion = array();
-				foreach ($item as $msg) {
+				foreach ($item as $msg) 
+                {
 					array_push($msg_validacion, $msg);
 				}
 				array_push($mensages_validacion, array($indice.''.$key => $msg_validacion));
@@ -384,5 +432,48 @@ class AlmacenController extends Controller
             return ;
         }
 	}
-    */
+
+    /**
+	 * Validad los parametros recibidos, Esto no tiene ruta de acceso es un metodo privado del controlador.
+	 *
+	 * @param  Request  $request que corresponde a los parametros enviados por el cliente
+	 *
+	 * @return Response
+	 * <code> Respuesta Error json con los errores encontrados </code>
+	 */
+	private function ValidarParametrosContactos($key, $id, $request){ 
+        $mensajes = 
+        [
+            'required'      => "required",
+            'email'         => "email",
+            'unique'        => "unique"
+        ];
+
+        $reglas = [
+            'nombre'          => 'required',
+            'puesto'          => 'required'
+        ];
+
+        
+
+		$v = \Validator::make($request, $reglas, $mensajes );
+
+			
+        if ($v->fails()){
+			$mensages_validacion = array();
+            foreach ($v->errors()->messages() as $indice => $item) { // todos los mensajes de todos los campos
+			$msg_validacion = array();
+				foreach ($item as $msg) 
+                {
+					array_push($msg_validacion, $msg);
+				}
+				array_push($mensages_validacion, array($indice.''.$key => $msg_validacion));
+			}
+			return $mensages_validacion;
+        }else{
+            return ;
+        }
+	}
+
+
 }
