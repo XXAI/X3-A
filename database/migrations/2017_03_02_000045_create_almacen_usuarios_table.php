@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateUsuariosAlmacenesTable extends Migration{
+class CreateAlmacenUsuariosTable extends Migration{
     /**
      * Run the migrations.
      * @table pedido_proveedor_insumos
@@ -11,7 +11,7 @@ class CreateUsuariosAlmacenesTable extends Migration{
      * @return void
      */
     public function up(){
-        Schema::create('usuarios_almacenes', function(Blueprint $table) {
+        Schema::create('almacen_usuarios', function(Blueprint $table) {
             $table->engine = 'InnoDB';
         
             $table->string('id', 255);
@@ -37,6 +37,6 @@ class CreateUsuariosAlmacenesTable extends Migration{
      * @return void
      */
      public function down(){
-       Schema::dropIfExists('usuarios_almacenes');
+       Schema::dropIfExists('almacen_usuarios');
      }
 }
