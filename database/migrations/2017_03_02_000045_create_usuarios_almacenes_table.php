@@ -11,7 +11,7 @@ class CreateUsuariosAlmacenesTable extends Migration{
      * @return void
      */
     public function up(){
-        Schema::create('usuarios_almacenes', function(Blueprint $table) {
+        Schema::create('usuario_almacen', function(Blueprint $table) {
             $table->engine = 'InnoDB';
         
             $table->string('id', 255);
@@ -37,6 +37,6 @@ class CreateUsuariosAlmacenesTable extends Migration{
      * @return void
      */
      public function down(){
-       Schema::dropIfExists('usuarios_almacenes');
+       Schema::dropIfExists('usuario_almacen');
      }
 }

@@ -43,8 +43,6 @@ class EntregaController extends Controller
 
        if ($parametros['q']) {
             $pedidos =  Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor")->where('id','LIKE',"%".$parametros['q']."%");
-
-            
         } else {
              $pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
         }

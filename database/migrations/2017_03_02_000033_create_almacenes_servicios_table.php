@@ -16,6 +16,7 @@ class CreateAlmacenesServiciosTable extends Migration{
       
           $table->string('id', 255);
           $table->integer('incremento');
+          $table->string('clues', 45);
           $table->string('servidor_id', 4);
           $table->string('almacen_id', 255);
           $table->string('usuario_id', 255);

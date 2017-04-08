@@ -20,7 +20,7 @@ class CreateMedicamentosTable extends Migration{
 		    $table->boolean('es_controlado')->nullable()->default(null);
 		    $table->boolean('es_surfactante')->nullable()->default(null);
 		    
-			$table->string('concentracion', 100)->nullable();
+			$table->string('concentracion', 150)->nullable();
 			$table->string('contenido', 100)->nullable();
 
 		    $table->decimal('cantidad_x_envase', 15, 2)->nullable()->default(null);
