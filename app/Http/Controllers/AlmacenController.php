@@ -3,15 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Response as HttpResponse;
+
+use JWTAuth;
 use App\Http\Requests;
+
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB, \Request;
 
+use App\Models\Almacen;
+use App\Models\Usuario;
+
 use App\Models\AlmacenUsuarios;
 use App\Models\Almacenes;
- 
-
-
 
 
 /** 
@@ -65,28 +68,65 @@ class AlmacenController extends Controller
 	 */
     public function index()
     {
-        $parametros = Input::only('q','page','per_page');
-        if ($parametros['q']) {
-             $data =  Almacenes::with('AlmacenUsuarios','AlmacenTiposMovimientos')->where(function($query) use ($parametros) {
-                 $query->where('nombre','LIKE',"%".$parametros['q']."%");
-             });
-        } else {
-                $data =  Almacenes::with('AlmacenUsuarios','AlmacenTiposMovimientos');
-        }
-        if(isset($parametros['page'])){
+        $parametros = Input::all();
 
+        //if(count($parametros)){
+        if (isset($parametros['q'])) {
+            $almacenes =  Almacen::where(function($query) use ($parametros) {
+                $query->where('nombre','LIKE',"%".$parametros['q']."%")
+                    ->where('tipo','LIKE',"%".$parametros['q']."%")
+                    ->where('clues','LIKE',"%".$parametros['q']."%");
+            });
+        } else {
+            $almacenes = Almacen::getModel();
+        }
+
+        if(isset($parametros['filtro_usuario'])){
+            $obj =  JWTAuth::parseToken()->getPayload();
+            $usuario = Usuario::find($obj->get('id'));
+
+            $almacenes_id = $usuario->almacenes()->lists('almacenes.id');
+
+            $almacenes = $almacenes->whereNotIn('id',$almacenes_id);
+        }else{
+            $almacenes = $almacenes->with('AlmacenUsuarios','AlmacenTiposMovimientos');
+        }
+
+        //$pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();
+        if(isset($parametros['page'])){
+            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
+            $almacenes = $almacenes->paginate($resultadosPorPagina);
+        } else {
+            $almacenes = $almacenes->get();
+        }
+        //}else{
+           // $almacenes = Almacen::all();
+        //}
+        return Response::json([ 'data' => $almacenes],200);
+
+        /*
+        $parametros = Input::only('q','page','per_page');
+        if($parametros['q']) {
+            $data = Almacenes::with('AlmacenUsuarios','AlmacenTiposMovimientos')->where(function($query) use ($parametros) {
+                $query->where('nombre','LIKE',"%".$parametros['q']."%");
+            });
+        }else{
+            $data = Almacenes::with('AlmacenUsuarios','AlmacenTiposMovimientos');
+        }
+
+        if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
             $data = $data->paginate($resultadosPorPagina);
-        } else {
+        }else{
             $data = $data->get();
         }
+
         if(count($data) <= 0){
             return Response::json(array("status" => 404,"messages" => "No hay resultados"), 200);
-        } 
-        else{
+        }else{
             return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data, "total" => count($data)), 200);
-            
         }
+        */
     }
 
     /**

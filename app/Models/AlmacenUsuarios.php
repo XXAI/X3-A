@@ -10,9 +10,6 @@ class AlmacenUsuarios extends BaseModel{
     protected $generarID = true;
     protected $guardarIDServidor = true;
     protected $guardarIDUsuario = true;
-    
-    public function roles(){
-		return $this->belongsToMany('App\Models\Rol', 'permiso_rol', 'permiso_id', 'rol_id');
-	}
+    protected $table = 'almacen_usuario';
 
 }

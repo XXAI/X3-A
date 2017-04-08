@@ -15,5 +15,12 @@ class Almacen extends BaseModel
     protected $fillable = ["created_at","updated_at"];
     protected $table = 'almacenes';  
     
+    public function usuarios(){
+      return $this->hasMany('App\Models\AlmacenUsuarios','almacen_id');
+    }
+
+    public function tiposMovimientos(){
+      return $this->hasMany('App\Models\AlmacenTiposMovimientos','almacen_id')->with('TipoMovimiento');
+    }
    
 }

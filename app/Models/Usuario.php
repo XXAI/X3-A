@@ -13,8 +13,12 @@ class Usuario extends BaseModel implements Authenticatable{
     protected $fillable = ["id","servidor_id","password","nombre","apellidos","avatar","su"];
     
     public function roles(){
-		  return $this->belongsToMany('App\Models\Rol', 'rol_usuario', 'usuario_id', 'rol_id');
+        return $this->belongsToMany('App\Models\Rol', 'rol_usuario', 'usuario_id', 'rol_id');
 	}
+
+    public function almacenes(){
+        return $this->belongsToMany('App\Models\Almacen','usuario_almacen','usuario_id','almacen_id');
+    }
 
 
     /**

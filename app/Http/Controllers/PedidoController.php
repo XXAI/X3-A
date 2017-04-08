@@ -6,9 +6,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
+use JWTAuth;
+
 use App\Http\Requests;
 use App\Models\Pedido;
 use App\Models\PedidoInsumo;
+use App\Models\Usuario;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, DB;
@@ -45,7 +48,7 @@ class PedidoController extends Controller
 
        if ($parametros['q']) {
             $pedidos =  Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor")->where(function($query) use ($parametros) {
-                 $query->where('id','LIKE',"%".$parametros['q']."%");
+                 $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere('descripcion','LIKE',"%".$parametros['q']."%");
              });
         } else {
              $pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
@@ -72,9 +75,12 @@ class PedidoController extends Controller
         
         if(!$object){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
-        }else
-        {
-            $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "acta", "tipoInsumo", "tipoPedido");
+        }else{
+            if($object->status == 'AB'){
+                $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos");
+            }else{
+                $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante");
+            }
         }
 
         return Response::json([ 'data' => $object],200);
@@ -108,9 +114,18 @@ class PedidoController extends Controller
         if(count($parametros) == 1){
             $parametros = $parametros[0];
         }
+
+        $obj =  JWTAuth::parseToken()->getPayload();
+        $usuario = Usuario::find($obj->get('id'));
+
+        $almacenes_id = $usuario->almacenes()->lists('almacenes.id');
+
+        if(count($almacenes_id) > 1){
+            //error
+        }
         
-        $parametros['datos']['almacen_solicitante'] = '00011';
-        $parametros['datos']['status'] = 1;
+        $parametros['datos']['almacen_solicitante'] = $almacenes_id[0];
+        $parametros['datos']['status'] = 'AB';
         $parametros['datos']['tipo_pedido_id'] = 1;
         
         $v = Validator::make($parametros['datos'], $reglas, $mensajes);
@@ -164,7 +179,7 @@ class PedidoController extends Controller
         ];
 
         $reglas = [
-            'tipo_pedido_id'        => 'required',
+            //'tipo_pedido_id'        => 'required',
             'descripcion'           => 'required',
             //'almacen_solicitante'   => 'required',
             'almacen_proveedor'     => 'required',
@@ -184,10 +199,15 @@ class PedidoController extends Controller
         if(count($parametros) == 1){
             $parametros = $parametros[0];
         }
-        
-        $parametros['datos']['almacen_solicitante'] = '00011';
-        $parametros['datos']['status'] = 1;
-        $parametros['datos']['tipo_pedido_id'] = 1;
+
+        $obj =  JWTAuth::parseToken()->getPayload();
+        $usuario = Usuario::find($obj->get('id'));
+
+        //$parametros['datos']['tipo_pedido_id'] = 1;
+
+        if(!isset($parametros['datos']{'status'})){
+            $parametros['datos']['status'] = 'AB';
+        }
         
         $v = Validator::make($parametros['datos'], $reglas, $mensajes);
 

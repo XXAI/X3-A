@@ -13,7 +13,7 @@ class Medicamento extends BaseModel{
     //protected $guardarIDUsuario = false;
     //public $incrementing = false;
     
-    //protected $table = 'medicamentos';  
+    protected $table = 'medicamentos';  
     protected $primaryKey = 'insumo_medico_clave';
     protected $fillable = ["id","insumo_medico_clave","presentacion_id","es_controlado","es_surfactante","concentracion","contenido","cantidad_x_envase","unidad_medida_id","indicaciones","via_administracion_id","dosis"];
 

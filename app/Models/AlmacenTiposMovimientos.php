@@ -13,11 +13,11 @@ class AlmacenTiposMovimientos extends BaseModel{
 
     protected $table = 'almacen_tipos_movimientos';
 
-    public function Almacenes()
+    public function almacenes()
     {
 		  return $this->belongsTo('App\Models\Almacenes','almacen_id');
     }
-    public function TipoMovimiento()
+    public function tipoMovimiento()
     {
 		  return $this->hasOne('App\Models\TiposMovimientos','id','tipo_movimiento_id');
     }
