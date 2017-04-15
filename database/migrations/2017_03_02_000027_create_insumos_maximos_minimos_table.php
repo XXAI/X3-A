@@ -27,8 +27,7 @@ class CreateInsumosMaximosMinimosTable extends Migration{
 		
 		    $table->index('almacenes_id','fk_articulos_maximos_minimos_almacenes1_idx');
 		
-		    $table->foreign('almacenes_id')
-		        ->references('id')->on('almacenes');
+		    $table->foreign('almacenes_id')->references('id')->on('almacenes');
 		
 		    $table->timestamps();
             $table->softDeletes();

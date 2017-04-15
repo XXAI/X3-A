@@ -89,7 +89,7 @@ class AlmacenController extends Controller
 
             $almacenes = $almacenes->whereNotIn('id',$almacenes_id);
         }else{
-            $almacenes = $almacenes->with('AlmacenUsuarios','AlmacenTiposMovimientos');
+            $almacenes = $almacenes->with('usuarios','tiposMovimientos');
         }
 
         //$pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();

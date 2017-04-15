@@ -15,10 +15,8 @@ class CreateTiposInsumosTable extends Migration{
           $table->engine = 'InnoDB';
       
           $table->increments('id');
-          $table->string('servidor_id', 4);
           $table->string('nombre', 255);
-          $table->string('usuario_id', 255);
-      
+          
           $table->timestamps();
           $table->softDeletes();
       });

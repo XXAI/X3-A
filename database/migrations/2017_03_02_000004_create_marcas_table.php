@@ -3,19 +3,18 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateOrganismosTable extends Migration{
+class CreateMarcasTable extends Migration{
     /**
      * Run the migrations.
-     * @table organismos
+     * @table marcas
      *
      * @return void
      */
     public function up(){
-       Schema::create('organismos', function(Blueprint $table) {
+       Schema::create('marcas', function(Blueprint $table) {
           $table->engine = 'InnoDB';
       
           $table->increments('id');
-          $table->string('clave', 255);
           $table->string('nombre', 255);
       
           $table->timestamps();
@@ -29,6 +28,6 @@ class CreateOrganismosTable extends Migration{
      * @return void
      */
      public function down(){
-       Schema::dropIfExists('organismos');
+       Schema::dropIfExists('marcas');
      }
 }

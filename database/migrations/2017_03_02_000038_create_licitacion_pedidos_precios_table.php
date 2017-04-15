@@ -15,8 +15,6 @@ class CreateLicitacionPedidosPreciosTable extends Migration{
             $table->engine = 'InnoDB';
         
             $table->increments('id');
-            $table->integer('incremento');
-            $table->string('servidor_id', 4);
             $table->integer('licitacion_pedido_id')->unsigned();
             $table->string('lote', 45);
             $table->string('insumo_medico_clave', 45);

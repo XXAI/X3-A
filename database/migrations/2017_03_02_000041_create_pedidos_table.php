@@ -19,7 +19,7 @@ class CreatePedidosTable extends Migration{
 		    $table->string('servidor_id', 4);
 			$table->string('clues', 45);
 		    $table->integer('tipo_insumo_id')->unsigned()->nullable();
-		    $table->integer('tipo_pedido_id')->unsigned();
+		    $table->string('tipo_pedido_id',4);
 			$table->string('descripcion', 255);
 		    $table->string('pedido_padre', 255)->nullable();
 		    $table->string('folio', 45)->nullable();
@@ -34,16 +34,7 @@ class CreatePedidosTable extends Migration{
 		    $table->string('usuario_id', 255);
 		    
 		    $table->primary('id');
-		/*
-		    $table->index('almacen_solicitante','fk_pedidos_almacenes1_idx');
-		    $table->index('almacen_proveedor','fk_pedidos_almacenes2_idx');
-		    $table->index('organismo_dirigido','fk_pedidos_organismos1_idx');
-		    $table->index('acta_id','fk_pedidos_actas1_idx');
-		    $table->index('pedido_padre','fk_pedidos_pedidos1_idx');
-		    $table->index('tipo_insumo_id','fk_pedidos_tipos_insumos1_idx');
-		    $table->index('tipo_pedido_id','fk_pedidos_tipos_pedidos1_idx');
-		    $table->index('proveedor_id','fk_pedidos_proveedores1_idx');
-		*/
+			
 		    $table->foreign('almacen_solicitante')->references('id')->on('almacenes');
 		
 		    $table->foreign('almacen_proveedor')->references('id')->on('almacenes');

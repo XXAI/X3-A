@@ -22,7 +22,6 @@ class CreateAlmacenesTable extends Migration{
           $table->boolean('subrogado');
           $table->integer('proveedor_id')->unsigned()->nullable();
           $table->boolean('unidosis');
-          $table->string('clave', 45);
           $table->string('nombre', 255);
           $table->string('usuario_id', 255);
           

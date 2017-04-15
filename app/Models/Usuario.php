@@ -17,7 +17,7 @@ class Usuario extends BaseModel implements Authenticatable{
 	}
 
     public function almacenes(){
-        return $this->belongsToMany('App\Models\Almacen','usuario_almacen','usuario_id','almacen_id');
+        return $this->belongsToMany('App\Models\Almacen','almacen_usuario','usuario_id','almacen_id');
     }
 
 

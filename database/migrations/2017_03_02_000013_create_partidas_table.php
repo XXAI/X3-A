@@ -15,11 +15,9 @@ class CreatePartidasTable extends Migration{
             $table->engine = 'InnoDB';
         
             $table->increments('id');
-            $table->string('servidor_id', 4);
             $table->string('clave', 45);
             $table->string('nombre', 45);
-            $table->string('usuario_id', 255);
-        
+            
             $table->timestamps();
             $table->softDeletes();
         });

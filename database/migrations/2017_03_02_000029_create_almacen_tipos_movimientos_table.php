@@ -17,8 +17,8 @@ class CreateAlmacenTiposMovimientosTable extends Migration{
 		    $table->string('id', 255);
 		    $table->integer('incremento');
 		    $table->string('servidor_id', 4);
-		    $table->integer('tipo_movimiento_id');
-		    $table->string('almacen_id', 255);
+            $table->string('almacen_id', 255);
+		    $table->string('tipo_movimiento_id',4);
 		    $table->string('usuario_id', 255);
 		    
 		    $table->primary('id');

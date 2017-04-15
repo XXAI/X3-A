@@ -17,7 +17,6 @@ class CreateEmpresasEspejosTable extends Migration{
             $table->engine = 'InnoDB';
         
             $table->increments('id');
-            $table->string('servidor_id', 4);
             $table->string('ejercicio', 45);
             $table->integer('proveedor_id')->unsigned();
             $table->boolean('vigente');

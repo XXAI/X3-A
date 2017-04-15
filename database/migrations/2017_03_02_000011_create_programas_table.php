@@ -22,7 +22,6 @@ class CreateProgramasTable extends Migration{
         
             //$table->unique('clave','clave_UNIQUE');
             
-
             $table->timestamps();
             $table->softDeletes();
         });

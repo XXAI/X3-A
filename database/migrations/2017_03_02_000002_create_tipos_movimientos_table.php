@@ -14,13 +14,11 @@ class CreateTiposMovimientosTable extends Migration{
         Schema::create('tipos_movimientos', function(Blueprint $table) {
             $table->engine = 'InnoDB';
         
-            $table->integer('id',10);
-            //$table->string('servicio_id', 4)->nullable();
-            $table->string('tipo', 45)->comment('* ENTRADA\n* SALIDA\n* AJUSTE\n\n(AJUSTE-> es la merma) ');
+            $table->string('id',4);
+            $table->string('tipo', 45)->comment('* E\n* S\n* E/S\n');
             $table->string('nombre', 255);
-            $table->string('usuario_id', 255);
-        
-            //$table->primary('id');
+            
+            $table->primary('id');
 
             $table->timestamps();
             $table->softDeletes();

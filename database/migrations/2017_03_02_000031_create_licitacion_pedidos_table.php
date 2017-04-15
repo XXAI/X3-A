@@ -15,9 +15,7 @@ class CreateLicitacionPedidosTable extends Migration{
 		    $table->engine = 'InnoDB';
 		
 		    $table->increments('id');
-		    $table->integer('incremento');
-		    $table->string('servidor_id', 4);
-		    $table->integer('contratos_id')->unsigned();
+		    $table->integer('contrato_id')->unsigned();
 		    $table->string('clave_partida', 45);
 		    $table->string('clave_pedido', 45);
 		    $table->string('numero_requisision', 45);
@@ -27,8 +25,7 @@ class CreateLicitacionPedidosTable extends Migration{
  		
 		    //$table->index('contratos_id','fk_licitacion_pedidos_contratos1_idx');
 		
-		    $table->foreign('contratos_id')
-		        ->references('id')->on('contratos');
+		    $table->foreign('contrato_id')->references('id')->on('contratos');
 		
 		    $table->timestamps();
             $table->softDeletes();

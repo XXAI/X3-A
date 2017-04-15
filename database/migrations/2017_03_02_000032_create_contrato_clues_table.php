@@ -15,7 +15,6 @@ class CreateContratoCluesTable extends Migration{
             $table->engine = 'InnoDB';
         
             $table->increments('id');
-            $table->string('servidor_id', 4);
             $table->integer('contrato_id')->unsigned();
             $table->string('clues', 255);
             $table->decimal('techo_presupuestal', 15, 2);

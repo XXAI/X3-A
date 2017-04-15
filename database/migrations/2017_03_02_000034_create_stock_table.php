@@ -17,8 +17,9 @@ class CreateStockTable extends Migration{
             $table->string('id', 255);
             $table->integer('incremento');
             $table->string('servidor_id', 255);
-            $table->string('almacenen_id', 255);
+            $table->string('almacen_id', 255);
             $table->string('clave_insumo_medico', 55)->nullable();
+            $table->integer('marca_id')->unsigned()->default(1);
             $table->string('lote', 45)->nullable();
             $table->date('fecha_caducidad')->nullable();
             $table->string('codigo_barras', 45)->nullable();
@@ -30,7 +31,8 @@ class CreateStockTable extends Migration{
         
             //$table->index('almacenen_id','fk_stock_almacenes1_idx');
         
-            $table->foreign('almacenen_id')->references('id')->on('almacenes');
+            $table->foreign('almacen_id')->references('id')->on('almacenes');
+            $table->foreign('marca_id')->references('id')->on('marcas');
         
             $table->timestamps();
             $table->softDeletes();

@@ -18,7 +18,7 @@ class CreateComunicacionContactosTable extends Migration{
             $table->string('tipo', 45);
 		    $table->integer('contacto_id')->unsigned()->nullable();
             $table->integer('proveedor_id')->unsigned()->nullable();
-		    $table->integer('medio_contacto_id');
+		    $table->integer('medio_contacto_id')->unsigned();
 		    $table->string('valor', 255);
 		    $table->string('usuario_id', 255);
 		/*

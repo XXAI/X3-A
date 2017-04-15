@@ -14,12 +14,9 @@ class CreateMediosContactoTable extends Migration{
         Schema::create('medios_contacto', function(Blueprint $table) {
             $table->engine = 'InnoDB';
         
-            $table->integer('id');
+            $table->increments('id');
             $table->string('nombre', 45);
             $table->text('icon');
-            $table->string('usuario_id', 255);
-            
-            $table->primary('id');
             
             $table->timestamps();
             $table->softDeletes();

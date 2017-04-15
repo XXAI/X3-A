@@ -14,15 +14,15 @@ class CreateExtensionesContratosTable extends Migration{
         Schema::create('extensiones_contratos', function(Blueprint $table) {
             $table->engine = 'InnoDB';
 
-		    $table->increments('id');
-		    $table->string('servidor_id', 4);
-		    $table->date('fecha_fin');
-		    $table->string('usuario_id', 255);
+            $table->increments('id');
+            $table->integer('contrato_id')->unsigned();
+            $table->date('fecha_fin');
 
-		
-		    $table->timestamps();
+            $table->foreign('contrato_id')->references('id')->on('contratos');
+            
+            $table->timestamps();
             $table->softDeletes();
-		});
+	    });
     }
 
     /**
