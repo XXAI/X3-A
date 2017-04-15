@@ -4,14 +4,14 @@ namespace App\Models;
 use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Stock extends BaseModel{
+class Marca extends BaseModel{
     
     use SoftDeletes;
-    protected $generarID = true;
-    protected $guardarIDServidor = true;
-    protected $guardarIDUsuario = true;
+    protected $generarID = false;
+    protected $guardarIDServidor = false;
+    protected $guardarIDUsuario = false;
 
-    protected $table = 'stock';
+    protected $table = 'marcas';
 
     public function insumo(){
         return $this->belongsTo('App\Models\Insumo','clave_insumo_medico','clave');        
