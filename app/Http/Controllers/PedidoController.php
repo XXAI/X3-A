@@ -126,7 +126,7 @@ class PedidoController extends Controller
         
         $parametros['datos']['almacen_solicitante'] = $almacenes_id[0];
         $parametros['datos']['status'] = 'AB';
-        $parametros['datos']['tipo_pedido_id'] = 1;
+        $parametros['datos']['tipo_pedido_id'] = 'PA';
         
         $v = Validator::make($parametros['datos'], $reglas, $mensajes);
 

@@ -15,28 +15,28 @@ class TiposMovimientosSeeder extends Seeder
         DB::table('tipos_movimientos')->insert([
             [
                 'id' => 1,
-                'tipo' => "ENTRADA",
+                'tipo' => "E",
                 'nombre' => "Entrada Manual",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'id' => 2,
-                'tipo' => "SALIDA",
+                'tipo' => "S",
                 'nombre' => "Salida Manual",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'id' => 3,
-                'tipo' => "SALIDA",
+                'tipo' => "S",
                 'nombre' => "Entrega de Pedido",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'id' => 4,
-                'tipo' => "ENTRADA",
+                'tipo' => "E",
                 'nombre' => "Recepción de Pedido",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
