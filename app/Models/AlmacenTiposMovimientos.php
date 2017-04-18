@@ -21,8 +21,4 @@ class AlmacenTiposMovimientos extends BaseModel{
     {
 		  return $this->hasOne('App\Models\TiposMovimientos','id','tipo_movimiento_id');
     }
-
-
-
-    
 }

@@ -79,7 +79,7 @@ class PedidoController extends Controller
             if($object->status == 'AB'){
                 $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos");
             }else{
-                $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante");
+                $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica");
             }
         }
 
@@ -111,9 +111,9 @@ class PedidoController extends Controller
         $parametros = Input::all();
 
         //return Response::json([ 'data' => $parametros ],500);
-        if(count($parametros) == 1){
+        /*if(count($parametros) == 1){
             $parametros = $parametros[0];
-        }
+        }*/
 
         $obj =  JWTAuth::parseToken()->getPayload();
         $usuario = Usuario::find($obj->get('id'));
@@ -196,9 +196,9 @@ class PedidoController extends Controller
 
         $parametros = Input::all();
 
-        if(count($parametros) == 1){
+        /*if(count($parametros) == 1){
             $parametros = $parametros[0];
-        }
+        }*/
 
         $obj =  JWTAuth::parseToken()->getPayload();
         $usuario = Usuario::find($obj->get('id'));

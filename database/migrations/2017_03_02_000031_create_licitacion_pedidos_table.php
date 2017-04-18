@@ -28,8 +28,8 @@ class CreateLicitacionPedidosTable extends Migration{
 		    $table->foreign('contrato_id')->references('id')->on('contratos');
 		
 		    $table->timestamps();
-            $table->softDeletes();
-		});
+        $table->softDeletes();
+		  });
     }
 
     /**
