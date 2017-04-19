@@ -1,32 +1,56 @@
 id,nombre,created_at,updated_at,deleted_at
-1,"Broncoespasmo. Intravenosa",NULL,NULL,NULL
+1,"Bucal por inhalación",NULL,NULL,NULL
 2,Cutánea,NULL,NULL,NULL
 3,"Cutánea o piel cabelluda",NULL,NULL,NULL
-4,"Dermatitis Cutánea",NULL,NULL,NULL
+4,"Implante en el sitio de infección",NULL,NULL,NULL
 5,Infiltración,NULL,NULL,NULL
 6,"Infiltración local o subaracnoidea",NULL,NULL,NULL
 7,"Infusión intravenosa",NULL,NULL,NULL
-8,"Infusión intravenosa contínua",NULL,NULL,NULL
-9,"Infusión intravenosa lenta (20-120 minutos) Inyección intravenosa (1-3 minutos)",NULL,NULL,NULL
-10,Inhalación,NULL,NULL,NULL
-11,Intramuscular,NULL,NULL,NULL
-12,"Intramuscular o intravenosa",NULL,NULL,NULL
-13,"Intramuscular o Intravenosa lenta",NULL,NULL,NULL
-14,"Intramuscular o subcutánea",NULL,NULL,NULL
-15,"Intramuscular profunda o intravenosa",NULL,NULL,NULL
-16,"Intramuscular, intravenosa o subcutánea",NULL,NULL,NULL
-17,"Intrarraquidea o infiltración",NULL,NULL,NULL
-18,intravenosa,NULL,NULL,NULL
-19,"Intravenosa (infusión central o periférica)",NULL,NULL,NULL
-20,"Intravenosa en infusión contínua",NULL,NULL,NULL
-21,"Intravenosa lenta",NULL,NULL,NULL
-22,"Intravenosa, intramuscular o epidural",NULL,NULL,NULL
-23,"Intravenosa: bolo seguido de infusión",NULL,NULL,NULL
-24,"Intravenosa: bolo único en 5-10 seg",NULL,NULL,NULL
-25,Local,NULL,NULL,NULL
-26,Oral,NULL,NULL,NULL
-27,"Oral o subingual",NULL,NULL,NULL
-28,"Por inhalación",NULL,NULL,NULL
-29,Rectal,NULL,NULL,NULL
-30,Sublingual,NULL,NULL,NULL
-31,Transdérmica,NULL,NULL,NULL
+8,"Infusión intravenosa (30 – 60 minutos)",NULL,NULL,NULL
+9,"Infusión intravenosa (60 - 90 minutos)",NULL,NULL,NULL
+10,"Infusión intravenosa (60 min)",NULL,NULL,NULL
+11,"Infusión intravenosa lenta (20-120 minutos) Inyección intravenosa (1-3 minutos).",NULL,NULL,NULL
+12,"Infusión intravenosa u oral",NULL,NULL,NULL
+13,Inhalación,NULL,NULL,NULL
+14,Intramuscular,NULL,NULL,NULL
+15,"Intramuscular en la región deltoidea del brazo derecho",NULL,NULL,NULL
+16,"Intramuscular o intraarticular o intralesional",NULL,NULL,NULL
+17,"Intramuscular o Intravenosa lenta",NULL,NULL,NULL
+18,"Intramuscular o intravenosa lenta (5 a 10 minutos)",NULL,NULL,NULL
+19,"Intramuscular o intravenosa o infusión intravenosa",NULL,NULL,NULL
+20,"Intramuscular o intravenosa o intraarticular",NULL,NULL,NULL
+21,"Intramuscular o intravenosa o subcutánea",NULL,NULL,NULL
+22,"Intramuscular o subcutánea o infusión intravenosa",NULL,NULL,NULL
+23,"Intramuscular profunda",NULL,NULL,NULL
+24,"Intramuscular profunda o intravenosa",NULL,NULL,NULL
+25,Intranasal,NULL,NULL,NULL
+26,"Intrarraquidea o infiltración",NULL,NULL,NULL
+27,Intravenosa,NULL,NULL,NULL
+28,"Intravenosa (infusión central o periférica)",NULL,NULL,NULL
+29,"Intravenosa en infusión contínua",NULL,NULL,NULL
+30,"Intravenosa lenta",NULL,NULL,NULL
+31,"Intravenosa o infusión continua",NULL,NULL,NULL
+32,"Intravenosa o intramuscular",NULL,NULL,NULL
+33,"Intravenosa o intramuscular o epidural",NULL,NULL,NULL
+34,"Intravenosa o subcutánea",NULL,NULL,NULL
+35,"Intravenosa: bolo seguido de infusión",NULL,NULL,NULL
+36,"Intravenosa: bolo único en 5-10 seg",NULL,NULL,NULL
+37,Local,NULL,NULL,NULL
+38,Oftálmica,NULL,NULL,NULL
+39,Oral,NULL,NULL,NULL
+40,"Oral o intramuscular o infusión intravenosa",NULL,NULL,NULL
+41,"Oral o sonda enteral",NULL,NULL,NULL
+42,"Oral o subingual",NULL,NULL,NULL
+43,"Oral por inhalación",NULL,NULL,NULL
+44,"Por inhalación",NULL,NULL,NULL
+45,Rectal,NULL,NULL,NULL
+46,Subcutánea,NULL,NULL,NULL
+47,"Subcutánea (utilizando autoinyector de aguja oculta).",NULL,NULL,NULL
+48,"Subcutánea en el área abdominal",NULL,NULL,NULL
+49,"Subcutánea o intramuscular",NULL,NULL,NULL
+50,"Subcutánea profunda",NULL,NULL,NULL
+51,"Subcutánea profunda o intravascular (línea arterial del circuito)",NULL,NULL,NULL
+52,Sublingual,NULL,NULL,NULL
+53,Tópica,NULL,NULL,NULL
+54,Transdérmica,NULL,NULL,NULL
+55,Vaginal,NULL,NULL,NULL

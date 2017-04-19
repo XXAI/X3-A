@@ -24,9 +24,9 @@ class CreateMedicamentosTable extends Migration{
 			$table->string('contenido', 100)->nullable();
 
 		    $table->decimal('cantidad_x_envase', 15, 2)->nullable()->default(null);
-		    $table->integer('unidad_medida_id')->unsigned()->comment('Del contenido del envase');
+		    $table->integer('unidad_medida_id')->unsigned()->comment('Del contenido del envase')->nullable();
 		    $table->text('indicaciones')->nullable();
-		    $table->integer('via_administracion_id')->unsigned();
+		    $table->integer('via_administracion_id')->unsigned()->nullable();
 		    $table->text('dosis')->nullable();
 		
 		    $table->unique('insumo_medico_clave','insumo_medico_clave_UNIQUE');
