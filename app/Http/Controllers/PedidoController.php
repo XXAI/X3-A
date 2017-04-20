@@ -25,14 +25,17 @@ class PedidoController extends Controller
         $pedidos = Pedido::select(DB::raw(
             '
             count(
-                case when status = "AB" then 1 else null end
-            ) as abiertos,
+                1
+            ) as todos,
             count(
-                case when status = "ES" then 1 else null end
-            ) as en_espera,
+                case when status = "BR" then 1 else null end
+            ) as borradores,
             count(
-                case when status = "PE" then 1 else null end
-            ) as pendientes,
+                case when status = "ET" then 1 else null end
+            ) as en_transito,
+            count(
+                case when status = "PS" then 1 else null end
+            ) as por_surtir,
             count(
                 case when status = "FI" then 1 else null end
             ) as finalizados
@@ -76,7 +79,7 @@ class PedidoController extends Controller
         if(!$object){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }else{
-            if($object->status == 'AB'){
+            if($object->status == 'BR'){
                 $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos");
             }else{
                 $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica");
@@ -125,7 +128,7 @@ class PedidoController extends Controller
         }
         
         $parametros['datos']['almacen_solicitante'] = $almacenes_id[0];
-        $parametros['datos']['status'] = 'AB';
+        $parametros['datos']['status'] = 'BR'; //estatus de borrador
         $parametros['datos']['tipo_pedido_id'] = 'PA';
         
         $v = Validator::make($parametros['datos'], $reglas, $mensajes);
@@ -205,8 +208,12 @@ class PedidoController extends Controller
 
         //$parametros['datos']['tipo_pedido_id'] = 1;
 
-        if(!isset($parametros['datos']{'status'})){
-            $parametros['datos']['status'] = 'AB';
+        if(!isset($parametros['datos']['status'])){
+            $parametros['datos']['status'] = 'BR'; //estatus Borrador
+        }elseif($parametros['datos']['status'] == 'CONCLUIR'){
+            $parametros['datos']['status'] = 'PS';
+        }else{
+            $parametros['datos']['status'] = 'BR';
         }
         
         $v = Validator::make($parametros['datos'], $reglas, $mensajes);
