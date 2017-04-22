@@ -12,17 +12,17 @@ class MovimientoInsumos extends BaseModel{
     protected $guardarIDUsuario = true;
 
     protected $table = 'movimiento_insumos';
+
+    protected $fillable = ["movimiento_id","stock_id", "cantidad", "precio_unitario", "iva", "precio_total"];
+
     
     public function roles(){
 		return $this->belongsToMany('App\Models\Rol', 'permiso_rol', 'permiso_id', 'rol_id');
 	}
 
- 
-/*
      public function Stock(){
-        return $this->belongsToMany('App\Models\Stock','stock_id');
+        return $this->belongsTo('App\Models\Stock','stock_id');
     }
-    */
  
 
 }
