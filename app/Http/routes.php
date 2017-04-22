@@ -20,6 +20,8 @@ Route::post('refresh-token',    'AutenticacionController@refreshToken');
 Route::get('check-token',       'AutenticacionController@verificar');
 
 
+Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    
 Route::group(['middleware' => 'jwt'], function () {
     Route::resource('usuarios', 'UsuarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('roles', 'RolController',           ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -32,6 +34,8 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('entregas-stats',    'EntregaController@stats');     
 
     Route::resource('stock',    'StockController',    ['only' => ['index']]);
+
+
 
     //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
     Route::resource('catalogo-insumos',  'CatalogoInsumoController',     ['only' => ['index', 'show']]);
