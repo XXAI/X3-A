@@ -9,6 +9,12 @@ use Illuminate\Http\Response as HttpResponse;
 use App\Http\Requests;
 use App\Models\Pedido;
 use App\Models\PedidoInsumo;
+use App\Models\Movimiento, App\Models\MovimientoInsumos,
+    App\Models\Stock, 
+    App\Models\Insumo, 
+    App\Models\Medicamento, 
+    App\Models\MaterialCuracion,
+    App\Models\MovimientoPedido;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, DB;
@@ -22,11 +28,8 @@ class EntregaController extends Controller
         $pedidos = Pedido::select(DB::raw(
             '
             count(
-                case when status = "ES" then 1 else null end
-            ) as en_espera,
-            count(
-                case when status = "PE" then 1 else null end
-            ) as pendientes,
+                case when status = "PS" then 1 else null end
+            ) as por_surtir,
             count(
                 case when status = "FI" then 1 else null end
             ) as finalizados
@@ -39,42 +42,65 @@ class EntregaController extends Controller
     {
         $parametros = Input::only('status','q','page','per_page');
 
+
+        
+        
         
 
-       if ($parametros['q']) {
-            $pedidos =  Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor")->where('id','LIKE',"%".$parametros['q']."%");
-        } else {
-             $pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
-        }
+       
+
 
         if(isset($parametros['status'])) {
-            $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
-        }
+            if ($parametros['q']) {
+                $pedidos =  Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor")->where('id','LIKE',"%".$parametros['q']."%");
+            } else {
+                $pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
+            }
+        
+            $pedidos = $pedidos->where("pedidos.status",$parametros['status'])->orderBy('created_at','desc');
 
-        $pedidos = $pedidos->orderBy('created_at','desc');
+            
+            if(isset($parametros['page'])){
+                $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
+                $pedidos = $pedidos->paginate($resultadosPorPagina);
+            } else {
+                $pedidos = $pedidos->get();
+            }
 
-
-        //$pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();
-        if(isset($parametros['page'])){
-            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
-            $pedidos = $pedidos->paginate($resultadosPorPagina);
+            return Response::json([ 'data' => $pedidos],200);
         } else {
-            $pedidos = $pedidos->get();
-        }
+            $movimientos = Movimiento::where('tipo_movimiento_id', 3)->with('movimientoPedido.pedido.almacenSolicitante');
+            $movimientos = $movimientos->orderBy('created_at','desc');
+            if(isset($parametros['page'])){
+                $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
+                $movimientos = $movimientos->paginate($resultadosPorPagina);
+            } else {
+                $movimientos = $movimientos->get();
+            }
 
-        return Response::json([ 'data' => $pedidos],200);
+            return Response::json([ 'data' => $movimientos],200);
+        }
     }
 
     public function show($id)
     {
-    	$object = Pedido::find($id);
+    	$object = Movimiento::find($id);
+        
+
         
         if(!$object){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
-        }else
-        {
-            $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "acta", "tipoInsumo", "tipoPedido");
         }
+        $movimientosInsumos = $object->movimientoInsumos;
+
+       
+       
+        
+        $movimientoPedido = $object->movimientoPedido;
+        
+        $pedido = $movimientoPedido->pedido;
+        $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos");
+
 
         return Response::json([ 'data' => $object],200);
     }
@@ -86,66 +112,79 @@ class EntregaController extends Controller
         ];
 
         $reglas = [
-            'tipo_pedido_id'        => 'required',
-            'descripcion'           => 'required',
-            //'almacen_solicitante'   => 'required',
-            'almacen_proveedor'     => 'required',
-            //'observaciones'         => 'required',
-            'status'                => 'required',
-            //'tipo_insumo_id'        => 'required',
-            //'pedido_padre'          => 'required',
-            //'folio'                 => 'required',
-            //'organismo_dirigido'    => 'required',
-            //'acta_id'               => 'required',
-            //'usuario_validacion'    => 'required',
-            //'proveedor_id'          => 'required'
+            'pedido_id'        => 'required',
+            'recibe'           => 'required',
+            'entrega'           => 'required',
+            'lista'             => 'array|required'
         ];
 
-        $parametros = Input::all();
-
-        //return Response::json([ 'data' => $parametros ],500);
-        if(count($parametros) == 1){
-            $parametros = $parametros[0];
-        }
+        $input = Input::all();
+       
         
-        $parametros['datos']['almacen_solicitante'] = '00011';
-        $parametros['datos']['status'] = 1;
-        $parametros['datos']['tipo_pedido_id'] = 1;
         
-        $v = Validator::make($parametros['datos'], $reglas, $mensajes);
+        
+        
+        $v = Validator::make($input, $reglas, $mensajes);
 
         if ($v->fails()) {
             return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
         }
 
+        DB::beginTransaction();
         try {
-            DB::beginTransaction();
+           
+            $pedido = Pedido::find($input['pedido_id']);
+
+            if(!$pedido){
+                throw new Exception("El pedido no existe");
+            }
+
+            // deberíamos mandar el id del almacen desde el cliente 
+            //y corroborar que o tenga el usuario asignado y con el pedido correspondiente;
+            $input['almacen_id'] = $pedido->almacen_proveedor;
             
-            $object = Pedido::create($parametros['datos']);
+            // Movimiento de tipo salida por entrega
+            $input['tipo_movimiento_id'] = 3;
 
-            foreach ($parametros['insumos'] as $key => $value) {
-                $reglas_insumos = [
-                    'clave'           => 'required',
-                    'cantidad'        => 'required'
-                ];  
+            
+            
+            $object = Movimiento::create($input);
+            $object->movimientoPedido()->create([                
+                'pedido_id' => $input['pedido_id'],
+                'recibe' => $input['recibe'],
+                'entrega' => $input['entrega']
+            ]);
+            $listaInsumos = [];
+            
+            //Que onda con el ¿precio? ¿Como se calcula?
+            foreach($input['lista'] as $item){
+                $listaInsumos[] = new MovimientoInsumos([
+                    'stock_id' => $item['id'],
+                    'cantidad' => -$item['cantidad']
+                ]);
 
-                $v = Validator::make($value, $reglas_insumos, $mensajes);
+                $stock  = Stock::find($item['id']);
+                $stock->existencia = $stock->existencia - $item['cantidad'];
 
-                if ($v->fails()) {
-                    DB::rollBack();
-                    return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
-                }      
+                $insumo = Insumo::find($stock->clave_insumo_medico);
+                if($insumo->es_unidosis){
+                    if($insumo->tipo == "ME"){
+                        $insumo = Medicamento::where("insumo_medico_clave",$stock->clave_insumo_medico)->first();
+                        $stock->existencia_unidosis = $stock->existencia_unidosis - ($insumo->cantidad_x_envase * $item['cantidad']);
+                    }
+                    if($insumo->tipo == "MC"){
+                        $insumo = MaterialCuracion::where("insumo_medico_clave",$stock->clave_insumo_medico)->first();
+                        $stock->existencia_unidosis = $stock->existencia_unidosis - ($insumo->cantidad_x_envase * $item['cantidad']);
+                    }
+                }
+                $stock->save();
+
                 
-                $insumo = [
-                    'insumo_medico_clave' => $value['clave'],
-                    'cantidad_solicitada_um' => $value['cantidad'],
-                    'pedido_id' => $object->id
-                ];
-                //$value['pedido_id'] = $object->id;
 
-                $object_insumo = PedidoInsumo::create($insumo);    
+            }
 
-            }    
+            $object->movimientoInsumos()->saveMany($listaInsumos);
+            $object->movimientoInsumos;
 
             DB::commit();
             return Response::json([ 'data' => $object ],200);
@@ -156,92 +195,12 @@ class EntregaController extends Controller
         } 
     }
 
-    public function update(Request $request, $id)
-    {
-        $mensajes = [
-            'required'      => "required",
-        ];
 
-        $reglas = [
-            'tipo_pedido_id'        => 'required',
-            'descripcion'           => 'required',
-            //'almacen_solicitante'   => 'required',
-            'almacen_proveedor'     => 'required',
-            //'observaciones'         => 'required',
-            'status'                => 'required',
-            //'tipo_insumo_id'        => 'required',
-            //'pedido_padre'          => 'required',
-            //'folio'                 => 'required',
-            //'organismo_dirigido'    => 'required',
-            //'acta_id'               => 'required',
-            //'usuario_validacion'    => 'required',
-            //'proveedor_id'          => 'required'
-        ];
-
-        $parametros = Input::all();
-
-        if(count($parametros) == 1){
-            $parametros = $parametros[0];
-        }
-        
-        $parametros['datos']['almacen_solicitante'] = '00011';
-        $parametros['datos']['status'] = 1;
-        $parametros['datos']['tipo_pedido_id'] = 1;
-        
-        $v = Validator::make($parametros['datos'], $reglas, $mensajes);
-
-        if ($v->fails()) {
-            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
-        }
-
-        try {
-            $object = Pedido::find($id);
-
-             DB::beginTransaction();
-
-            $object->update($parametros['datos']);
-
-            $arreglo_insumos = Array();
-            
-            PedidoInsumo::where("pedido_id", $id)->delete();
-
-            foreach ($parametros['insumos'] as $key => $value) {
-
-                $reglas_insumos = [
-                    'clave'           => 'required',
-                    'cantidad'        => 'required'
-                ];  
-
-                $v = Validator::make($value, $reglas_insumos, $mensajes);
-
-                if ($v->fails()) {
-                    DB::rollBack();
-                    return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
-                }      
-                
-                $insumo = [
-                    'insumo_medico_clave' => $value['clave'],
-                    'cantidad_solicitada_um' => $value['cantidad'],
-                    'pedido_id' => $object->id
-                ];
-                //$value['pedido_id'] = $object->id;
-
-                $object_insumo = PedidoInsumo::create($insumo);  
-            }   
-
-             
-             DB::commit(); 
-
-            return Response::json([ 'data' => $object ],200);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
-        } 
-    }
 
     function destroy($id)
     {
+        // Cancelar en todo caso
+        return false;
         try {
             $object = Pedido::destroy($id);
             return Response::json(['data'=>$object],200);

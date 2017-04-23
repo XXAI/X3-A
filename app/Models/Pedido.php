@@ -18,6 +18,7 @@ class Pedido extends BaseModel
     public function insumos(){
         return $this->hasMany('App\Models\PedidoInsumo','pedido_id','id');        
     }
+   
 
     public function acta(){
         return $this->belongsTo('App\Models\Acta','acta_id','id');        
