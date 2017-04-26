@@ -19,6 +19,7 @@ class CatalogoInsumosSeeder extends Seeder
             'generico-grupo-insumo'         =>'generico_grupo_insumo',
             'insumos-medicos'               =>'insumos_medicos',
             'medicamentos'                  =>'medicamentos',
+            'unidades-medicas'              =>'unidades_medicas',
         ];
 
         foreach($lista_csv as $csv => $tabla){

@@ -3,15 +3,15 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateLicitacionPedidosTable extends Migration{
+class CreateContratosPedidosTable extends Migration{
     /**
      * Run the migrations.
-     * @table licitacion_pedidos
+     * @table contratos_pedidos
      *
      * @return void
      */
     public function up(){
-       Schema::create('licitacion_pedidos', function(Blueprint $table) {
+       Schema::create('contratos_pedidos', function(Blueprint $table) {
 		    $table->engine = 'InnoDB';
 		
 		    $table->increments('id');
@@ -23,7 +23,7 @@ class CreateLicitacionPedidosTable extends Migration{
 		    $table->string('usuario_id', 255);
 		    
  		
-		    //$table->index('contratos_id','fk_licitacion_pedidos_contratos1_idx');
+		    //$table->index('contratos_id','fk_contratos_pedidos_contratos1_idx');
 		
 		    $table->foreign('contrato_id')->references('id')->on('contratos');
 		
@@ -38,6 +38,6 @@ class CreateLicitacionPedidosTable extends Migration{
      * @return void
      */
      public function down(){
-       Schema::dropIfExists('licitacion_pedidos');
+       Schema::dropIfExists('contratos_pedidos');
      }
 }

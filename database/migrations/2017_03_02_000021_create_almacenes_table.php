@@ -17,7 +17,8 @@ class CreateAlmacenesTable extends Migration{
           $table->string('id', 255);
           $table->integer('incremento');
           $table->string('servidor_id', 4);
-          $table->string('tipo_almacen', 100)->comment('* ESTATAL\n* JURISDICCIONAL\n* UNIDAD_MEDICA\n* LABORATORIO\n* FARMACIA\n* CENDIS_UNIDOSIS');
+          $table->string('nivel_almacen', 100)->comment('* 1 => HACE PEDIDOS AL PROVEEDOR\n 2 => HACE PEDIDOS A OTRO ALMACEN DENTRO DE LA CLUES');
+          $table->string('tipo_almacen', 100)->comment('* ALMPAL\n* JURIS\n* UNMED\n* LAB\n* FARMACIA\n* CENDIS');
           $table->string('clues', 45);
           $table->boolean('subrogado');
           $table->integer('proveedor_id')->unsigned()->nullable();

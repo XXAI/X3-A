@@ -17,12 +17,17 @@ class CreatePedidosInsumosTable extends Migration{
             $table->string('id', 255);
             $table->integer('incremento');
             $table->string('servidor_id', 4);
+
             $table->string('pedido_id', 255);
             $table->string('insumo_medico_clave', 45);
-            $table->decimal('cantidad_calculada_sistema', 15, 2);
-            $table->decimal('cantidad_solicitada_um', 15, 2)->comment('1Cuando sea un pedido standar de surtimeinto :\ncantidad_solicitada --> ingresó manual y se toma en cuenta');
-            $table->string('cantidad_ajustada_js', 45)->nullable();
-            $table->string('cantidad_ajustada_ca', 45)->nullable();
+            //$table->integer('cantidad_sugerida')->nullable()->comment('Cantidad sugerida por el sistema');
+            $table->integer('cantidad')->nullable()->comment('Cantidad ingresada por la unidad medica, se utilizara en caso de ser un pedido por desabasto');
+            $table->integer('cantidad_solicitada')->nullable()->comment('Cantidad validada enviada en el pedido, en caso de ser un pedido por desabasto, esta sera la cantidad modificada por la comisión en caso de ser necesario');
+            $table->integer('cantidad_recibida')->nullable()->comment('Cantidad recibida');
+            $table->decimal('precio_unitario',15,2)->nullable();
+            $table->decimal('monto',15,2)->nullable();
+            $table->decimal('monto_solicitado',15,2)->nullable();
+            $table->decimal('monto_recibido',15,2)->nullable();
             $table->string('usuario_id', 255);
             
             $table->primary('id');

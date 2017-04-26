@@ -72,21 +72,21 @@ class PedidoController extends Controller
         return Response::json([ 'data' => $pedidos],200);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-    	$object = Pedido::find($id);
+    	$pedido = Pedido::find($id);
         
-        if(!$object){
+        if(!$pedido){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }else{
-            if($object->status == 'BR'){
-                $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos");
+            if($pedido->status == 'BR'){
+                $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos");
             }else{
-                $object = $object->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica");
+                $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");
             }
         }
 
-        return Response::json([ 'data' => $object],200);
+        return Response::json([ 'data' => $pedido],200);
     }
 
     public function store(Request $request)
@@ -98,8 +98,9 @@ class PedidoController extends Controller
         $reglas = [
             'tipo_pedido_id'        => 'required',
             'descripcion'           => 'required',
+            'fecha'                 => 'required|date',
             //'almacen_solicitante'   => 'required',
-            'almacen_proveedor'     => 'required',
+            //'almacen_proveedor'     => 'required',
             //'observaciones'         => 'required',
             'status'                => 'required',
             //'tipo_insumo_id'        => 'required',
@@ -119,17 +120,28 @@ class PedidoController extends Controller
         }*/
 
         $obj =  JWTAuth::parseToken()->getPayload();
-        $usuario = Usuario::find($obj->get('id'));
+        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
 
-        $almacenes_id = $usuario->almacenes()->lists('almacenes.id');
+        if(count($usuario->almacenes) > 1){
+            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
+            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
+        }else{
+            $almacen = $usuario->almacenes[0];
+        }
 
-        if(count($almacenes_id) > 1){
-            //error
+        if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
+            $reglas['proveedor_id'] = 'required';
+            $parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
+            $parametros['datos']['almacen_proveedor'] = null;
+            //Harima: Checa proveedor seleccionado, por el momento se saca del alamancen, pero luego podemos poner un dropbox por si se dos o mas proveedores son asignados por clues
+        }elseif($almacen->nivel_almacen == 2){
+            $reglas['almacen_proveedor'] = 'required';
         }
         
-        $parametros['datos']['almacen_solicitante'] = $almacenes_id[0];
+        $parametros['datos']['almacen_solicitante'] = $almacen->id;
+        $parametros['datos']['clues'] = $almacen->clues;
         $parametros['datos']['status'] = 'BR'; //estatus de borrador
-        $parametros['datos']['tipo_pedido_id'] = 'PA';
+        $parametros['datos']['tipo_pedido_id'] = 'PA'; //tipo de pedido Pedido de Abatecimiento
         
         $v = Validator::make($parametros['datos'], $reglas, $mensajes);
 
@@ -140,7 +152,11 @@ class PedidoController extends Controller
         try {
             DB::beginTransaction();
             
-            $object = Pedido::create($parametros['datos']);
+            $pedido = Pedido::create($parametros['datos']);
+
+            $total_claves = count($parametros['insumos']);
+            $total_insumos = 0;
+            $total_monto = 0;
 
             foreach ($parametros['insumos'] as $key => $value) {
                 $reglas_insumos = [
@@ -157,17 +173,26 @@ class PedidoController extends Controller
                 
                 $insumo = [
                     'insumo_medico_clave' => $value['clave'],
-                    'cantidad_solicitada_um' => $value['cantidad'],
-                    'pedido_id' => $object->id
+                    'cantidad_solicitada' => $value['cantidad'],
+                    'monto_solicitado' => $value['monto'],
+                    'precio_unitario' => $value['precio'],
+                    'pedido_id' => $pedido->id
                 ];
-                //$value['pedido_id'] = $object->id;
+                //$value['pedido_id'] = $pedido->id;
 
-                $object_insumo = PedidoInsumo::create($insumo);    
+                $total_insumos += $value['cantidad'];
+                $total_monto += $value['monto'];
 
-            }    
+                $object_insumo = PedidoInsumo::create($insumo);
+            }
+            
+            $pedido->total_claves_solicitadas = $total_claves;
+            $pedido->total_cantidad_solicitada = $total_insumos;
+            $pedido->total_monto_solicitado = $total_monto;
+            $pedido->save();
 
             DB::commit();
-            return Response::json([ 'data' => $object ],200);
+            return Response::json([ 'data' => $pedido ],200);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -184,8 +209,9 @@ class PedidoController extends Controller
         $reglas = [
             //'tipo_pedido_id'        => 'required',
             'descripcion'           => 'required',
+            'fecha'                 => 'required|date',
             //'almacen_solicitante'   => 'required',
-            'almacen_proveedor'     => 'required',
+            //'almacen_proveedor'     => 'required',
             //'observaciones'         => 'required',
             'status'                => 'required',
             //'tipo_insumo_id'        => 'required',
@@ -204,14 +230,34 @@ class PedidoController extends Controller
         }*/
 
         $obj =  JWTAuth::parseToken()->getPayload();
-        $usuario = Usuario::find($obj->get('id'));
+        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
 
+        if(count($usuario->almacenes) > 1){
+            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
+            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
+        }else{
+            $almacen = $usuario->almacenes[0];
+        }
+
+        if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
+            $reglas['proveedor_id'] = 'required';
+            $parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
+            $parametros['datos']['almacen_proveedor'] = null;
+            //Harima: Checa proveedor seleccionado, por el momento se saca del alamancen, pero luego podemos poner un dropbox por si se dos o mas proveedores son asignados por clues
+        }elseif($almacen->nivel_almacen == 2){
+            $reglas['almacen_proveedor'] = 'required';
+        }
+        
         //$parametros['datos']['tipo_pedido_id'] = 1;
 
         if(!isset($parametros['datos']['status'])){
             $parametros['datos']['status'] = 'BR'; //estatus Borrador
         }elseif($parametros['datos']['status'] == 'CONCLUIR'){
-            $parametros['datos']['status'] = 'PS';
+            if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
+                $parametros['datos']['status'] = 'PS';
+            }elseif($almacen->nivel_almacen == 2){
+                $parametros['datos']['status'] = 'ET';
+            }
         }else{
             $parametros['datos']['status'] = 'BR';
         }
@@ -223,15 +269,19 @@ class PedidoController extends Controller
         }
 
         try {
-            $object = Pedido::find($id);
+            $pedido = Pedido::find($id);
 
              DB::beginTransaction();
 
-            $object->update($parametros['datos']);
+            $pedido->update($parametros['datos']);
 
             $arreglo_insumos = Array();
             
             PedidoInsumo::where("pedido_id", $id)->delete();
+
+            $total_claves = count($parametros['insumos']);
+            $total_insumos = 0;
+            $total_monto = 0;
 
             foreach ($parametros['insumos'] as $key => $value) {
 
@@ -249,18 +299,39 @@ class PedidoController extends Controller
                 
                 $insumo = [
                     'insumo_medico_clave' => $value['clave'],
-                    'cantidad_solicitada_um' => $value['cantidad'],
-                    'pedido_id' => $object->id
+                    'cantidad_solicitada' => $value['cantidad'],
+                    'monto_solicitado' => $value['monto'],
+                    'precio_unitario' => $value['precio'],
+                    'pedido_id' => $pedido->id
                 ];
-                //$value['pedido_id'] = $object->id;
+                //$value['pedido_id'] = $pedido->id;
 
-                $object_insumo = PedidoInsumo::create($insumo);  
-            }   
+                $total_insumos += $value['cantidad'];
+                $total_monto += $value['monto'];
 
+                PedidoInsumo::create($insumo);  
+            }
+
+            if(!$pedido->folio && $pedido->status != 'BR'){
+                $max_folio = Pedido::where('clues',$almacen->clues)->max('folio');
+                $anio = date('Y');
+                if(!$max_folio){
+                    $prox_folio = 1;
+                }else{
+                    $max_folio = explode('-',$max_folio);
+                    $prox_folio = intval($max_folio[3]) + 1;
+                }
+                $pedido->folio = $almacen->clues . '-' . $anio . '-PA-' . str_pad($prox_folio, 3, "0", STR_PAD_LEFT);
+            }
+
+            $pedido->total_claves_solicitadas = $total_claves;
+            $pedido->total_cantidad_solicitada = $total_insumos;
+            $pedido->total_monto_solicitado = $total_monto;
+            $pedido->save();
              
              DB::commit(); 
 
-            return Response::json([ 'data' => $object ],200);
+            return Response::json([ 'data' => $pedido ],200);
 
         } catch (\Exception $e) {
             DB::rollBack();
