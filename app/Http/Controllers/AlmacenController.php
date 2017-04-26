@@ -88,6 +88,7 @@ class AlmacenController extends Controller
             $almacenes_id = $usuario->almacenes()->lists('almacenes.id');
 
             $almacenes = $almacenes->whereNotIn('id',$almacenes_id);
+            
         }else{
             $almacenes = $almacenes->with('usuarios','tiposMovimientos');
         }
