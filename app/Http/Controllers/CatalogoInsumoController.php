@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
-
+use JWTAuth;
 use App\Http\Requests;
 use App\Models\Insumo;
+use App\Models\Usuario;
+use App\Models\Contrato;
+use App\Models\Proveedor;
 use App\Models\GrupoInsumo;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
@@ -18,15 +21,44 @@ class CatalogoInsumoController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
+    public function index(Request $request){
+        $obj =  JWTAuth::parseToken()->getPayload();
+        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
+
+        if(count($usuario->almacenes) > 1){
+            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
+            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
+        }else{
+            $almacen = $usuario->almacenes[0];
+        }
+
+        if(Input::get('con_precios')){
+            //Harima: obtenemos el contrato activo 
+            $proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
+
+            if(count($proveedor->contratoActivo) > 1){
+                return Response::json(['error' => 'El proveedor tiene mas de un contrato activo'], HttpResponse::HTTP_CONFLICT);
+            }else{
+                $contrato_activo = $proveedor->contratoActivo;
+            }
+            
+            if(count($contrato_activo) > 1){
+                return Response::json(['error' => 'Hay mas de un contrato activo'], HttpResponse::HTTP_CONFLICT);
+            }elseif(count($contrato_activo) == 0){
+                return Response::json(['error' => 'No se encontraron contratos activos para este proveedor'], HttpResponse::HTTP_CONFLICT);
+            }else{
+                $contrato_activo = $contrato_activo[0];
+            }
+            //Se carga un scope con el cual obtenemos los nombres o descripciones de los catalogos que utiliza insumos_medicos
+            $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id,$proveedor->id)->with('informacion','generico.grupos');
+        }else{
+            $insumos = Insumo::conDescripciones()->with('informacion','generico.grupos');
+        }
+        
         //return Response::json([ 'data' => []],200);
         //return Response::json(['error' => ""], HttpResponse::HTTP_UNAUTHORIZED);
+
         $parametros = Input::only('q','page','per_page');
-
-        //Se carga un scope con el cual obtenemos los nombres o descripciones de los catalogos que utiliza insumos_medicos
-        $insumos = Insumo::conDescripciones()->with('informacion','generico.grupos');
-
         //buscar una cadena en clave, descripcion, nombre del grupo o nombre del generico
         if ($parametros['q']) {
             //Hacemos una busqueda sobre grupos_insumos, para ver si hay grupos que conincidan con el criterio de busqueda, esto reemplaza el leftjoin que estaba en grupos_insumos

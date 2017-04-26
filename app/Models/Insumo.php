@@ -24,6 +24,15 @@ class Insumo extends BaseModel{
                 //->leftjoin('grupos_insumos','grupos_insumos.id','=','genericos.grupo_insumo_id'); //Se elimino relación uno a uno, se hizo de uno a muchos
     }
 
+    public function scopeConDescripcionesPrecios($query, $contrato_id, $proveedor_id){
+        return $query->select('insumos_medicos.*','genericos.nombre as generico_nombre','genericos.es_cuadro_basico','contratos_precios.precio') //,'grupos_insumos.nombre as grupo_nombre'
+                ->leftjoin('genericos','genericos.id','=','insumos_medicos.generico_id')
+                ->join('contratos_precios',function($join)use($contrato_id, $proveedor_id){
+                    $join->on('contratos_precios.insumo_medico_clave','=','insumos_medicos.clave')->where('contratos_precios.contrato_id','=',$contrato_id)->where('contratos_precios.proveedor_id','=',$proveedor_id);
+                });
+                //->leftjoin('grupos_insumos','grupos_insumos.id','=','genericos.grupo_insumo_id'); //Se elimino relación uno a uno, se hizo de uno a muchos
+    }
+
     //Relacion con el Modelo Medicamento, usando un scope para cargar los datos de los catalogos utilizados por medicamentos
     public function informacion(){
         if ($this->tipo = "ME"){

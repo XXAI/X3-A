@@ -18,6 +18,7 @@ class CreateInsumosMedicosTable extends Migration{
           $table->string('tipo', 2)->nullable()->default('ME')->comment('ME = Medicamentos\nMC = Material de curación\nAD = Auxiliares de Diagnostico');
           $table->integer('generico_id')->unsigned();
           $table->boolean('es_causes')->nullable()->default(null);
+          $table->boolean('es_unidosis')->nullable()->default(null);
           $table->text('descripcion')->nullable();
           
           $table->primary('clave');

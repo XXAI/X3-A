@@ -22,11 +22,8 @@ class EntregaController extends Controller
         $pedidos = Pedido::select(DB::raw(
             '
             count(
-                case when status = "ES" then 1 else null end
-            ) as en_espera,
-            count(
-                case when status = "PE" then 1 else null end
-            ) as pendientes,
+                case when status = "PS" then 1 else null end
+            ) as por_surtir,
             count(
                 case when status = "FI" then 1 else null end
             ) as finalizados

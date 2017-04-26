@@ -11,7 +11,4 @@ class EmpresasEspejos extends BaseModel{
     protected $guardarIDServidor = false;
     protected $guardarIDUsuario = true;
     
-    public function roles(){
-		return $this->belongsToMany('App\Models\Rol', 'permiso_rol', 'permiso_id', 'rol_id');
-	}
 }
