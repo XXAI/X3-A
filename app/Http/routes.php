@@ -20,7 +20,7 @@ Route::post('refresh-token',    'AutenticacionController@refreshToken');
 Route::get('check-token',       'AutenticacionController@verificar');
 
 
-Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+
     
 Route::group(['middleware' => 'jwt'], function () {
     Route::resource('usuarios', 'UsuarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -34,6 +34,9 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('entregas-stats',    'EntregaController@stats');     
 
     Route::resource('stock',    'StockController',    ['only' => ['index']]);
+
+    Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
 
 
 

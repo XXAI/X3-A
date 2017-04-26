@@ -120,10 +120,6 @@ class EntregaController extends Controller
 
         $input = Input::all();
        
-        
-        
-        
-        
         $v = Validator::make($input, $reglas, $mensajes);
 
         if ($v->fails()) {
