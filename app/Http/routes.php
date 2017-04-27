@@ -26,12 +26,16 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('permisos', 'PermisoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
     Route::resource('almacenes',    'AlmacenController',    ['only' => ['index']]);
+
+    Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+
     Route::resource('pedidos',      'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::get('pedidos-stats',     'PedidoController@stats');     
     Route::resource('entregas',     'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::get('entregas-stats',    'EntregaController@stats');     
 
     Route::resource('stock',    'StockController',    ['only' => ['index']]);
+    Route::resource('comprobar-stock',    'ComprobarStockController',    ['only' => ['index']]);
 
     //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
     Route::resource('catalogo-insumos',  'CatalogoInsumoController',     ['only' => ['index', 'show']]);

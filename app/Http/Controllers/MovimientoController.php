@@ -15,6 +15,7 @@ use App\Models\Movimientos;
 use App\Models\Stock;
 use App\Models\MovimientoInsumos;
 use App\Models\TiposMovimientos;
+use App\Models\Insumo;
 
 
 
@@ -72,22 +73,43 @@ class MovimientoController extends Controller
 	 */
     public function index()
     {
-        $parametros = Input::only('q','page','per_page');
+        $parametros = Input::only('q','page','per_page','almacen','tipo');
+        if(!$parametros['almacen']){
+                        return Response::json(array("status" => 404,"messages" => "Debe especificar un almacen."), 200);
+        }                
+
         if ($parametros['q']) {
-             $data =  Movimientos::with('MovimientoInsumos')->where(function($query) use ($parametros) {
-                 $query->where('folio','LIKE',"%".$parametros['q']."%");
+                 ///$data =  Movimientos::with('MovimientoInsumos')->where(function($query) use ($parametros) {
+                 $data =  Movimientos::where(function($query) use ($parametros) {
+                 $query->where('folio','LIKE',"%".$parametros['q']."%")->where('almacen_id',$parametros['almacen']);
              });
         } else {
-                $data =  Movimientos::with('MovimientoInsumos');
+            
+                 if($parametros['tipo']){
+                //$data =  Movimientos::with('MovimientoInsumos')->where('tipo_movimiento_id',$parametros['tipo']);
+                $data =  Movimientos::where('almacen_id',$parametros['almacen'])->where('tipo_movimiento_id',$parametros['tipo']);
+                }else{
+                    //$data =  Movimientos::with('MovimientoInsumos');
+                    $data =  Movimientos::where('almacen_id',$parametros['almacen']);
+                    //dd(json_encode($data));
+                }
+
         }
+
         if(isset($parametros['page'])){
 
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
             $data = $data->paginate($resultadosPorPagina);
+           // $data = \App\Movimientos::paginate($resultadosPorPagina);
+
         } else {
+
             $data = $data->get();
+
         }
+
         if(count($data) <= 0){
+
             return Response::json(array("status" => 404,"messages" => "No hay resultados"), 200);
         } 
         else{
@@ -108,71 +130,132 @@ class MovimientoController extends Controller
 	 */
     public function store(Request $request)
     {
-        $errors = array();
+        $errors = array();        
 
         $validacion = $this->ValidarMovimiento("", NULL, Input::json()->all());
-		if(!$validacion)
+		if(is_array($validacion))
         {
 			return Response::json(['error' => $validacion], HttpResponse::HTTP_CONFLICT);
 		}
         $datos = (object) Input::json()->all();	
         $success = false;
 
+        $id_tipo_movimiento = $datos->tipo_movimiento_id;
         $tipo_movimiento = TiposMovimientos::Find($datos->tipo_movimiento_id);
+
         $tipo = NULL;
         if($tipo_movimiento)
             $tipo = $tipo_movimiento->tipo;
 
+        if($id_tipo_movimiento == 1){
 
-        if(property_exists($datos, "insumos"))
-        {
-            if(count($datos->insumos) > 0 )
-            {
-                $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
 
-                foreach ($detalle as $key => $value)
+                if(property_exists($datos, "insumos"))
+                {
+                    if(count($datos->insumos) > 0 )
                     {
-                        $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo);
-                        if($validacion_insumos != "")
+                        $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
+                        foreach ($detalle as $key => $value)
                             {
-                                array_push($errors, $validacion_insumos);
+                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo);
+                                if($validacion_insumos != "")
+                                    {
+                                        array_push($errors, $validacion_insumos);
+                                    }
                             }
-                    }
-            }else{
+                    }else{
                             array_push($errors, array(array('insumos' => array('no_items_insumos'))));
-            }
-            
+                    }
+                    
+                }else{
+                        array_push($errors, array(array('insumos' => array('no_exist_insumos'))));
+                }
 
-        }else{
-            array_push($errors, array(array('insumos' => array('no_exist_insumos'))));
-        }
+                if( count($errors) > 0 )
+                {
+                    return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+                } 
 
-        if( count($errors) > 0 )
-        {
-            return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
-        } 
+                DB::beginTransaction();
+                try{
+                        $data = new Movimientos;
+                        $success = $this->ValidarMetadatos($datos, $data);
+
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    return Response::json(["status" => 500, 'error' => $e->getMessage()], 200);
+                } 
+                if ($success){
+                    DB::commit();
+                    return Response::json(array("status" => 201,"messages" => "Creado","data" => $data), 201);
+                } 
+                else{
+                    DB::rollback();
+                    return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
+                }
+        }//FIN IF TIPO MOVIMIENTO = 1  -> ENTRADA MANUAL
+
+        if($id_tipo_movimiento == 2){
 
 
-        
-         
-        DB::beginTransaction();
-        try{
-                $data = new Movimientos;
-                $success = $this->ValidarMetadatos($datos, $data);
+                if(property_exists($datos, "insumos"))
+                {
+                    if(count($datos->insumos) > 0 )
+                    {
+                        $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
+                        foreach ($detalle as $key => $value)
+                            {
+                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo);
+                                if($validacion_insumos != "")
+                                    {
+                                        array_push($errors, $validacion_insumos);
+                                    }
 
-        } catch (\Exception $e) {
-            DB::rollback();
-            return Response::json(["status" => 500, 'error' => $e->getMessage()], 200);
-        } 
-        if ($success){
-            DB::commit();
-            return Response::json(array("status" => 201,"messages" => "Creado","data" => $data), 201);
-        } 
-        else{
-            DB::rollback();
-            return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
-        }
-          
+                                // validar existencia en stock
+                                $item_insumo = Stock::where('clave_insumo_medico', $value['clave'])->where('existencia','>',0)->sum('existencia');
+
+                                if($value['cantidad'] > $item_insumo)
+                                     array_push($errors, array(array('cantidad'.$key => array('Stock_insuficiente'))));
+
+                            }
+                    }else{
+                            array_push($errors, array(array('insumos' => array('no_items_insumos'))));
+                    }
+                    
+                }else{
+                        array_push($errors, array(array('insumos' => array('no_exist_insumos'))));
+                }
+
+                if( count($errors) > 0 )
+                {
+                    return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+                } 
+
+                DB::beginTransaction();
+                try{
+                        $data = new Movimientos;
+                        $success = $this->ValidarMetadatosSalida($datos, $data);
+
+                } catch (\Exception $e) {
+                    DB::rollback();
+                    return Response::json(["status" => 500, 'error' => $e->getMessage()], 200);
+                } 
+                if ($success){
+                    DB::commit();
+                    return Response::json(array("status" => 201,"messages" => "Creado","data" => $data), 201);
+                } 
+                else{
+                    DB::rollback();
+                    return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
+                }
+                
+
+
+        }///FIN IF TIPO MOVIMIENTO = 2 -->  SALIDA MANUAL
+
+
+
+
     }
 
     /**
@@ -186,15 +269,16 @@ class MovimientoController extends Controller
 	 */
     public function show($id)
     {
-        /*
-        $data = Proveedores::with('Contactos','ComunicacionContacto')->find($id);
+
+        $data =  Movimientos::with('MovimientoInsumos','Almacen')->find($id);
+
         if(!$data){
-			return Response::json(array("status" => 404,"messages" => "No hay resultados"), 200);
+			return Response::json(array("status" => 404,"messages" => "No se encuentra el movimiento solicitado"), 200);
 		} 
 		else{
 			return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $data), 200);
 		}
-        */
+        
     }
 
     /**
@@ -210,36 +294,7 @@ class MovimientoController extends Controller
 	 */
     public function update(Request $request, $id)
     {
-/*
-        $validacion = $this->ValidarParametros("", NULL, Input::json()->all());
-		if($validacion != ""){
-			return Response::json(['error' => $validacion], HttpResponse::HTTP_CONFLICT);
-		}
-        $data = Proveedores::find($id);
-        $datos = (object) Input::json()->all();		
-
-        $success = false;
-
-        DB::beginTransaction();
-        try{
-            if(!$data){
-                return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
-            }
-            $success = $this->campos($datos, $data);
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            return Response::json(["status" => 500, 'error' => $e->getMessage()], 200);
-        } 
-        if($success){
-			DB::commit();
-			return Response::json(array("status" => 200, "messages" => "Operación realizada con exito", "data" => $data), 200);
-		} 
-		else {
-			DB::rollback();
-			return Response::json(array("status" => 304, "messages" => "No modificado"),200);
-		}
-        */
+ 
     }
     
      /**
@@ -253,30 +308,112 @@ class MovimientoController extends Controller
 	 */
     public function destroy($id)
     {
-        /*
-        $success = false;
-        DB::beginTransaction();
-        try {
-			$data = Proveedores::find($id);
-			if($data->delete())
-			    $success = true;
-		} catch (Exception $e) {
-            DB::rollback(); 
-		    return Response::json(["status" => 500, 'error' => $e->getMessage()], 200);
-		}
-        if ($success){
-			DB::commit();
-			return Response::json(array("status" => 200, "messages" => "Operación realizada con exito","data" => $data), 200);
-		} 
-		else {
-			DB::rollback();
-			return Response::json(array("status" => 404, "messages" => "No se encontro el registro"), 200);
-		}
-
-        */
+        
     }
 
+
+///***************************************************************************************************************************
+///***************************************************************************************************************************
+
     /**
+	 * Validad los parametros recibidos, Esto no tiene ruta de acceso es un metodo privado del controlador.
+	 * @param  Request  $request que corresponde a los parametros enviados por el cliente
+	 * @return Response
+	 * <code> Respuesta Error json con los errores encontrados </code>
+	 */
+	private function ValidarMovimiento($key, $id, $request)
+    { 
+        $mensajes = [
+                        'required'      => "required",
+                        'email'         => "email",
+                        'unique'        => "unique",
+                        'integer'       => "not_integer",
+                        'in'            => 'in',
+                    ];
+
+        $reglas = [
+                    'tipo_movimiento_id'  => 'required|integer|in:1,2',
+                  ];
+        
+    $v = \Validator::make($request, $reglas, $mensajes );
+
+        if ($v->fails())
+        {
+			$mensages_validacion = array();
+            foreach ($v->errors()->messages() as $indice => $item)  // todos los mensajes de todos los campos
+            {
+                $msg_validacion = array();
+                    foreach ($item as $msg)
+                    {
+                        array_push($msg_validacion, $msg);
+                    }
+                    array_push($mensages_validacion, array($indice.''.$key => $msg_validacion));
+			}
+			return $mensages_validacion;
+        }else{
+                return true;
+             }
+	}
+
+///**************************************************************************************************************************
+///**************************************************************************************************************************
+   
+    private function ValidarInsumos($key, $id, $request,$tipo){ 
+        $mensajes = [
+                        'required'      => "required",
+                        'email'         => "email",
+                        'unique'        => "unique",
+                        'integer'       => "integer",
+                        'min'           => "min"
+                    ];
+
+        if($tipo=='E')
+                {
+                    $reglas = [
+                                'clave'                 => 'required',
+                                'cantidad'              => 'required|integer',
+                                'cantidad_x_envase'     => 'required|integer',
+                                'lote'                  => 'required',
+                                'fecha_caducidad'       => 'required',
+                                'codigo_barras'         => 'required|string',
+                              ];
+                }else{
+                        $reglas = [
+                                    'clave'                 => 'required',
+                                    'cantidad'              => 'required|integer',
+                                    'cantidad_x_envase'     => 'required|integer',
+                                  ];
+                     }
+                     
+    $v = \Validator::make($request, $reglas, $mensajes );
+
+    //$item_insumo = Insumo::where('clave','>')
+
+
+        if ($v->fails())
+        {
+			$mensages_validacion = array(); 
+            foreach ($v->errors()->messages() as $indice => $item)  // todos los mensajes de todos los campos
+            {
+                $msg_validacion = array();
+                    foreach ($item as $msg)
+                    {
+                        array_push($msg_validacion, $msg);
+                    }
+                    array_push($mensages_validacion, array($indice.''.$key => $msg_validacion));
+			}
+			return $mensages_validacion;
+        }else{
+                return ;
+             }
+        
+		 
+	}
+
+///***************************************************************************************************************************
+///***************************************************************************************************************************
+
+        /**
 	 * Funcion que recive todos los campos del formulario que se envia desde el cliente
 	 * @param  Request  $datos que corresponde a los datos del form enviados por el cliente
      * @param  Request  $data que corresponde a el objeto ORM
@@ -308,9 +445,6 @@ class MovimientoController extends Controller
 
                 MovimientoInsumos::where("movimiento_id", $data->id)->delete();
 
-                
-
-         
                  foreach ($detalle as $key => $value)
                 {
                      if($value != null){
@@ -321,6 +455,7 @@ class MovimientoController extends Controller
 
                         $item_stock->almacen_id             = $data->almacen_id;
                         $item_stock->clave_insumo_medico    = $value->clave;
+                        $item_stock->marca_id               = NULL;
                         $item_stock->lote                   = $value->lote;
                         $item_stock->fecha_caducidad        = $value->fecha_caducidad;
                         $item_stock->codigo_barras          = $value->codigo_barras;
@@ -339,6 +474,7 @@ class MovimientoController extends Controller
                             $item_detalles->precio_total            = 0;
 
                             $item_detalles->save();   
+                            
                         }else{
                                 return Response::json(['error' => $validacion_insumos], HttpResponse::HTTP_CONFLICT);
                              }
@@ -349,94 +485,106 @@ class MovimientoController extends Controller
         
         return $success;
     }
- 
-    /**
-	 * Validad los parametros recibidos, Esto no tiene ruta de acceso es un metodo privado del controlador.
-	 * @param  Request  $request que corresponde a los parametros enviados por el cliente
-	 * @return Response
-	 * <code> Respuesta Error json con los errores encontrados </code>
-	 */
-	private function ValidarMovimiento($key, $id, $request){ 
-  
-        $mensajes = [
-                        'required'      => "required",
-                        'email'         => "email",
-                        'unique'        => "unique"
-                    ];
+///**************************************************************************************************************************
+///**************************************************************************************************************************
+       
+    private function ValidarMetadatosSalida($datos, $data){
+		$success = false;
+        //comprobar que el servidor id no me lo envian por parametro, si no poner el servidor por default de la configuracion local, si no seleccionar el servidor del parametro
+        $servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
 
-        $reglas = [
-                    'tipo_movimiento_id'  => 'required|integer',
-                  ];
-        
-		$v = \Validator::make($request, $reglas, $mensajes );
-        if ($v->fails())
+        //agregar al modelo los datos
+        $data->almacen_id                   =  $datos->almacen_id;
+        $data->tipo_movimiento_id           =  $datos->tipo_movimiento_id; 
+        $data->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")          ? $datos->fecha_movimiento          : '';
+        $data->observaciones                =  property_exists($datos, "observaciones")             ? $datos->observaciones             : '';
+        $data->cancelado                    =  property_exists($datos, "cancelado")                 ? $datos->cancelado                 : '';
+        $data->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion") ? $datos->observaciones_cancelacion : '';
+
+        // si se guarda el movimiento tratar de guardar el detalle de insumos
+        if( $data->save() )
         {
-			$mensages_validacion = array();
-            foreach ($v->errors()->messages() as $indice => $item)  // todos los mensajes de todos los campos
-            {
-                $msg_validacion = array();
-                    foreach ($item as $msg)
-                    {
-                        array_push($msg_validacion, $msg);
-                    }
-                    array_push($mensages_validacion, array($indice.''.$key => $msg_validacion));
-			}
-			return $mensages_validacion;
-        }else{
-                return true;
-             }
-	}
+            $success = true;
+            if(property_exists($datos, "insumos")){
+                 $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
 
-    ///***************************************************************************************************************************
-    ///**************************************************************************************************************************
-    private function ValidarInsumos($key, $id, $request,$tipo){ 
-        $mensajes = [
-                        'required'      => "required",
-                        'email'         => "email",
-                        'unique'        => "unique",
-                        'integer'       => "integer",
-                        'min'           => "min"
-                    ];
+                MovimientoInsumos::where("movimiento_id", $data->id)->delete();
 
-        if($tipo=='ENTRADA')
+                 foreach ($detalle as $key => $value)
                 {
-                    $reglas = [
-                                'clave'                 => 'required',
-                                'cantidad'              => 'required|integer',
-                                'cantidad_x_envase'     => 'required|integer',
-                                'lote'                  => 'required',
-                                'fecha_caducidad'       => 'required',
-                                'codigo_barras'         => 'required|string',
-                              ];
-                }else{
-                        $reglas = [
-                                    'clave'                 => 'required',
-                                    'cantidad'              => 'required|integer',
-                                    'cantidad_x_envase'     => 'required|integer',
-                                  ];
-                     }
-                     
-    $v = \Validator::make($request, $reglas, $mensajes );
-        if ($v->fails())
-        {
-			$mensages_validacion = array(); 
-            foreach ($v->errors()->messages() as $indice => $item)  // todos los mensajes de todos los campos
-            {
-                $msg_validacion = array();
-                    foreach ($item as $msg)
-                    {
-                        array_push($msg_validacion, $msg);
+                     if($value != null){
+                         if(is_array($value))
+                            $value = (object) $value;
+
+////*************************************************************************************************************************
+                        /// ACTUALIZACION DE NUEVO STOCK
+                        $stocks = array();                        
+                        $stocks = Stock::where('clave_insumo_medico',$value->clave)->where('existencia','>',0)->orderBy('fecha_caducidad','ASC')->get();
+
+                        $cantidad_surtir     = $value->cantidad;
+                        $cantidad_conseguida = 0;
+
+                        foreach($stocks as $stock)
+                        {
+                            $restar_item               = 0;
+                            $por_completar             = $cantidad_surtir - $cantidad_conseguida;
+                            $disponible_item           = $stock->existencia;
+                            $disponible_unidosis_item  = $stock->existencia_unidosis;
+
+                            $insumo_medico = Insumo::conDescripciones()->with('informacionAmpliada')->find($stock->clave_insumo_medico);
+                            $insumo_medico = (object) $insumo_medico;
+                            
+                            $cantidad_x_envase = $insumo_medico->informacionAmpliada->cantidad_x_envase;
+
+                            if($disponible_item >= $por_completar){
+                                $cantidad_conseguida += $por_completar; // COMPLETADO LO REQUERIDO
+                                $restar_item = $por_completar;   
+                            }else{
+                                $cantidad_conseguida += $disponible_item;
+                                $restar_item = $disponible_item;
+                            }
+
+                            $stock->existencia = ($disponible_item - $restar_item);
+
+                            $stock_update = Stock::find($stock->id);
+
+                            $stock_update->existencia          = ($disponible_item - $restar_item);
+                            $stock_update->existencia_unidosis = ($disponible_unidosis_item) - ($restar_item * $cantidad_x_envase);
+
+ 
+                            if($stock_update->save()){
+///*************************************************************************************************************************
+                            $item_detalles = new MovimientoInsumos;
+
+                            $item_detalles->movimiento_id           = $data->id; 
+                            $item_detalles->stock_id                = $stock_update->id; 
+                            $item_detalles->cantidad                = $restar_item;
+                            $item_detalles->precio_unitario         = 0;
+                            $item_detalles->iva                     = 0; 
+                            $item_detalles->precio_total            = 0;
+
+                            $item_detalles->save();
+///*************************************************************************************************************************
+                            }
+
+                            if($cantidad_conseguida == $cantidad_surtir){
+                                break;
+                            }
+
+                        }
+
+////*************************************************************************************************************************
+                       
                     }
-                    array_push($mensages_validacion, array($indice.''.$key => $msg_validacion));
-			}
-			return $mensages_validacion;
-        }else{
-                return ;
-             }
+                }
+            }               
+        }
         
-		 
-	}
-    ///***************************************************************************************************************************
-    ///**************************************************************************************************************************
-    
+        return $success;
+    }
+///**************************************************************************************************************************
+///**************************************************************************************************************************
+     
+
+
 }

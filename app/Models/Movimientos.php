@@ -22,6 +22,10 @@ class Movimientos extends BaseModel{
      public function MovimientoInsumos(){
         return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id');
     }
+
+    public function Almacen(){
+        return $this->hasOne('App\Models\Almacen','id','almacen_id');
+    }
  
 
 }
