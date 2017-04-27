@@ -24,6 +24,10 @@ class Movimiento extends BaseModel{
     public function movimientoPedido(){
         return $this->hasOne('App\Models\MovimientoPedido','movimiento_id');
     }
+
+    public function almacen(){
+        return $this->hasOne('App\Models\Almacen','id','almacen_id');
+    }
  
 
 }

@@ -19,7 +19,7 @@ class CreateStockTable extends Migration{
             $table->string('servidor_id', 255);
             $table->string('almacen_id', 255);
             $table->string('clave_insumo_medico', 55)->nullable();
-            $table->integer('marca_id')->unsigned()->default(1);
+            $table->integer('marca_id')->unsigned()->nullable();
             $table->string('lote', 45)->nullable();
             $table->date('fecha_caducidad')->nullable();
             $table->string('codigo_barras', 45)->nullable();
