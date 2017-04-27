@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
+use JWTAuth;
 use App\Models\Pedido;
+use App\Models\Usuario;
 use App\Models\PedidoInsumo;
 use App\Models\Movimiento, App\Models\MovimientoInsumos,
     App\Models\Stock, 
@@ -41,14 +43,6 @@ class EntregaController extends Controller
     public function index()
     {
         $parametros = Input::only('status','q','page','per_page');
-
-
-        
-        
-        
-
-       
-
 
         if(isset($parametros['status'])) {
             if ($parametros['q']) {
@@ -135,9 +129,19 @@ class EntregaController extends Controller
                 throw new Exception("El pedido no existe");
             }
 
+            $obj =  JWTAuth::parseToken()->getPayload();
+            $usuario = Usuario::with('almacenes')->find($obj->get('id'));
+
+            if(count($usuario->almacenes) > 1){
+                //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
+                return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
+            }else{
+                $almacen = $usuario->almacenes[0];
+            }
+
             // deberíamos mandar el id del almacen desde el cliente 
             //y corroborar que o tenga el usuario asignado y con el pedido correspondiente;
-            $input['almacen_id'] = $pedido->almacen_proveedor;
+            $input['almacen_id'] = $almacen->id;
             
             // Movimiento de tipo salida por entrega
             $input['tipo_movimiento_id'] = 3;

@@ -12,6 +12,8 @@ use App\Http\Requests;
 use App\Models\Pedido;
 use App\Models\PedidoInsumo;
 use App\Models\Usuario;
+use App\Models\Presupuesto;
+use App\Models\UnidadMedicaPresupuesto;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, DB;
@@ -19,6 +21,35 @@ use \Validator,\Hash, \Response, DB;
 
 class PedidoController extends Controller
 {   
+    public function obtenerDatosPresupuesto(Request $request){
+        try{
+            $obj =  JWTAuth::parseToken()->getPayload();
+            $usuario = Usuario::with('almacenes')->find($obj->get('id'));
+
+            if(count($usuario->almacenes) > 1){
+                //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
+                return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
+            }else{
+                $almacen = $usuario->almacenes[0];
+            }
+
+            $presupuesto = Presupuesto::where('activo',1)->first();
+
+            $presupuesto_unidad_medica = UnidadMedicaPresupuesto::select('clues',
+                                            DB::raw('sum(causes_autorizado) as causes_autorizado'),DB::raw('sum(causes_modificado) as causes_modificado'),DB::raw('sum(causes_comprometido) as causes_comprometido'),DB::raw('sum(causes_devengado) as causes_devengado'),DB::raw('sum(causes_disponible) as causes_disponible'),
+                                            DB::raw('sum(no_causes_autorizado) as no_causes_autorizado'),DB::raw('sum(no_causes_modificado) as no_causes_modificado'),DB::raw('sum(no_causes_comprometido) as no_causes_comprometido'),DB::raw('sum(no_causes_devengado) as no_causes_devengado'),DB::raw('sum(no_causes_disponible) as no_causes_disponible'),
+                                            DB::raw('sum(material_curacion_autorizado) as material_curacion_autorizado'),DB::raw('sum(material_curacion_modificado) as material_curacion_modificado'),DB::raw('sum(material_curacion_comprometido) as material_curacion_comprometido'),DB::raw('sum(material_curacion_devengado) as material_curacion_devengado'),DB::raw('sum(material_curacion_disponible) as material_curacion_disponible'))
+                                            ->where('presupuesto_id',$presupuesto->id)
+                                            ->where('clues',$almacen->clues)
+                                            ->where('proveedor_id',$almacen->proveedor_id)
+                                            ->groupBy('clues')->first();
+            
+            return Response::json([ 'data' => $presupuesto_unidad_medica],200);
+        } catch (\Exception $e) {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
+
     public function stats(){
 
         // Hay que obtener la clues del usuario
@@ -322,6 +353,21 @@ class PedidoController extends Controller
                     $prox_folio = intval($max_folio[3]) + 1;
                 }
                 $pedido->folio = $almacen->clues . '-' . $anio . '-PA-' . str_pad($prox_folio, 3, "0", STR_PAD_LEFT);
+            }
+
+            if($pedido->status == 'PS'){
+                $fecha = explode('-',$pedido->fecha);
+                $presupuesto = Presupuesto::where('activo',1)->first();
+                $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
+                                            ->where('clues',$almacen->clues)
+                                            ->where('proveedor_id',$almacen->proveedor_id)
+                                            ->where('mes',$fecha[1])
+                                            ->where('anio',$fecha[0])
+                                            ->first();
+                $presupuesto_unidad->causes_comprometido += $total_monto;
+                $presupuesto_unidad->causes_disponible -= $total_monto;
+
+                $presupuesto_unidad->save();
             }
 
             $pedido->total_claves_solicitadas = $total_claves;
