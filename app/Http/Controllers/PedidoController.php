@@ -312,7 +312,7 @@ class PedidoController extends Controller
 
             $total_claves = count($parametros['insumos']);
             $total_insumos = 0;
-            $total_monto = 0;
+            $total_monto = ['causes' => 0, 'no_causes' => 0, 'material_curacion' => 0];
 
             foreach ($parametros['insumos'] as $key => $value) {
 
@@ -338,8 +338,15 @@ class PedidoController extends Controller
                 //$value['pedido_id'] = $pedido->id;
 
                 $total_insumos += $value['cantidad'];
-                $total_monto += $value['monto'];
 
+                if($value['tipo'] == 'ME' && $value['es_causes']){
+                    $total_monto['causes'] += $value['monto'];
+                }elseif($value['tipo'] == 'ME' && !$value['es_causes']){
+                    $total_monto['no_causes'] += $value['monto'];
+                }else{
+                    $total_monto['material_curacion'] += $value['monto'];
+                }
+                
                 PedidoInsumo::create($insumo);  
             }
 
@@ -364,15 +371,27 @@ class PedidoController extends Controller
                                             ->where('mes',$fecha[1])
                                             ->where('anio',$fecha[0])
                                             ->first();
-                $presupuesto_unidad->causes_comprometido += $total_monto;
-                $presupuesto_unidad->causes_disponible -= $total_monto;
+                
+                $presupuesto_unidad->causes_comprometido += $total_monto['causes'];
+                $presupuesto_unidad->causes_disponible -= $total_monto['causes'];
 
-                $presupuesto_unidad->save();
+                $presupuesto_unidad->no_causes_comprometido += $total_monto['no_causes'];
+                $presupuesto_unidad->no_causes_disponible -= $total_monto['no_causes'];
+
+                $presupuesto_unidad->material_curacion_comprometido += $total_monto['material_curacion'];
+                $presupuesto_unidad->material_curacion_disponible -= $total_monto['material_curacion'];
+
+                if($presupuesto_unidad->causes_disponible < 0 || $presupuesto_unidad->no_causes_disponible < 0 || $presupuesto_unidad->material_curacion_disponible < 0){
+                    DB::rollBack();
+                    return Response::json(['error' => 'El presupuesto es insuficiente para este pedido, los cambios no se guardaron.', 'data'=>$presupuesto_unidad], 500);
+                }else{
+                    $presupuesto_unidad->save();
+                }
             }
 
             $pedido->total_claves_solicitadas = $total_claves;
             $pedido->total_cantidad_solicitada = $total_insumos;
-            $pedido->total_monto_solicitado = $total_monto;
+            $pedido->total_monto_solicitado = $total_monto['causes'] + $total_monto['no_causes'] + $total_monto['material_curacion'];
             $pedido->save();
              
              DB::commit(); 
