@@ -28,6 +28,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('permisos', 'PermisoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
 
+    Route::resource('unidades-medicas', 'UnidadesMedicasController',    ['only' => ['index']]);
     Route::resource('almacenes',        'AlmacenController',    ['only' => ['index']]);
     Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::get('pedidos-stats',         'PedidoController@stats');

@@ -24,7 +24,7 @@ class Almacen extends BaseModel
     }
 
     public function unidadMedica(){
-      return $this->hasOne('App\Models\UnidadMedica','clues','clues');
+      return $this->belongsTo('App\Models\UnidadMedica','clues');
     }
    
 }
