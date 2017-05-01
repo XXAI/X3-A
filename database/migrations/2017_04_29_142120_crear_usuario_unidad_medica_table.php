@@ -13,8 +13,12 @@ class CrearUsuarioUnidadMedicaTable extends Migration
     public function up()
     {
         Schema::create('usuario_unidad_medica', function (Blueprint $table) {
+            $table->increments('id');
             $table->string('usuario_id');
 			$table->string('clues',12);
+            $table->timestamps();
+            $table->softDeletes();
+
 
 			$table->foreign('usuario_id')
                   ->references('id')->on('usuarios')
@@ -23,6 +27,7 @@ class CrearUsuarioUnidadMedicaTable extends Migration
 			$table->foreign('clues')
                   ->references('clues')->on('unidades_medicas')
                   ->onDelete('cascade');
+            
         });
     }
 

@@ -65,24 +65,27 @@ class UsuarioController extends Controller
             'apellidos'     => 'required'
         ];
 
-        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles');
+        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','unidades_medicas','almacenes');
 
         $v = Validator::make($inputs, $reglas, $mensajes);
 
         if ($v->fails()) {
             return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
         }
-
+        DB::beginTransaction();
         try {
             $inputs['servidor_id'] = env("SERVIDOR_ID");
             $inputs['password'] = Hash::make($inputs['password']);
             $usuario = Usuario::create($inputs);
 
             $usuario->roles()->sync($inputs['roles']);
-
+            $usuario->unidadesMedicas()->sync($inputs['unidades_medicas']);
+            $usuario->almacenes()->sync($inputs['almacenes']);
+            DB::commit();
             return Response::json([ 'data' => $usuario ],200);
 
         } catch (\Exception $e) {
+             DB::rollBack();
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
     }
@@ -105,6 +108,9 @@ class UsuarioController extends Controller
         }
         unset($object->password);
         $object->roles;
+        
+        $object->unidades_medicas = $object->unidadesMedicas()->with('almacenes')->get();
+        $object->almacenes;
 
         return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
     }
@@ -137,7 +143,7 @@ class UsuarioController extends Controller
             return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }
 
-        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','cambiarPassword');
+        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','cambiarPassword','unidades_medicas','almacenes');
 
         $v = Validator::make($inputs, $reglas, $mensajes);
 
@@ -145,6 +151,7 @@ class UsuarioController extends Controller
             return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
         }
 
+        DB::beginTransaction();
         try {
             $object->nombre =  $inputs['nombre'];
             $object->apellidos =  $inputs['apellidos'];
@@ -153,13 +160,26 @@ class UsuarioController extends Controller
             if ($inputs['cambiarPassword'] ){
                 $object->password = Hash::make($inputs['password']);
             }
+            
             $object->save();
+
+            
+
             $object->roles()->sync($inputs['roles']);
+            $object->unidadesMedicas()->sync($inputs['unidades_medicas']);
+            $object->almacenes()->sync($inputs['almacenes']);
+
+            /*
             $object->roles;
+            $object->almacenes;
+            $object->unidadesMedicas()->with('almacenes');
             unset($object->password); 
+*/
+            DB::commit();
             return Response::json([ 'data' => $object ],200);
 
         } catch (\Exception $e) {
+            DB::rollback();
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
 

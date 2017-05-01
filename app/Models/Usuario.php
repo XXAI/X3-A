@@ -20,6 +20,8 @@ class Usuario extends BaseModel implements Authenticatable{
         return $this->belongsToMany('App\Models\Almacen','almacen_usuario','usuario_id','almacen_id');
     }
 
+
+
     public function unidadesMedicas(){
         return $this->belongsToMany('App\Models\UnidadMedica','usuario_unidad_medica','usuario_id','clues');
     }

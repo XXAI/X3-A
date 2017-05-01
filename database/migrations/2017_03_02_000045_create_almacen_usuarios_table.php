@@ -13,15 +13,16 @@ class CreateAlmacenUsuariosTable extends Migration{
     public function up(){
         Schema::create('almacen_usuario', function(Blueprint $table) {
             $table->engine = 'InnoDB';
-        
-            $table->string('id', 255);
-            $table->integer('incremento');
-            $table->string('servidor_id', 4);
+            
+            $table->increments('id');
+            //$table->string('id', 255);
+            //$table->integer('incremento');
+            //$table->string('servidor_id', 4);
             $table->string('usuario_id', 255);
             $table->string('almacen_id', 255);
             //$table->string('usuario_id', 255);
             
-            $table->primary('id');
+            //$table->primary('id');
       
             $table->foreign('usuario_id')->references('id')->on('usuarios');
             $table->foreign('almacen_id')->references('id')->on('almacenes');
