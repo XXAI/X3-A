@@ -18,8 +18,12 @@ class Pedido extends BaseModel
     public function insumos(){
         return $this->hasMany('App\Models\PedidoInsumo','pedido_id','id');
     }
-   
 
+    public function recepciones(){
+        //return $this->hasManyThrough('App\Models\Movimiento','App\Models\MovimientoPedido');
+        return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id');
+    }
+    
     public function acta(){
         return $this->belongsTo('App\Models\Acta','acta_id','id');        
     }

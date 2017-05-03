@@ -52,7 +52,7 @@ class UnidadesMedicasController extends Controller
             }
 
             if($usuario->su){
-                $items = UnidadMedica::with('almacenes')->get();
+                $items = UnidadMedica::with('almacenes')->orderBy('nombre')->get();
             } else {
                 $items = $usuario->unidadesMedicas()->with('almacenes')->get();
             }

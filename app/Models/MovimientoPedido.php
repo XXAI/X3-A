@@ -18,6 +18,15 @@ class MovimientoPedido extends BaseModel{
     public function movimiento(){
         return $this->belongsTo('App\Models\Movimiento','movimiento_id');
     }
+
+    public function entradaAbierta(){
+        return $this->belongsTo('App\Models\Movimiento','movimiento_id')->where('tipo_movimiento_id',4)->where('status','BR');
+    }
+
+    public function entradas(){
+        return $this->hasMany('App\Models\Movimiento','id','movimiento_id')->where('tipo_movimiento_id',4);
+    }
+
     public function pedido(){
         return $this->belongsTo('App\Models\Pedido','pedido_id');
     }

@@ -76,8 +76,17 @@ class PedidoController extends Controller
         return Response::json($pedidos,200);
     }
 
-    public function index()
-    {
+    public function index(Request $request){
+        $obj =  JWTAuth::parseToken()->getPayload();
+        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
+
+        if(count($usuario->almacenes) > 1){
+            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
+            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
+        }else{
+            $almacen = $usuario->almacenes[0];
+        }
+        
         $parametros = Input::only('status','q','page','per_page');
 
        if ($parametros['q']) {
@@ -87,6 +96,8 @@ class PedidoController extends Controller
         } else {
              $pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
         }
+
+        $pedidos = $pedidos->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues);
 
         if(isset($parametros['status'])) {
             $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
@@ -371,6 +382,10 @@ class PedidoController extends Controller
                                             ->where('mes',$fecha[1])
                                             ->where('anio',$fecha[0])
                                             ->first();
+                if(!$presupuesto_unidad){
+                    DB::rollBack();
+                    return Response::json(['error' => 'No existe presupuesto asignado al mes y/o año del pedido'], 500);
+                }
                 
                 $presupuesto_unidad->causes_comprometido += $total_monto['causes'];
                 $presupuesto_unidad->causes_disponible -= $total_monto['causes'];
@@ -400,7 +415,7 @@ class PedidoController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+            return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
         } 
     }
 
