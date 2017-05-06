@@ -33,8 +33,11 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::get('pedidos-stats',         'PedidoController@stats');
     Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
-    Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::get('entregas-stats',        'EntregaController@stats');     
+    
+    Route::group(['middleware' => 'almacen'], function () {
+        Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::get('entregas-stats',        'EntregaController@stats');     
+    });
     Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
  

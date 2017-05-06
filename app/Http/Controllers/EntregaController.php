@@ -24,7 +24,7 @@ use \Validator,\Hash, \Response, DB;
 
 class EntregaController extends Controller
 {
-    public function stats(){
+    public function stats(Request $request){
 
         // Hay que obtener la clues del usuario
         $pedidos = Pedido::select(DB::raw(
@@ -36,19 +36,22 @@ class EntregaController extends Controller
                 case when status = "FI" then 1 else null end
             ) as finalizados
             '
-        ))->first();
+        ))->where('almacen_proveedor',$request->get('almacen_id'))->first();
 
         return Response::json($pedidos,200);
     }
-    public function index()
+    public function index(Request $request)
     {
+        
+        
+        
         $parametros = Input::only('status','q','page','per_page');
 
         if(isset($parametros['status'])) {
             if ($parametros['q']) {
-                $pedidos =  Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor")->where('id','LIKE',"%".$parametros['q']."%");
+                $pedidos =  Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor")->where('almacen_proveedor',$request->get('almacen_id'))->where('id','LIKE',"%".$parametros['q']."%");
             } else {
-                $pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
+                $pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor")->where('almacen_proveedor',$request->get('almacen_id'));
             }
         
             $pedidos = $pedidos->where("pedidos.status",$parametros['status'])->orderBy('created_at','desc');

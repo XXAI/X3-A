@@ -28,6 +28,8 @@ class VerificarJWT
             if(!$usuario){
                 return response()->json(['error' => 'formato_token_invalido'], 401);                
             }
+            // Pasamos el usuario id como verificado
+            $request->attributes->add(['usuario_id' => $usuario->id]);
         } catch (TokenExpiredException $e) {
             return response()->json(['error' => 'token_expirado'], 401);  
         } catch (JWTException $e) {
