@@ -59,7 +59,16 @@ class PedidoController extends Controller
         } 
     }
 
-    public function stats(){
+    public function stats(Request $request){
+        $obj =  JWTAuth::parseToken()->getPayload();
+        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
+
+        if(count($usuario->almacenes) > 1){
+            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
+            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
+        }else{
+            $almacen = $usuario->almacenes[0];
+        }
 
         // Hay que obtener la clues del usuario
         $pedidos = Pedido::select(DB::raw(
@@ -80,7 +89,7 @@ class PedidoController extends Controller
                 case when status = "FI" then 1 else null end
             ) as finalizados
             '
-        ))->first();
+        ))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
 
         return Response::json($pedidos,200);
     }
