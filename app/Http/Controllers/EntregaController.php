@@ -128,6 +128,9 @@ class EntregaController extends Controller
            
             $pedido = Pedido::find($input['pedido_id']);
 
+
+
+
             if(!$pedido){
                 throw new Exception("El pedido no existe");
             }
@@ -144,8 +147,9 @@ class EntregaController extends Controller
 
             // deberíamos mandar el id del almacen desde el cliente 
             //y corroborar que o tenga el usuario asignado y con el pedido correspondiente;
-            $input['almacen_id'] = $almacen->id;
-            
+
+            $input['almacen_id'] = $pedido->almacen_proveedor;
+
             // Movimiento de tipo salida por entrega
             $input['tipo_movimiento_id'] = 3;
 
