@@ -21,11 +21,19 @@ class RolController extends Controller
     {
         //return Response::json([ 'data' => []],200);
         //return Response::json(['error' => "NO EXSITE LA BASE"], 500);
-        $parametros = Input::only('q');
+        $parametros = Input::only('q','page','per_page');
         if ($parametros['q']) {
-             $roles =  Rol::where('nombre','LIKE',"%".$parametros['q']."%")->get();
+             $roles =  Rol::where('nombre','LIKE',"%".$parametros['q']."%");
         } else {
-             $roles =  Rol::all();
+             $roles =  Rol::select('*');
+        }
+
+        if(isset($parametros['page'])){
+
+            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+            $roles = $roles->paginate($resultadosPorPagina);
+        } else {
+            $roles = $roles->get();
         }
        
         return Response::json([ 'data' => $roles],200);
@@ -47,9 +55,10 @@ class RolController extends Controller
 
         $reglas = [
             'nombre'        => 'required|unique:roles',
+            'permisos'        => 'required|array',
         ];
 
-        $inputs = Input::only('nombre');
+        $inputs = Input::only('nombre','permisos');
 
         $v = Validator::make($inputs, $reglas, $mensajes);
 
@@ -57,13 +66,17 @@ class RolController extends Controller
             return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
         }
 
+        DB::beginTransaction();
         try {
            
-            $rol = Usuario::create($inputs);
+            $rol = Rol::create($inputs);
+            $rol->permisos()->sync($inputs['permisos']);
 
+            DB::commit();
             return Response::json([ 'data' => $rol ],200);
 
         } catch (\Exception $e) {
+            DB::rollback();
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
     }
@@ -76,13 +89,14 @@ class RolController extends Controller
      */
     public function show($id)
     {
-        $object = Roll::find($id);
+        $object = Rol::find($id);
 
         if(!$object){
             return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }
+        $object->permisos;
 
-         return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
+        return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
     }
 
     /**
@@ -94,7 +108,46 @@ class RolController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $mensajes = [
+            
+            'required'      => "required",
+            'unique'        => "unique"
+        ];
+
+        $reglas = [
+            'nombre'        => 'required|unique:roles,nombre,'.$id,
+            'permisos'        => 'required|array',
+        ];
+
+        $inputs = Input::only('nombre','permisos');
+
+        $rol = Rol::find($id);
+
+        if(!$rol){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+        
+
+        $v = Validator::make($inputs, $reglas, $mensajes);
+
+        if ($v->fails()) {
+            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+        }
+
+        DB::beginTransaction();
+        try {
+
+            $rol->nombre = $inputs['nombre'];
+           
+            $rol->permisos()->sync($inputs['permisos']);
+
+            DB::commit();
+            return Response::json([ 'data' => $rol ],200);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
     }
 
     /**
@@ -105,6 +158,11 @@ class RolController extends Controller
      */
     public function destroy($id)
     {
-        //
+        try {
+            $object = Rol::destroy($id);
+            return Response::json(['data'=>$object],200);
+        } catch (Exception $e) {
+           return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        }
     }
 }

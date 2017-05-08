@@ -18,10 +18,10 @@ class Rol extends BaseModel{
     
     
     public function permisos(){
-		return $this->belongsToMany('App\Models\Rol', 'permiso_rol', 'rol_id', 'permiso_id');
-	}
+      return $this->belongsToMany('App\Models\Permiso', 'permiso_rol', 'rol_id', 'permiso_id');
+    }
 
     public function usuarios(){
-		return $this->belongsToMany('App\Models\Usuario', 'rol_usuario', 'rol_id', 'usuario_id');
-	}
+      return $this->belongsToMany('App\Models\Usuario', 'rol_usuario', 'rol_id', 'usuario_id');
+    }
 }
