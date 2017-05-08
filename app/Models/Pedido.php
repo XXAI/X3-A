@@ -23,9 +23,17 @@ class Pedido extends BaseModel
         //return $this->hasManyThrough('App\Models\Movimiento','App\Models\MovimientoPedido');
         return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id');
     }
+
+    public function director(){
+        return $this->hasOne('App\Models\PersonalClues','id','director_id');
+    }
+
+    public function encargadoAlmacen(){
+      return $this->hasOne('App\Models\PersonalClues','id','encargado_almacen_id');
+    }
     
     public function acta(){
-        return $this->belongsTo('App\Models\Acta','acta_id','id');        
+        return $this->belongsTo('App\Models\Acta','acta_id','id');
     }
 
     public function tipoInsumo(){

@@ -13,6 +13,7 @@ use App\Models\Pedido;
 use App\Models\PedidoInsumo;
 use App\Models\Usuario;
 use App\Models\Presupuesto;
+use App\Models\UnidadMedica;
 use App\Models\UnidadMedicaPresupuesto;
 
 use Illuminate\Support\Facades\Input;
@@ -124,7 +125,7 @@ class PedidoController extends Controller
             if($pedido->status == 'BR'){
                 $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos");
             }else{
-                $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");
+                $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
             }
         }
 
@@ -403,6 +404,11 @@ class PedidoController extends Controller
                     $presupuesto_unidad->save();
                 }
             }
+
+            $almacen->load('unidadMedica');
+
+            $pedido->director_id = $almacen->unidadMedica->director_id;
+            $pedido->encargado_almacen_id = $almacen->encargado_almacen_id;
 
             $pedido->total_claves_solicitadas = $total_claves;
             $pedido->total_cantidad_solicitada = $total_insumos;

@@ -18,10 +18,11 @@ class UnidadMedica extends BaseModel{
     protected $table = 'unidades_medicas';  
     protected $fillable = ["clues","nombre"];
 
-
     public function almacenes(){
       return $this->hasMany('App\Models\Almacen','clues');
     }
 
-   
+    public function director(){
+      return $this->hasOne('App\Models\PersonalClues','id','director_id');
+    }
 }
