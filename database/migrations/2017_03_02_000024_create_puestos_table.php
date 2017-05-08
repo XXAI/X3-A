@@ -20,6 +20,7 @@ class CreatePuestosTable extends Migration{
             //$table->string('servicio_id', 255);
             $table->string('clave', 45);
             $table->string('nombre', 255);
+            
             $table->string('usuario_id', 255);
             
             $table->primary('id');

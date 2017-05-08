@@ -19,12 +19,16 @@ class Almacen extends BaseModel
       return $this->hasMany('App\Models\AlmacenUsuarios','almacen_id');
     }
 
+    public function encargado(){
+      return $this->hasOne('App\Models\PersonalClues','id','encargado_almacen_id');
+    }
+
     public function tiposMovimientos(){
       return $this->hasMany('App\Models\AlmacenTiposMovimientos','almacen_id')->with('TipoMovimiento');
     }
 
     public function unidadMedica(){
-      return $this->belongsTo('App\Models\UnidadMedica','clues');
+      return $this->belongsTo('App\Models\UnidadMedica','clues','clues');
     }
    
 }

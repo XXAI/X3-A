@@ -24,13 +24,16 @@ class CreateAlmacenesTable extends Migration{
           $table->integer('proveedor_id')->unsigned()->nullable();
           $table->boolean('unidosis');
           $table->string('nombre', 255);
+          $table->string('encargado_almacen_id', 255)->nullable();
+
           $table->string('usuario_id', 255);
           
           $table->primary('id');
       
           //$table->index('proveedor_id','fk_almacenes_proveedores1_idx');
           $table->foreign('proveedor_id')->references('id')->on('proveedores');
-      
+          $table->foreign('encargado_almacen_id')->references('id')->on('personal_clues');
+
           $table->timestamps();
           $table->softDeletes();
       });
