@@ -9,7 +9,8 @@ class AlmacenUsuarios extends BaseModel{
     use SoftDeletes;
     protected $generarID = true;
     protected $guardarIDServidor = true;
-    protected $guardarIDUsuario = true;
+    protected $guardarIDUsuario = false;
     protected $table = 'almacen_usuario';
+    protected $fillable = ["usuario_id","almacen_id"];
 
 }

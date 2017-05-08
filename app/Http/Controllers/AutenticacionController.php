@@ -7,7 +7,7 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 use Illuminate\Http\Request;
 use \Hash, \Config;
-use App\Models\Usuario, App\Models\Permiso;
+use App\Models\Usuario, App\Models\Permiso, App\Models\Almacen, App\Models\UnidadMedica;
 
 class AutenticacionController extends Controller
 {
@@ -61,12 +61,31 @@ class AutenticacionController extends Controller
                     //"permisos" => $lista_permisos
                 ];
 
+             
+                
+                $unidades_medicas = [];
+               
+                if( $usuario->su ){
+                    $unidades_medicas = UnidadMedica::has('almacenes')->with('almacenes')->get();
+                } else {
+                    $ums = $usuario->unidadesMedicas;
+                    $almacenes = $usuario->almacenes()->lists("almacenes.id");
+                    foreach($ums as $um){
+                        $almacenes_res = $um->almacenes()->whereIn('almacenes.id',$almacenes)->get();
+                        $um->almacenes = $almacenes_res;
+                        //$almacenes = $um->almacenes()->has('usuarios')->where('usuario_id',$usuario->id)->get();
+                    }
+                    $unidades_medicas = $ums;
+                }
+                
+
                 $usuario = [
                     "id" => $usuario->id,
                     "nombre" => $usuario->nombre,
                     "apellidos" => $usuario->apellidos,
                     "avatar" => $usuario->avatar,
-                    "permisos" => $lista_permisos
+                    "permisos" => $lista_permisos,                    
+                    "unidades_medicas" =>  $unidades_medicas
                 ];
 
                 $server_info = [

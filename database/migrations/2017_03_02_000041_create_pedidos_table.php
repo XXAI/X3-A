@@ -41,6 +41,9 @@ class CreatePedidosTable extends Migration{
 			$table->integer('total_cantidad_solicitada')->nullable();
             $table->integer('total_cantidad_recibida')->nullable();
 
+			$table->string('encargado_almacen_id', 255)->nullable();
+			$table->string('director_id', 255)->nullable();
+
 		    $table->string('usuario_id', 255);
 		    
 		    $table->primary('id');
@@ -53,6 +56,8 @@ class CreatePedidosTable extends Migration{
 		    $table->foreign('tipo_insumo_id')->references('id')->on('tipos_insumos');
 		    $table->foreign('tipo_pedido_id')->references('id')->on('tipos_pedidos');
 		    $table->foreign('proveedor_id')->references('id')->on('proveedores');
+			$table->foreign('encargado_almacen_id')->references('id')->on('personal_clues');
+			$table->foreign('director_id')->references('id')->on('personal_clues');
 		
 		    $table->timestamps();
 			$table->softDeletes();

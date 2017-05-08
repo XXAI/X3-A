@@ -16,12 +16,24 @@ class Pedido extends BaseModel
     protected $fillable = [ 'tipo_insumo_id', 'tipo_pedido_id', 'clues','pedido_padre', 'folio', 'fecha','descripcion','observaciones', 'almacen_solicitante', 'almacen_proveedor', 'organismo_dirigido', 'acta_id', 'status', 'usuario_validacion', 'proveedor_id', "created_at","updated_at"];
     
     public function insumos(){
-        return $this->hasMany('App\Models\PedidoInsumo','pedido_id','id');        
+        return $this->hasMany('App\Models\PedidoInsumo','pedido_id','id');
     }
-   
 
+    public function recepciones(){
+        //return $this->hasManyThrough('App\Models\Movimiento','App\Models\MovimientoPedido');
+        return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id');
+    }
+
+    public function director(){
+        return $this->hasOne('App\Models\PersonalClues','id','director_id');
+    }
+
+    public function encargadoAlmacen(){
+      return $this->hasOne('App\Models\PersonalClues','id','encargado_almacen_id');
+    }
+    
     public function acta(){
-        return $this->belongsTo('App\Models\Acta','acta_id','id');        
+        return $this->belongsTo('App\Models\Acta','acta_id','id');
     }
 
     public function tipoInsumo(){

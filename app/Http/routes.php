@@ -27,18 +27,25 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('roles', 'RolController',           ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('permisos', 'PermisoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
-    Route::resource('almacenes',    'AlmacenController',    ['only' => ['index']]);
-    Route::resource('pedidos',      'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::get('pedidos-stats',     'PedidoController@stats');     
-    Route::resource('entregas',     'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::get('entregas-stats',    'EntregaController@stats');     
 
+    Route::resource('unidades-medicas', 'UnidadesMedicasController',    ['only' => ['index']]);
+    Route::resource('almacenes',        'AlmacenController',    ['only' => ['index']]);
+    Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::get('pedidos-stats',         'PedidoController@stats');
+    Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
+    
+    Route::group(['middleware' => 'almacen'], function () {
+        Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::get('entregas-stats',        'EntregaController@stats');     
+    });
+    Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+
+ 
     Route::resource('stock',    'StockController',    ['only' => ['index']]);
+    Route::resource('comprobar-stock',    'ComprobarStockController',    ['only' => ['index']]);
 
     Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
-
-
 
     //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
     Route::resource('catalogo-insumos',  'CatalogoInsumoController',     ['only' => ['index', 'show']]);

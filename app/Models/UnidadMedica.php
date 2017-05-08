@@ -11,8 +11,18 @@ class UnidadMedica extends BaseModel{
     protected $generarID = false;
     protected $guardarIDServidor = false;
     //protected $guardarIDUsuario = false;
-    //public $incrementing = false;
+    public $incrementing = false;
+
+    protected $primaryKey = 'clues';
     
     protected $table = 'unidades_medicas';  
-    protected $fillable = ["id","clues","nombre"];
+    protected $fillable = ["clues","nombre"];
+
+    public function almacenes(){
+      return $this->hasMany('App\Models\Almacen','clues');
+    }
+
+    public function director(){
+      return $this->hasOne('App\Models\PersonalClues','id','director_id');
+    }
 }

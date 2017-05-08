@@ -13,9 +13,9 @@ class RecepcionPedido extends BaseModel
     protected $guardarIDUsuario = true;
     protected $table = 'movimientos';
 
-    protected $fillable = ["almacen_id","tipo_movimiento_id", "fecha_movimiento", "observaciones", "cancelado", "observaciones_cancelacion"];
+    protected $fillable = ["status","almacen_id","tipo_movimiento_id", "fecha_movimiento", "observaciones", "cancelado", "observaciones_cancelacion"];
 
-    public function MovimientoInsumo(){
+    public function movimientoInsumo(){
         return $this->belongsTo('App\Models\MovimientoInsumos', 'id', 'movimiento_id');
     }
 

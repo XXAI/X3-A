@@ -12,17 +12,19 @@ class Movimiento extends BaseModel{
     protected $guardarIDUsuario = true;
 
     protected $table = 'movimientos';
-    protected $fillable = ['almacen_id','tipo_movimiento_id','fecha_movimiento','observaciones'];
+    protected $fillable = ['status','almacen_id','tipo_movimiento_id','fecha_movimiento','observaciones'];
     
-
- 
-    // Porque esta en mayusculas deberia ser movimientosInsumos() !!!! los odio a todos!! AKira
-    public function movimientoInsumos(){
+    // Porque esta en mayusculas deberia ser movimientosInsumos() !!!! los odio a todos!! AKira |Harima: se cambio a insumos
+    public function insumos(){
         return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id')->with('stock.marca');
     }
 
     public function movimientoPedido(){
         return $this->hasOne('App\Models\MovimientoPedido','movimiento_id');
+    }
+
+    public function almacen(){
+        return $this->hasOne('App\Models\Almacen','id','almacen_id');
     }
  
 

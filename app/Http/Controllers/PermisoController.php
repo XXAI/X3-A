@@ -22,7 +22,24 @@ class PermisoController extends Controller
      */
     public function index()
     {
-        return Permiso::all();
+        $parametros = Input::only('q','page','per_page');
+        if ($parametros['q']) {
+             $permisos =  Permiso::where('descripcion','LIKE',"%".$parametros['q']."%")->orderBy('grupo','asc');
+        } else {
+             $permisos =  Permiso::select('*')->orderBy('grupo','asc');
+        }
+        // No podemos mostrar los permisos de superusuario a menos que seas super usuario
+        $permisos = $permisos->where('su',false);
+
+        if(isset($parametros['page'])){
+
+            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+            $permisos = $permisos->paginate($resultadosPorPagina);
+        } else {
+            $permisos = $permisos->get();
+        }
+       
+        return Response::json([ 'data' => $permisos],200);
     }
 
     /**

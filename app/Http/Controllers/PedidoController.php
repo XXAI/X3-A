@@ -12,6 +12,9 @@ use App\Http\Requests;
 use App\Models\Pedido;
 use App\Models\PedidoInsumo;
 use App\Models\Usuario;
+use App\Models\Presupuesto;
+use App\Models\UnidadMedica;
+use App\Models\UnidadMedicaPresupuesto;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, DB;
@@ -19,6 +22,35 @@ use \Validator,\Hash, \Response, DB;
 
 class PedidoController extends Controller
 {   
+    public function obtenerDatosPresupuesto(Request $request){
+        try{
+            $obj =  JWTAuth::parseToken()->getPayload();
+            $usuario = Usuario::with('almacenes')->find($obj->get('id'));
+
+            if(count($usuario->almacenes) > 1){
+                //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
+                return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
+            }else{
+                $almacen = $usuario->almacenes[0];
+            }
+
+            $presupuesto = Presupuesto::where('activo',1)->first();
+
+            $presupuesto_unidad_medica = UnidadMedicaPresupuesto::select('clues',
+                                            DB::raw('sum(causes_autorizado) as causes_autorizado'),DB::raw('sum(causes_modificado) as causes_modificado'),DB::raw('sum(causes_comprometido) as causes_comprometido'),DB::raw('sum(causes_devengado) as causes_devengado'),DB::raw('sum(causes_disponible) as causes_disponible'),
+                                            DB::raw('sum(no_causes_autorizado) as no_causes_autorizado'),DB::raw('sum(no_causes_modificado) as no_causes_modificado'),DB::raw('sum(no_causes_comprometido) as no_causes_comprometido'),DB::raw('sum(no_causes_devengado) as no_causes_devengado'),DB::raw('sum(no_causes_disponible) as no_causes_disponible'),
+                                            DB::raw('sum(material_curacion_autorizado) as material_curacion_autorizado'),DB::raw('sum(material_curacion_modificado) as material_curacion_modificado'),DB::raw('sum(material_curacion_comprometido) as material_curacion_comprometido'),DB::raw('sum(material_curacion_devengado) as material_curacion_devengado'),DB::raw('sum(material_curacion_disponible) as material_curacion_disponible'))
+                                            ->where('presupuesto_id',$presupuesto->id)
+                                            ->where('clues',$almacen->clues)
+                                            ->where('proveedor_id',$almacen->proveedor_id)
+                                            ->groupBy('clues')->first();
+            
+            return Response::json([ 'data' => $presupuesto_unidad_medica],200);
+        } catch (\Exception $e) {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
+
     public function stats(){
 
         // Hay que obtener la clues del usuario
@@ -45,8 +77,17 @@ class PedidoController extends Controller
         return Response::json($pedidos,200);
     }
 
-    public function index()
-    {
+    public function index(Request $request){
+        $obj =  JWTAuth::parseToken()->getPayload();
+        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
+
+        if(count($usuario->almacenes) > 1){
+            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
+            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
+        }else{
+            $almacen = $usuario->almacenes[0];
+        }
+        
         $parametros = Input::only('status','q','page','per_page');
 
        if ($parametros['q']) {
@@ -56,6 +97,8 @@ class PedidoController extends Controller
         } else {
              $pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
         }
+
+        $pedidos = $pedidos->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues);
 
         if(isset($parametros['status'])) {
             $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
@@ -82,7 +125,7 @@ class PedidoController extends Controller
             if($pedido->status == 'BR'){
                 $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos");
             }else{
-                $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");
+                $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
             }
         }
 
@@ -281,7 +324,7 @@ class PedidoController extends Controller
 
             $total_claves = count($parametros['insumos']);
             $total_insumos = 0;
-            $total_monto = 0;
+            $total_monto = ['causes' => 0, 'no_causes' => 0, 'material_curacion' => 0];
 
             foreach ($parametros['insumos'] as $key => $value) {
 
@@ -307,8 +350,15 @@ class PedidoController extends Controller
                 //$value['pedido_id'] = $pedido->id;
 
                 $total_insumos += $value['cantidad'];
-                $total_monto += $value['monto'];
 
+                if($value['tipo'] == 'ME' && $value['es_causes']){
+                    $total_monto['causes'] += $value['monto'];
+                }elseif($value['tipo'] == 'ME' && !$value['es_causes']){
+                    $total_monto['no_causes'] += $value['monto'];
+                }else{
+                    $total_monto['material_curacion'] += $value['monto'];
+                }
+                
                 PedidoInsumo::create($insumo);  
             }
 
@@ -324,9 +374,45 @@ class PedidoController extends Controller
                 $pedido->folio = $almacen->clues . '-' . $anio . '-PA-' . str_pad($prox_folio, 3, "0", STR_PAD_LEFT);
             }
 
+            if($pedido->status == 'PS'){
+                $fecha = explode('-',$pedido->fecha);
+                $presupuesto = Presupuesto::where('activo',1)->first();
+                $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
+                                            ->where('clues',$almacen->clues)
+                                            ->where('proveedor_id',$almacen->proveedor_id)
+                                            ->where('mes',$fecha[1])
+                                            ->where('anio',$fecha[0])
+                                            ->first();
+                if(!$presupuesto_unidad){
+                    DB::rollBack();
+                    return Response::json(['error' => 'No existe presupuesto asignado al mes y/o año del pedido'], 500);
+                }
+                
+                $presupuesto_unidad->causes_comprometido += $total_monto['causes'];
+                $presupuesto_unidad->causes_disponible -= $total_monto['causes'];
+
+                $presupuesto_unidad->no_causes_comprometido += $total_monto['no_causes'];
+                $presupuesto_unidad->no_causes_disponible -= $total_monto['no_causes'];
+
+                $presupuesto_unidad->material_curacion_comprometido += $total_monto['material_curacion'];
+                $presupuesto_unidad->material_curacion_disponible -= $total_monto['material_curacion'];
+
+                if($presupuesto_unidad->causes_disponible < 0 || $presupuesto_unidad->no_causes_disponible < 0 || $presupuesto_unidad->material_curacion_disponible < 0){
+                    DB::rollBack();
+                    return Response::json(['error' => 'El presupuesto es insuficiente para este pedido, los cambios no se guardaron.', 'data'=>$presupuesto_unidad], 500);
+                }else{
+                    $presupuesto_unidad->save();
+                }
+            }
+
+            $almacen->load('unidadMedica');
+
+            $pedido->director_id = $almacen->unidadMedica->director_id;
+            $pedido->encargado_almacen_id = $almacen->encargado_almacen_id;
+
             $pedido->total_claves_solicitadas = $total_claves;
             $pedido->total_cantidad_solicitada = $total_insumos;
-            $pedido->total_monto_solicitado = $total_monto;
+            $pedido->total_monto_solicitado = $total_monto['causes'] + $total_monto['no_causes'] + $total_monto['material_curacion'];
             $pedido->save();
              
              DB::commit(); 
@@ -335,7 +421,7 @@ class PedidoController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+            return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
         } 
     }
 
