@@ -34,6 +34,8 @@ class PedidoController extends Controller
                 $almacen = $usuario->almacenes[0];
             }
 
+            $parametros = Input::all();
+
             $presupuesto = Presupuesto::where('activo',1)->first();
 
             $presupuesto_unidad_medica = UnidadMedicaPresupuesto::select('clues',
@@ -43,8 +45,14 @@ class PedidoController extends Controller
                                             ->where('presupuesto_id',$presupuesto->id)
                                             ->where('clues',$almacen->clues)
                                             ->where('proveedor_id',$almacen->proveedor_id)
-                                            ->groupBy('clues')->first();
-            
+                                            ->groupBy('clues');
+            if(isset($parametros['mes'])){
+                if($parametros['mes']){
+                    $presupuesto_unidad_medica = $presupuesto_unidad_medica->where('mes',$parametros['mes']);
+                }
+            }
+
+            $presupuesto_unidad_medica = $presupuesto_unidad_medica->first();
             return Response::json([ 'data' => $presupuesto_unidad_medica],200);
         } catch (\Exception $e) {
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
