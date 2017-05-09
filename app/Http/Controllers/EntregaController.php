@@ -129,8 +129,6 @@ class EntregaController extends Controller
             $pedido = Pedido::find($input['pedido_id']);
 
 
-
-
             if(!$pedido){
                 throw new Exception("El pedido no existe");
             }
