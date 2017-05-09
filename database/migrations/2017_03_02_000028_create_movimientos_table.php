@@ -18,7 +18,7 @@ class CreateMovimientosTable extends Migration{
 		    $table->string('servidor_id', 4);
 		    $table->integer('incremento');
 		    $table->string('almacen_id', 255);
-		    $table->string('tipo_movimiento_id',4);
+		    $table->integer('tipo_movimiento_id')->unsigned();
         $table->string('status', 10)->comment('BR BORRADOR\nFI FINALIZADO\n');
 		    $table->date('fecha_movimiento');
 		    $table->string('observaciones', 255)->nullable();
