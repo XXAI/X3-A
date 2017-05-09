@@ -379,6 +379,10 @@ class PedidoController extends Controller
                 PedidoInsumo::create($insumo);  
             }
 
+            if($total_monto['material_curacion'] > 0){
+                $total_monto['material_curacion'] += $total_monto['material_curacion']*16/100;
+            }
+
             if(!$pedido->folio && $pedido->status != 'BR'){
                 $max_folio = Pedido::where('clues',$almacen->clues)->max('folio');
                 $anio = date('Y');
