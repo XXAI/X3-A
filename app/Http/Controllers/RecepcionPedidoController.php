@@ -334,6 +334,7 @@ class RecepcionPedidoController extends Controller
 
 	        if($parametros['status'] == 'FI')
 	        {
+	        	$total_cantidad_solicitado  = 0;
 	        	$total_monto_recibido 		= 0;
 		        $total_claves_recibido 		= 0;
 		        $total_cantidad_recibido 	= 0;
@@ -342,9 +343,14 @@ class RecepcionPedidoController extends Controller
 	        	foreach ($pedido_totales as $key => $value) {
 	        		if($value['cantidad_recibida'] != null)
 	        		{
+
+	        			$total_cantidad_solicitado 	+= $value['cantidad_solicitada'];
+	        			
 	        			$total_cantidad_recibido 	+= $value['cantidad_recibida'];
 	        			$total_monto_recibido 		+= $value['monto_recibido'];			
 	        			$total_claves_recibido++;
+
+
 	        		}
 	        	}
 
@@ -352,6 +358,9 @@ class RecepcionPedidoController extends Controller
 	        	$pedido->total_claves_recibidas 	= $total_claves_recibido;
 	        	$pedido->total_cantidad_recibida 	= $total_cantidad_recibido;
 
+	        	if($total_cantidad_solicitado == $total_cantidad_recibido)
+	        		$pedido->status = "FI";
+	        	
 	        	$pedido->update();
 
 	        }
