@@ -197,7 +197,16 @@ class RecepcionPedidoController extends Controller
         }
 
         //Se carga un scope con el cual obtenemos los nombres o descripciones de los catalogos que utiliza insumos_medicos
-        $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->with('informacion','generico.grupos')->lists("precio","clave");
+        $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes")->get();
+        $lista_insumos = array();
+        foreach ($insumos as $key => $value) {
+        	$array_datos = array();
+        	$array_datos['precio'] = $value['precio'];
+        	$array_datos['clave'] = $value['clave'];
+        	$array_datos['tipo'] = $value['tipo'];
+        	$lista_insumos[$value['clave']] = $array_datos;
+        }
+        //return Response::json(['error' => $lista_insumos], HttpResponse::HTTP_CONFLICT);
 		/**/
 
 		$pedido = Pedido::with(['recepciones'=>function($recepciones){
@@ -262,16 +271,21 @@ class RecepcionPedidoController extends Controller
 	        
 	        $stock = $parametros['stock'];
 
-	       
+
 	        foreach ($stock as $key => $value) {
 	        	$reglas_stock = [
 		            'almacen_id'        	=> 'required',
 		            'clave_insumo_medico'   => 'required',
 		            'lote'     				=> 'required',
-		            'fecha_caducidad'     	=> 'required',
 		            'codigo_barras'     	=> 'required',
 					'existencia'     		=> 'required'
 		        ];
+
+		        $tipo_insumo = $lista_insumos[$value['clave_insumo_medico']]['tipo'];
+
+		        if($tipo_insumo == "ME")
+		        	$reglas_stock['fecha_caducidad'] = 'required';
+
 				$value['almacen_id'] = $almacen->id;
 
 		        $v = Validator::make($value, $reglas_stock, $mensajes);
@@ -280,17 +294,36 @@ class RecepcionPedidoController extends Controller
 		            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 		        }
 
-		        
-		        if($this->validacion_fecha_caducidad($value['fecha_caducidad']))
-		        {
-			        if($parametros['status'] == 'FI')
-			        {
-						$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first();
+		        if($parametros['status'] == 'FI')
+				{
+					$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
 
-						$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first();
+					if($tipo_insumo == "ME") //Verifico si es medicamento o material de curación, para agregar el IVA
+		        	{		        		
+		        		if($this->validacion_fecha_caducidad($value['fecha_caducidad'])) //Validacion de Fecha de caducidad
+				        {				    		
+							$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
+							$pedido_insumo->cantidad_recibida += $value['existencia'];
+							$pedido_insumo->monto_recibido 	  += ( $value['existencia'] * $pedido_insumo->precio_unitario );
+							$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
+
+							if($insert_stock){
+								$insert_stock->existencia += $value['existencia'];
+								$insert_stock->save();
+							}else{					
+								$insert_stock = Stock::create($value);
+							}
+							
+						}else
+						{
+							return Response::json(['error' => 'Existe medicamento con fecha de caducidad menor a 6 meses, favor de verificar'], HttpResponse::HTTP_CONFLICT);
+						}	
+		        	}else
+		        	{
+		        		$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
 						$pedido_insumo->cantidad_recibida += $value['existencia'];
-						$pedido_insumo->monto_recibido 	  += ( $value['existencia'] * $pedido_insumo->precio_unitario );
-						$pedido_insumo->update();
+						$pedido_insumo->monto_recibido 	  += ( $value['existencia'] * $pedido_insumo->precio_unitario ) * (1.16);
+						$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
 
 						if($insert_stock){
 							$insert_stock->existencia += $value['existencia'];
@@ -298,28 +331,30 @@ class RecepcionPedidoController extends Controller
 						}else{					
 							$insert_stock = Stock::create($value);
 						}
-					}else
-					{
-						$value['existencia'] = 0;
-						$insert_stock = Stock::create($value);
-					}
+		        	}
 				}else
 				{
-					return Response::json(['error' => 'Existe medicamento con fecha de caducidad menor a 6 meses, favor de verificar'], HttpResponse::HTTP_CONFLICT);
+					$value['existencia'] = 0;
+					$insert_stock = Stock::create($value);
 				}
 
-		        $reglas_movimiento_insumos = [
+		       $reglas_movimiento_insumos = [
 					'movimiento_id'		=> 'required',
 		            'cantidad'        	=> 'required',
 		            'precio_unitario'   => 'required',
 		            'precio_total'     	=> 'required'
 		        ];
 
-		        $value['precio_unitario'] 	= $insumos[$value['clave_insumo_medico']];
-		        $value['precio_total'] 		= ($insumos[$value['clave_insumo_medico']] * $value['cantidad']);
+		        $value['precio_unitario'] 	= $lista_insumos[$value['clave_insumo_medico']]['precio'];
+		        $value['iva'] = 0;
 
+		        if($tipo_insumo != "ME")  //Verifico si es material de curación, para agregar el IVA
+		        {
+		        	$value['iva'] = ($value['precio_unitario'] * $value['cantidad']) * (0.16);
+		        }	
+		        $value['precio_total'] 		= ($value['precio_unitario'] * $value['cantidad']) + $value['iva'];
 
-				$value['movimiento_id'] = $movimiento->id;
+		        $value['movimiento_id'] = $movimiento->id;
 
 		        $v = Validator::make($value, $reglas_movimiento_insumos, $mensajes);
 
@@ -331,25 +366,21 @@ class RecepcionPedidoController extends Controller
 		        $movimiento_insumo = MovimientoInsumos::Create($value);	        	
 	        }
 
-	        if($parametros['status'] == 'FI')
+	        if($parametros['status'] == 'FI') //Verificamos si se finaliza la recepcion (parcial o completa)
 	        {
 	        	$total_cantidad_solicitado  = 0;
 	        	$total_monto_recibido 		= 0;
 		        $total_claves_recibido 		= 0;
 		        $total_cantidad_recibido 	= 0;
 
-	        	$pedido_totales = PedidoInsumo::where("pedido_id", $pedido->id)->get();
+	        	$pedido_totales = PedidoInsumo::where("pedido_id", $pedido->id)->get(); //Recorremos los insumos del pedido para actualizar los montos (cantidad, claves montos)
 	        	foreach ($pedido_totales as $key => $value) {
 	        		if($value['cantidad_recibida'] != null)
 	        		{
-
-	        			$total_cantidad_solicitado 	+= $value['cantidad_solicitada'];
-	        			
+	        			$total_cantidad_solicitado 	+= $value['cantidad_solicitada'];	        			
 	        			$total_cantidad_recibido 	+= $value['cantidad_recibida'];
 	        			$total_monto_recibido 		+= $value['monto_recibido'];			
 	        			$total_claves_recibido++;
-
-
 	        		}
 	        	}
 
