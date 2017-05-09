@@ -272,8 +272,6 @@ class RecepcionPedidoController extends Controller
 		            'fecha_caducidad'     	=> 'required',
 		            'codigo_barras'     	=> 'required',
 					'existencia'     		=> 'required'
-					//'marca_id'     		=> 'required',
-		            //'existencia_unidosis' => 'required'
 		        ];
 				$value['almacen_id'] = $almacen->id;
 
@@ -352,8 +350,7 @@ class RecepcionPedidoController extends Controller
     {
     	$fecha = date('Y-m-j');
 		$nuevafecha = strtotime ( '+6 month' , strtotime ( $fecha ) ) ;
-		$fecha_validar_convertida = strtotime ( '+6 month' , strtotime ( $fecha_validar ) ) ; 
-    	
+		$fecha_validar_convertida = strtotime ( $fecha_validar ) ; 
     	
     	if($nuevafecha < $fecha_validar_convertida)
     		return true;
