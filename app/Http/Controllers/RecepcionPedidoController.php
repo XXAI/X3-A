@@ -15,6 +15,7 @@ use App\Models\Pedido;
 use App\Models\MovimientoPedido;
 use App\Models\Proveedor;
 use App\Models\Insumo;
+use App\Models\PedidoInsumo;
 
 use App\Models\Usuario;
 
@@ -220,7 +221,6 @@ class RecepcionPedidoController extends Controller
 			$recepcion->pedido_id = $pedido->id;
 		}
 
-
 		if(!isset($parametros['fecha_movimiento'])){
 			$parametros['fecha_movimiento'] = date('Y-m-d');
 		}
@@ -246,8 +246,6 @@ class RecepcionPedidoController extends Controller
 	            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 	        }
 
-	        
-
 			if($recepcion->entradaAbierta){
 				
 				$movimiento = $recepcion->entradaAbierta;
@@ -263,6 +261,8 @@ class RecepcionPedidoController extends Controller
 
 	        
 	        $stock = $parametros['stock'];
+
+	       
 
 	        foreach ($stock as $key => $value) {
 	        	$reglas_stock = [
@@ -287,7 +287,12 @@ class RecepcionPedidoController extends Controller
 			        if($parametros['status'] == 'FI')
 			        {
 						$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first();
-						
+
+						$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first();
+						$pedido_insumo->cantidad_recibida += $value['existencia'];
+						$pedido_insumo->monto_recibido 	  += ( $pedido_insumo->cantidad_recibida * $pedido_insumo->precio_unitario );
+						$pedido_insumo->update();
+
 						if($insert_stock){
 							$insert_stock->existencia += $value['existencia'];
 							$insert_stock->save();
@@ -325,6 +330,30 @@ class RecepcionPedidoController extends Controller
 		        $value['stock_id'] = $insert_stock->id;
 
 		        $movimiento_insumo = MovimientoInsumos::Create($value);	        	
+	        }
+
+	        if($parametros['status'] == 'FI')
+	        {
+	        	$total_monto_recibido 		= 0;
+		        $total_claves_recibido 		= 0;
+		        $total_cantidad_recibido 	= 0;
+
+	        	$pedido_totales = PedidoInsumo::where("pedido_id", $pedido->id)->get();
+	        	foreach ($pedido_totales as $key => $value) {
+	        		if($value['cantidad_recibida'] != null)
+	        		{
+	        			$total_cantidad_recibido 	+= $value['cantidad_recibida'];
+	        			$total_monto_recibido 		+= $value['monto_recibido'];			
+	        			$total_claves_recibido++;
+	        		}
+	        	}
+
+	        	$pedido->total_monto_recibido 		= $total_monto_recibido;
+	        	$pedido->total_claves_recibidas 	= $total_claves_recibido;
+	        	$pedido->total_cantidad_recibida 	= $total_cantidad_recibido;
+
+	        	$pedido->update();
+
 	        }
 	        DB::commit();
 	        return Response::json([ 'data' => $movimiento ],200);
