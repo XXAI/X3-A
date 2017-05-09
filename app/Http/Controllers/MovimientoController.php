@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, DB;
 
 
-use App\Models\Movimientos;
+use App\Models\Movimiento;
 use App\Models\Stock;
 use App\Models\MovimientoInsumos;
 use App\Models\TiposMovimientos;
@@ -80,17 +80,17 @@ class MovimientoController extends Controller
 
         if ($parametros['q']) {
                  ///$data =  Movimientos::with('MovimientoInsumos')->where(function($query) use ($parametros) {
-                 $data =  Movimientos::where(function($query) use ($parametros) {
+                 $data =  Movimiento::where(function($query) use ($parametros) {
                  $query->where('folio','LIKE',"%".$parametros['q']."%")->where('almacen_id',$parametros['almacen']);
              });
         } else {
             
                  if($parametros['tipo']){
                 //$data =  Movimientos::with('MovimientoInsumos')->where('tipo_movimiento_id',$parametros['tipo']);
-                $data =  Movimientos::where('almacen_id',$parametros['almacen'])->where('tipo_movimiento_id',$parametros['tipo']);
+                $data =  Movimiento::where('almacen_id',$parametros['almacen'])->where('tipo_movimiento_id',$parametros['tipo']);
                 }else{
                     //$data =  Movimientos::with('MovimientoInsumos');
-                    $data =  Movimientos::where('almacen_id',$parametros['almacen']);
+                    $data =  Movimiento::where('almacen_id',$parametros['almacen']);
                     //dd(json_encode($data));
                 }
 
@@ -178,7 +178,7 @@ class MovimientoController extends Controller
 
                 DB::beginTransaction();
                 try{
-                        $data = new Movimientos;
+                        $data = new Movimiento;
                         $success = $this->ValidarMetadatos($datos, $data);
 
                 } catch (\Exception $e) {
@@ -233,7 +233,7 @@ class MovimientoController extends Controller
 
                 DB::beginTransaction();
                 try{
-                        $data = new Movimientos;
+                        $data = new Movimiento;
                         $success = $this->ValidarMetadatosSalida($datos, $data);
 
                 } catch (\Exception $e) {
@@ -270,7 +270,7 @@ class MovimientoController extends Controller
     public function show($id)
     {
 
-        $data =  Movimientos::with('MovimientoInsumos','Almacen')->find($id);
+        $data =  Movimiento::with('MovimientoInsumos','Almacen')->find($id);
 
         if(!$data){
 			return Response::json(array("status" => 404,"messages" => "No se encuentra el movimiento solicitado"), 200);

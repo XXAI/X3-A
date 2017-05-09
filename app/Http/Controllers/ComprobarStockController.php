@@ -34,12 +34,18 @@ class ComprobarStockController extends Controller
             $existencia_unidosis += $stock->existencia_unidosis;
         }               
 
-        $objeto_response = (object) array('almacen_id' => $parametros['almacen'],
-                                          'clave' => $parametros['clave'],
-                                          'existencia' => $existencia,
-                                          'existencia_unidosis' => $existencia_unidosis);
+        $objeto_response = array('almacen_id' => $parametros['almacen'],
+                                        'clave' => $parametros['clave'],
+                                        'existencia' => $existencia,
+                                        'existencia_unidosis' => $existencia_unidosis,
+                                        'data' => $stocks,
+                                        'status' => 200,
+                                        'messages' => 'Operación realizada con exito',
+                                        'total' => count($stocks));
 
-        return Response::json([ 'data' => $objeto_response ],HttpResponse::HTTP_OK);
+        return Response::json($objeto_response,HttpResponse::HTTP_OK);
+        //return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data, "total" => count($data)), 200);
+
     }
 
     /**
