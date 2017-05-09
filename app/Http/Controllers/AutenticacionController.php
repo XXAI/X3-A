@@ -18,6 +18,13 @@ class AutenticacionController extends Controller
         $credentials = $request->only('id', 'password');
 
         try {
+
+            /*$usuarios = Usuario::where('su',0)->get();
+            foreach ($usuarios as $usuario) {
+                //$usuario->password = str_replace(['á','é','í','ó','ú',' ','.','(',')'],['a','e','i','o','u'], mb_strtolower($usuario->nombre,'UTF-8'));
+                $usuario->password = Hash::make($usuario->password);
+                $usuario->save();
+            }*/
            
             $usuario = Usuario::where('id',$credentials['id'])->first();
 
