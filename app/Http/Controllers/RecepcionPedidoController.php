@@ -449,8 +449,11 @@ class RecepcionPedidoController extends Controller
 						if($insert_stock){
 							$insert_stock->existencia += 0;
 							$insert_stock->save();
-						}else{					
+						}else{		
+
 							$insert_stock = Stock::create($value);
+							$insert_stock->existencia = 0;
+							$insert_stock->update();
 						}
 					}
 				}else
