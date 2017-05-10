@@ -19,6 +19,7 @@ class CreateInsumosMedicosTable extends Migration{
           $table->integer('generico_id')->unsigned();
           $table->boolean('es_causes')->nullable()->default(null);
           $table->boolean('es_unidosis')->nullable()->default(null);
+          $table->boolean('tiene_fecha_caducidad')->default(0);
           $table->text('descripcion')->nullable();
           
           $table->primary('clave');
