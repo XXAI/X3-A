@@ -27,7 +27,7 @@ use \Validator,\Hash, \Response, DB;
 class RecepcionPedidoController extends Controller
 {
 
-	public function obtenerDatosPresupuesto(){
+	public function obtenerDatosPresupuesto($mes){
         try{
             $obj =  JWTAuth::parseToken()->getPayload();
             $usuario = Usuario::with('almacenes')->find($obj->get('id'));
@@ -47,11 +47,11 @@ class RecepcionPedidoController extends Controller
                                             ->where('clues',$almacen->clues)
                                             ->where('proveedor_id',$almacen->proveedor_id)
                                             ->groupBy('clues');
-            /*if(isset($parametros['mes'])){
-                if($parametros['mes']){
-                    $presupuesto_unidad_medica = $presupuesto_unidad_medica->where('mes',$parametros['mes']);
+            if(isset($mes)){
+                if($mes){
+                    $presupuesto_unidad_medica = $presupuesto_unidad_medica->where('mes',$mes);
                 }
-            }*/
+            }
 
             $presupuesto_unidad_medica = $presupuesto_unidad_medica->first();
             return $presupuesto_unidad_medica;
@@ -392,8 +392,11 @@ class RecepcionPedidoController extends Controller
 				{
 			        if($parametros['status'] == 'FI')
 					{
-						//$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
-						$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
+						//
+						if(isset($value['codigo_barras']))
+							$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
+						else
+							$insert_stock = Stock::whereNull('codigo_barras')->orWhere('codigo_barras','')->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
 
 						if($tipo_insumo == "ME") //Verifico si es medicamento o material de curación, para agregar el IVA
 			        	{		        		
@@ -486,7 +489,9 @@ class RecepcionPedidoController extends Controller
 		        $total_cantidad_recibido 	= 0;
 
 	        	$pedido_totales = PedidoInsumo::where("pedido_id", $pedido->id)->get(); //Recorremos los insumos del pedido para actualizar los montos (cantidad, claves montos)
+	        	$validador_cantidad_solicitada = 0;
 	        	foreach ($pedido_totales as $key => $value) {
+	        		$validador_cantidad_solicitada += $value['cantidad_solicitada'];
 	        		if($value['cantidad_recibida'] != null)
 	        		{
 	        			$tipo_insumo 	= $lista_insumos[$value['insumo_medico_clave']]['tipo'];
@@ -506,13 +511,13 @@ class RecepcionPedidoController extends Controller
 	        	$pedido->total_claves_recibidas 	= $total_claves_recibido;
 	        	$pedido->total_cantidad_recibida 	= $total_cantidad_recibido;
 
-	        	if($total_cantidad_solicitado == $total_cantidad_recibido)
+	        	if($validador_cantidad_solicitada == $total_cantidad_recibido)
 	        		$pedido->status = "FI";
 	        	
 	        	$pedido->update();
 
 	        	/*Calculo de unidad presupuesto*/
-	        	$unidad_presupuesto = $this->obtenerDatosPresupuesto();
+	        	$unidad_presupuesto = $this->obtenerDatosPresupuesto(substr($pedido->fecha,5,2) );
 
 	        	$unidad_presupuesto->causes_comprometido 				-= $causes_unidad_presupuesto;
 	        	$unidad_presupuesto->causes_devengado 					+= $causes_unidad_presupuesto;
