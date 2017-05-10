@@ -216,6 +216,7 @@ class RecepcionPedidoController extends Controller
             $almacen = $usuario->almacenes[0];
         }
 
+        
         /*Recepcion de precios por insumo*/
 		$proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
 
@@ -333,8 +334,8 @@ class RecepcionPedidoController extends Controller
 				{
 					$reglas_movimiento_pedido = [
 			            'entrega'        	=> 'required',
-			            'recibe'    => 'required',
-			            'fecha_movimiento'     	=> 'required'
+			            'recibe'    		=> 'required',
+			            'fecha_movimiento'  => 'required'
 			        ];
 
 			        $v = Validator::make($parametros, $reglas_movimiento_pedido, $mensajes);
@@ -390,14 +391,14 @@ class RecepcionPedidoController extends Controller
 
 		        if($this->validacion_fecha_caducidad($value['fecha_caducidad'])) //Validacion de Fecha de caducidad
 				{
+					if(isset($value['codigo_barras']))
+						$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->first(); //Verifica si existe el medicamento en el stock
+					else
+						$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->whereNull('codigo_barras')->orWhere('codigo_barras','')->first(); //Verifica si existe el medicamento en el stock
+
+					
 			        if($parametros['status'] == 'FI')
 					{
-						//
-						if(isset($value['codigo_barras']))
-							$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
-						else
-							$insert_stock = Stock::whereNull('codigo_barras')->orWhere('codigo_barras','')->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
-
 						if($tipo_insumo == "ME") //Verifico si es medicamento o material de curación, para agregar el IVA
 			        	{		        		
 			        						    		
@@ -437,14 +438,20 @@ class RecepcionPedidoController extends Controller
 							if($insert_stock){
 								$insert_stock->existencia += $value['existencia'];
 								$insert_stock->save();
+								
 							}else{					
 								$insert_stock = Stock::create($value);
+								
 							}
 			        	}
 					}else
 					{
-						$value['existencia'] = 0;
-						$insert_stock = Stock::create($value);
+						if($insert_stock){
+							$insert_stock->existencia += 0;
+							$insert_stock->save();
+						}else{					
+							$insert_stock = Stock::create($value);
+						}
 					}
 				}else
 				{
@@ -466,7 +473,7 @@ class RecepcionPedidoController extends Controller
 		        {
 		        	$value['iva'] = ($value['precio_unitario'] * $value['cantidad']) * (0.16);
 		        }	
-		        $value['precio_total'] 		= ($value['precio_unitario'] * $value['cantidad']) + $value['iva'];
+		        $value['precio_total'] 		= ($value['precio_unitario'] * $value['cantidad']);
 
 		        $value['movimiento_id'] = $movimiento->id;
 
