@@ -424,8 +424,9 @@ class RecepcionPedidoController extends Controller
 							$pedido_insumo->cantidad_recibida += $value['existencia'];
 
 							$cantidad_recibida 						= ( $value['existencia'] * $pedido_insumo->precio_unitario ) * (1.16);
+							$cantidad_recibida_sin_iva				= ( $value['existencia'] * $pedido_insumo->precio_unitario );
 
-							$pedido_insumo->monto_recibido 	  		+= $cantidad_recibida;
+							$pedido_insumo->monto_recibido 	  		+= $cantidad_recibida_sin_iva;
 							$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
 
 							$material_curacion_unidad_presupuesto 	+= $cantidad_recibida; //Se suma el monto de material de curazion
@@ -488,9 +489,15 @@ class RecepcionPedidoController extends Controller
 	        	foreach ($pedido_totales as $key => $value) {
 	        		if($value['cantidad_recibida'] != null)
 	        		{
+	        			$tipo_insumo 	= $lista_insumos[$value['insumo_medico_clave']]['tipo'];
+		        
 	        			$total_cantidad_solicitado 	+= $value['cantidad_solicitada'];	        			
 	        			$total_cantidad_recibido 	+= $value['cantidad_recibida'];
-	        			$total_monto_recibido 		+= $value['monto_recibido'];			
+	        			if($tipo_insumo == "ME")
+	        				$total_monto_recibido 		+= $value['monto_recibido'];
+	        				else
+	        				$total_monto_recibido 		+= ( $value['monto_recibido'] * 1.16);
+	        							
 	        			$total_claves_recibido++;
 	        		}
 	        	}
