@@ -277,7 +277,6 @@ class RecepcionPedidoController extends Controller
 		            'almacen_id'        	=> 'required',
 		            'clave_insumo_medico'   => 'required',
 		            'lote'     				=> 'required',
-		            'codigo_barras'     	=> 'required',
 					'existencia'     		=> 'required'
 		        ];
 
@@ -294,17 +293,33 @@ class RecepcionPedidoController extends Controller
 		            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 		        }
 
-		        if($parametros['status'] == 'FI')
+		        if($this->validacion_fecha_caducidad($value['fecha_caducidad'])) //Validacion de Fecha de caducidad
 				{
-					$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
+			        if($parametros['status'] == 'FI')
+					{
+						$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
 
-					if($tipo_insumo == "ME") //Verifico si es medicamento o material de curación, para agregar el IVA
-		        	{		        		
-		        		if($this->validacion_fecha_caducidad($value['fecha_caducidad'])) //Validacion de Fecha de caducidad
-				        {				    		
-							$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
+						if($tipo_insumo == "ME") //Verifico si es medicamento o material de curación, para agregar el IVA
+			        	{		        		
+			        						    		
+								$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
+								$pedido_insumo->cantidad_recibida += $value['existencia'];
+								$pedido_insumo->monto_recibido 	  += ( $value['existencia'] * $pedido_insumo->precio_unitario );
+								$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
+
+								if($insert_stock){
+									$insert_stock->existencia += $value['existencia'];
+									$insert_stock->save();
+								}else{					
+									$insert_stock = Stock::create($value);
+								}
+								
+								
+			        	}else
+			        	{
+			        		$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
 							$pedido_insumo->cantidad_recibida += $value['existencia'];
-							$pedido_insumo->monto_recibido 	  += ( $value['existencia'] * $pedido_insumo->precio_unitario );
+							$pedido_insumo->monto_recibido 	  += ( $value['existencia'] * $pedido_insumo->precio_unitario ) * (1.16);
 							$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
 
 							if($insert_stock){
@@ -313,30 +328,16 @@ class RecepcionPedidoController extends Controller
 							}else{					
 								$insert_stock = Stock::create($value);
 							}
-							
-						}else
-						{
-							return Response::json(['error' => 'Existe medicamento con fecha de caducidad menor a 6 meses, favor de verificar'], HttpResponse::HTTP_CONFLICT);
-						}	
-		        	}else
-		        	{
-		        		$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
-						$pedido_insumo->cantidad_recibida += $value['existencia'];
-						$pedido_insumo->monto_recibido 	  += ( $value['existencia'] * $pedido_insumo->precio_unitario ) * (1.16);
-						$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
-
-						if($insert_stock){
-							$insert_stock->existencia += $value['existencia'];
-							$insert_stock->save();
-						}else{					
-							$insert_stock = Stock::create($value);
-						}
-		        	}
+			        	}
+					}else
+					{
+						$value['existencia'] = 0;
+						$insert_stock = Stock::create($value);
+					}
 				}else
 				{
-					$value['existencia'] = 0;
-					$insert_stock = Stock::create($value);
-				}
+					return Response::json(['error' => 'El medicamento con clave '.$value['clave_insumo_medico']."  con número de lote ".$value['lote']." tiene fecha de caducidad menor a 6 meses"], 500);
+				}	
 
 		       $reglas_movimiento_insumos = [
 					'movimiento_id'		=> 'required',
