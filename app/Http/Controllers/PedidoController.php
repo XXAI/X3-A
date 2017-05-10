@@ -193,7 +193,6 @@ class PedidoController extends Controller
             $reglas['proveedor_id'] = 'required';
             $parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
             $parametros['datos']['almacen_proveedor'] = null;
-            //Harima: Checa proveedor seleccionado, por el momento se saca del alamancen, pero luego podemos poner un dropbox por si se dos o mas proveedores son asignados por clues
         }elseif($almacen->nivel_almacen == 2){
             $reglas['almacen_proveedor'] = 'required';
         }
@@ -217,18 +216,19 @@ class PedidoController extends Controller
             $total_claves = count($parametros['insumos']);
             $total_insumos = 0;
             $total_monto = 0;
+            $monto_iva = 0;
 
             foreach ($parametros['insumos'] as $key => $value) {
                 $reglas_insumos = [
                     'clave'           => 'required',
-                    'cantidad'        => 'required'
+                    'cantidad'        => 'required|integer|min:1'
                 ];  
 
                 $v = Validator::make($value, $reglas_insumos, $mensajes);
 
                 if ($v->fails()) {
                     DB::rollBack();
-                    return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+                    return Response::json(['error' => 'El insumo con clave: '.$value['clave'].' tiene un valor incorrecto.'], 500);
                 }      
                 
                 $insumo = [
@@ -243,7 +243,15 @@ class PedidoController extends Controller
                 $total_insumos += $value['cantidad'];
                 $total_monto += $value['monto'];
 
+                if($value['tipo'] == 'MC'){
+                    $monto_iva += $value['monto'];
+                }
+
                 $object_insumo = PedidoInsumo::create($insumo);
+            }
+
+            if($monto_iva > 0){
+                $total_monto += $monto_iva*16/100;
             }
             
             $pedido->total_claves_solicitadas = $total_claves;
@@ -303,7 +311,6 @@ class PedidoController extends Controller
             $reglas['proveedor_id'] = 'required';
             $parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
             $parametros['datos']['almacen_proveedor'] = null;
-            //Harima: Checa proveedor seleccionado, por el momento se saca del alamancen, pero luego podemos poner un dropbox por si se dos o mas proveedores son asignados por clues
         }elseif($almacen->nivel_almacen == 2){
             $reglas['almacen_proveedor'] = 'required';
         }
@@ -347,14 +354,14 @@ class PedidoController extends Controller
 
                 $reglas_insumos = [
                     'clave'           => 'required',
-                    'cantidad'        => 'required'
+                    'cantidad'        => 'required|integer|min:1'
                 ];  
 
                 $v = Validator::make($value, $reglas_insumos, $mensajes);
 
                 if ($v->fails()) {
                     DB::rollBack();
-                    return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+                    return Response::json(['error' => 'El insumo con clave: '.$value['clave'].' tiene un valor incorrecto.'], 500);
                 }      
                 
                 $insumo = [
