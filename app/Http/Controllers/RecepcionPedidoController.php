@@ -16,6 +16,8 @@ use App\Models\MovimientoPedido;
 use App\Models\Proveedor;
 use App\Models\Insumo;
 use App\Models\PedidoInsumo;
+use App\Models\Presupuesto;
+use App\Models\UnidadMedicaPresupuesto;
 
 use App\Models\Usuario;
 
@@ -24,6 +26,40 @@ use \Validator,\Hash, \Response, DB;
 
 class RecepcionPedidoController extends Controller
 {
+
+	public function obtenerDatosPresupuesto(){
+        try{
+            $obj =  JWTAuth::parseToken()->getPayload();
+            $usuario = Usuario::with('almacenes')->find($obj->get('id'));
+
+            if(count($usuario->almacenes) > 1){
+                //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
+                return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
+            }else{
+                $almacen = $usuario->almacenes[0];
+            }
+
+            $parametros = Input::all();
+
+            $presupuesto = Presupuesto::where('activo',1)->first();
+
+            $presupuesto_unidad_medica = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
+                                            ->where('clues',$almacen->clues)
+                                            ->where('proveedor_id',$almacen->proveedor_id)
+                                            ->groupBy('clues');
+            /*if(isset($parametros['mes'])){
+                if($parametros['mes']){
+                    $presupuesto_unidad_medica = $presupuesto_unidad_medica->where('mes',$parametros['mes']);
+                }
+            }*/
+
+            $presupuesto_unidad_medica = $presupuesto_unidad_medica->first();
+            return $presupuesto_unidad_medica;
+        } catch (\Exception $e) {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
+
     public function index()
     {
     	$pedidos = Movimiento::with("movimientoInsumos.stock")->get();
@@ -168,6 +204,7 @@ class RecepcionPedidoController extends Controller
 
         $parametros = Input::all();
 
+        
         $obj =  JWTAuth::parseToken()->getPayload();
         $usuario = Usuario::with('almacenes')->find($obj->get('id'));
 
@@ -201,12 +238,12 @@ class RecepcionPedidoController extends Controller
         $lista_insumos = array();
         foreach ($insumos as $key => $value) {
         	$array_datos = array();
-        	$array_datos['precio'] = $value['precio'];
-        	$array_datos['clave'] = $value['clave'];
-        	$array_datos['tipo'] = $value['tipo'];
+        	$array_datos['precio'] 			= $value['precio'];
+        	$array_datos['clave'] 			= $value['clave'];
+        	$array_datos['tipo'] 			= $value['tipo'];
+        	$array_datos['es_causes'] 		= $value['es_causes'];
         	$lista_insumos[$value['clave']] = $array_datos;
         }
-        //return Response::json(['error' => $lista_insumos], HttpResponse::HTTP_CONFLICT);
 		/**/
 
 		$pedido = Pedido::with(['recepciones'=>function($recepciones){
@@ -225,6 +262,7 @@ class RecepcionPedidoController extends Controller
 			$recepcion = $pedido->recepciones[0];
 		}else{
 			$recepcion = new MovimientoPedido;
+
 			$recepcion->recibe = 'RECIBE';
 			$recepcion->entrega = 'ENTREGA';
 			$recepcion->pedido_id = $pedido->id;
@@ -252,6 +290,7 @@ class RecepcionPedidoController extends Controller
 	        $v = Validator::make($datos_movimiento, $reglas, $mensajes);
 
 	        if ($v->fails()) {
+	        	DB::rollBack();
 	            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 	        }
 
@@ -260,17 +299,71 @@ class RecepcionPedidoController extends Controller
 				$movimiento = $recepcion->entradaAbierta;
 				$movimiento->update($datos_movimiento);
 
-				MovimientoInsumos::where("movimiento_id", $movimiento->id)->delete();    
+				MovimientoInsumos::where("movimiento_id", $movimiento->id)->forceDelete();    
 
+				/*En caso de Existir una abierta actualizamos datos*/
+				if($parametros['status'] == 'FI') //Actualizamod datos en caso de ser necesario
+				{
+					$reglas_movimiento_pedido = [
+			            'entrega'        	=> 'required',
+			            'recibe'    => 'required',
+			            'fecha_movimiento'     	=> 'required'
+			        ];
+
+			        $v = Validator::make($parametros, $reglas_movimiento_pedido, $mensajes);
+
+			        if ($v->fails()) {
+			        	DB::rollBack();
+			            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+			        }
+
+			        $recepcion->recibe = $parametros['entrega']; // Se actualiza la persona que entrega
+					$recepcion->entrega = $parametros['recibe']; // Se actualiza la perosna que recibe
+
+					$recepcion->save();
+
+			    }
+				/**/
 			}else{
 				$movimiento = Movimiento::create($datos_movimiento);
 				$recepcion->movimiento_id = $movimiento->id;
+
+				
+				if($parametros['status'] == 'FI') //Actualizamod datos en caso de ser necesario
+				{
+					$reglas_movimiento_pedido = [
+			            'entrega'        	=> 'required',
+			            'recibe'    => 'required',
+			            'fecha_movimiento'     	=> 'required'
+			        ];
+
+			        $v = Validator::make($parametros, $reglas_movimiento_pedido, $mensajes);
+
+			        if ($v->fails()) {
+			        	DB::rollBack();
+			            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+			        }
+
+			        $recepcion->recibe = $parametros['entrega']; // Se actualiza la persona que entrega
+					$recepcion->entrega = $parametros['recibe']; // Se actualiza la perosna que recibe
+
+					$movimiento->fecha_movimiento 	= $parametros['fecha_movimiento']; //Se actualizan datos de movimiento (fecha)
+					$movimiento->observaciones 		= $parametros['observaciones']; //Se actualizan datos de movimiento (observaciones)
+
+					$movimiento->update($datos_movimiento);
+			    }
+
 				$recepcion->save();
 			}
 
 	        
 	        $stock = $parametros['stock'];
 
+	        /*Variable para ir sumando lo devengado y actualizar la tabla de unidad presupuesto*/
+	        $causes_unidad_presupuesto 				= 0;
+	        $no_causes_unidad_presupuesto 			= 0;
+	        $material_curacion_unidad_presupuesto 	= 0;
+	        /*                                                                                  */
 
 	        foreach ($stock as $key => $value) {
 	        	$reglas_stock = [
@@ -280,7 +373,8 @@ class RecepcionPedidoController extends Controller
 					'existencia'     		=> 'required'
 		        ];
 
-		        $tipo_insumo = $lista_insumos[$value['clave_insumo_medico']]['tipo'];
+		        $tipo_insumo 	= $lista_insumos[$value['clave_insumo_medico']]['tipo'];
+		        $es_causes 		= $lista_insumos[$value['clave_insumo_medico']]['es_causes'];
 
 		        if($tipo_insumo == "ME")
 		        	$reglas_stock['fecha_caducidad'] = 'required';
@@ -290,6 +384,7 @@ class RecepcionPedidoController extends Controller
 		        $v = Validator::make($value, $reglas_stock, $mensajes);
 
 		        if ($v->fails()) {
+		        	DB::rollBack();
 		            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 		        }
 
@@ -297,30 +392,43 @@ class RecepcionPedidoController extends Controller
 				{
 			        if($parametros['status'] == 'FI')
 					{
-						$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
+						//$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
+						$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first(); //Verifica si existe el medicamento en el stock
 
 						if($tipo_insumo == "ME") //Verifico si es medicamento o material de curación, para agregar el IVA
 			        	{		        		
 			        						    		
-								$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
-								$pedido_insumo->cantidad_recibida += $value['existencia'];
-								$pedido_insumo->monto_recibido 	  += ( $value['existencia'] * $pedido_insumo->precio_unitario );
-								$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
+							$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
+							$pedido_insumo->cantidad_recibida += $value['existencia'];
+							$cantidad_recibida = ( $value['existencia'] * $pedido_insumo->precio_unitario );
 
-								if($insert_stock){
-									$insert_stock->existencia += $value['existencia'];
-									$insert_stock->save();
-								}else{					
-									$insert_stock = Stock::create($value);
-								}
-								
+							$pedido_insumo->monto_recibido 	  += $cantidad_recibida;
+							$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
+
+							if($insert_stock){
+								$insert_stock->existencia += $value['existencia'];
+								$insert_stock->save();
+							}else{					
+								$insert_stock = Stock::create($value);
+							}		
+
+							if($es_causes == 1)
+								$causes_unidad_presupuesto 				+= $cantidad_recibida;
+							else
+					        	$no_causes_unidad_presupuesto 			+= $cantidad_recibida;
+					        
 								
 			        	}else
 			        	{
 			        		$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
 							$pedido_insumo->cantidad_recibida += $value['existencia'];
-							$pedido_insumo->monto_recibido 	  += ( $value['existencia'] * $pedido_insumo->precio_unitario ) * (1.16);
+
+							$cantidad_recibida 						= ( $value['existencia'] * $pedido_insumo->precio_unitario ) * (1.16);
+
+							$pedido_insumo->monto_recibido 	  		+= $cantidad_recibida;
 							$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
+
+							$material_curacion_unidad_presupuesto 	+= $cantidad_recibida; //Se suma el monto de material de curazion
 
 							if($insert_stock){
 								$insert_stock->existencia += $value['existencia'];
@@ -336,6 +444,7 @@ class RecepcionPedidoController extends Controller
 					}
 				}else
 				{
+					DB::rollBack();
 					return Response::json(['error' => 'El medicamento con clave '.$value['clave_insumo_medico']."  con número de lote ".$value['lote']." tiene fecha de caducidad menor a 6 meses"], 500);
 				}	
 
@@ -360,6 +469,7 @@ class RecepcionPedidoController extends Controller
 		        $v = Validator::make($value, $reglas_movimiento_insumos, $mensajes);
 
 		        if ($v->fails()) {
+		        	DB::rollBack();
 		            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 		        }
 		        $value['stock_id'] = $insert_stock->id;
@@ -393,6 +503,22 @@ class RecepcionPedidoController extends Controller
 	        		$pedido->status = "FI";
 	        	
 	        	$pedido->update();
+
+	        	/*Calculo de unidad presupuesto*/
+	        	$unidad_presupuesto = $this->obtenerDatosPresupuesto();
+
+	        	$unidad_presupuesto->causes_comprometido 				-= $causes_unidad_presupuesto;
+	        	$unidad_presupuesto->causes_devengado 					+= $causes_unidad_presupuesto;
+        		
+        		$unidad_presupuesto->no_causes_comprometido 			-= $no_causes_unidad_presupuesto;
+	        	$unidad_presupuesto->no_causes_devengado 				+= $no_causes_unidad_presupuesto;
+        
+        		$unidad_presupuesto->material_curacion_comprometido 	-= $material_curacion_unidad_presupuesto;
+	        	$unidad_presupuesto->material_curacion_devengado 		+= $material_curacion_unidad_presupuesto;
+
+	        	$unidad_presupuesto->update();
+        
+	        	/*Fin calculo de unidad presupuesto*/
 
 	        }
 	        DB::commit();
