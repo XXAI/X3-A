@@ -70,3 +70,5 @@ id,tipo,nombre,numero,created_at,updated_at,deleted_at
 69,AD,MICROBIOLOGÍA,15,NULL,NULL,NULL
 70,AD,"QUÍMICA CLÍNICA",16,NULL,NULL,NULL
 71,AD,"RADIOLOGÍA ",17,NULL,NULL,NULL
+72,ME,Generico,24,NULL,NULL,NULL
+73,MC,Generico,32,NULL,NULL,NULL

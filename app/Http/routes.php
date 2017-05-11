@@ -19,7 +19,7 @@ Route::post('obtener-token',    'AutenticacionController@autenticar');
 Route::post('refresh-token',    'AutenticacionController@refreshToken');
 Route::get('check-token',       'AutenticacionController@verificar');
 
-
+//Route::get('generar-excel-pedido/{id}', 'PedidoController@generarExcel');
 
     
 Route::group(['middleware' => 'jwt'], function () {
@@ -36,7 +36,7 @@ Route::group(['middleware' => 'jwt'], function () {
     
     Route::group(['middleware' => 'almacen'], function () {
         Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::get('entregas-stats',        'EntregaController@stats');     
+        Route::get('entregas-stats',        'EntregaController@stats');
     });
     Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 

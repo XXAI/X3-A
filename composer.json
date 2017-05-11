@@ -7,7 +7,8 @@
     "require": {
         "php": ">=5.5.9",
         "laravel/framework": "5.2.*",
-        "tymon/jwt-auth": "0.5.*"
+        "tymon/jwt-auth": "0.5.*",
+        "maatwebsite/excel": "~2.1.0"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
@@ -47,8 +48,8 @@
     },
     "config": {
         "preferred-install": "dist",
-        "github-oauth":{
-			"github.com":"9487e0b3c55cea824ee41ff9b489f9b00aaae048"
-		}
+        "github-oauth": {
+
+        }
     }
 }

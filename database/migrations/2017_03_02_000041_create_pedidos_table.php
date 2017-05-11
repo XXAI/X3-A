@@ -25,6 +25,7 @@ class CreatePedidosTable extends Migration{
 		    $table->string('pedido_padre', 255)->nullable();
 		    $table->string('folio', 45)->nullable();
 			$table->date('fecha');
+			$table->date('fecha_expiracion');
 		    $table->string('almacen_solicitante', 255);
 		    $table->string('almacen_proveedor', 255)->nullable();
 		    $table->integer('organismo_dirigido')->unsigned()->nullable();

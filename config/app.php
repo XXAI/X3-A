@@ -163,7 +163,10 @@ return [
          */
         Tymon\JWTAuth\Providers\JWTAuthServiceProvider::class,
 
-        
+        /*
+        * PHPExcel
+        */
+        Maatwebsite\Excel\ExcelServiceProvider::class,
 
     ],
 
@@ -211,7 +214,8 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
         'JWTAuth' => 'Tymon\JWTAuth\Facades\JWTAuth',
-        'JWTFactory' => 'Tymon\JWTAuth\Facades\JWTFactory'
+        'JWTFactory' => 'Tymon\JWTAuth\Facades\JWTFactory',
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class
 
     ],
 
