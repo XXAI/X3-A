@@ -235,7 +235,7 @@ class RecepcionPedidoController extends Controller
         }
 
         //Se carga un scope con el cual obtenemos los nombres o descripciones de los catalogos que utiliza insumos_medicos
-        $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes")->get();
+        $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad")->get();
         $lista_insumos = array();
         foreach ($insumos as $key => $value) {
         	$array_datos = array();
@@ -243,6 +243,7 @@ class RecepcionPedidoController extends Controller
         	$array_datos['clave'] 			= $value['clave'];
         	$array_datos['tipo'] 			= $value['tipo'];
         	$array_datos['es_causes'] 		= $value['es_causes'];
+        	$array_datos['caducidad'] 		= $value['tiene_fecha_caducidad'];
         	$lista_insumos[$value['clave']] = $array_datos;
         }
 		/**/
@@ -306,8 +307,8 @@ class RecepcionPedidoController extends Controller
 				if($parametros['status'] == 'FI') //Actualizamod datos en caso de ser necesario
 				{
 					$reglas_movimiento_pedido = [
-			            'entrega'        	=> 'required',
-			            'recibe'    => 'required',
+			            'entrega'        		=> 'required',
+			            'recibe'    			=> 'required',
 			            'fecha_movimiento'     	=> 'required'
 			        ];
 
@@ -376,6 +377,7 @@ class RecepcionPedidoController extends Controller
 
 		        $tipo_insumo 	= $lista_insumos[$value['clave_insumo_medico']]['tipo'];
 		        $es_causes 		= $lista_insumos[$value['clave_insumo_medico']]['es_causes'];
+		        $caducidad 		= $lista_insumos[$value['clave_insumo_medico']]['caducidad'];
 
 		        if($tipo_insumo == "ME")
 		        	$reglas_stock['fecha_caducidad'] = 'required';
@@ -389,23 +391,24 @@ class RecepcionPedidoController extends Controller
 		            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 		        }
 
-		        if($this->validacion_fecha_caducidad($value['fecha_caducidad'])) //Validacion de Fecha de caducidad
+		        if(!isset($value['fecha_caducidad']))
+		        	$value['fecha_caducidad'] = null;
+		        
+		        if($this->validacion_fecha_caducidad($value['fecha_caducidad'], $caducidad)) //Validacion de Fecha de caducidad
 				{
 					if(isset($value['codigo_barras'])){
 						$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->first(); //Verifica si existe el medicamento en el stock
 						
 					}
 					else{
-						//$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->whereNull('codigo_barras')->orWhere('codigo_barras','')->first(); //Verifica si existe el medicamento en el stock
+						
 						$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->Where(function ($query) {
 																			                $query->whereNull('codigo_barras')
 																			                      ->orWhere('codigo_barras', '');
 																			            })->first(); //Verifica si existe el medicamento en el stock
-						//return Response::json(['error' => $insert_stock], HttpResponse::HTTP_CONFLICT);
 					}
 
-					//return Response::json(['error' => $insert_stock], HttpResponse::HTTP_CONFLICT);
-			        if($parametros['status'] == 'FI')
+					if($parametros['status'] == 'FI')
 					{
 						if($tipo_insumo == "ME") //Verifico si es medicamento o material de curación, para agregar el IVA
 			        	{		        		
@@ -571,16 +574,55 @@ class RecepcionPedidoController extends Controller
     }
 
 
-    private function validacion_fecha_caducidad($fecha_validar)
+    private function validacion_fecha_caducidad($fecha_validar, $caducidad)
     {
-    	$fecha = date('Y-m-j');
-		$nuevafecha = strtotime ( '+6 month' , strtotime ( $fecha ) ) ;
-		$fecha_validar_convertida = strtotime ( $fecha_validar ) ; 
-    	
-    	if($nuevafecha < $fecha_validar_convertida)
-    		return true;
-    	else
-    		return false;
-		 
-    }
+    	if($caducidad == 1)
+    	{
+
+    		if($this->valida_fecha($fecha_validar))
+    		{
+    			
+	   	    	$fecha = date('Y-m-j');
+				$nuevafecha = strtotime ( '+6 month' , strtotime ( $fecha ) ) ;
+				$fecha_validar_convertida = strtotime ( $fecha_validar ) ; 
+		    	
+		    	if($nuevafecha < $fecha_validar_convertida)
+		    		return true;
+		    	else
+		    		return false;
+		    }else{
+		    	return false;
+		    }	
+	    }else if($caducidad == 0)
+	    {
+	    	if($fecha_validar != null)
+	    	{
+		    	if($this->valida_fecha($fecha_validar))
+	    		{
+		   	    	$fecha = date('Y-m-j');
+					$nuevafecha = strtotime ( '+6 month' , strtotime ( $fecha ) ) ;
+					$fecha_validar_convertida = strtotime ( $fecha_validar ) ; 
+			    	
+			    	if($nuevafecha < $fecha_validar_convertida)
+			    		return true;
+			    	else
+			    		return false;
+			    }else{
+			    	return false;
+			    }
+			}else
+				return true;
+    	}
+	}
+
+	private function valida_fecha($fecha)
+	{
+		if (preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/",$fecha))
+	    {
+	        return true;
+	    }else{
+	        return false;
+	    }
+		
+	}
 }
