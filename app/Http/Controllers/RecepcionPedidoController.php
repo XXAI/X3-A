@@ -286,6 +286,9 @@ class RecepcionPedidoController extends Controller
 			'observaciones' => ($parametros['observaciones'])?$parametros['observaciones']:null
 		];
 
+		if(count($parametros['stock']) == 0){
+            return Response::json(['error' => 'Se necesita capturar al menos un lote'], 500);
+        }
 		
         try {
             DB::beginTransaction();
@@ -295,7 +298,7 @@ class RecepcionPedidoController extends Controller
 	        	DB::rollBack();
 	            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 	        }
-
+			
 			if($recepcion->entradaAbierta){
 				
 				$movimiento = $recepcion->entradaAbierta;
@@ -394,10 +397,21 @@ class RecepcionPedidoController extends Controller
 
 			        if(!isset($value['fecha_caducidad']) or $this->limpia_espacios($value['fecha_caducidad']) == "")
 			        	$value['fecha_caducidad'] = null;
+
+			        
+					//return Response::json(['error' => $x], HttpResponse::HTTP_CONFLICT);
 			        
 			        
 			        if($this->validacion_fecha_caducidad($value['fecha_caducidad'], $caducidad)) //Validacion de Fecha de caducidad
-					{
+			        {
+			        	
+					
+				        if(!isset($value['fecha_caducidad'])){
+							$value['fecha_caducidad'] = null;
+						}elseif(!$value['fecha_caducidad']){
+							$value['fecha_caducidad'] = null;
+						}
+			        
 						if(isset($value['codigo_barras'])){
 							$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->first(); //Verifica si existe el medicamento en el stock
 							
@@ -472,7 +486,7 @@ class RecepcionPedidoController extends Controller
 					}else
 					{
 						DB::rollBack();
-						return Response::json(['error' => 'El medicamento con clave '.$value['clave_insumo_medico']."  con número de lote ".$value['lote']." tiene fecha de caducidad menor a 6 meses"], 500);
+						return Response::json(['error' => 'El medicamento con clave '.$value['clave_insumo_medico']."  con número de lote ".$value['lote']." tiene fecha de caducidad menor a 6 meses o es invalido"], 500);
 					}	
 
 			       $reglas_movimiento_insumos = [
@@ -505,7 +519,7 @@ class RecepcionPedidoController extends Controller
 		        }
 		    }else{
 		    	DB::rollBack();
-						return Response::json(['error' => 'Debe de ingresar al menos un insumo a recibir'], 500);
+						return Response::json(['error' => 'Debe de ingresar al menos un lote'], 500);
 		    }    
 
 	        if($parametros['status'] == 'FI') //Verificamos si se finaliza la recepcion (parcial o completa)
@@ -623,14 +637,23 @@ class RecepcionPedidoController extends Controller
 
 	private function valida_fecha($fecha)
 	{
-		if (preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/",$fecha))
-	    {
-	        return true;
-	    }else{
-	        return false;
-	    }
+		$mes = substr($fecha, 5,2);
+		$dia = substr($fecha, 8,2);
+		$anio = substr($fecha, 0,4);
+
+		if(checkdate ( $mes , $dia , $anio ))
+		{
+			if (preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/",$fecha))
+		    {
+		        return true;
+		    }else{
+		        return false;
+		    }
+		}else
+			return false;
 		
 	}
+
 	private function limpia_espacios($cadena){
 		$cadena = str_replace(' ', '', $cadena);
 		return $cadena;
