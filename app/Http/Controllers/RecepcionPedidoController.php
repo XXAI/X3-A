@@ -391,12 +391,20 @@ class RecepcionPedidoController extends Controller
 
 		        if($this->validacion_fecha_caducidad($value['fecha_caducidad'])) //Validacion de Fecha de caducidad
 				{
-					if(isset($value['codigo_barras']))
+					if(isset($value['codigo_barras'])){
 						$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->first(); //Verifica si existe el medicamento en el stock
-					else
-						$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->whereNull('codigo_barras')->orWhere('codigo_barras','')->first(); //Verifica si existe el medicamento en el stock
+						
+					}
+					else{
+						//$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->whereNull('codigo_barras')->orWhere('codigo_barras','')->first(); //Verifica si existe el medicamento en el stock
+						$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->Where(function ($query) {
+																			                $query->whereNull('codigo_barras')
+																			                      ->orWhere('codigo_barras', '');
+																			            })->first(); //Verifica si existe el medicamento en el stock
+						//return Response::json(['error' => $insert_stock], HttpResponse::HTTP_CONFLICT);
+					}
 
-					
+					//return Response::json(['error' => $insert_stock], HttpResponse::HTTP_CONFLICT);
 			        if($parametros['status'] == 'FI')
 					{
 						if($tipo_insumo == "ME") //Verifico si es medicamento o material de curación, para agregar el IVA
