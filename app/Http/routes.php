@@ -19,7 +19,7 @@ Route::post('obtener-token',    'AutenticacionController@autenticar');
 Route::post('refresh-token',    'AutenticacionController@refreshToken');
 Route::get('check-token',       'AutenticacionController@verificar');
 
-//Route::get('generar-excel-pedido/{id}', 'PedidoController@generarExcel');
+Route::get('generar-excel-pedido/{id}', 'PedidoController@generarExcel');
 
     
 Route::group(['middleware' => 'jwt'], function () {
