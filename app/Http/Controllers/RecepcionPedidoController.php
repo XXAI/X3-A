@@ -366,141 +366,147 @@ class RecepcionPedidoController extends Controller
 	        $no_causes_unidad_presupuesto 			= 0;
 	        $material_curacion_unidad_presupuesto 	= 0;
 	        /*                                                                                  */
+	        if(count($stock) > 0)
+	        {
+		        foreach ($stock as $key => $value) {
+		        	$reglas_stock = [
+			            'almacen_id'        	=> 'required',
+			            'clave_insumo_medico'   => 'required',
+			            'lote'     				=> 'required',
+						'existencia'     		=> 'required'
+			        ];
 
-	        foreach ($stock as $key => $value) {
-	        	$reglas_stock = [
-		            'almacen_id'        	=> 'required',
-		            'clave_insumo_medico'   => 'required',
-		            'lote'     				=> 'required',
-					'existencia'     		=> 'required'
-		        ];
+			        $tipo_insumo 	= $lista_insumos[$value['clave_insumo_medico']]['tipo'];
+			        $es_causes 		= $lista_insumos[$value['clave_insumo_medico']]['es_causes'];
+			        $caducidad 		= $lista_insumos[$value['clave_insumo_medico']]['caducidad'];
 
-		        $tipo_insumo 	= $lista_insumos[$value['clave_insumo_medico']]['tipo'];
-		        $es_causes 		= $lista_insumos[$value['clave_insumo_medico']]['es_causes'];
-		        $caducidad 		= $lista_insumos[$value['clave_insumo_medico']]['caducidad'];
+			        if($tipo_insumo == "ME")
+			        	$reglas_stock['fecha_caducidad'] = 'required';
 
-		        if($tipo_insumo == "ME")
-		        	$reglas_stock['fecha_caducidad'] = 'required';
+					$value['almacen_id'] = $almacen->id;
 
-				$value['almacen_id'] = $almacen->id;
+			        $v = Validator::make($value, $reglas_stock, $mensajes);
 
-		        $v = Validator::make($value, $reglas_stock, $mensajes);
+			        if ($v->fails()) {
+			        	DB::rollBack();
+			            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+			        }
 
-		        if ($v->fails()) {
-		        	DB::rollBack();
-		            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
-		        }
-
-		        if(!isset($value['fecha_caducidad']))
-		        	$value['fecha_caducidad'] = null;
-		        
-		        if($this->validacion_fecha_caducidad($value['fecha_caducidad'], $caducidad)) //Validacion de Fecha de caducidad
-				{
-					if(isset($value['codigo_barras'])){
-						$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->first(); //Verifica si existe el medicamento en el stock
-						
-					}
-					else{
-						
-						$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->Where(function ($query) {
-																			                $query->whereNull('codigo_barras')
-																			                      ->orWhere('codigo_barras', '');
-																			            })->first(); //Verifica si existe el medicamento en el stock
-					}
-
-					if($parametros['status'] == 'FI')
+			        if(!isset($value['fecha_caducidad']) or $this->limpia_espacios($value['fecha_caducidad']) == "")
+			        	$value['fecha_caducidad'] = null;
+			        
+			        
+			        if($this->validacion_fecha_caducidad($value['fecha_caducidad'], $caducidad)) //Validacion de Fecha de caducidad
 					{
-						if($tipo_insumo == "ME") //Verifico si es medicamento o material de curación, para agregar el IVA
-			        	{		        		
-			        						    		
-							$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
-							$pedido_insumo->cantidad_recibida += $value['existencia'];
-							$cantidad_recibida = ( $value['existencia'] * $pedido_insumo->precio_unitario );
+						if(isset($value['codigo_barras'])){
+							$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->first(); //Verifica si existe el medicamento en el stock
+							
+						}
+						else{
+							
+							$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->Where(function ($query) {
+																				                $query->whereNull('codigo_barras')
+																				                      ->orWhere('codigo_barras', '');
+																				            })->first(); //Verifica si existe el medicamento en el stock
+						}
 
-							$pedido_insumo->monto_recibido 	  += $cantidad_recibida;
-							$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
+						if($parametros['status'] == 'FI')
+						{
+							if($tipo_insumo == "ME") //Verifico si es medicamento o material de curación, para agregar el IVA
+				        	{		        		
+				        						    		
+								$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
+								$pedido_insumo->cantidad_recibida += $value['existencia'];
+								$cantidad_recibida = ( $value['existencia'] * $pedido_insumo->precio_unitario );
 
+								$pedido_insumo->monto_recibido 	  += $cantidad_recibida;
+								$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
+
+								if($insert_stock){
+									$insert_stock->existencia += $value['existencia'];
+									$insert_stock->save();
+								}else{					
+									$insert_stock = Stock::create($value);
+								}		
+
+								if($es_causes == 1)
+									$causes_unidad_presupuesto 				+= $cantidad_recibida;
+								else
+						        	$no_causes_unidad_presupuesto 			+= $cantidad_recibida;
+						        
+									
+				        	}else
+				        	{
+				        		$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
+								$pedido_insumo->cantidad_recibida += $value['existencia'];
+
+								$cantidad_recibida 						= ( $value['existencia'] * $pedido_insumo->precio_unitario ) * (1.16);
+								$cantidad_recibida_sin_iva				= ( $value['existencia'] * $pedido_insumo->precio_unitario );
+
+								$pedido_insumo->monto_recibido 	  		+= $cantidad_recibida_sin_iva;
+								$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
+
+								$material_curacion_unidad_presupuesto 	+= $cantidad_recibida; //Se suma el monto de material de curazion
+
+								if($insert_stock){
+									$insert_stock->existencia += $value['existencia'];
+									$insert_stock->save();
+									
+								}else{					
+									$insert_stock = Stock::create($value);
+									
+								}
+				        	}
+						}else
+						{
 							if($insert_stock){
-								$insert_stock->existencia += $value['existencia'];
+								$insert_stock->existencia += 0;
 								$insert_stock->save();
-							}else{					
+							}else{		
+
 								$insert_stock = Stock::create($value);
-							}		
-
-							if($es_causes == 1)
-								$causes_unidad_presupuesto 				+= $cantidad_recibida;
-							else
-					        	$no_causes_unidad_presupuesto 			+= $cantidad_recibida;
-					        
-								
-			        	}else
-			        	{
-			        		$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
-							$pedido_insumo->cantidad_recibida += $value['existencia'];
-
-							$cantidad_recibida 						= ( $value['existencia'] * $pedido_insumo->precio_unitario ) * (1.16);
-							$cantidad_recibida_sin_iva				= ( $value['existencia'] * $pedido_insumo->precio_unitario );
-
-							$pedido_insumo->monto_recibido 	  		+= $cantidad_recibida_sin_iva;
-							$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
-
-							$material_curacion_unidad_presupuesto 	+= $cantidad_recibida; //Se suma el monto de material de curazion
-
-							if($insert_stock){
-								$insert_stock->existencia += $value['existencia'];
-								$insert_stock->save();
-								
-							}else{					
-								$insert_stock = Stock::create($value);
-								
+								$insert_stock->existencia = 0;
+								$insert_stock->update();
 							}
-			        	}
+						}
 					}else
 					{
-						if($insert_stock){
-							$insert_stock->existencia += 0;
-							$insert_stock->save();
-						}else{		
+						DB::rollBack();
+						return Response::json(['error' => 'El medicamento con clave '.$value['clave_insumo_medico']."  con número de lote ".$value['lote']." tiene fecha de caducidad menor a 6 meses"], 500);
+					}	
 
-							$insert_stock = Stock::create($value);
-							$insert_stock->existencia = 0;
-							$insert_stock->update();
-						}
-					}
-				}else
-				{
-					DB::rollBack();
-					return Response::json(['error' => 'El medicamento con clave '.$value['clave_insumo_medico']."  con número de lote ".$value['lote']." tiene fecha de caducidad menor a 6 meses"], 500);
-				}	
+			       $reglas_movimiento_insumos = [
+						'movimiento_id'		=> 'required',
+			            'cantidad'        	=> 'required',
+			            'precio_unitario'   => 'required',
+			            'precio_total'     	=> 'required'
+			        ];
 
-		       $reglas_movimiento_insumos = [
-					'movimiento_id'		=> 'required',
-		            'cantidad'        	=> 'required',
-		            'precio_unitario'   => 'required',
-		            'precio_total'     	=> 'required'
-		        ];
+			        $value['precio_unitario'] 	= $lista_insumos[$value['clave_insumo_medico']]['precio'];
+			        $value['iva'] = 0;
 
-		        $value['precio_unitario'] 	= $lista_insumos[$value['clave_insumo_medico']]['precio'];
-		        $value['iva'] = 0;
+			        if($tipo_insumo != "ME")  //Verifico si es material de curación, para agregar el IVA
+			        {
+			        	$value['iva'] = ($value['precio_unitario'] * $value['cantidad']) * (0.16);
+			        }	
+			        $value['precio_total'] 		= ($value['precio_unitario'] * $value['cantidad']);
 
-		        if($tipo_insumo != "ME")  //Verifico si es material de curación, para agregar el IVA
-		        {
-		        	$value['iva'] = ($value['precio_unitario'] * $value['cantidad']) * (0.16);
-		        }	
-		        $value['precio_total'] 		= ($value['precio_unitario'] * $value['cantidad']);
+			        $value['movimiento_id'] = $movimiento->id;
 
-		        $value['movimiento_id'] = $movimiento->id;
+			        $v = Validator::make($value, $reglas_movimiento_insumos, $mensajes);
 
-		        $v = Validator::make($value, $reglas_movimiento_insumos, $mensajes);
+			        if ($v->fails()) {
+			        	DB::rollBack();
+			            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+			        }
+			        $value['stock_id'] = $insert_stock->id;
 
-		        if ($v->fails()) {
-		        	DB::rollBack();
-		            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+			        $movimiento_insumo = MovimientoInsumos::Create($value);	        	
 		        }
-		        $value['stock_id'] = $insert_stock->id;
-
-		        $movimiento_insumo = MovimientoInsumos::Create($value);	        	
-	        }
+		    }else{
+		    	DB::rollBack();
+						return Response::json(['error' => 'Debe de ingresar al menos un insumo a recibir'], 500);
+		    }    
 
 	        if($parametros['status'] == 'FI') //Verificamos si se finaliza la recepcion (parcial o completa)
 	        {
@@ -624,5 +630,9 @@ class RecepcionPedidoController extends Controller
 	        return false;
 	    }
 		
+	}
+	private function limpia_espacios($cadena){
+		$cadena = str_replace(' ', '', $cadena);
+		return $cadena;
 	}
 }
