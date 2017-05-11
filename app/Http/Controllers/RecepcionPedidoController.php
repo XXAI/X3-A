@@ -286,6 +286,9 @@ class RecepcionPedidoController extends Controller
 			'observaciones' => ($parametros['observaciones'])?$parametros['observaciones']:null
 		];
 
+		if(count($parametros['stock']) == 0){
+            return Response::json(['error' => 'Se necesita capturar al menos un lote'], 500);
+        }
 		
         try {
             DB::beginTransaction();
@@ -295,7 +298,7 @@ class RecepcionPedidoController extends Controller
 	        	DB::rollBack();
 	            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 	        }
-
+			
 			if($recepcion->entradaAbierta){
 				
 				$movimiento = $recepcion->entradaAbierta;
@@ -391,8 +394,12 @@ class RecepcionPedidoController extends Controller
 		            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 		        }
 
-		        if(!isset($value['fecha_caducidad']))
-		        	$value['fecha_caducidad'] = null;
+		        if(!isset($value['fecha_caducidad'])){
+					$value['fecha_caducidad'] = null;
+				}elseif(!$value['fecha_caducidad']){
+					$value['fecha_caducidad'] = null;
+				}
+		        	
 		        
 		        if($this->validacion_fecha_caducidad($value['fecha_caducidad'], $caducidad)) //Validacion de Fecha de caducidad
 				{

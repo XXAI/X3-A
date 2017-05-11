@@ -187,7 +187,7 @@ class PedidoController extends Controller{
 
         if(count($usuario->almacenes) > 1){
             //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
-            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
+            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], 500);
         }else{
             $almacen = $usuario->almacenes[0];
         }
@@ -213,6 +213,10 @@ class PedidoController extends Controller{
 
         if ($v->fails()) {
             return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+        }
+
+        if(count($parametros['insumos']) == 0){
+            return Response::json(['error' => 'Se necesita capturar al menos un insumo'], 500);
         }
 
         try {
