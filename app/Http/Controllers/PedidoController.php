@@ -512,8 +512,14 @@ class PedidoController extends Controller{
 
         return $pdf->stream($data['acta']->folio.'Requisiciones.pdf');
         */
+        $nombre_archivo = 'Pedido '.$pedido->clues;
+        if($pedido->folio){
+            $nombre_archivo = ' - ' . $pedido->folio;  
+        }else{
+            $nombre_archivo .= ' - ' . $pedido->id;
+        }
 
-        $nombre_archivo = $pedido->folio;  
+        
 
         Excel::create($nombre_archivo, function($excel) use($pedido) {
 
