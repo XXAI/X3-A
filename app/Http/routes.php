@@ -28,12 +28,21 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('permisos', 'PermisoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
 
+    Route::resource('jurisdicciones', 'JurisdiccionesController',    ['only' => ['index']]);
     Route::resource('unidades-medicas', 'UnidadesMedicasController',    ['only' => ['index']]);
     Route::resource('almacenes',        'AlmacenController',    ['only' => ['index']]);
+    Route::resource('proveedores', 'ProveedoresController',    ['only' => ['index']]);
+
+
     Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::get('pedidos-stats',         'PedidoController@stats');
     Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
     
+    // # SECCION: Administrador central
+    Route::get('abasto', 'AbastoController@lista');
+    Route::get('abasto-excel', 'AbastoController@excel');
+    // # FIN SECCION
+
     Route::group(['middleware' => 'almacen'], function () {
         Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::get('entregas-stats',        'EntregaController@stats');
