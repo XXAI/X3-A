@@ -11,7 +11,7 @@ class Proveedor extends BaseModel
     protected $generarID = true;
     protected $guardarIDServidor = true;
     protected $guardarIDUsuario = true;
-    protected $fillable = ["id","nombre","rfc","direccion","ciudad","contacto","cargo_contacto","telefono","celular","email","activo"];
+    protected $fillable = ["id","nombre","nombre_corto","rfc","direccion","ciudad","contacto","cargo_contacto","telefono","celular","email","activo"];
     protected $table = 'proveedores'; 
 
     public function contratos(){

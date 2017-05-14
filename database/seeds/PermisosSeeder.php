@@ -252,6 +252,30 @@ class PermisosSeeder extends Seeder
                 'su' => 0,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
+            ],
+            [
+                'id' => 'bsIbPL3qv6XevcAyrRm1GxJufDbzLOax',
+                'descripcion' => 'Ver pedidos hechos en la plataforma',
+                'grupo' => 'Administrador central',
+                'su' => 0,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
+            ],
+            [
+                'id' => 'bwWWUufmEBRFpw9HbUJQUP8EFnagynQv',
+                'descripcion' => 'Ver abasto de insumos por clues',
+                'grupo' => 'Administrador central',
+                'su' => 0,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
+            ],
+            [
+                'id' => 's8kSv2Gj9DZwRvClVRmZohp92Rtvi26i',
+                'descripcion' => 'Realizar transferencia de recursos',
+                'grupo' => 'Administrador central',
+                'su' => 0,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
             ]
         ]);
     }

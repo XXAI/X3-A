@@ -133,7 +133,7 @@ class EntregaController extends Controller
                 throw new Exception("El pedido no existe");
             }
 
-            $obj =  JWTAuth::parseToken()->getPayload();
+           /* $obj =  JWTAuth::parseToken()->getPayload();
             $usuario = Usuario::with('almacenes')->find($obj->get('id'));
 
             if(count($usuario->almacenes) > 1){
@@ -141,12 +141,12 @@ class EntregaController extends Controller
                 return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
             }else{
                 $almacen = $usuario->almacenes[0];
-            }
+            }*/
 
             // deberíamos mandar el id del almacen desde el cliente 
             //y corroborar que o tenga el usuario asignado y con el pedido correspondiente;
 
-            $input['almacen_id'] = $pedido->almacen_proveedor;
+            $input['almacen_id'] =  $request->get('almacen_id');   //$pedido->almacen_proveedor;
 
             // Movimiento de tipo salida por entrega
             $input['tipo_movimiento_id'] = 3;
@@ -188,8 +188,8 @@ class EntregaController extends Controller
 
             }
 
-            $object->movimientoInsumos()->saveMany($listaInsumos);
-            $object->movimientoInsumos;
+            
+            $object->movimientoInsumos = $object->insumos()->saveMany($listaInsumos);
 
             DB::commit();
             return Response::json([ 'data' => $object ],200);
