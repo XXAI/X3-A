@@ -443,92 +443,9 @@ class PedidoController extends Controller{
         }
 
         Excel::create($nombre_archivo, function($excel) use($pedido) {
+            $insumos_tipo = [];
 
-            $excel->sheet('Insumos', function($sheet) use($pedido) {
-                $sheet->setAutoSize(true);
-
-                $sheet->mergeCells('A1:L1');
-                $sheet->row(1, array('FOLIO: '.$pedido->folio));
-
-                $sheet->mergeCells('A2:L2'); 
-                $sheet->row(2, array('UNIDAD MEDICA: '.$pedido->almacenSolicitante->unidadMedica->nombre));
-
-                $sheet->mergeCells('A3:L3'); 
-                $sheet->row(3, array('PROVEEDOR: '.$pedido->proveedor->nombre));
-
-                $sheet->mergeCells('A4:L4'); 
-                $sheet->row(4, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0]));
-
-                $sheet->mergeCells('A5:L5'); 
-                $sheet->row(5, array(''));
-
-                $sheet->mergeCells('E6:G6');
-                $sheet->mergeCells('H6:J6');
-                $sheet->mergeCells('A6:A7');
-                $sheet->mergeCells('B6:B7');
-                $sheet->mergeCells('C6:C7');
-                $sheet->mergeCells('D6:D7');
-                $sheet->mergeCells('K6:K7');
-                $sheet->mergeCells('L6:L7'); 
-
-                $sheet->row(6, array(
-                    'NO.', 'CLAVE','DESCRIPCIÓN DE LOS INSUMOS','TIPO','SOLICITADO','','','RECIBIDO','','','% UNIDADES','% MONTO'
-                ));
-
-                $sheet->cells("A6:K6", function($cells) {
-                    $cells->setAlignment('center');
-                });
-
-                $sheet->row(7, array(
-                    '','','','','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','',''
-                ));
-
-                $sheet->cells("A7:L7", function($cells) {
-                    $cells->setAlignment('center');
-                });
-
-                $sheet->row(1, function($row) {
-                    $row->setBackground('#DDDDDD');
-                    $row->setFontWeight('bold');
-                    $row->setFontSize(16);
-                });
-                $sheet->row(2, function($row) {
-                    $row->setBackground('#DDDDDD');
-                    $row->setFontWeight('bold');
-                    $row->setFontSize(14);
-                });
-                $sheet->row(3, function($row) {
-                    $row->setBackground('#DDDDDD');
-                    $row->setFontWeight('bold');
-                    $row->setFontSize(14);
-                });
-                $sheet->row(4, function($row) {
-                    $row->setBackground('#DDDDDD');
-                    $row->setFontWeight('bold');
-                    $row->setFontSize(14);
-                });
-                $sheet->row(5, function($row) {
-                    $row->setBackground('#DDDDDD');
-                    $row->setFontWeight('bold');
-                    $row->setFontSize(14);
-                });
-                $sheet->row(6, function($row) {
-                    $row->setBackground('#DDDDDD');
-                    $row->setFontWeight('bold');
-                    $row->setFontSize(11);
-                });
-                $sheet->row(7, function($row) {
-                    // call cell manipulation methods
-                    $row->setBackground('#DDDDDD');
-                    $row->setFontWeight('bold');
-                    $row->setFontSize(11);
-                });
-
-                $iva_solicitado = 0;
-                $iva_recibido = 0;
-
-                $contador_filas = 7;
-                foreach($pedido->insumos as $insumo){
+            foreach($pedido->insumos as $insumo){
                     $tipo = '---';
 
                     if($insumo->insumosConDescripcion->tipo == 'ME' && $insumo->insumosConDescripcion->es_causes){
@@ -539,84 +456,191 @@ class PedidoController extends Controller{
                         $tipo = 'MATERIAL DE CURACIÓN';
                     }
 
-                    $contador_filas++;
-                    $sheet->appendRow(array(
-                        ($contador_filas-7), 
-                        $insumo->insumo_medico_clave,
-                        $insumo->insumosConDescripcion->descripcion,
-                        $tipo,
-                        $insumo->cantidad_solicitada,
-                        $insumo->precio_unitario,
-                        $insumo->monto_solicitado,
-                        $insumo->cantidad_recibida | 0,
-                        $insumo->precio_unitario,
-                        $insumo->monto_recibido | 0,
-                        '=H'.$contador_filas.'/E'.$contador_filas,
-                        '=J'.$contador_filas.'/G'.$contador_filas
-                    ));
-
-                    if($insumo->insumosConDescripcion->tipo == 'MC'){
-                        $iva_solicitado += $insumo->monto_solicitado;
-                        $iva_recibido += $insumo->monto_recibido;
+                    if(!isset($insumos_tipo[$tipo])){
+                        $insumos_tipo[$tipo] = [];
                     }
-                }
+                    $insumos_tipo[$tipo][] = $insumo;
+            }
 
-                $iva_solicitado = $iva_solicitado*16/100;
-                $iva_recibido = $iva_recibido*16/100;
-                
-                $sheet->setBorder("A1:L$contador_filas", 'thin');
+            foreach($insumos_tipo as $tipo => $lista_insumos){
+                $excel->sheet($tipo, function($sheet) use($pedido,$lista_insumos,$tipo) {
+                    $sheet->setAutoSize(true);
 
-                $sheet->appendRow(array(
-                        '', 
-                        '',
-                        '',
-                        '',
-                        '',
-                        'SUBTOTAL',
-                        '=SUM(G8:G'.($contador_filas).')',
-                        '',
-                        '',
-                        '=SUM(J8:J'.($contador_filas).')',
+                    $sheet->mergeCells('A1:L1');
+                    $sheet->row(1, array('FOLIO: '.$pedido->folio));
+
+                    $sheet->mergeCells('A2:L2'); 
+                    $sheet->row(2, array('UNIDAD MEDICA: '.$pedido->almacenSolicitante->unidadMedica->nombre));
+
+                    $sheet->mergeCells('A3:L3'); 
+                    $sheet->row(3, array('PROVEEDOR: '.$pedido->proveedor->nombre));
+
+                    $sheet->mergeCells('A4:L4'); 
+                    $sheet->row(4, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0]));
+
+                    $sheet->mergeCells('A5:L5'); 
+                    $sheet->row(5, array($tipo));
+
+                    $sheet->cells("A5:L5", function($cells) {
+                        $cells->setAlignment('center');
+                    });
+
+                    $sheet->mergeCells('E6:G6');
+                    $sheet->mergeCells('H6:J6');
+                    $sheet->mergeCells('A6:A7');
+                    $sheet->mergeCells('B6:B7');
+                    $sheet->mergeCells('C6:C7');
+                    $sheet->mergeCells('D6:D7');
+                    $sheet->mergeCells('K6:K7');
+                    $sheet->mergeCells('L6:L7'); 
+
+                    $sheet->row(6, array(
+                        'NO.', 'CLAVE','DESCRIPCIÓN DE LOS INSUMOS','TIPO','SOLICITADO','','','RECIBIDO','','','% UNIDADES','% MONTO'
                     ));
-                $sheet->appendRow(array(
-                        '', 
-                        '',
-                        '',
-                        '',
-                        '',
-                        'IVA',
-                        $iva_solicitado,
-                        '',
-                        '',
-                        $iva_recibido,
+
+                    $sheet->cells("A6:L6", function($cells) {
+                        $cells->setAlignment('center');
+                    });
+
+                    $sheet->row(7, array(
+                        '','','','','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','',''
                     ));
-                $sheet->appendRow(array(
-                        '', 
-                        '',
-                        '',
-                        '',
-                        '',
-                        'TOTAL',
-                        '=SUM(G'.($contador_filas+1).':G'.($contador_filas+2).')',
-                        '',
-                        '',
-                        '=SUM(J'.($contador_filas+1).':J'.($contador_filas+2).')',
+
+                    $sheet->cells("A7:L7", function($cells) {
+                        $cells->setAlignment('center');
+                    });
+
+                    $sheet->row(1, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(16);
+                    });
+                    $sheet->row(2, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(3, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(4, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(5, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(6, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(11);
+                    });
+                    $sheet->row(7, function($row) {
+                        // call cell manipulation methods
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(11);
+                    });
+
+                    $iva_solicitado = 0;
+                    $iva_recibido = 0;
+
+                    $contador_filas = 7;
+                    foreach($lista_insumos as $insumo){
+                        $tipo = '---';
+
+                        if($insumo->insumosConDescripcion->tipo == 'ME' && $insumo->insumosConDescripcion->es_causes){
+                            $tipo = 'CAUSES';
+                        }else if($insumo->insumosConDescripcion->tipo == 'ME' && !$insumo->insumosConDescripcion->es_causes){
+                            $tipo = 'NO CAUSES';
+                        }else if($insumo->insumosConDescripcion->tipo == 'MC'){
+                            $tipo = 'MATERIAL DE CURACIÓN';
+                        }
+
+                        $contador_filas++;
+                        $sheet->appendRow(array(
+                            ($contador_filas-7), 
+                            $insumo->insumo_medico_clave,
+                            $insumo->insumosConDescripcion->descripcion,
+                            $tipo,
+                            $insumo->cantidad_solicitada,
+                            $insumo->precio_unitario,
+                            $insumo->monto_solicitado,
+                            $insumo->cantidad_recibida | 0,
+                            $insumo->precio_unitario,
+                            $insumo->monto_recibido | 0,
+                            '=H'.$contador_filas.'/E'.$contador_filas,
+                            '=J'.$contador_filas.'/G'.$contador_filas
+                        ));
+
+                        if($insumo->insumosConDescripcion->tipo == 'MC'){
+                            $iva_solicitado += $insumo->monto_solicitado;
+                            $iva_recibido += $insumo->monto_recibido;
+                        }
+                    }
+
+                    $iva_solicitado = $iva_solicitado*16/100;
+                    $iva_recibido = $iva_recibido*16/100;
+                    
+                    $sheet->setBorder("A1:L$contador_filas", 'thin');
+
+                    $sheet->appendRow(array(
+                            '', 
+                            '',
+                            '',
+                            '',
+                            '',
+                            'SUBTOTAL',
+                            '=SUM(G8:G'.($contador_filas).')',
+                            '',
+                            '',
+                            '=SUM(J8:J'.($contador_filas).')',
+                        ));
+                    $sheet->appendRow(array(
+                            '', 
+                            '',
+                            '',
+                            '',
+                            '',
+                            'IVA',
+                            $iva_solicitado,
+                            '',
+                            '',
+                            $iva_recibido,
+                        ));
+                    $sheet->appendRow(array(
+                            '', 
+                            '',
+                            '',
+                            '',
+                            '',
+                            'TOTAL',
+                            '=SUM(G'.($contador_filas+1).':G'.($contador_filas+2).')',
+                            '',
+                            '',
+                            '=SUM(J'.($contador_filas+1).':J'.($contador_filas+2).')',
+                        ));
+                    $contador_filas += 3;
+
+
+                    $phpColor = new \PHPExcel_Style_Color();
+                    $phpColor->setRGB('DDDDDD'); 
+                    $sheet->getStyle("K8:L$contador_filas")->getFont()->setColor( $phpColor );
+
+                    $sheet->setColumnFormat(array(
+                        "E8:E$contador_filas" => '#,##0',
+                        "H8:H$contador_filas" => '#,##0',
+                        "F8:G$contador_filas" => '"$" #,##0.00_-',
+                        "I8:J$contador_filas" => '"$" #,##0.00_-',
+                        "K8:L$contador_filas" => '[Green]0.00%;[Red]-0.00%;0.00%',
                     ));
-                $contador_filas += 3;
-
-
-                $phpColor = new \PHPExcel_Style_Color();
-                $phpColor->setRGB('DDDDDD'); 
-                $sheet->getStyle("K8:L$contador_filas")->getFont()->setColor( $phpColor );
-
-                $sheet->setColumnFormat(array(
-                    "E8:E$contador_filas" => '#,##0',
-                    "H8:H$contador_filas" => '#,##0',
-                    "F8:G$contador_filas" => '"$" #,##0.00_-',
-                    "I8:J$contador_filas" => '"$" #,##0.00_-',
-                    "K8:L$contador_filas" => '[Green]0.00%;[Red]-0.00%;0.00%',
-                ));
-            });
+                });
+            }
         })->export('xls');
     }
 }
