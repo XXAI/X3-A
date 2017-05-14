@@ -10,6 +10,7 @@ use App\Models\Insumo;
 use App\Models\Usuario;
 use App\Models\Contrato;
 use App\Models\Proveedor;
+use App\Models\Almacen;
 use App\Models\GrupoInsumo;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
@@ -22,15 +23,7 @@ class CatalogoInsumoController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request){
-        $obj =  JWTAuth::parseToken()->getPayload();
-        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
-
-        if(count($usuario->almacenes) > 1){
-            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
-            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
-        }else{
-            $almacen = $usuario->almacenes[0];
-        }
+        $almacen = Almacen::find($request->get('almacen_id'));
 
         if(Input::get('con_precios')){
             //Harima: obtenemos el contrato activo 

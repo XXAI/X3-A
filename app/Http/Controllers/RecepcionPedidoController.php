@@ -15,6 +15,7 @@ use App\Models\Pedido;
 use App\Models\MovimientoPedido;
 use App\Models\Proveedor;
 use App\Models\Insumo;
+use App\Models\Almacen;
 use App\Models\PedidoInsumo;
 use App\Models\Presupuesto;
 use App\Models\UnidadMedicaPresupuesto;
@@ -27,48 +28,35 @@ use \Validator,\Hash, \Response, DB;
 class RecepcionPedidoController extends Controller
 {
 
-	public function obtenerDatosPresupuesto($mes){
+	public function obtenerDatosPresupuesto($clues,$proveedor_id,$mes){
         try{
-            $obj =  JWTAuth::parseToken()->getPayload();
-            $usuario = Usuario::with('almacenes')->find($obj->get('id'));
-
-            if(count($usuario->almacenes) > 1){
-                //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
-                return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
-            }else{
-                $almacen = $usuario->almacenes[0];
-            }
-
             $parametros = Input::all();
 
             $presupuesto = Presupuesto::where('activo',1)->first();
 
             $presupuesto_unidad_medica = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
-                                            ->where('clues',$almacen->clues)
-                                            ->where('proveedor_id',$almacen->proveedor_id)
-                                            ->groupBy('clues');
-            if(isset($mes)){
-                if($mes){
-                    $presupuesto_unidad_medica = $presupuesto_unidad_medica->where('mes',$mes);
-                }
-            }
-
-            $presupuesto_unidad_medica = $presupuesto_unidad_medica->first();
+                                            ->where('clues',$clues)
+                                            ->where('proveedor_id',$proveedor_id)
+											->where('mes',$mes)
+                                            ->groupBy('clues')
+											->first();
+			
             return $presupuesto_unidad_medica;
         } catch (\Exception $e) {
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
     }
 
-    public function index()
-    {
+    public function index(){
+		/*
     	$pedidos = Movimiento::with("movimientoInsumos.stock")->get();
     	return Response::json([ 'data' => $pedidos],200);
-
+		*/
     }
 
     public function show(Request $request, $id){
-    	$pedido = Pedido::with(['recepciones'=>function($recepciones){
+		
+    	$pedido = Pedido::where('almacen_solicitante',$request->get('almacen_id'))->with(['recepciones'=>function($recepciones){
 			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
 		}])->where('status','PS')->find($id);
         
@@ -79,116 +67,6 @@ class RecepcionPedidoController extends Controller
         }
 
         return Response::json([ 'data' => $pedido],200);
-    }
-
-    public function store(Request $request)
-    {
-		/*
-    	$mensajes = [
-            'required'      => "required",
-        ];
-
-        $reglas = [
-            'almacen_id'        	=> 'required',
-            'tipo_movimiento_id'    => 'required',
-            'fecha_movimiento'     	=> 'required'
-        ];
-
-        $parametros = Input::all();
-
-        $obj =  JWTAuth::parseToken()->getPayload();
-        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
-		
-		if(count($usuario->almacenes) > 1){
-            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
-            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
-        }else{
-            $almacen = $usuario->almacenes[0];
-        }
-
-		if(!isset($parametros['fecha_movimiento'])){
-			$parametros['fecha_movimiento'] = '2017-05-01';
-		}
-
-		if(!isset($parametros['observaciones'])){
-			$parametros['observaciones'] = null;
-		}
-
-		$datos_movimiento = [
-			'status' => $parametros['status'],
-			'tipo_movimiento_id' => 4, //Recepcion de pedido
-			'fecha_movimiento' => $parametros['fecha_movimiento'],
-			'almacen_id' => $almacen->id,
-			'observaciones' => ($parametros['observaciones'])?$parametros['observaciones']:null
-		];
-
-        try {
-            DB::beginTransaction();
-	        $v = Validator::make($datos_movimiento, $reglas, $mensajes);
-
-	        if ($v->fails()) {
-	            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
-	        }
-
-	        $movimiento = Movimiento::create($datos_movimiento);
-
-	        $stock = $parametros['stock'];
-
-	        foreach ($stock as $key => $value) {
-	        	$reglas_stock = [
-		            'almacen_id'        	=> 'required',
-		            'clave_insumo_medico'   => 'required',
-		            'lote'     				=> 'required',
-		            'fecha_caducidad'     	=> 'required',
-		            'codigo_barras'     	=> 'required',
-					'existencia'     		=> 'required'
-					//'marca_id'     		=> 'required',
-		            //'existencia_unidosis' => 'required'
-		        ];
-				$value['almacen_id'] = $almacen->id;
-
-		        $v = Validator::make($value, $reglas_stock, $mensajes);
-
-		        if ($v->fails()) {
-		            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
-		        }
-
-				$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->first();
-				
-				if($insert_stock){
-					$insert_stock->existencia += $value['existencia'];
-					$insert_stock->save();
-				}else{					
-					$insert_stock = Stock::create($value);
-				}
-
-		        $reglas_movimiento_insumos = [
-					'movimiento_id'		=> 'required',
-		            'cantidad'        	=> 'required',
-		            'precio_unitario'   => 'required',
-		            'precio_total'     	=> 'required'
-					//'iva'     			=> 'required',
-		        ];
-
-				$value['movimiento_id'] = $movimiento->id;
-
-		        $v = Validator::make($value, $reglas_movimiento_insumos, $mensajes);
-
-		        if ($v->fails()) {
-		            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
-		        }
-		        $value['stock_id'] = $insert_stock->id;
-
-		        $movimiento_insumo = MovimientoInsumos::Create($value);	        	
-	        }
-	        DB::commit();
-	        return Response::json([ 'data' => $movimiento ],200);
-
-	    } catch (\Exception $e) {
-            DB::rollBack();
-            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
-        } 
-		*/
     }
 
     public function update(Request $request, $id){
@@ -203,33 +81,18 @@ class RecepcionPedidoController extends Controller
         ];
 
         $parametros = Input::all();
-
-        
-        $obj =  JWTAuth::parseToken()->getPayload();
-        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
-
-
-		if(count($usuario->almacenes) > 1){
-            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
-            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
-        }else{
-            $almacen = $usuario->almacenes[0];
-        }
-
+		
+		$almacen = Almacen::find($request->get('almacen_id'));
         
         /*Recepcion de precios por insumo*/
 		$proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
 
-        if(count($proveedor->contratoActivo) > 1){
-            return Response::json(['error' => 'El proveedor tiene mas de un contrato activo'], HttpResponse::HTTP_CONFLICT);
-        }else{
-            $contrato_activo = $proveedor->contratoActivo;
-        }
+		$contrato_activo = $proveedor->contratoActivo;
         
         if(count($contrato_activo) > 1){
-            return Response::json(['error' => 'Hay mas de un contrato activo'], HttpResponse::HTTP_CONFLICT);
+            return Response::json(['error' => 'Hay mas de un contrato activo'], 500);
         }elseif(count($contrato_activo) == 0){
-            return Response::json(['error' => 'No se encontraron contratos activos para este proveedor'], HttpResponse::HTTP_CONFLICT);
+            return Response::json(['error' => 'No se encontraron contratos activos para este proveedor'], 500);
         }else{
             $contrato_activo = $contrato_activo[0];
         }
@@ -248,12 +111,10 @@ class RecepcionPedidoController extends Controller
         }
 		/**/
 
-		$pedido = Pedido::with(['recepciones'=>function($recepciones){
+		$pedido = Pedido::where('almacen_solicitante',$almacen->id)->with(['recepciones'=>function($recepciones){
 			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
 		}])->where('status','PS')->find($id);
 
-		
-		
 		if(!$pedido){
 			return Response::json(['error' => 'No se encontró el pedido'],500);
 		}
@@ -554,7 +415,7 @@ class RecepcionPedidoController extends Controller
 	        	$pedido->update();
 
 	        	/*Calculo de unidad presupuesto*/
-	        	$unidad_presupuesto = $this->obtenerDatosPresupuesto(substr($pedido->fecha,5,2) );
+	        	$unidad_presupuesto = $this->obtenerDatosPresupuesto($almacen->clues,$almacen->proveedor_id,substr($pedido->fecha,5,2));
 
 	        	$unidad_presupuesto->causes_comprometido 				-= $causes_unidad_presupuesto;
 	        	$unidad_presupuesto->causes_devengado 					+= $causes_unidad_presupuesto;
@@ -579,21 +440,20 @@ class RecepcionPedidoController extends Controller
         } 
     }
     
-    function destroy($id)
-    {
-    	 try {
+    function destroy($id){
+    	 /*
+		 try {
             $object = Movimiento::destroy($id);
             return Response::json(['data'=>$object],200);
         } catch (Exception $e) {
            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         }
+		*/
     }
 
 
-    private function validacion_fecha_caducidad($fecha_validar, $caducidad)
-    {
-    	if($caducidad == 1)
-    	{
+    private function validacion_fecha_caducidad($fecha_validar, $caducidad){
+    	if($caducidad == 1){
 
     		if($this->valida_fecha($fecha_validar))
     		{

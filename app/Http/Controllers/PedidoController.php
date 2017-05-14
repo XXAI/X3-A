@@ -12,6 +12,7 @@ use App\Http\Requests;
 use App\Models\Pedido;
 use App\Models\PedidoInsumo;
 use App\Models\Usuario;
+use App\Models\Almacen;
 use App\Models\Presupuesto;
 use App\Models\UnidadMedica;
 use App\Models\UnidadMedicaPresupuesto;
@@ -24,15 +25,7 @@ use \Validator,\Hash, \Response, DB;
 class PedidoController extends Controller{
     public function obtenerDatosPresupuesto(Request $request){
         try{
-            $obj =  JWTAuth::parseToken()->getPayload();
-            $usuario = Usuario::with('almacenes')->find($obj->get('id'));
-
-            if(count($usuario->almacenes) > 1){
-                //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
-                return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
-            }else{
-                $almacen = $usuario->almacenes[0];
-            }
+            $almacen = Almacen::find($request->get('almacen_id'));
 
             $parametros = Input::all();
 
@@ -60,15 +53,7 @@ class PedidoController extends Controller{
     }
 
     public function stats(Request $request){
-        $obj =  JWTAuth::parseToken()->getPayload();
-        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
-
-        if(count($usuario->almacenes) > 1){
-            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
-            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
-        }else{
-            $almacen = $usuario->almacenes[0];
-        }
+        $almacen = Almacen::find($request->get('almacen_id'));
 
         // Hay que obtener la clues del usuario
         $pedidos = Pedido::select(DB::raw(
@@ -98,19 +83,12 @@ class PedidoController extends Controller{
     }
 
     public function index(Request $request){
-        $obj =  JWTAuth::parseToken()->getPayload();
-        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
-
-        if(count($usuario->almacenes) > 1){
-            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
-            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
-        }else{
-            $almacen = $usuario->almacenes[0];
-        }
+        $almacen = Almacen::find($request->get('almacen_id'));
         
         $parametros = Input::only('status','q','page','per_page');
 
-        $pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
+        //$pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
+        $pedidos = Pedido::getModel();
 
        if ($parametros['q']) {
             $pedidos =  $pedidos->where(function($query) use ($parametros) {
@@ -138,7 +116,8 @@ class PedidoController extends Controller{
     }
 
     public function show(Request $request, $id){
-    	$pedido = Pedido::find($id);
+        //$almacen = Almacen::find($request->get('almacen_id'));
+    	$pedido = Pedido::where('almacen_solicitante',$request->get('almacen_id'))->find($id);
         
         if(!$pedido){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
@@ -146,10 +125,9 @@ class PedidoController extends Controller{
             if($pedido->status == 'BR'){
                 $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor");
             }else{
-                $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
+                $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
             }
         }
-
         return Response::json([ 'data' => $pedido],200);
     }
 
@@ -162,35 +140,12 @@ class PedidoController extends Controller{
             'tipo_pedido_id'        => 'required',
             'descripcion'           => 'required',
             'fecha'                 => 'required|date',
-            //'almacen_solicitante'   => 'required',
-            //'almacen_proveedor'     => 'required',
-            //'observaciones'         => 'required',
-            'status'                => 'required',
-            //'tipo_insumo_id'        => 'required',
-            //'pedido_padre'          => 'required',
-            //'folio'                 => 'required',
-            //'organismo_dirigido'    => 'required',
-            //'acta_id'               => 'required',
-            //'usuario_validacion'    => 'required',
-            //'proveedor_id'          => 'required'
+            'status'                => 'required'
         ];
 
         $parametros = Input::all();
 
-        //return Response::json([ 'data' => $parametros ],500);
-        /*if(count($parametros) == 1){
-            $parametros = $parametros[0];
-        }*/
-
-        $obj =  JWTAuth::parseToken()->getPayload();
-        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
-
-        if(count($usuario->almacenes) > 1){
-            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
-            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], 500);
-        }else{
-            $almacen = $usuario->almacenes[0];
-        }
+        $almacen = Almacen::find($request->get('almacen_id'));
 
         if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
             $reglas['proveedor_id'] = 'required';
@@ -203,7 +158,7 @@ class PedidoController extends Controller{
         $parametros['datos']['almacen_solicitante'] = $almacen->id;
         $parametros['datos']['clues'] = $almacen->clues;
         $parametros['datos']['status'] = 'BR'; //estatus de borrador
-        $parametros['datos']['tipo_pedido_id'] = 'PA'; //tipo de pedido Pedido de Abatecimiento
+        $parametros['datos']['tipo_pedido_id'] = 'PA'; //tipo de pedido Pedido de Abastecimiento
 
         $fecha = date($parametros['datos']['fecha']);
         $fecha_expiracion = strtotime("+20 days", strtotime($fecha));
@@ -285,37 +240,14 @@ class PedidoController extends Controller{
         ];
 
         $reglas = [
-            //'tipo_pedido_id'        => 'required',
             'descripcion'           => 'required',
             'fecha'                 => 'required|date',
-            //'almacen_solicitante'   => 'required',
-            //'almacen_proveedor'     => 'required',
-            //'observaciones'         => 'required',
-            'status'                => 'required',
-            //'tipo_insumo_id'        => 'required',
-            //'pedido_padre'          => 'required',
-            //'folio'                 => 'required',
-            //'organismo_dirigido'    => 'required',
-            //'acta_id'               => 'required',
-            //'usuario_validacion'    => 'required',
-            //'proveedor_id'          => 'required'
+            'status'                => 'required'
         ];
 
         $parametros = Input::all();
 
-        /*if(count($parametros) == 1){
-            $parametros = $parametros[0];
-        }*/
-
-        $obj =  JWTAuth::parseToken()->getPayload();
-        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
-
-        if(count($usuario->almacenes) > 1){
-            //Harima: Aqui se checa si el usuario tiene asignado mas de un almacen, se busca en el request si se envio algun almacen seleccionado desde el cliente, si no marcar error
-            return Response::json(['error' => 'El usuario tiene asignado mas de un almacen'], HttpResponse::HTTP_CONFLICT);
-        }else{
-            $almacen = $usuario->almacenes[0];
-        }
+        $almacen = Almacen::find($request->get('almacen_id'));
 
         if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
             $reglas['proveedor_id'] = 'required';
@@ -471,9 +403,10 @@ class PedidoController extends Controller{
         } 
     }
 
-    function destroy($id){
+    function destroy(Request $request, $id){
         try {
-            $object = Pedido::destroy($id);
+            //$object = Pedido::destroy($id);
+            $object = Pedido::where('almacen_proveedor',$request->get('almacen_id'))->where('id',$id)->delete();
             return Response::json(['data'=>$object],200);
         } catch (Exception $e) {
            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
@@ -485,6 +418,9 @@ class PedidoController extends Controller{
         $meses = ['01'=>'ENERO','02'=>'FEBRERO','03'=>'MARZO','04'=>'ABRIL','05'=>'MAYO','06'=>'JUNIO','07'=>'JULIO','08'=>'AGOSTO','09'=>'SEPTIEMBRE','10'=>'OCTUBRE','11'=>'NOVIEMBRE','12'=>'DICIEMBRE'];
         $data = [];
 
+        //$almacen = Almacen::find($request->get('almacen_id'));
+        //$pedido = Pedido::where('almacen_proveedor',$almacen->id)->where('clues',$almacen->clues)->where('id',$id)->first();
+
         $pedido = Pedido::find($id);
         
         if(!$pedido){
@@ -493,25 +429,12 @@ class PedidoController extends Controller{
 
         $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
 
-        //$usuario = JWTAuth::parseToken()->getPayload();
-        //$configuracion = Configuracion::where('clues',$usuario->get('clues'))->first();
+        //return Response::json(['data'=>$pedido],200);
 
         $fecha = explode('-',$pedido->fecha);
         $fecha[1] = $meses[$fecha[1]];
         $pedido->fecha = $fecha;
-        
-        //return Response::json(['data'=>$pedido],500);
-        /*
-        $pdf = PDF::loadView('pdf.requisiciones', $data);
-        $pdf->output();
-        $dom_pdf = $pdf->getDomPDF();
-        $canvas = $dom_pdf->get_canvas();
-        $w = $canvas->get_width();
-        $h = $canvas->get_height();
-        $canvas->page_text(($w/2)-10, ($h-40), "{PAGE_NUM} de {PAGE_COUNT}", null, 10, array(0, 0, 0));
 
-        return $pdf->stream($data['acta']->folio.'Requisiciones.pdf');
-        */
         $nombre_archivo = 'Pedido '.$pedido->clues;
         if($pedido->folio){
             $nombre_archivo = ' - ' . $pedido->folio;  
@@ -519,38 +442,37 @@ class PedidoController extends Controller{
             $nombre_archivo .= ' - ' . $pedido->id;
         }
 
-        
-
         Excel::create($nombre_archivo, function($excel) use($pedido) {
 
             $excel->sheet('Insumos', function($sheet) use($pedido) {
                 $sheet->setAutoSize(true);
 
-                $sheet->mergeCells('A1:K1');
+                $sheet->mergeCells('A1:L1');
                 $sheet->row(1, array('FOLIO: '.$pedido->folio));
 
-                $sheet->mergeCells('A2:K2'); 
+                $sheet->mergeCells('A2:L2'); 
                 $sheet->row(2, array('UNIDAD MEDICA: '.$pedido->almacenSolicitante->unidadMedica->nombre));
 
-                $sheet->mergeCells('A3:K3'); 
+                $sheet->mergeCells('A3:L3'); 
                 $sheet->row(3, array('PROVEEDOR: '.$pedido->proveedor->nombre));
 
-                $sheet->mergeCells('A4:K4'); 
+                $sheet->mergeCells('A4:L4'); 
                 $sheet->row(4, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0]));
 
-                $sheet->mergeCells('A5:K5'); 
+                $sheet->mergeCells('A5:L5'); 
                 $sheet->row(5, array(''));
 
-                $sheet->mergeCells('D6:F6');
-                $sheet->mergeCells('G6:I6');
+                $sheet->mergeCells('E6:G6');
+                $sheet->mergeCells('H6:J6');
                 $sheet->mergeCells('A6:A7');
                 $sheet->mergeCells('B6:B7');
                 $sheet->mergeCells('C6:C7');
-                $sheet->mergeCells('J6:J7');
-                $sheet->mergeCells('K6:K7'); 
+                $sheet->mergeCells('D6:D7');
+                $sheet->mergeCells('K6:K7');
+                $sheet->mergeCells('L6:L7'); 
 
                 $sheet->row(6, array(
-                    'NO.', 'CLAVE','DESCRIPCIÓN DE LOS INSUMOS','SOLICITADO','','','RECIBIDO','','','% UNIDADES','% MONTO'
+                    'NO.', 'CLAVE','DESCRIPCIÓN DE LOS INSUMOS','TIPO','SOLICITADO','','','RECIBIDO','','','% UNIDADES','% MONTO'
                 ));
 
                 $sheet->cells("A6:K6", function($cells) {
@@ -558,10 +480,10 @@ class PedidoController extends Controller{
                 });
 
                 $sheet->row(7, array(
-                    '', '','','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','',''
+                    '','','','','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','',''
                 ));
 
-                $sheet->cells("A7:K7", function($cells) {
+                $sheet->cells("A7:L7", function($cells) {
                     $cells->setAlignment('center');
                 });
 
@@ -607,20 +529,32 @@ class PedidoController extends Controller{
 
                 $contador_filas = 7;
                 foreach($pedido->insumos as $insumo){
+                    $tipo = '---';
+
+                    if($insumo->insumosConDescripcion->tipo == 'ME' && $insumo->insumosConDescripcion->es_causes){
+                        $tipo = 'CAUSES';
+                    }else if($insumo->insumosConDescripcion->tipo == 'ME' && !$insumo->insumosConDescripcion->es_causes){
+                        $tipo = 'NO CAUSES';
+                    }else if($insumo->insumosConDescripcion->tipo == 'MC'){
+                        $tipo = 'MATERIAL DE CURACIÓN';
+                    }
+
                     $contador_filas++;
                     $sheet->appendRow(array(
                         ($contador_filas-7), 
                         $insumo->insumo_medico_clave,
                         $insumo->insumosConDescripcion->descripcion,
+                        $tipo,
                         $insumo->cantidad_solicitada,
                         $insumo->precio_unitario,
                         $insumo->monto_solicitado,
                         $insumo->cantidad_recibida | 0,
                         $insumo->precio_unitario,
                         $insumo->monto_recibido | 0,
-                        '=G'.$contador_filas.'/D'.$contador_filas,
-                        '=I'.$contador_filas.'/F'.$contador_filas
-                    ));   
+                        '=H'.$contador_filas.'/E'.$contador_filas,
+                        '=J'.$contador_filas.'/G'.$contador_filas
+                    ));
+
                     if($insumo->insumosConDescripcion->tipo == 'MC'){
                         $iva_solicitado += $insumo->monto_solicitado;
                         $iva_recibido += $insumo->monto_recibido;
@@ -630,21 +564,23 @@ class PedidoController extends Controller{
                 $iva_solicitado = $iva_solicitado*16/100;
                 $iva_recibido = $iva_recibido*16/100;
                 
-                $sheet->setBorder("A1:K$contador_filas", 'thin');
+                $sheet->setBorder("A1:L$contador_filas", 'thin');
 
                 $sheet->appendRow(array(
                         '', 
                         '',
                         '',
                         '',
+                        '',
                         'SUBTOTAL',
-                        '=SUM(F8:F'.($contador_filas).')',
+                        '=SUM(G8:G'.($contador_filas).')',
                         '',
                         '',
-                        '=SUM(I8:I'.($contador_filas).')',
+                        '=SUM(J8:J'.($contador_filas).')',
                     ));
                 $sheet->appendRow(array(
                         '', 
+                        '',
                         '',
                         '',
                         '',
@@ -659,25 +595,26 @@ class PedidoController extends Controller{
                         '',
                         '',
                         '',
+                        '',
                         'TOTAL',
-                        '=SUM(F'.($contador_filas+1).':F'.($contador_filas+2).')',
+                        '=SUM(G'.($contador_filas+1).':G'.($contador_filas+2).')',
                         '',
                         '',
-                        '=SUM(I'.($contador_filas+1).':I'.($contador_filas+2).')',
+                        '=SUM(J'.($contador_filas+1).':J'.($contador_filas+2).')',
                     ));
                 $contador_filas += 3;
 
 
                 $phpColor = new \PHPExcel_Style_Color();
                 $phpColor->setRGB('DDDDDD'); 
-                $sheet->getStyle("J8:K$contador_filas")->getFont()->setColor( $phpColor );
+                $sheet->getStyle("K8:L$contador_filas")->getFont()->setColor( $phpColor );
 
                 $sheet->setColumnFormat(array(
-                    "D8:D$contador_filas" => '#,##0',
-                    "G8:G$contador_filas" => '#,##0',
-                    "E8:F$contador_filas" => '"$" #,##0.00_-',
-                    "H8:I$contador_filas" => '"$" #,##0.00_-',
-                    "J8:K$contador_filas" => '[Green]0.00%;[Red]-0.00%;0.00%',
+                    "E8:E$contador_filas" => '#,##0',
+                    "H8:H$contador_filas" => '#,##0',
+                    "F8:G$contador_filas" => '"$" #,##0.00_-',
+                    "I8:J$contador_filas" => '"$" #,##0.00_-',
+                    "K8:L$contador_filas" => '[Green]0.00%;[Red]-0.00%;0.00%',
                 ));
             });
         })->export('xls');
