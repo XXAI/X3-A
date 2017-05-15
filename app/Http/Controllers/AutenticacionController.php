@@ -34,6 +34,7 @@ class AutenticacionController extends Controller
 
             if(Hash::check($credentials['password'], $usuario->password)){
                 $lista_permisos = "";
+                $modulo_inicio = null;
                 if ($usuario->su) {
                     $permisos = Permiso::all();
                     foreach ( $permisos as $permiso){
@@ -44,32 +45,27 @@ class AutenticacionController extends Controller
                     }
                 } else {
                     $roles = $usuario->roles;
-                
+                    
                     foreach ( $roles as $rol){
+                        $modulo_inicio = $rol->modulo_inicio;
                         $permisos = $rol->permisos;
                         foreach ( $permisos as $permiso){
                             if ($lista_permisos != "") {
                                 $lista_permisos .= "|";
                             }
                             $lista_permisos.=$permiso->id;
-
                         }
                     }
                 }
                 
-                
-
                 $claims = [
                     "sub" => 1,
                     "id" => $usuario->id,
-                    
                     //"nombre" => $usuario->nombre,
                     //"apellidos" => $usuario->apellidos,
                     //"permisos" => $lista_permisos
                 ];
 
-             
-                
                 $unidades_medicas = [];
                
                 if( $usuario->su ){
@@ -92,7 +88,8 @@ class AutenticacionController extends Controller
                     "apellidos" => $usuario->apellidos,
                     "avatar" => $usuario->avatar,
                     "permisos" => $lista_permisos,                    
-                    "unidades_medicas" =>  $unidades_medicas
+                    "unidades_medicas" =>  $unidades_medicas,
+                    "modulo_inicio" => $modulo_inicio
                 ];
 
                 $server_info = [

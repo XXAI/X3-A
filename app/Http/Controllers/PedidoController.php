@@ -200,7 +200,7 @@ class PedidoController extends Controller{
                 $insumo = [
                     'insumo_medico_clave' => $value['clave'],
                     'cantidad_solicitada' => $value['cantidad'],
-                    'monto_solicitado' => $value['monto'],
+                    'monto_solicitado' => $value['cantidad']*$value['precio'], //$value['monto'],
                     'precio_unitario' => $value['precio'],
                     'pedido_id' => $pedido->id
                 ];
@@ -317,7 +317,7 @@ class PedidoController extends Controller{
                 $insumo = [
                     'insumo_medico_clave' => $value['clave'],
                     'cantidad_solicitada' => $value['cantidad'],
-                    'monto_solicitado' => $value['monto'],
+                    'monto_solicitado' => $value['cantidad']*$value['precio'], //$value['monto'],
                     'precio_unitario' => $value['precio'],
                     'pedido_id' => $pedido->id
                 ];
@@ -573,7 +573,7 @@ class PedidoController extends Controller{
                             $insumo->monto_solicitado,
                             $insumo->cantidad_recibida | 0,
                             $insumo->precio_unitario,
-                            $insumo->monto_recibido | 0,
+                            ($insumo->monto_recibido)?$insumo->monto_recibido:0,
                             '=H'.$contador_filas.'/E'.$contador_filas,
                             '=J'.$contador_filas.'/G'.$contador_filas
                         ));
