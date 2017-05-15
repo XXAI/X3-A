@@ -35,8 +35,12 @@ Route::group(['middleware' => 'jwt'], function () {
 
     
     // # SECCION: Administrador central
+    // Akira: Debería haber creado un  grupo para la ruta pero ya no me dió tiempo.
     Route::get('abasto', 'AbastoController@lista');
     Route::get('abasto-excel', 'AbastoController@excel');
+    Route::get('presupuesto-pedidos-administrador-central', 'PedidosAdministradorCentralController@presupuesto');
+    Route::get('pedidos-administrador-central', 'PedidosAdministradorCentralController@lista');
+    Route::get('pedidos-administrador-central-excel', 'PedidosAdministradorCentralController@excel');
     // # FIN SECCION
 
     Route::group(['middleware' => 'almacen'], function () {
