@@ -35,6 +35,13 @@ class PedidosAdministradorCentralController extends Controller
                 }
             }
 
+            if(isset($parametros['proveedores'])){
+                if($parametros['proveedores']){
+                    $proveedores_ids = explode(',',$parametros['proveedores']);
+                    $presupuesto_unidad_medica = $presupuesto_unidad_medica->whereIn('proveedor_id',$proveedores_ids);
+                }
+            }
+
             $presupuesto_unidad_medica = $presupuesto_unidad_medica->first();
             return Response::json([ 'data' => $presupuesto_unidad_medica],200);
         } catch (\Exception $e) {

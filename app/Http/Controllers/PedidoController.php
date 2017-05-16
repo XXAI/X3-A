@@ -294,7 +294,7 @@ class PedidoController extends Controller{
 
             $arreglo_insumos = Array();
             
-            PedidoInsumo::where("pedido_id", $id)->delete();
+            PedidoInsumo::where("pedido_id", $id)->forceDelete();
 
             $total_claves = count($parametros['insumos']);
             $total_insumos = 0;
@@ -406,8 +406,19 @@ class PedidoController extends Controller{
     function destroy(Request $request, $id){
         try {
             //$object = Pedido::destroy($id);
-            $object = Pedido::where('almacen_proveedor',$request->get('almacen_id'))->where('id',$id)->delete();
-            return Response::json(['data'=>$object],200);
+            $pedido = Pedido::where('almacen_solicitante',$request->get('almacen_id'))->where('id',$id)->first();
+            if($pedido){
+                if($pedido->status == 'BR'){
+                    $pedido->insumos()->delete();
+                    $pedido->delete();
+                }else{
+                    return Response::json(['error' => 'Este pedido ya no puede eliminarse'], 500);
+                }
+            }else{
+                return Response::json(['error' => 'No tiene permiso para eliminar este recurso'], 401);
+            }
+            //$object = Pedido::where('almacen_proveedor',$request->get('almacen_id'))->where('id',$id)->delete();
+            return Response::json(['data'=>$pedido],200);
         } catch (Exception $e) {
            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         }

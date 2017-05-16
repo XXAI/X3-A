@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PedidoInsumo extends BaseModel
 {
-    //use SoftDeletes;
+    use SoftDeletes;
     protected $generarID = true;
     protected $guardarIDServidor = true;
     protected $guardarIDUsuario = true;
