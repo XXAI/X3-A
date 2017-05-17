@@ -477,8 +477,17 @@ class PedidoController extends Controller{
                 $excel->sheet($tipo, function($sheet) use($pedido,$lista_insumos,$tipo) {
                     $sheet->setAutoSize(true);
 
+                    $clave_folio = 'SC';
+                    if($tipo == 'CAUSES'){
+                        $clave_folio = '-C';
+                    }else if($tipo == 'NO CAUSES'){
+                        $clave_folio = '-NC';
+                    }else if($tipo == 'MATERIAL DE CURACIÓN'){
+                        $clave_folio = '-MC';
+                    }
+
                     $sheet->mergeCells('A1:L1');
-                    $sheet->row(1, array('FOLIO: '.$pedido->folio));
+                    $sheet->row(1, array('FOLIO: '.$pedido->folio.$clave_folio));
 
                     $sheet->mergeCells('A2:L2'); 
                     $sheet->row(2, array('UNIDAD MEDICA: '.$pedido->almacenSolicitante->unidadMedica->nombre));
