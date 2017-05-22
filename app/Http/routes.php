@@ -19,8 +19,6 @@ Route::post('obtener-token',    'AutenticacionController@autenticar');
 Route::post('refresh-token',    'AutenticacionController@refreshToken');
 Route::get('check-token',       'AutenticacionController@verificar');
 
-Route::get('generar-excel-pedido/{id}', 'PedidoController@generarExcel');
-
 Route::group(['middleware' => 'jwt'], function () {
     Route::resource('usuarios', 'UsuarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('roles', 'RolController',           ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -38,10 +36,18 @@ Route::group(['middleware' => 'jwt'], function () {
     // Akira: Debería haber creado un  grupo para la ruta pero ya no me dió tiempo.
     Route::get('abasto', 'AbastoController@lista');
     Route::get('abasto-excel', 'AbastoController@excel');
+
     Route::get('presupuesto-pedidos-administrador-central', 'PedidosAdministradorCentralController@presupuesto');
     Route::get('pedidos-administrador-central', 'PedidosAdministradorCentralController@lista');
     Route::get('pedidos-administrador-central-excel', 'PedidosAdministradorCentralController@excel');
     // # FIN SECCION
+
+    Route::group(['middleware' => 'proveedor'], function () {
+        Route::get('presupuesto-pedidos-administrador-proveedores', 'PedidosAdministradorProveedoresController@presupuesto');
+        Route::get('pedidos-administrador-proveedores', 'PedidosAdministradorProveedoresController@lista');
+        Route::get('pedidos-administrador-proveedores-excel', 'PedidosAdministradorProveedoresController@excel');
+        Route::get('pedidos-administrador-proveedores-pedido/{id}', 'PedidosAdministradorProveedoresController@pedido');
+    });
 
     Route::group(['middleware' => 'almacen'], function () {
         Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -57,6 +63,8 @@ Route::group(['middleware' => 'jwt'], function () {
         //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
         Route::resource('catalogo-insumos',  'CatalogoInsumoController',     ['only' => ['index', 'show']]);
     });
+    Route::get('generar-excel-pedido/{id}', 'PedidoController@generarExcel');
+    
     Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
  

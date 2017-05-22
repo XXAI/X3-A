@@ -89,12 +89,8 @@ class RecepcionPedidoController extends Controller
 
 		$contrato_activo = $proveedor->contratoActivo;
         
-        if(count($contrato_activo) > 1){
-            return Response::json(['error' => 'Hay mas de un contrato activo'], 500);
-        }elseif(count($contrato_activo) == 0){
+        if(!$contrato_activo){
             return Response::json(['error' => 'No se encontraron contratos activos para este proveedor'], 500);
-        }else{
-            $contrato_activo = $contrato_activo[0];
         }
 
         //Se carga un scope con el cual obtenemos los nombres o descripciones de los catalogos que utiliza insumos_medicos

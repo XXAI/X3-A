@@ -13,13 +13,13 @@ class Proveedor extends BaseModel
     protected $guardarIDUsuario = true;
     protected $fillable = ["id","nombre","nombre_corto","rfc","direccion","ciudad","contacto","cargo_contacto","telefono","celular","email","activo"];
     protected $table = 'proveedores'; 
-
+    
     public function contratos(){
-        return $this->belongsToMany('App\Models\Contrato', 'contrato_proveedor', 'proveedor_id', 'contrato_id');
+        return $this->hasMany('App\Models\Contrato','proveedor_id');
     }
 
     public function contratoActivo(){
-        return $this->belongsToMany('App\Models\Contrato', 'contrato_proveedor', 'proveedor_id', 'contrato_id')->where('contratos.activo','=',1);
+        return $this->hasOne('App\Models\Contrato','proveedor_id')->orderBy('fecha_fin','DESC')->where('contratos.activo','=',1);
     }
 
 }

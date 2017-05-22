@@ -15,9 +15,13 @@ class Contrato extends BaseModel{
     
     protected $table = 'contratos';  
     //protected $primaryKey = 'clave';
-    protected $fillable = ["id","monto_minimo","monto_maximo","fecha_inicio","fecha_fin","activo"];
+    protected $fillable = ["id","proveedor_id","monto_minimo","monto_maximo","fecha_inicio","fecha_fin","activo"];
     
-    public function proveedores(){
-        return $this->belongsToMany('App\Models\Proveedor', 'contrato_proveedor', 'contrato_id', 'proveedor_id');
+    public function proveedor(){
+        return $this->belongsTo('App\Models\Proveedor');
+    }
+
+    public function unidadesMedicas(){
+        return $this->belongsToMany('App\Models\UnidadMedica', 'contrato_clues', 'contrato_id', 'clues');
     }
 }

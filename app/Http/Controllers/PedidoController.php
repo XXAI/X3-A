@@ -116,16 +116,17 @@ class PedidoController extends Controller{
     }
 
     public function show(Request $request, $id){
-        //$almacen = Almacen::find($request->get('almacen_id'));
-    	$pedido = Pedido::where('almacen_solicitante',$request->get('almacen_id'))->find($id);
+        $almacen = Almacen::find($request->get('almacen_id'));
+    	//$pedido = Pedido::where('almacen_solicitante',$request->get('almacen_id'))->find($id);
+        $pedido = Pedido::where('clues',$almacen->clues)->find($id);
         
         if(!$pedido){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }else{
             if($pedido->status == 'BR'){
-                $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor");
+                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor");
             }else{
-                $pedido = $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
+                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
             }
         }
         return Response::json([ 'data' => $pedido],200);
@@ -202,6 +203,7 @@ class PedidoController extends Controller{
                     'cantidad_solicitada' => $value['cantidad'],
                     'monto_solicitado' => $value['cantidad']*$value['precio'], //$value['monto'],
                     'precio_unitario' => $value['precio'],
+                    'tipo_insumo_id' => $value['tipo_insumo_id'],
                     'pedido_id' => $pedido->id
                 ];
                 //$value['pedido_id'] = $pedido->id;
@@ -319,6 +321,7 @@ class PedidoController extends Controller{
                     'cantidad_solicitada' => $value['cantidad'],
                     'monto_solicitado' => $value['cantidad']*$value['precio'], //$value['monto'],
                     'precio_unitario' => $value['precio'],
+                    'tipo_insumo_id' => $value['tipo_insumo_id'],
                     'pedido_id' => $pedido->id
                 ];
                 //$value['pedido_id'] = $pedido->id;
@@ -425,20 +428,32 @@ class PedidoController extends Controller{
 
     }
 
-    public function generarExcel(Request $request, $id) {
+    public function generarExcel($id) {
+        $obj =  JWTAuth::parseToken()->getPayload();
+        $usuario = Usuario::with('almacenes')->find($obj->get('id'));
+
         $meses = ['01'=>'ENERO','02'=>'FEBRERO','03'=>'MARZO','04'=>'ABRIL','05'=>'MAYO','06'=>'JUNIO','07'=>'JULIO','08'=>'AGOSTO','09'=>'SEPTIEMBRE','10'=>'OCTUBRE','11'=>'NOVIEMBRE','12'=>'DICIEMBRE'];
         $data = [];
 
         //$almacen = Almacen::find($request->get('almacen_id'));
         //$pedido = Pedido::where('almacen_proveedor',$almacen->id)->where('clues',$almacen->clues)->where('id',$id)->first();
+        $pedido = Pedido::getModel();
+        if(!$usuario->su){
+            if($usuario->proveedor_id){
+                $pedido = $pedido->where('proveedor_id',$usuario->proveedor_id);
+            }else{
+                $unidades = $usuario->almacenes->lists('clues');
+                $pedido = $pedido->whereIn('clues',$unidades);
+            }
+        }
 
-        $pedido = Pedido::find($id);
+        $pedido = $pedido->find($id);
         
         if(!$pedido){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }
 
-        $pedido->load("insumos.insumosConDescripcion","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoInsumo", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
+        $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
 
         //return Response::json(['data'=>$pedido],200);
 
@@ -459,13 +474,15 @@ class PedidoController extends Controller{
             foreach($pedido->insumos as $insumo){
                     $tipo = '---';
 
-                    if($insumo->insumosConDescripcion->tipo == 'ME' && $insumo->insumosConDescripcion->es_causes){
+                    $tipo = $insumo->tipoInsumo->nombre;
+
+                    /*if($insumo->insumosConDescripcion->tipo == 'ME' && $insumo->insumosConDescripcion->es_causes){
                         $tipo = 'CAUSES';
                     }else if($insumo->insumosConDescripcion->tipo == 'ME' && !$insumo->insumosConDescripcion->es_causes){
                         $tipo = 'NO CAUSES';
                     }else if($insumo->insumosConDescripcion->tipo == 'MC'){
                         $tipo = 'MATERIAL DE CURACIÓN';
-                    }
+                    }*/
 
                     if(!isset($insumos_tipo[$tipo])){
                         $insumos_tipo[$tipo] = [];
@@ -477,56 +494,49 @@ class PedidoController extends Controller{
                 $excel->sheet($tipo, function($sheet) use($pedido,$lista_insumos,$tipo) {
                     $sheet->setAutoSize(true);
 
-                    $clave_folio = 'SC';
-                    if($tipo == 'CAUSES'){
-                        $clave_folio = '-C';
-                    }else if($tipo == 'NO CAUSES'){
-                        $clave_folio = '-NC';
-                    }else if($tipo == 'MATERIAL DE CURACIÓN'){
-                        $clave_folio = '-MC';
-                    }
-
-                    $sheet->mergeCells('A1:L1');
+                    $clave_folio = '-'.$lista_insumos[0]->tipoInsumo->clave;
+                    
+                    $sheet->mergeCells('A1:K1');
                     $sheet->row(1, array('FOLIO: '.$pedido->folio.$clave_folio));
 
-                    $sheet->mergeCells('A2:L2'); 
+                    $sheet->mergeCells('A2:K2'); 
                     $sheet->row(2, array('UNIDAD MEDICA: '.$pedido->almacenSolicitante->unidadMedica->nombre));
 
-                    $sheet->mergeCells('A3:L3'); 
+                    $sheet->mergeCells('A3:K3'); 
                     $sheet->row(3, array('PROVEEDOR: '.$pedido->proveedor->nombre));
 
-                    $sheet->mergeCells('A4:L4'); 
+                    $sheet->mergeCells('A4:K4'); 
                     $sheet->row(4, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0]));
 
-                    $sheet->mergeCells('A5:L5'); 
+                    $sheet->mergeCells('A5:K5'); 
                     $sheet->row(5, array($tipo));
 
-                    $sheet->cells("A5:L5", function($cells) {
+                    $sheet->cells("A5:K5", function($cells) {
                         $cells->setAlignment('center');
                     });
 
-                    $sheet->mergeCells('E6:G6');
-                    $sheet->mergeCells('H6:J6');
+                    $sheet->mergeCells('D6:F6');
+                    $sheet->mergeCells('G6:I6');
+
                     $sheet->mergeCells('A6:A7');
                     $sheet->mergeCells('B6:B7');
                     $sheet->mergeCells('C6:C7');
-                    $sheet->mergeCells('D6:D7');
+                    $sheet->mergeCells('J6:J7'); 
                     $sheet->mergeCells('K6:K7');
-                    $sheet->mergeCells('L6:L7'); 
 
                     $sheet->row(6, array(
-                        'NO.', 'CLAVE','DESCRIPCIÓN DE LOS INSUMOS','TIPO','SOLICITADO','','','RECIBIDO','','','% UNIDADES','% MONTO'
+                        'NO.', 'CLAVE','DESCRIPCIÓN DE LOS INSUMOS','SOLICITADO','','','RECIBIDO','','','% UNIDADES','% MONTO'
                     ));
 
-                    $sheet->cells("A6:L6", function($cells) {
+                    $sheet->cells("A6:K6", function($cells) {
                         $cells->setAlignment('center');
                     });
 
                     $sheet->row(7, array(
-                        '','','','','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','',''
+                        '','','','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','',''
                     ));
 
-                    $sheet->cells("A7:L7", function($cells) {
+                    $sheet->cells("A7:K7", function($cells) {
                         $cells->setAlignment('center');
                     });
 
@@ -572,30 +582,19 @@ class PedidoController extends Controller{
 
                     $contador_filas = 7;
                     foreach($lista_insumos as $insumo){
-                        $tipo = '---';
-
-                        if($insumo->insumosConDescripcion->tipo == 'ME' && $insumo->insumosConDescripcion->es_causes){
-                            $tipo = 'CAUSES';
-                        }else if($insumo->insumosConDescripcion->tipo == 'ME' && !$insumo->insumosConDescripcion->es_causes){
-                            $tipo = 'NO CAUSES';
-                        }else if($insumo->insumosConDescripcion->tipo == 'MC'){
-                            $tipo = 'MATERIAL DE CURACIÓN';
-                        }
-
                         $contador_filas++;
                         $sheet->appendRow(array(
                             ($contador_filas-7), 
                             $insumo->insumo_medico_clave,
                             $insumo->insumosConDescripcion->descripcion,
-                            $tipo,
                             $insumo->cantidad_solicitada,
                             $insumo->precio_unitario,
                             $insumo->monto_solicitado,
                             $insumo->cantidad_recibida | 0,
                             $insumo->precio_unitario,
                             ($insumo->monto_recibido)?$insumo->monto_recibido:0,
-                            '=H'.$contador_filas.'/E'.$contador_filas,
-                            '=J'.$contador_filas.'/G'.$contador_filas
+                            '=G'.$contador_filas.'/D'.$contador_filas,
+                            '=I'.$contador_filas.'/F'.$contador_filas
                         ));
 
                         if($insumo->insumosConDescripcion->tipo == 'MC'){
@@ -607,23 +606,21 @@ class PedidoController extends Controller{
                     $iva_solicitado = $iva_solicitado*16/100;
                     $iva_recibido = $iva_recibido*16/100;
                     
-                    $sheet->setBorder("A1:L$contador_filas", 'thin');
+                    $sheet->setBorder("A1:K$contador_filas", 'thin');
 
                     $sheet->appendRow(array(
                             '', 
                             '',
                             '',
                             '',
-                            '',
                             'SUBTOTAL',
-                            '=SUM(G8:G'.($contador_filas).')',
+                            '=SUM(F8:F'.($contador_filas).')',
                             '',
                             '',
-                            '=SUM(J8:J'.($contador_filas).')',
+                            '=SUM(I8:I'.($contador_filas).')',
                         ));
                     $sheet->appendRow(array(
                             '', 
-                            '',
                             '',
                             '',
                             '',
@@ -638,26 +635,25 @@ class PedidoController extends Controller{
                             '',
                             '',
                             '',
-                            '',
                             'TOTAL',
-                            '=SUM(G'.($contador_filas+1).':G'.($contador_filas+2).')',
+                            '=SUM(F'.($contador_filas+1).':F'.($contador_filas+2).')',
                             '',
                             '',
-                            '=SUM(J'.($contador_filas+1).':J'.($contador_filas+2).')',
+                            '=SUM(I'.($contador_filas+1).':I'.($contador_filas+2).')',
                         ));
                     $contador_filas += 3;
 
 
                     $phpColor = new \PHPExcel_Style_Color();
                     $phpColor->setRGB('DDDDDD'); 
-                    $sheet->getStyle("K8:L$contador_filas")->getFont()->setColor( $phpColor );
+                    $sheet->getStyle("J8:K$contador_filas")->getFont()->setColor( $phpColor );
 
                     $sheet->setColumnFormat(array(
-                        "E8:E$contador_filas" => '#,##0',
-                        "H8:H$contador_filas" => '#,##0',
-                        "F8:G$contador_filas" => '"$" #,##0.00_-',
-                        "I8:J$contador_filas" => '"$" #,##0.00_-',
-                        "K8:L$contador_filas" => '[Green]0.00%;[Red]-0.00%;0.00%',
+                        "D8:D$contador_filas" => '#,##0',
+                        "G8:G$contador_filas" => '#,##0',
+                        "E8:F$contador_filas" => '"$" #,##0.00_-',
+                        "H8:I$contador_filas" => '"$" #,##0.00_-',
+                        "J8:K$contador_filas" => '[Green]0.00%;[Red]-0.00%;0.00%',
                     ));
                 });
             }

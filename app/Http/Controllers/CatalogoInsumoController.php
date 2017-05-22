@@ -29,19 +29,12 @@ class CatalogoInsumoController extends Controller
             //Harima: obtenemos el contrato activo 
             $proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
 
-            if(count($proveedor->contratoActivo) > 1){
-                return Response::json(['error' => 'El proveedor tiene mas de un contrato activo'], HttpResponse::HTTP_CONFLICT);
-            }else{
-                $contrato_activo = $proveedor->contratoActivo;
+            $contrato_activo = $proveedor->contratoActivo;
+            
+            if(!$contrato_activo){
+                return Response::json(['error' => 'No se encontraron contratos activos para este proveedor'], HttpResponse::HTTP_CONFLICT);
             }
             
-            if(count($contrato_activo) > 1){
-                return Response::json(['error' => 'Hay mas de un contrato activo'], HttpResponse::HTTP_CONFLICT);
-            }elseif(count($contrato_activo) == 0){
-                return Response::json(['error' => 'No se encontraron contratos activos para este proveedor'], HttpResponse::HTTP_CONFLICT);
-            }else{
-                $contrato_activo = $contrato_activo[0];
-            }
             //Se carga un scope con el cual obtenemos los nombres o descripciones de los catalogos que utiliza insumos_medicos
             $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id,$proveedor->id)->with('informacion','generico.grupos');
         }else{

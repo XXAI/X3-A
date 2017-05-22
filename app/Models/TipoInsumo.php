@@ -12,6 +12,6 @@ class TipoInsumo extends BaseModel
     protected $generarID = true;
     protected $guardarIDServidor = true;
     protected $guardarIDUsuario = true;
-    protected $fillable = ["created_at","updated_at"];
+    protected $fillable = ["id","clave","nombre","created_at","updated_at"];
     protected $table = 'tipos_insumos';
 }

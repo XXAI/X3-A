@@ -16,10 +16,8 @@ class CreateContratoCluesTable extends Migration{
         
             $table->increments('id');
             $table->integer('contrato_id')->unsigned();
-            $table->string('clues', 255);
-            $table->decimal('techo_presupuestal', 15, 2);
-            $table->string('usuario_id', 255);
-        
+            $table->string('clues', 12);
+            
             $table->index('contrato_id','fk_contrato_clues_contratos1_idx');
         
             $table->foreign('contrato_id')->references('id')->on('contratos');

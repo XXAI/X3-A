@@ -16,9 +16,9 @@ class CreateContratosPedidosTable extends Migration{
 		
 		    $table->increments('id');
 		    $table->integer('contrato_id')->unsigned();
-		    $table->string('clave_partida', 45);
-		    $table->string('clave_pedido', 45);
-		    $table->string('numero_requisision', 45);
+		    $table->string('clave_partida', 45)->nullable();
+		    $table->string('clave_pedido', 45)->nullable();
+		    $table->string('numero_requisision', 45)->nullable();
 		    $table->string('nombre', 255)->nullable();
 		    $table->string('usuario_id', 255);
 		    

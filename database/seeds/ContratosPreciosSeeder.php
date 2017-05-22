@@ -13,27 +13,33 @@ class ContratosPreciosSeeder extends Seeder
         DB::table('contratos')->insert([
             [
                 'id' => 1,
+                'proveedor_id' => 1,
                 'monto_minimo' => 217414184.49,
                 'monto_maximo' => 217414184.49,
                 'fecha_inicio' => '2017-04-01',
                 'fecha_fin' => '2017-12-31',
                 'activo' => 1,
                 'usuario_id' => 'root'
-            ]
-        ]);
-
-        DB::table('contrato_proveedor')->insert([
-            [
-                'contrato_id' => 1,
-                'proveedor_id' => 1
             ],
             [
-                'contrato_id' => 1,
-                'proveedor_id' => 2
+                'id' => 2,
+                'proveedor_id' => 2,
+                'monto_minimo' => 217414184.49,
+                'monto_maximo' => 217414184.49,
+                'fecha_inicio' => '2017-04-01',
+                'fecha_fin' => '2017-12-31',
+                'activo' => 1,
+                'usuario_id' => 'root'
             ],
             [
-                'contrato_id' => 1,
-                'proveedor_id' => 3
+                'id' => 3,
+                'proveedor_id' => 3,
+                'monto_minimo' => 217414184.49,
+                'monto_maximo' => 217414184.49,
+                'fecha_inicio' => '2017-04-01',
+                'fecha_fin' => '2017-12-31',
+                'activo' => 1,
+                'usuario_id' => 'root'
             ]
         ]);
 
