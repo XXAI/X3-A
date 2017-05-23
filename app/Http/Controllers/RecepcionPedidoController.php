@@ -285,45 +285,62 @@ class RecepcionPedidoController extends Controller
 			        	{		        		
 			        						    		
 							$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
-							$pedido_insumo->cantidad_recibida += $value['existencia'];
-							$cantidad_recibida = ( $value['existencia'] * $pedido_insumo->precio_unitario );
 
-							$pedido_insumo->monto_recibido 	  += $cantidad_recibida;
-							$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
+							if($pedido_insumo->cantidad_solicitada >= ($pedido_insumo->cantidad_recibida + $value['existencia']))
+							{
+								$pedido_insumo->cantidad_recibida += $value['existencia'];
+								$cantidad_recibida = ( $value['existencia'] * $pedido_insumo->precio_unitario );
 
-							if($insert_stock){
-								$insert_stock->existencia += $value['existencia'];
-								$insert_stock->save();
-							}else{					
-								$insert_stock = Stock::create($value);
-							}		
+								$pedido_insumo->monto_recibido 	  += $cantidad_recibida;
+								$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
 
-							if($es_causes == 1)
-								$causes_unidad_presupuesto 				+= $cantidad_recibida;
-							else
-					        	$no_causes_unidad_presupuesto 			+= $cantidad_recibida;
-					        
+								if($insert_stock){
+									$insert_stock->existencia += $value['existencia'];
+									$insert_stock->save();
+								}else{					
+									$insert_stock = Stock::create($value);
+								}		
+
+								if($es_causes == 1)
+									$causes_unidad_presupuesto 				+= $cantidad_recibida;
+								else
+						        	$no_causes_unidad_presupuesto 			+= $cantidad_recibida;
+						    }else
+						    {
+						    	DB::rollBack();
+								return Response::json(['error' => 'Existe un error, se ha sobrepasado el monto solicitando, por favor contactese con soporte de la aplicacion'], 500);
+						    }   
 								
 			        	}else
 			        	{
 			        		$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
-							$pedido_insumo->cantidad_recibida += $value['existencia'];
 
-							$cantidad_recibida 						= ( $value['existencia'] * $pedido_insumo->precio_unitario ) * (1.16);
-							$cantidad_recibida_sin_iva				= ( $value['existencia'] * $pedido_insumo->precio_unitario );
+			        		
+			        		if(($pedido_insumo->cantidad_solicitada) >= ($pedido_insumo->cantidad_recibida + $value['existencia']))
+							{
+							
+								$pedido_insumo->cantidad_recibida += $value['existencia'];
 
-							$pedido_insumo->monto_recibido 	  		+= $cantidad_recibida_sin_iva;
-							$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
+								$cantidad_recibida 						= ( $value['existencia'] * $pedido_insumo->precio_unitario ) * (1.16);
+								$cantidad_recibida_sin_iva				= ( $value['existencia'] * $pedido_insumo->precio_unitario );
 
-							$material_curacion_unidad_presupuesto 	+= $cantidad_recibida; //Se suma el monto de material de curazion
+								$pedido_insumo->monto_recibido 	  		+= $cantidad_recibida_sin_iva;
+								$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
 
-							if($insert_stock){
-								$insert_stock->existencia += $value['existencia'];
-								$insert_stock->save();
-								
-							}else{					
-								$insert_stock = Stock::create($value);
-								
+								$material_curacion_unidad_presupuesto 	+= $cantidad_recibida; //Se suma el monto de material de curazion
+
+								if($insert_stock){
+									$insert_stock->existencia += $value['existencia'];
+									$insert_stock->save();
+									
+								}else{					
+									$insert_stock = Stock::create($value);
+									
+								}
+							}else
+							{
+								DB::rollBack();
+								return Response::json(['error' => 'Existe un error, se ha sobrepasado el monto solicitando, por favor contactese con soporte de la aplicaciÓn'], 500);
 							}
 			        	}
 					}else
