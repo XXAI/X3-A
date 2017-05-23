@@ -70,6 +70,8 @@ class RecepcionPedidoController extends Controller
     }
 
     public function update(Request $request, $id){
+
+
 		$mensajes = [
             'required'      => "required",
         ];
@@ -82,6 +84,18 @@ class RecepcionPedidoController extends Controller
 
         $parametros = Input::all();
 		
+		$pedido_verificar = PedidoInsumo::where("pedido_id", $id)
+							->select( DB::raw('SUM(cantidad_solicitada) as cantidad_solicitada'), DB::raw('SUM(cantidad_recibida) as cantidad_recibida') )
+							->groupBy("pedido_id")
+							->first();
+		
+
+		if($pedido_verificar->cantidad_solicitada < intval($pedido_verificar->cantidad_recibida))
+		{
+			return Response::json(['error' =>"Existe un error al comprobar la cantidad recibida, por favor contactese con el area de soporte" ], 500);
+		}
+
+
 		$almacen = Almacen::find($request->get('almacen_id'));
         
         /*Recepcion de precios por insumo*/
@@ -93,7 +107,7 @@ class RecepcionPedidoController extends Controller
             return Response::json(['error' => 'No se encontraron contratos activos para este proveedor'], 500);
         }
 
-        //Se carga un scope con el cual obtenemos los nombres o descripciones de los catalogos que utiliza insumos_medicos
+        //cargamos en un arreglo los insumos, para poder obtener datos, de los insumos que envie 
         $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad")->get();
         $lista_insumos = array();
         foreach ($insumos as $key => $value) {
@@ -106,14 +120,17 @@ class RecepcionPedidoController extends Controller
         	$lista_insumos[$value['clave']] = $array_datos;
         }
 		/**/
+		DB::beginTransaction();
 
 		$pedido = Pedido::where('almacen_solicitante',$almacen->id)->with(['recepciones'=>function($recepciones){
 			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
 		}])->where('status','PS')->find($id);
 
 		if(!$pedido){
+			DB::rollBack();
 			return Response::json(['error' => 'No se encontró el pedido'],500);
 		}
+
 
 		if(count($pedido->recepciones) > 1){
 			return Response::json(['error' => 'El pedido tiene mas de una recepción abierta'], 500);
@@ -148,7 +165,7 @@ class RecepcionPedidoController extends Controller
         }
 		
         try {
-            DB::beginTransaction();
+            
 	        $v = Validator::make($datos_movimiento, $reglas, $mensajes);
 
 	        if ($v->fails()) {
@@ -234,9 +251,11 @@ class RecepcionPedidoController extends Controller
 					'existencia'     		=> 'required'
 		        ];
 
+		        /*Obtenemos variables del insumo a procesar. de acuerdo a la lista de insumos cargada anteriormente*/
 		        $tipo_insumo 	= $lista_insumos[$value['clave_insumo_medico']]['tipo'];
 		        $es_causes 		= $lista_insumos[$value['clave_insumo_medico']]['es_causes'];
 		        $caducidad 		= $lista_insumos[$value['clave_insumo_medico']]['caducidad'];
+		        /**/
 
 		        if($tipo_insumo == "ME")
 		        	$reglas_stock['fecha_caducidad'] = 'required';
@@ -254,14 +273,9 @@ class RecepcionPedidoController extends Controller
 		        	$value['fecha_caducidad'] = null;
 
 		        
-				//return Response::json(['error' => $x], HttpResponse::HTTP_CONFLICT);
-		        
-		        
 		        if($this->validacion_fecha_caducidad($value['fecha_caducidad'], $caducidad)) //Validacion de Fecha de caducidad
 		        {
-		        	
-				
-			        if(!isset($value['fecha_caducidad'])){
+		          if(!isset($value['fecha_caducidad'])){
 						$value['fecha_caducidad'] = null;
 					}elseif(!$value['fecha_caducidad']){
 						$value['fecha_caducidad'] = null;
@@ -274,9 +288,9 @@ class RecepcionPedidoController extends Controller
 					else{
 						
 						$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->Where(function ($query) {
-																			                $query->whereNull('codigo_barras')
-																			                      ->orWhere('codigo_barras', '');
-																			            })->first(); //Verifica si existe el medicamento en el stock
+			                $query->whereNull('codigo_barras')
+			                      ->orWhere('codigo_barras', '');
+			            })->first(); //Verifica si existe el medicamento en el stock
 					}
 
 					if($parametros['status'] == 'FI')
@@ -286,7 +300,9 @@ class RecepcionPedidoController extends Controller
 			        						    		
 							$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
 
-							if($pedido_insumo->cantidad_solicitada >= ($pedido_insumo->cantidad_recibida + $value['existencia']))
+
+
+							if($pedido_insumo->cantidad_solicitada >= intval(($pedido_insumo->cantidad_recibida + $value['existencia'])))
 							{
 								$pedido_insumo->cantidad_recibida += $value['existencia'];
 								$cantidad_recibida = ( $value['existencia'] * $pedido_insumo->precio_unitario );
@@ -308,7 +324,7 @@ class RecepcionPedidoController extends Controller
 						    }else
 						    {
 						    	DB::rollBack();
-								return Response::json(['error' => 'Existe un error, se ha sobrepasado el monto solicitando, por favor contactese con soporte de la aplicacion'], 500);
+								return Response::json(['error' => 'Existe un error, el insumo '.$value['clave_insumo_medico'].' ha sobrepasado el monto solicitando, por favor contactese con soporte de la aplicacion'], 500);
 						    }   
 								
 			        	}else
@@ -316,7 +332,7 @@ class RecepcionPedidoController extends Controller
 			        		$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
 
 			        		
-			        		if(($pedido_insumo->cantidad_solicitada) >= ($pedido_insumo->cantidad_recibida + $value['existencia']))
+			        		if(($pedido_insumo->cantidad_solicitada) >= intval(($pedido_insumo->cantidad_recibida + $value['existencia'])))
 							{
 							
 								$pedido_insumo->cantidad_recibida += $value['existencia'];
@@ -340,7 +356,7 @@ class RecepcionPedidoController extends Controller
 							}else
 							{
 								DB::rollBack();
-								return Response::json(['error' => 'Existe un error, se ha sobrepasado el monto solicitando, por favor contactese con soporte de la aplicaciÓn'], 500);
+								return Response::json(['error' => 'Existe un error,el insumo '.$value['clave_insumo_medico'].' se ha sobrepasado el monto solicitando, por favor contactese con soporte de la aplicación'], 500);
 							}
 			        	}
 					}else
@@ -387,7 +403,17 @@ class RecepcionPedidoController extends Controller
 		        }
 		        $value['stock_id'] = $insert_stock->id;
 
-		        $movimiento_insumo = MovimientoInsumos::Create($value);	        	
+
+		        $pedido_insumo_validador = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
+		       
+		        if(($pedido_insumo_validador->cantidad_solicitada) >= ($pedido_insumo_validador->cantidad_recibida + $value['existencia']))
+				{
+		        	$movimiento_insumo = MovimientoInsumos::Create($value);	  //Aqui debo de verificar     
+		        }else
+				{
+					DB::rollBack();
+					return Response::json(['error' => 'Existe un error,el insumo '.$value['clave_insumo_medico'].' se ha sobrepasado el monto solicitando, por favor contactese con soporte de la aplicación'], 500);
+				}	 	
 	        }
 	        
 		     
