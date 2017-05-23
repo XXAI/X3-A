@@ -84,6 +84,7 @@ class RecepcionPedidoController extends Controller
 
         $parametros = Input::all();
 		
+		/*Verifica de primera instancia que no se haya sobrepasado las cantidades solicitadas con la recibida, por error*/
 		$pedido_verificar = PedidoInsumo::where("pedido_id", $id)
 							->select( DB::raw('SUM(cantidad_solicitada) as cantidad_solicitada'), DB::raw('SUM(cantidad_recibida) as cantidad_recibida') )
 							->groupBy("pedido_id")
@@ -94,6 +95,7 @@ class RecepcionPedidoController extends Controller
 		{
 			return Response::json(['error' =>"Existe un error al comprobar la cantidad recibida, por favor contactese con el area de soporte" ], 500);
 		}
+		/*Fin validador*/
 
 
 		$almacen = Almacen::find($request->get('almacen_id'));
@@ -137,6 +139,8 @@ class RecepcionPedidoController extends Controller
 		}elseif(count($pedido->recepciones) == 1){
 			$recepcion = $pedido->recepciones[0];
 		}else{
+
+			//$movimiento_validador = MovimientoPedido::where() 
 			$recepcion = new MovimientoPedido;
 
 			$recepcion->recibe = 'RECIBE';
@@ -147,6 +151,23 @@ class RecepcionPedidoController extends Controller
 		if(!isset($parametros['fecha_movimiento'])){
 			$parametros['fecha_movimiento'] = date('Y-m-d');
 		}
+
+		/* Validador de  movimientos, se verifica que no exista un movimiento con las mismas característicasa*/
+		
+
+		
+		if($parametros['status'] == 'FI') //Actualizamod datos en caso de ser necesario
+		{												
+			$movimiento_validador = Movimiento::where("fecha_movimiento", $parametros['fecha_movimiento'])
+											->where("observaciones", ($parametros['observaciones'])?$parametros['observaciones']:null) 
+											->where("almacen_id", $almacen->id);
+								
+			if($movimiento_validador->count() > 0)
+			{
+				return Response::json(['error' => "Error, se ha detectado un movimiento con los mismos datos, por favor oprima la tecla F5, y verifique sus datos."], 500);		
+			}									
+		}
+		/**/
 
 		if(!isset($parametros['observaciones'])){
 			$parametros['observaciones'] = null;
@@ -404,16 +425,16 @@ class RecepcionPedidoController extends Controller
 		        $value['stock_id'] = $insert_stock->id;
 
 
-		        $pedido_insumo_validador = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
+		        /*$pedido_insumo_validador = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
 		       
 		        if(($pedido_insumo_validador->cantidad_solicitada) >= ($pedido_insumo_validador->cantidad_recibida + $value['existencia']))
-				{
+				{*/
 		        	$movimiento_insumo = MovimientoInsumos::Create($value);	  //Aqui debo de verificar     
-		        }else
+		        /*}else
 				{
 					DB::rollBack();
 					return Response::json(['error' => 'Existe un error,el insumo '.$value['clave_insumo_medico'].' se ha sobrepasado el monto solicitando, por favor contactese con soporte de la aplicación'], 500);
-				}	 	
+				}*/	 	
 	        }
 	        
 		     
