@@ -37,11 +37,17 @@ class PedidoController extends Controller{
                                             DB::raw('sum(material_curacion_autorizado) as material_curacion_autorizado'),DB::raw('sum(material_curacion_modificado) as material_curacion_modificado'),DB::raw('sum(material_curacion_comprometido) as material_curacion_comprometido'),DB::raw('sum(material_curacion_devengado) as material_curacion_devengado'),DB::raw('sum(material_curacion_disponible) as material_curacion_disponible'))
                                             ->where('presupuesto_id',$presupuesto->id)
                                             ->where('clues',$almacen->clues)
-                                            ->where('proveedor_id',$almacen->proveedor_id)
+                                            //->where('proveedor_id',$almacen->proveedor_id)
                                             ->groupBy('clues');
             if(isset($parametros['mes'])){
                 if($parametros['mes']){
                     $presupuesto_unidad_medica = $presupuesto_unidad_medica->where('mes',$parametros['mes']);
+                }
+            }
+
+            if(isset($parametros['anio'])){
+                if($parametros['anio']){
+                    $presupuesto_unidad_medica = $presupuesto_unidad_medica->where('anio',$parametros['anio']);
                 }
             }
 
@@ -77,7 +83,8 @@ class PedidoController extends Controller{
                 case when status = "EX" then 1 else null end
             ) as expirados
             '
-        ))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
+        //))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
+        ))->where('clues',$almacen->clues)->first();
 
         return Response::json($pedidos,200);
     }
@@ -96,7 +103,8 @@ class PedidoController extends Controller{
              });
         }
 
-        $pedidos = $pedidos->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues);
+        //$pedidos = $pedidos->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues);
+        $pedidos = $pedidos->where('clues',$almacen->clues);
 
         if(isset($parametros['status'])) {
             $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
@@ -139,12 +147,15 @@ class PedidoController extends Controller{
 
         $reglas = [
             'tipo_pedido_id'        => 'required',
+            'almacen_solicitante'   => 'required',
             'descripcion'           => 'required',
             'fecha'                 => 'required|date',
             'status'                => 'required'
         ];
 
         $parametros = Input::all();
+
+
 
         $almacen = Almacen::find($request->get('almacen_id'));
 
@@ -155,15 +166,29 @@ class PedidoController extends Controller{
         }elseif($almacen->nivel_almacen == 2){
             $reglas['almacen_proveedor'] = 'required';
         }
+
+        $almacen_solicitante = Almacen::find($parametros['datos']['almacen_solicitante']);
+
+        if($almacen_solicitante){
+            if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
+                $tipo_pedido = 'PFS';
+            }else{
+                $tipo_pedido = 'PA';
+            }
+        }else{
+            return Response::json(['error' => 'No se encontró el almacen solicitante'], 500);
+        }
         
-        $parametros['datos']['almacen_solicitante'] = $almacen->id;
+        //$parametros['datos']['almacen_solicitante'] = $almacen->id;
         $parametros['datos']['clues'] = $almacen->clues;
         $parametros['datos']['status'] = 'BR'; //estatus de borrador
-        $parametros['datos']['tipo_pedido_id'] = 'PA'; //tipo de pedido Pedido de Abastecimiento
+        $parametros['datos']['tipo_pedido_id'] = $tipo_pedido; //tipo de pedido Pedido de Abastecimiento
 
         $fecha = date($parametros['datos']['fecha']);
         $fecha_expiracion = strtotime("+20 days", strtotime($fecha));
         $parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
+
+        //return Response::json(['error' => 'Se necesita capturar al menos un insumo','data'=>$parametros['datos']], 500);
 
         $v = Validator::make($parametros['datos'], $reglas, $mensajes);
 
@@ -242,6 +267,7 @@ class PedidoController extends Controller{
         ];
 
         $reglas = [
+            'almacen_solicitante'   => 'required',
             'descripcion'           => 'required',
             'fecha'                 => 'required|date',
             'status'                => 'required'
@@ -252,30 +278,51 @@ class PedidoController extends Controller{
         $almacen = Almacen::find($request->get('almacen_id'));
 
         if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
-            $reglas['proveedor_id'] = 'required';
-            $parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
+            //$reglas['proveedor_id'] = 'required';
+            //$parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
             $parametros['datos']['almacen_proveedor'] = null;
         }elseif($almacen->nivel_almacen == 2){
             $reglas['almacen_proveedor'] = 'required';
         }
         
+        $almacen_solicitante = Almacen::find($parametros['datos']['almacen_solicitante']);
+
+        $tipo_pedido = '';
+        if($almacen_solicitante){
+            if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
+                $tipo_pedido = 'PFS';
+            }else{
+                $tipo_pedido = 'PA';
+            }
+        }else{
+            return Response::json(['error' => 'No se encontró el almacen solicitante'], 500);
+        }
+        $parametros['datos']['tipo_pedido_id'] = $tipo_pedido;
         //$parametros['datos']['tipo_pedido_id'] = 1;
 
         if(!isset($parametros['datos']['status'])){
             $parametros['datos']['status'] = 'BR'; //estatus Borrador
         }elseif($parametros['datos']['status'] == 'CONCLUIR'){
-            if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
+            if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL'){
                 $parametros['datos']['status'] = 'PS';
-            }elseif($almacen->nivel_almacen == 2){
+            }elseif($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
                 $parametros['datos']['status'] = 'ET';
             }
+            /*elseif($almacen_solicitante->nivel_almacen == 2){
+                $parametros['datos']['status'] = 'ET';
+            }*/
         }else{
             $parametros['datos']['status'] = 'BR';
         }
 
-        $fecha = date($parametros['datos']['fecha']);
-        $fecha_expiracion = strtotime("+20 days", strtotime($fecha));
-        $parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
+        if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL'){
+            $fecha = date($parametros['datos']['fecha']);
+            $fecha_expiracion = strtotime("+20 days", strtotime($fecha));
+            $parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
+        }else{
+            $parametros['datos']['fecha_expiracion'] = null;
+        }
+       
         
         $v = Validator::make($parametros['datos'], $reglas, $mensajes);
 
@@ -344,23 +391,27 @@ class PedidoController extends Controller{
             }
 
             if(!$pedido->folio && $pedido->status != 'BR'){
-                $max_folio = Pedido::where('clues',$almacen->clues)->max('folio');
                 $anio = date('Y');
+
+                $folio_template = $almacen->clues . '-' . $anio . '-'.$tipo_pedido.'-';
+                $max_folio = Pedido::where('clues',$almacen->clues)->where('folio','like',$folio_template.'%')->max('folio');
+                
                 if(!$max_folio){
                     $prox_folio = 1;
                 }else{
                     $max_folio = explode('-',$max_folio);
                     $prox_folio = intval($max_folio[3]) + 1;
                 }
-                $pedido->folio = $almacen->clues . '-' . $anio . '-PA-' . str_pad($prox_folio, 3, "0", STR_PAD_LEFT);
+                $pedido->folio = $folio_template . str_pad($prox_folio, 3, "0", STR_PAD_LEFT);
             }
 
-            if($pedido->status == 'PS'){
+            //Harima: Ajustamos el presupuesto, colocamos los totales en comprometido
+            if($pedido->status != 'BR'){
                 $fecha = explode('-',$pedido->fecha);
                 $presupuesto = Presupuesto::where('activo',1)->first();
                 $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
                                             ->where('clues',$almacen->clues)
-                                            ->where('proveedor_id',$almacen->proveedor_id)
+                                            //->where('proveedor_id',$almacen->proveedor_id)
                                             ->where('mes',$fecha[1])
                                             ->where('anio',$fecha[0])
                                             ->first();

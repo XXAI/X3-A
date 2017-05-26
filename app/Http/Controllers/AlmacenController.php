@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
 use JWTAuth;
 use App\Http\Requests;
 
 use Illuminate\Support\Facades\Input;
-use \Validator,\Hash, \Response, \DB, \Request;
+use \Validator,\Hash, \Response, \DB;
 
 use App\Models\Almacen;
 use App\Models\Usuario;
@@ -66,7 +67,7 @@ class AlmacenController extends Controller
 	 * <code style="color:green"> Respuesta Ok json(array("status": 200, "messages": "Operación realizada con exito", "data": array(resultado)),status) </code>
 	 * <code> Respuesta Error json(array("status": 404, "messages": "No hay resultados"),status) </code>
 	 */
-    public function index()
+    public function index(Request $request)
     {
         $parametros = Input::all();
 
@@ -82,13 +83,13 @@ class AlmacenController extends Controller
         }
 
         if(isset($parametros['filtro_usuario'])){
-            $obj =  JWTAuth::parseToken()->getPayload();
-            $usuario = Usuario::find($obj->get('id'));
+            $almacen = Almacen::find($request->get('almacen_id'));
 
-            $almacenes_id = $usuario->almacenes()->lists('almacenes.id');
-
-            $almacenes = $almacenes->whereNotIn('id',$almacenes_id);
-            
+            $almacenes = $almacenes->where('clues',$almacen->clues)->orderBy('nivel_almacen')->orderBy('nombre');
+            //$obj =  JWTAuth::parseToken()->getPayload();
+            //$usuario = Usuario::find($obj->get('id'));
+            //$almacenes_id = $usuario->almacenes()->lists('almacenes.id');
+            //$almacenes = $almacenes->whereNotIn('id',$almacenes_id);
         }else{
             $almacenes = $almacenes->with('usuarios','tiposMovimientos');
         }

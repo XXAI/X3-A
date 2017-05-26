@@ -27,7 +27,6 @@ Route::group(['middleware' => 'jwt'], function () {
 
     Route::resource('jurisdicciones', 'JurisdiccionesController',    ['only' => ['index']]);
     Route::resource('unidades-medicas', 'UnidadesMedicasController',    ['only' => ['index']]);
-    Route::resource('almacenes',        'AlmacenController',    ['only' => ['index']]);
 
     Route::resource('proveedores', 'ProveedoresController',    ['only' => ['index']]);
 
@@ -50,6 +49,8 @@ Route::group(['middleware' => 'jwt'], function () {
     });
 
     Route::group(['middleware' => 'almacen'], function () {
+        Route::resource('almacenes',        'AlmacenController',    ['only' => ['index']]);
+        
         Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::get('entregas-stats',        'EntregaController@stats');
 

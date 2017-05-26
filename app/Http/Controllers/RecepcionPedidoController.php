@@ -36,7 +36,7 @@ class RecepcionPedidoController extends Controller
 
             $presupuesto_unidad_medica = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
                                             ->where('clues',$clues)
-                                            ->where('proveedor_id',$proveedor_id)
+                                            //->where('proveedor_id',$proveedor_id)
 											->where('mes',$mes)
                                             ->groupBy('clues')
 											->first();
@@ -56,15 +56,24 @@ class RecepcionPedidoController extends Controller
 
     public function show(Request $request, $id){
 		
-    	$pedido = Pedido::where('almacen_solicitante',$request->get('almacen_id'))->with(['recepciones'=>function($recepciones){
+    	$pedido = Pedido::with(['recepciones'=>function($recepciones){
 			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
-		}])->where('status','PS')->find($id);
+		}])->find($id);
         
         if(!$pedido){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
-        }else{
-        	$pedido = $pedido->load("insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");
         }
+
+		if($pedido->status == 'BR'){
+			return Response::json(['error' => "Este pedido se encuentra en borrador."], 500);
+		}
+
+		if($pedido->tipo_pedido_id != 'PA'){
+			return Response::json(['error' => "Este pedido no admite captura de recepción."], 500);
+		}
+
+        $pedido = $pedido->load("insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");
+        
 
         return Response::json([ 'data' => $pedido],200);
     }
