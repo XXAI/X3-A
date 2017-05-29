@@ -15,6 +15,10 @@ use App\Models\Usuario;
 use App\Models\Almacen;
 use App\Models\Presupuesto;
 use App\Models\UnidadMedica;
+use App\Models\MovimientoPedido;
+use App\Models\Movimiento;
+use App\Models\MovimientoInsumos;
+use App\Models\Stock;
 use App\Models\UnidadMedicaPresupuesto;
 use \Excel;
 
@@ -295,7 +299,7 @@ class PedidoController extends Controller{
                 $tipo_pedido = 'PA';
             }
         }else{
-            return Response::json(['error' => 'No se encontró el almacen solicitante'], 500);
+            return Response::json(['error' => 'No se encontró el almacen seleccionado'], 500);
         }
         $parametros['datos']['tipo_pedido_id'] = $tipo_pedido;
         //$parametros['datos']['tipo_pedido_id'] = 1;
@@ -336,6 +340,10 @@ class PedidoController extends Controller{
 
         try {
             $pedido = Pedido::find($id);
+
+            if($pedido->status != 'BR'){
+                return Response::json(['error' => 'El pedido ya no puede editarse.'], 500);
+            }
 
              DB::beginTransaction();
 
@@ -406,7 +414,7 @@ class PedidoController extends Controller{
             }
 
             //Harima: Ajustamos el presupuesto, colocamos los totales en comprometido
-            if($pedido->status != 'BR'){
+            if($pedido->status == 'PS' || $pedido->status == 'ET'){
                 $fecha = explode('-',$pedido->fecha);
                 $presupuesto = Presupuesto::where('activo',1)->first();
                 $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
@@ -435,6 +443,61 @@ class PedidoController extends Controller{
                 }else{
                     $presupuesto_unidad->save();
                 }
+
+                if($pedido->tipo_pedido_id == 'PFS'){
+                    //crear movimiento de entrada y generar stock
+                    $recepcion = new MovimientoPedido;
+
+                    $recepcion->recibe = 'FARMACIA SUBROGADA';
+                    $recepcion->entrega = 'ALMACEN PRINCIPAL';
+                    $recepcion->pedido_id = $pedido->id;
+
+                    $datos_movimiento = [
+                        'status' => 'FI',
+                        'tipo_movimiento_id' => 6, //Recepcion de pedido
+                        'fecha_movimiento' => $pedido->fecha,
+                        'almacen_id' => $almacen_solicitante->id,
+                        'observaciones' => 'Entrada en base al pedido '.$pedido->folio.' para la Farmacia Subrogada'
+                    ];
+
+                    $movimiento = Movimiento::create($datos_movimiento);
+				    $recepcion->movimiento_id = $movimiento->id;
+
+                    $recepcion->save();
+
+                    $pedido->load("insumos");
+
+                    //DB::rollBack();
+                    //return Response::json(['error'=>'Error calculado', 'data'=>$pedido->insumos],500);
+
+                    //Cargamos los stocks ['clave'=>'stock_id']
+                    $stocks = Stock::where('almacen_id',$almacen_solicitante->id)->where('lote','like',$fecha[1].'-'.$fecha[0].'-F-SBRG')->lists('id','clave_insumo_medico');
+
+                    foreach($pedido->insumos as $insumo){
+                        if(!isset($stocks[$insumo->insumo_medico_clave])){
+                            $nuevo_stock = [
+                                'almacen_id'        	=> $almacen_solicitante->id,
+                                'clave_insumo_medico'   => $insumo->insumo_medico_clave,
+                                'lote'     				=> $fecha[1].'-'.$fecha[0].'-F-SBRG',
+                                'existencia'     		=> $insumo->cantidad_solicitada
+                            ];
+                            $stock = Stock::create($nuevo_stock);
+                            $stock_id = $stock->id;
+                        }else{
+                            $stock_id = $stocks[$insumo->insumo_medico_clave];
+                            Stock::where('id',$stock_id)->update(['existencia'=>DB::raw('existencia + '.$insumo->cantidad_solicitada)]);
+                        }
+
+                        $nuevo_movimiento_insumo = [
+                            'movimiento_id'		=> $movimiento->id,
+                            'cantidad'        	=> $insumo->cantidad_solicitada,
+                            'precio_unitario'   => $insumo->precio_unitario,
+                            'precio_total'     	=> $insumo->monto_solicitado,
+                            'stock_id'          => $stock_id
+                        ];
+                        $movimiento_insumo = MovimientoInsumos::create($nuevo_movimiento_insumo);
+                    }
+                }
             }
 
             $almacen->load('unidadMedica');
@@ -460,7 +523,8 @@ class PedidoController extends Controller{
     function destroy(Request $request, $id){
         try {
             //$object = Pedido::destroy($id);
-            $pedido = Pedido::where('almacen_solicitante',$request->get('almacen_id'))->where('id',$id)->first();
+            $almacen = Almacen::find($request->get('almacen_id'));
+            $pedido = Pedido::where('clues',$almacen->clues)->where('id',$id)->first();
             if($pedido){
                 if($pedido->status == 'BR'){
                     $pedido->insumos()->delete();
