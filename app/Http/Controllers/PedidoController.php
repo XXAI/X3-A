@@ -310,7 +310,7 @@ class PedidoController extends Controller{
             if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL'){
                 $parametros['datos']['status'] = 'PS';
             }elseif($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
-                $parametros['datos']['status'] = 'ET';
+                $parametros['datos']['status'] = 'FI';
             }
             /*elseif($almacen_solicitante->nivel_almacen == 2){
                 $parametros['datos']['status'] = 'ET';
@@ -414,7 +414,8 @@ class PedidoController extends Controller{
             }
 
             //Harima: Ajustamos el presupuesto, colocamos los totales en comprometido
-            if($pedido->status == 'PS' || $pedido->status == 'ET'){
+            //if($pedido->status == 'PS' || $pedido->status == 'ET'){
+            if($pedido->status != 'BR'){
                 $fecha = explode('-',$pedido->fecha);
                 $presupuesto = Presupuesto::where('activo',1)->first();
                 $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
