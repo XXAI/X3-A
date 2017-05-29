@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\AdministradorCentral;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests;
 use App\Models\Proveedor;
 use Illuminate\Support\Facades\Input;

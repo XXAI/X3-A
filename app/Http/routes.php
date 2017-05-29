@@ -27,19 +27,34 @@ Route::group(['middleware' => 'jwt'], function () {
 
     Route::resource('jurisdicciones', 'JurisdiccionesController',    ['only' => ['index']]);
     Route::resource('unidades-medicas', 'UnidadesMedicasController',    ['only' => ['index']]);
-
     Route::resource('proveedores', 'ProveedoresController',    ['only' => ['index']]);
 
     
     // # SECCION: Administrador central
-    // Akira: Debería haber creado un  grupo para la ruta pero ya no me dió tiempo.
-    Route::get('abasto', 'AbastoController@lista');
-    Route::get('abasto-excel', 'AbastoController@excel');
+    Route::group(['prefix' => 'administrador-central','namespace' => 'AdministradorCentral'], function () {
+        Route::get('abasto', 'AbastoController@lista');
+        Route::get('abasto-excel', 'AbastoController@excel');
 
-    Route::get('presupuesto-pedidos-administrador-central', 'PedidosAdministradorCentralController@presupuesto');
-    Route::get('pedidos-administrador-central', 'PedidosAdministradorCentralController@lista');
-    Route::get('pedidos-administrador-central-excel', 'PedidosAdministradorCentralController@excel');
+        Route::get('presupuesto-pedidos', 'PedidosController@presupuesto');
+        Route::get('pedidos', 'PedidosController@lista');
+        Route::get('pedidos-excel', 'PedidosController@excel');
+
+
+        // TRANSFERENCIAS DE PRESUPUESTO
+        Route::get('unidades-medicas-con-presupuesto', 'TransferenciasPresupuestosController@unidadesMedicasConPresupuesto');
+        Route::get('meses-presupuesto-actual', 'TransferenciasPresupuestosController@mesesPresupuestoActual');
+        Route::get('anios-presupuesto-actual', 'TransferenciasPresupuestosController@aniosPresupuestoActual');
+        // Este método es para obtener la lista de meses y años del presupuesto actual anteriores al mes y año actual
+        Route::get('meses-anios-presupuesto-actual-anterior-fecha-actual', 'TransferenciasPresupuestosController@mesesAnioPresupuestoActualAnteriorFechaActual');        
+        Route::get('presupuesto-unidad-medica', 'TransferenciasPresupuestosController@presupuestoUnidadMedica');
+        Route::get('transferencias-presupuestos', 'TransferenciasPresupuestosController@lista');
+        Route::post('transferencias-presupuestos', 'TransferenciasPresupuestosController@transferir');
+        Route::post('transferencias-saldos-mes-actual', 'TransferenciasPresupuestosController@transferirSaldosAlMesActual');
+        
+
+    });
     // # FIN SECCION
+
 
     Route::group(['middleware' => 'proveedor'], function () {
         Route::get('presupuesto-pedidos-administrador-proveedores', 'PedidosAdministradorProveedoresController@presupuesto');
@@ -64,8 +79,9 @@ Route::group(['middleware' => 'jwt'], function () {
         //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
         Route::resource('catalogo-insumos',  'CatalogoInsumoController',     ['only' => ['index', 'show']]);
     });
+
     Route::get('generar-excel-pedido/{id}', 'PedidoController@generarExcel');
-    
+
     Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
  

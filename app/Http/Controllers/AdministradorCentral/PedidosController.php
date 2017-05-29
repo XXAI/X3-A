@@ -1,17 +1,18 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\AdministradorCentral;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests;
 use App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
 
-class PedidosAdministradorCentralController extends Controller
+class PedidosController extends Controller
 {
     public function presupuesto(Request $request){
         try{

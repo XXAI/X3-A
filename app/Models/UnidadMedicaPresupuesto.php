@@ -14,4 +14,8 @@ class UnidadMedicaPresupuesto extends BaseModel
     protected $guardarIDUsuario = false;
     protected $fillable = [ "clues", "mes", "anio", "presupuesto_id", "proveedor_id", "causes_autorizado", "causes_modificado", "causes_comprometido", "causes_devengado", "causes_disponible", "no_causes_autorizado", "no_causes_modificado", "no_causes_comprometido", "no_causes_devengado", "no_causes_disponible", "material_curacion_autorizado", "material_curacion_modificado", "material_curacion_comprometido", "material_curacion_devengado", "material_curacion_disponible"];
     protected $table = 'unidad_medica_presupuesto';
+
+    public function unidadMedica(){
+      return $this->belongsTo('App\Models\UnidadMedica','clues','clues');
+    }
 }
