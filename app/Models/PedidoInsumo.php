@@ -16,7 +16,7 @@ class PedidoInsumo extends BaseModel
     protected $table = 'pedidos_insumos';
 
     public function insumosConDescripcion(){
-        return $this->hasOne('App\Models\Insumo','clave','insumo_medico_clave')->conDescripciones();        
+        return $this->hasOne('App\Models\Insumo','clave','insumo_medico_clave')->conDescripciones()->withTrashed();        
     }
 
     public function tipoInsumo(){
