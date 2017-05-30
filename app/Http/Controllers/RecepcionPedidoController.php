@@ -171,7 +171,7 @@ class RecepcionPedidoController extends Controller
 											->where("observaciones", ($parametros['observaciones'])?$parametros['observaciones']:null) 
 											->where("almacen_id", $almacen->id);
 								
-			if($movimiento_validador->count() > 0)
+			if($movimiento_validador->count() > 1)
 			{
 				return Response::json(['error' => "Error, se ha detectado un movimiento con los mismos datos, por favor oprima la tecla F5, y verifique sus datos."], 500);		
 			}									
