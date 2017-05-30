@@ -429,18 +429,18 @@ class PedidoController extends Controller{
                     return Response::json(['error' => 'No existe presupuesto asignado al mes y/o año del pedido'], 500);
                 }
                 
-                $presupuesto_unidad->causes_comprometido += $total_monto['causes'];
-                $presupuesto_unidad->causes_disponible -= $total_monto['causes'];
+                $presupuesto_unidad->causes_comprometido = round($presupuesto_unidad->causes_comprometido,2) + round($total_monto['causes'],2);
+                $presupuesto_unidad->causes_disponible = round($presupuesto_unidad->causes_disponible,2) - round($total_monto['causes'],2);
 
-                $presupuesto_unidad->no_causes_comprometido += $total_monto['no_causes'];
-                $presupuesto_unidad->no_causes_disponible -= $total_monto['no_causes'];
+                $presupuesto_unidad->no_causes_comprometido = round($presupuesto_unidad->no_causes_comprometido,2) + round($total_monto['no_causes'],2);
+                $presupuesto_unidad->no_causes_disponible = round($presupuesto_unidad->no_causes_disponible,2) - round($total_monto['no_causes'],2);
 
-                $presupuesto_unidad->material_curacion_comprometido += $total_monto['material_curacion'];
-                $presupuesto_unidad->material_curacion_disponible -= $total_monto['material_curacion'];
-
+                $presupuesto_unidad->material_curacion_comprometido = round($presupuesto_unidad->material_curacion_comprometido,2) + round($total_monto['material_curacion'],2);
+                $presupuesto_unidad->material_curacion_disponible = round($presupuesto_unidad->material_curacion_disponible,2) - round($total_monto['material_curacion'],2);
+                
                 if($presupuesto_unidad->causes_disponible < 0 || $presupuesto_unidad->no_causes_disponible < 0 || $presupuesto_unidad->material_curacion_disponible < 0){
                     DB::rollBack();
-                    return Response::json(['error' => 'El presupuesto es insuficiente para este pedido, los cambios no se guardaron.', 'data'=>$presupuesto_unidad], 500);
+                    return Response::json(['error' => 'El presupuesto es insuficiente para este pedido, los cambios no se guardaron.', 'data'=>[$presupuesto_unidad,$total_monto]], 500);
                 }else{
                     $presupuesto_unidad->save();
                 }
@@ -558,8 +558,17 @@ class PedidoController extends Controller{
             if($usuario->proveedor_id){
                 $pedido = $pedido->where('proveedor_id',$usuario->proveedor_id);
             }else{
-                $unidades = $usuario->almacenes->lists('clues');
-                $pedido = $pedido->whereIn('clues',$unidades);
+                $usuario->load('roles.permisos');
+                $permisos = [];
+                foreach($usuario->roles as $rol){
+                    $rol_permisos = $rol->permisos->lists('id','id')->toArray();
+                    $permisos = array_merge($permisos,$rol_permisos);
+                }
+                //$permisos = $usuario->roles->permisos->lists('id','id');
+                if(!isset($permisos['bsIbPL3qv6XevcAyrRm1GxJufDbzLOax'])){
+                    $unidades = $usuario->almacenes->lists('clues');
+                    $pedido = $pedido->whereIn('clues',$unidades);
+                }
             }
         }
 
