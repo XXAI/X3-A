@@ -119,7 +119,7 @@ class RecepcionPedidoController extends Controller
         }
 
         //cargamos en un arreglo los insumos, para poder obtener datos, de los insumos que envie 
-        $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad")->get();
+        $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad")->withTrashed()->get();
         $lista_insumos = array();
         foreach ($insumos as $key => $value) {
         	$array_datos = array();
