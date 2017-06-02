@@ -302,7 +302,7 @@ class PedidosAdministradorProveedoresController extends Controller
                 $items = $items->whereIn('status',$status);
             }              
         }else{
-            $items = $items->whereIn('status',['PS','FI','EX']);
+            $items = $items->whereIn('status',['PS','FI','EX','EF']);
         }
 
         if(isset($parametros['jurisdicciones']) && $parametros['jurisdicciones'] != ""){

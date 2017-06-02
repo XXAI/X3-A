@@ -85,7 +85,10 @@ class PedidoController extends Controller{
             ) as finalizados,
             count(
                 case when status = "EX" then 1 else null end
-            ) as expirados
+            ) as expirados,
+            count(
+                case when status = "EF" then 1 else null end
+            ) as farmacia
             '
         //))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
         ))->where('clues',$almacen->clues)->first();
@@ -310,7 +313,7 @@ class PedidoController extends Controller{
             if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL'){
                 $parametros['datos']['status'] = 'PS';
             }elseif($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
-                $parametros['datos']['status'] = 'FI';
+                $parametros['datos']['status'] = 'EF';
             }
             /*elseif($almacen_solicitante->nivel_almacen == 2){
                 $parametros['datos']['status'] = 'ET';
