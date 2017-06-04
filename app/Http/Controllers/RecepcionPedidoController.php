@@ -24,6 +24,7 @@ use App\Models\Usuario;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, DB;
+use DateTime;
 
 class RecepcionPedidoController extends Controller
 {
@@ -526,15 +527,15 @@ class RecepcionPedidoController extends Controller
 
     		if($this->valida_fecha($fecha_validar))
     		{
-    			
-	   	    	$fecha = date('Y-m-j');
+    			return $this->valida_caducidad($fecha_validar);
+	   	    	/*$fecha = date('Y-m-j');
 				$nuevafecha = strtotime ( '+6 month' , strtotime ( $fecha ) ) ;
 				$fecha_validar_convertida = strtotime ( $fecha_validar ) ; 
 		    	
 		    	if($nuevafecha < $fecha_validar_convertida)
 		    		return true;
 		    	else
-		    		return false;
+		    		return false;*/
 		    }else{
 		    	return false;
 		    }	
@@ -544,14 +545,15 @@ class RecepcionPedidoController extends Controller
 	    	{
 		    	if($this->valida_fecha($fecha_validar))
 	    		{
-		   	    	$fecha = date('Y-m-j');
+	    			return $this->valida_caducidad($fecha_validar);
+		   	    	/*$fecha = date('Y-m-j');
 					$nuevafecha = strtotime ( '+6 month' , strtotime ( $fecha ) ) ;
 					$fecha_validar_convertida = strtotime ( $fecha_validar ) ; 
 			    	
 			    	if($nuevafecha < $fecha_validar_convertida)
 			    		return true;
 			    	else
-			    		return false;
+			    		return false;*/
 			    }else{
 			    	return false;
 			    }
@@ -559,6 +561,25 @@ class RecepcionPedidoController extends Controller
 				return true;
     	}
 	}
+
+	private function valida_caducidad($fecha)
+	{
+		$date1=date_create($fecha);
+		$fecha2 = new DateTime;
+		$fecha2->modify("+6 month");
+
+		$diff=date_diff($fecha2, $date1, FALSE);
+
+		if($diff->invert == 0)
+		{
+			return true;
+			
+		}else
+		{
+			return false;
+		}
+	}
+
 
 	private function valida_fecha($fecha)
 	{
