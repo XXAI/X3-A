@@ -72,6 +72,7 @@ class EntregasMesController extends Controller
                             SELECT 
                                     proveedores.id as proveedor_id,
                                     proveedores.nombre_corto as proveedor,
+                                    proveedores.nombre as proveedor_nombre_completo,
                                     SUM(total_monto_solicitado) total_monto_solicitado, 
                                     IF ((SUM(total_monto_recibido) * 100 / SUM(total_monto_solicitado)) IS NULL, 0.00, (SUM(total_monto_recibido) * 100 / SUM(total_monto_solicitado)) ) as porcentaje_entregado
                             FROM pedidos
@@ -90,7 +91,7 @@ class EntregasMesController extends Controller
     public function entregasPedidosStatsDiarias(Request $request){
         try{
             
-            $input = Input::only('mes','anio');
+            $input = Input::only('mes','anio','proveedor_id');
             
             $mensajes = [
                 'required'      => "required",
@@ -102,7 +103,7 @@ class EntregasMesController extends Controller
                 'proveedor_id'          => 'required'
             ];
 
-            $input = Input::all();
+            
         
             $v = Validator::make($input, $reglas, $mensajes);
 
@@ -140,7 +141,19 @@ class EntregasMesController extends Controller
                                 MATERIAL_CURACION.monto as material_curacion_monto
                                 
                             FROM
-                                movimientos 
+                            (
+                                SELECT movimientos.fecha_movimiento
+                                FROM pedidos
+                                LEFT JOIN movimiento_pedido ON movimiento_pedido.pedido_id = pedidos.id
+                                LEFT JOIN movimientos ON movimientos.id = movimiento_pedido.movimiento_id 
+                                WHERE 
+
+                                        YEAR(pedidos.fecha)= '.$input['anio'].' AND 
+                                        MONTH(pedidos.fecha) = '.$input['mes'].' AND
+                                        pedidos.proveedor_id = '.$input['proveedor_id'].'
+                                GROUP BY  movimientos.fecha_movimiento 
+
+                            ) as  movimientos 
                             INNER JOIN
                             (
                                 SELECT 
@@ -254,6 +267,122 @@ class EntregasMesController extends Controller
                                 GROUP BY fecha_movimiento
                             ) AS MATERIAL_CURACION ON MATERIAL_CURACION.fecha_movimiento = movimientos.fecha_movimiento
                             GROUP BY movimientos.fecha_movimiento
+                        
+                        ) as tabla')
+                    )->get();
+      
+            return Response::json([ 'data' => $items],200);
+        } catch (\Exception $e) {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
+
+
+
+
+    public function pedidosAnioMesClues(Request $request){
+        try{
+            
+            $input = Input::only('mes','anio','proveedor_id');
+            
+            $mensajes = [
+                'required'      => "required",
+                'integer'      => "integer",
+            ];
+            $reglas = [
+                'mes'        			=> 'required|integer',
+                'anio'                  => 'required|integer',
+                'proveedor_id'          => 'required'
+            ];
+
+        
+            $v = Validator::make($input, $reglas, $mensajes);
+
+            if ($v->fails()) {
+                return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+            }
+
+            $items = DB::table(
+                        DB::raw('(
+                            SELECT 
+                                unidades_medicas.clues,
+                                unidades_medicas.nombre as unidad_medica,
+                                IF(CAUSES.cantidad_recibida IS NULL, 0, CAUSES.cantidad_recibida) as causes_cantidad_recibida,
+                                IF(CAUSES.cantidad_solicitada IS NULL,0, CAUSES.cantidad_solicitada) as causes_cantidad_solicitada,
+                                IF(NO_CAUSES.cantidad_recibida IS NULL,0, NO_CAUSES.cantidad_recibida) as no_causes_cantidad_recibida,
+                                IF(NO_CAUSES.cantidad_solicitada IS NULL,0, NO_CAUSES.cantidad_solicitada) as no_causes_cantidad_solicitada,
+                                IF(MATERIAL_CURACION.cantidad_recibida IS NULL,0, MATERIAL_CURACION.cantidad_recibida) as material_curacion_cantidad_recibida,
+                                IF(MATERIAL_CURACION.cantidad_solicitada IS NULL,0, MATERIAL_CURACION.cantidad_solicitada) as material_curacion_cantidad_solicitada
+                                
+                            FROM
+                            (
+                                SELECT
+                                unidades_medicas.clues,
+                                unidades_medicas.nombre
+                                FROM pedidos 
+                                LEFT JOIN unidades_medicas ON unidades_medicas.clues = pedidos.clues
+                                WHERE 
+                                    pedidos.status != "BR" AND
+                                    YEAR(pedidos.fecha)= '.$input['anio'].' AND 
+                                    MONTH(pedidos.fecha) = '.$input['mes'].' AND
+                                    pedidos.proveedor_id = '.$input['proveedor_id'].'
+                                GROUP BY pedidos.clues
+                            ) AS unidades_medicas
+                            LEFT JOIN  (
+                                SELECT 
+                                    pedidos.clues,
+                                    IF(SUM(pedidos_insumos.cantidad_recibida) IS NULL, 0, SUM(pedidos_insumos.cantidad_recibida)) as cantidad_recibida,
+                                    IF(SUM(pedidos_insumos.cantidad_solicitada) IS NULL, 0, SUM(pedidos_insumos.cantidad_solicitada)) as cantidad_solicitada
+
+                                FROM pedidos
+                                INNER JOIN pedidos_insumos ON pedidos_insumos.pedido_id = pedidos.id
+                                INNER JOIN insumos_medicos ON insumos_medicos.clave = pedidos_insumos.insumo_medico_clave
+                                WHERE
+                                    pedidos.status != "BR" AND
+                                    insumos_medicos.tipo = "ME" AND
+                                    insumos_medicos.es_causes = 1 AND
+                                    YEAR(pedidos.fecha)= '.$input['anio'].' AND 
+                                    MONTH(pedidos.fecha) = '.$input['mes'].' AND
+                                    pedidos.proveedor_id = '.$input['proveedor_id'].'
+                                GROUP BY pedidos.clues
+                            ) AS CAUSES ON CAUSES.clues = unidades_medicas.clues
+
+                            LEFT JOIN  (
+                                SELECT 
+                                    pedidos.clues,
+                                    IF(SUM(pedidos_insumos.cantidad_recibida) IS NULL, 0, SUM(pedidos_insumos.cantidad_recibida)) as cantidad_recibida,
+                                    IF(SUM(pedidos_insumos.cantidad_solicitada) IS NULL, 0, SUM(pedidos_insumos.cantidad_solicitada)) as cantidad_solicitada
+
+                                FROM pedidos
+                                INNER JOIN pedidos_insumos ON pedidos_insumos.pedido_id = pedidos.id
+                                INNER JOIN insumos_medicos ON insumos_medicos.clave = pedidos_insumos.insumo_medico_clave
+                                WHERE
+                                    pedidos.status != "BR" AND
+                                    insumos_medicos.tipo = "ME" AND
+                                    insumos_medicos.es_causes = 0 AND
+                                    YEAR(pedidos.fecha)= '.$input['anio'].' AND 
+                                    MONTH(pedidos.fecha) = '.$input['mes'].' AND
+                                    pedidos.proveedor_id = '.$input['proveedor_id'].'
+                                GROUP BY pedidos.clues
+                            ) AS NO_CAUSES ON NO_CAUSES.clues = unidades_medicas.clues
+
+                            LEFT JOIN  (
+                                SELECT 
+                                    pedidos.clues,
+                                    IF(SUM(pedidos_insumos.cantidad_recibida) IS NULL, 0, SUM(pedidos_insumos.cantidad_recibida)) as cantidad_recibida,
+                                    IF(SUM(pedidos_insumos.cantidad_solicitada) IS NULL, 0, SUM(pedidos_insumos.cantidad_solicitada)) as cantidad_solicitada
+
+                                FROM pedidos
+                                INNER JOIN pedidos_insumos ON pedidos_insumos.pedido_id = pedidos.id
+                                INNER JOIN insumos_medicos ON insumos_medicos.clave = pedidos_insumos.insumo_medico_clave
+                                WHERE
+                                    pedidos.status != "BR" AND
+                                    insumos_medicos.tipo = "MC" AND
+                                    YEAR(pedidos.fecha)= '.$input['anio'].' AND 
+                                    MONTH(pedidos.fecha) = '.$input['mes'].' AND
+                                    pedidos.proveedor_id = '.$input['proveedor_id'].'
+                                GROUP BY pedidos.clues
+                            ) AS MATERIAL_CURACION ON MATERIAL_CURACION.clues = unidades_medicas.clues
                         
                         ) as tabla')
                     )->get();
