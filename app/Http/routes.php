@@ -50,6 +50,18 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('transferencias-presupuestos', 'TransferenciasPresupuestosController@lista');
         Route::post('transferencias-presupuestos', 'TransferenciasPresupuestosController@transferir');
         Route::post('transferencias-saldos-mes-actual', 'TransferenciasPresupuestosController@transferirSaldosAlMesActual');
+
+
+        // ENTREGAS DEL MES
+
+        Route::get('meses-anios-pedidos', 'EntregasMesController@mesesAnioPresupuestos');
+        Route::get('entregas-pedidos-stats-mes-anio', 'EntregasMesController@statsMesAnio');
+        Route::get('entregas-pedidos-stats-diarias', 'EntregasMesController@entregasPedidosStatsDiarias');
+        Route::get('pedidos-clues-mes-anio', 'EntregasMesController@pedidosAnioMesClues');
+        
+        
+
+
         
 
     });
