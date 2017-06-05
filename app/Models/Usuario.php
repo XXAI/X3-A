@@ -24,6 +24,10 @@ class Usuario extends BaseModel implements Authenticatable{
         return $this->belongsToMany('App\Models\UnidadMedica','usuario_unidad_medica','usuario_id','clues')->orderBy('nombre');
     }
 
+    public function log(){
+        return $this->hasMany('App\Models\LogInicioSesion','usuario_id');
+    }
+
 
     /**
      * @return string

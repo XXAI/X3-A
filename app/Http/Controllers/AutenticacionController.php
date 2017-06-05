@@ -6,8 +6,8 @@ use JWTAuth, JWTFactory;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
 use Illuminate\Http\Request;
-use \Hash, \Config;
-use App\Models\Usuario, App\Models\Permiso, App\Models\Almacen, App\Models\UnidadMedica;
+use \Hash, \Config, Carbon\Carbon;
+use App\Models\Usuario, App\Models\Permiso, App\Models\Almacen, App\Models\UnidadMedica, App\Models\LogInicioSesion;
 
 class AutenticacionController extends Controller
 {
@@ -31,6 +31,13 @@ class AutenticacionController extends Controller
             if(!$usuario) {                
                 return response()->json(['error' => 'invalid_credentials'], 401); 
             }
+
+            $log_usuario = new LogInicioSesion();
+            $log_usuario->usuario_id = $usuario->id;
+            $log_usuario->servidor_id = $usuario->servidor_id;
+            $log_usuario->ip = $request->ip();
+            $log_usuario->navegador = $request->header('User-Agent');
+            $log_usuario->updated_at = Carbon::now();
 
             if(Hash::check($credentials['password'], $usuario->password)){
                 $lista_permisos = "";
@@ -97,14 +104,21 @@ class AutenticacionController extends Controller
                     "token_refresh_ttl" => Config::get("jwt.refresh_ttl")
                 ];
 
+                $log_usuario->login_status = 'OK';
+                $log_usuario->save();
+
                 $payload = JWTFactory::make($claims);
                 $token = JWTAuth::encode($payload);
                 return response()->json(['token' => $token->get(), 'usuario'=>$usuario, 'server_info'=> $server_info], 200);
             } else {
+                $log_usuario->login_status = 'ERR_PSW';
+                $log_usuario->save();
                 return response()->json(['error' => 'invalid_credentials'], 401); 
             }
 
         } catch (JWTException $e) {
+            $log_usuario->login_status = 'ERR_TKN';
+            $log_usuario->save();
             // something went wrong whilst attempting to encode the token
             return response()->json(['error' => 'could_not_create_token'], 500);
         }
