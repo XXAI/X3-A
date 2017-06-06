@@ -21,6 +21,7 @@ use App\Models\MovimientoInsumos;
 use App\Models\Stock;
 use App\Models\UnidadMedicaPresupuesto;
 use \Excel;
+use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, DB;
@@ -191,9 +192,9 @@ class PedidoController extends Controller{
         $parametros['datos']['status'] = 'BR'; //estatus de borrador
         $parametros['datos']['tipo_pedido_id'] = $tipo_pedido; //tipo de pedido Pedido de Abastecimiento
 
-        $fecha = date($parametros['datos']['fecha']);
-        $fecha_expiracion = strtotime("+20 days", strtotime($fecha));
-        $parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
+        //$fecha = date($parametros['datos']['fecha']);
+        //$fecha_expiracion = strtotime("+20 days", strtotime($fecha));
+        //$parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
 
         //return Response::json(['error' => 'Se necesita capturar al menos un insumo','data'=>$parametros['datos']], 500);
 
@@ -322,15 +323,17 @@ class PedidoController extends Controller{
             $parametros['datos']['status'] = 'BR';
         }
 
-        if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL'){
-            $fecha = date($parametros['datos']['fecha']);
-            $fecha_expiracion = strtotime("+20 days", strtotime($fecha));
+        if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL' && $parametros['datos']['status'] == 'PS'){
+            //$fecha = date($parametros['datos']['fecha']);
+            $fecha_concluido = Carbon::now();
+            $fecha_expiracion = strtotime("+20 days", strtotime($fecha_concluido));
+            $parametros['datos']['fecha_concluido'] = $fecha_concluido;
             $parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
         }else{
+            $parametros['datos']['fecha_concluido'] = null;
             $parametros['datos']['fecha_expiracion'] = null;
         }
-       
-        
+
         $v = Validator::make($parametros['datos'], $reglas, $mensajes);
 
         if ($v->fails()) {
