@@ -14,10 +14,10 @@ class Receta extends BaseModel
     protected $guardarIDUsuario = true;
     protected $table = 'recetas';
 
-    protected $fillable = ["folio","tipo_receta", "fecha_receta", "doctor", "paciente", "diagnostico", "imagen_receta"];
+    //protected $fillable = ["folio","tipo_receta", "fecha_receta", "doctor", "paciente", "diagnostico", "imagen_receta"];
 
-    public function RecetaDetalles(){
-        return $this->hasMany('App\Models\RecetaDetalle', 'recetas_id');
+    public function recetaDetalles(){
+        return $this->hasMany('App\Models\RecetaDetalle', 'receta_id');
     }
 
 }

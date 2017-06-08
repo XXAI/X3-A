@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
         $this->call(UsuariosSeeder::class);
         $this->call(CatalogoInsumosSeeder::class);
         $this->call(TiposMovimientosSeeder::class);
+        $this->call(TurnosSeeder::class);
+        $this->call(TiposRecetasSeeder::class);
         $this->call(TiposPedidosSeeder::class);
         $this->call(ProveedoresSeeder::class);
         $this->call(UnidadesMedicasPresupuestoSeeder::class);

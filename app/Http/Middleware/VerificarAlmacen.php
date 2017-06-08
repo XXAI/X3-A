@@ -20,7 +20,8 @@ class VerificarAlmacen
         try{
            
             $usuario = Usuario::find($request->get('usuario_id'));
-            $almacen_id = $value = Request::header('X-Almacen-Id');
+            $almacen_id = Request::header('X-Almacen-Id');
+            $clues = Request::header('X-clues');
             if($almacen_id == null){
                 throw new Exception('Debes especificar el almacén');
             }
@@ -33,6 +34,7 @@ class VerificarAlmacen
             }
             
             $request->attributes->add(['almacen_id' => $almacen_id]);
+            $request->attributes->add(['clues' => $clues]);
             
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 403);

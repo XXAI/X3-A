@@ -11,7 +11,8 @@ class CreateTiposMovimientosTable extends Migration{
      * @return void
      */
     public function up(){
-        Schema::create('tipos_movimientos', function(Blueprint $table) {
+        Schema::create('tipos_movimientos', function(Blueprint $table) 
+        {
             $table->engine = 'InnoDB';
         
             $table->increments('id');

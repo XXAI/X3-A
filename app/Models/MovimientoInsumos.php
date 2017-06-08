@@ -20,6 +20,10 @@ class MovimientoInsumos extends BaseModel{
     public function stock(){
         return $this->belongsTo('App\Models\Stock','stock_id');
     }
+
+    public function stockGrupo(){
+        return $this->belongsTo('App\Models\Stock','stock_id')->groupBy('clave_insumo_medico');
+    }
  
 
 }
