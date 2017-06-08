@@ -14,13 +14,24 @@ class Movimiento extends BaseModel{
     protected $table = 'movimientos';
     protected $fillable = ['status','almacen_id','tipo_movimiento_id','fecha_movimiento','observaciones'];
     
-    // Porque esta en mayusculas deberia ser movimientosInsumos() !!!! los odio a todos!! AKira |Harima: se cambio a insumos
     public function insumos(){
         return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id')->with('stock.marca');
     }
 
+    public function movimientoInsumos(){
+        return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id')->with('stockGrupo');
+    }
+
     public function movimientoPedido(){
         return $this->hasOne('App\Models\MovimientoPedido','movimiento_id');
+    }
+
+    public function movimientoMetadato(){
+        return $this->belongsTo('App\Models\MovimientoMetadato','id','movimiento_id');
+    }
+
+    public function movimientoDetalle(){
+        return $this->belongsTo('App\Models\MovimientoDetalle','id','movimiento_id');
     }
 
     public function almacen(){

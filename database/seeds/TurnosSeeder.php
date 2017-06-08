@@ -3,7 +3,7 @@
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
 
-class TiposMovimientosSeeder extends Seeder
+class TurnosSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -12,56 +12,57 @@ class TiposMovimientosSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('tipos_movimientos')->insert([
+        DB::table('turnos')->insert([
             [
                 'id' => 1,
-                'tipo' => "E",
-                'nombre' => "Entrada Manual",             
+                'nombre' => "MATUTINO",
+                'descripcion' => "",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'id' => 2,
-                'tipo' => "S",
-                'nombre' => "Salida Manual",             
+                'nombre' => "VESPERTINO",
+                'descripcion' => "",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'id' => 3,
-                'tipo' => "S",
-                'nombre' => "Entrega de Pedido",             
+                'nombre' => "NOCTURNO A",
+                'descripcion' => "LUNES, MIERCOLES Y VIERNES",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'id' => 4,
-                'tipo' => "E",
-                'nombre' => "Recepción de Pedido",             
+                'nombre' => "NOCTURNO B",
+                'descripcion' => "MARTES, JUEVES Y SABADO",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'id' => 5,
-                'tipo' => "S",
-                'nombre' => "Surtimiento de Receta",             
+                'nombre' => "ESPECIAL A",
+                'descripcion' => "DOMINGO Y 2 DIAS ENTRE SEMANA",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'id' => 6,
-                'tipo' => "E",
-                'nombre' => "Ajuste Más",             
+                'nombre' => "ESPECIAL B",
+                'descripcion' => "NOCTURNOS FESTIVOS",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
             [
                 'id' => 7,
-                'tipo' => "S",
-                'nombre' => "Ajuste Menos",             
+                'nombre' => "FIN DE SEMANA",
+                'descripcion' => "SABADO DOMINGO Y DIAS FESTIVOS",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
+            
             
         ]);
     }

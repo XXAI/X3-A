@@ -17,7 +17,7 @@ class CreateRecetaDetallesTable extends Migration{
           $table->string('id', 255);
           $table->integer('incremento');
           $table->string('servidor_id', 4);
-          $table->string('recetas_id', 255);
+          $table->string('receta_id', 255);
           $table->string('clave_insumo_medico', 45);
           $table->integer('cantidad');
           $table->decimal('dosis', 15, 2);
@@ -27,12 +27,14 @@ class CreateRecetaDetallesTable extends Migration{
           
           $table->primary('id');
       
-          $table->index('recetas_id','fk_receta_detalles_recetas1_idx');
-          $table->foreign('recetas_id')->references('id')->on('recetas');
+          $table->foreign('receta_id')->references('id')->on('recetas');
       
           $table->timestamps();
           $table->softDeletes();
       });
+
+     
+
     }
 
     /**

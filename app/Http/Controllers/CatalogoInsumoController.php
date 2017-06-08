@@ -15,6 +15,9 @@ use App\Models\GrupoInsumo;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 
+use App\Models\Stock;
+
+
 class CatalogoInsumoController extends Controller
 {
     /**
@@ -74,6 +77,34 @@ class CatalogoInsumoController extends Controller
         } else {
             $insumos = $insumos->get();
         }
+
+        /// se consigue stock en el almacen actual
+        foreach($insumos as $insumo_temp)
+        {
+            $stocks = array();  
+
+            //var_dump($request->get('almacen_id'));
+            //die();
+
+            $stocks = Stock::where('clave_insumo_medico',$insumo_temp->clave)->where('existencia','>',0)->where('almacen_id',$request->get('almacen_id'))->orderBy('fecha_caducidad','ASC')->get();
+            $existencia = 0;
+            $existencia_unidosis = 0;
+
+            foreach($stocks as $stock)
+            {
+                $existencia += $stock->existencia;
+                $existencia_unidosis += $stock->existencia_unidosis;
+            }               
+
+            $objeto_response = array('almacen_id' => $request->get('almacen_id'),
+                                            'clave' => $insumo_temp->clave,
+                                            'existencia' => $existencia,
+                                            'existencia_unidosis' => $existencia_unidosis);
+            $insumo_temp->stockExistencia = $objeto_response;
+            
+        }
+        
+        /// fin get stock en almacen actual
        
         return Response::json([ 'data' => $insumos],200);
     }

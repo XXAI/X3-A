@@ -27,6 +27,10 @@ class Almacen extends BaseModel
       return $this->hasMany('App\Models\AlmacenTiposMovimientos','almacen_id')->with('TipoMovimiento');
     }
 
+    public function AlmacenTiposMovimientos(){
+      return $this->hasMany('App\Models\AlmacenTiposMovimientos','almacen_id');
+    }
+
     public function unidadMedica(){
       return $this->belongsTo('App\Models\UnidadMedica','clues','clues');
     }

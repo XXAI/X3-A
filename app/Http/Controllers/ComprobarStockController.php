@@ -19,9 +19,11 @@ class ComprobarStockController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $parametros = Input::only('almacen','clave');
+
+        $parametros['almacen'] = $parametros['almacen'] ? $parametros['almacen']:$request->get('almacen_id');
 
         $stocks = array();                        
         $stocks = Stock::where('clave_insumo_medico',$parametros['clave'])->where('existencia','>',0)->where('almacen_id',$parametros['almacen'])->orderBy('fecha_caducidad','ASC')->get();
