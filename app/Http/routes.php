@@ -133,7 +133,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('entregas-stats',        'EntregaController@stats'); 
 
     
-    });
+    //});
  
 
     
