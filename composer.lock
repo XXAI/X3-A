@@ -4,13 +4,10 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-<<<<<<< HEAD
+
     "hash": "34b07c63bce3a6ab726da23e1fb8c1ff",
     "content-hash": "c71fabb05a51886ab95cf2fcdc313613",
-=======
-    "hash": "7d372e0ed89556244f016f6871025c4e",
-    "content-hash": "b1b93764ec8f5f19dbb0701a25b5c134",
->>>>>>> joram
+
     "packages": [
         {
             "name": "classpreloader/classpreloader",
@@ -2794,21 +2791,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/mockery/mockery.git",
-<<<<<<< HEAD
                 "reference": "6fdb61243844dc924071d3404bb23994ea0b6856"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/mockery/mockery/zipball/6fdb61243844dc924071d3404bb23994ea0b6856",
                 "reference": "6fdb61243844dc924071d3404bb23994ea0b6856",
-=======
-                "reference": "4db079511a283e5aba1b3c2fb19037c645e70fc2"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/mockery/mockery/zipball/4db079511a283e5aba1b3c2fb19037c645e70fc2",
-                "reference": "4db079511a283e5aba1b3c2fb19037c645e70fc2",
->>>>>>> joram
                 "shasum": ""
             },
             "require": {
