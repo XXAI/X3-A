@@ -13,7 +13,7 @@ class AlterRecetaDetallesTable extends Migration
     public function up()
     {
         Schema::table('receta_detalles', function (Blueprint $table) {
-                        $table->integer('duracion', 11)->change();
+                        $table->integer('duracion')->change();
         });
     }
 

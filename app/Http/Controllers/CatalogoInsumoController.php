@@ -43,11 +43,15 @@ class CatalogoInsumoController extends Controller
         }else{
             $insumos = Insumo::conDescripciones()->with('informacion','generico.grupos');
         }
+
         
+
+
+
         //return Response::json([ 'data' => []],200);
         //return Response::json(['error' => ""], HttpResponse::HTTP_UNAUTHORIZED);
 
-        $parametros = Input::only('q','page','per_page');
+        $parametros = Input::only('q','page','per_page','tipo');
         //buscar una cadena en clave, descripcion, nombre del grupo o nombre del generico
         if ($parametros['q']) {
             //Hacemos una busqueda sobre grupos_insumos, para ver si hay grupos que conincidan con el criterio de busqueda, esto reemplaza el leftjoin que estaba en grupos_insumos
@@ -70,6 +74,13 @@ class CatalogoInsumoController extends Controller
              });
         }
         
+        if(isset($parametros['tipo'])){
+            switch($parametros['tipo']){
+                case 'CA': $insumos = $insumos->where('es_causes',true)->where("insumos_medicos.tipo","ME"); break;
+                case 'NCA': $insumos = $insumos->where('es_causes',false)->where("insumos_medicos.tipo","ME"); break;
+                case 'MC': $insumos = $insumos->where("insumos_medicos.tipo","MC"); break;
+            }
+        }
 
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
