@@ -26,8 +26,8 @@ class AgregarTipoInsumoAPedidosInsusmos extends Migration
     public function down()
     {
         Schema::table('pedidos_insumos', function (Blueprint $table) {
+            $table->dropForeing(['tipo_insumo_id']);
             $table->dropColumn('tipo_insumo_id');
-            $table->dropForeing('tipo_insumo_id');
         });
     }
 }

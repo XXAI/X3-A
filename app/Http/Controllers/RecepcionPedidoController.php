@@ -29,7 +29,7 @@ use DateTime;
 class RecepcionPedidoController extends Controller
 {
 
-	public function obtenerDatosPresupuesto($clues,$proveedor_id,$mes){
+	public function obtenerDatosPresupuesto($clues,$proveedor_id,$mes,$almacen_id){
         try{
             $parametros = Input::all();
 
@@ -39,6 +39,7 @@ class RecepcionPedidoController extends Controller
                                             ->where('clues',$clues)
                                             //->where('proveedor_id',$proveedor_id)
 											->where('mes',$mes)
+											->where('almacen_id',$almacen_id)
                                             ->groupBy('clues')
 											->first();
 			
@@ -485,7 +486,7 @@ class RecepcionPedidoController extends Controller
 	        	$pedido->update();
 
 	        	/*Calculo de unidad presupuesto*/
-	        	$unidad_presupuesto = $this->obtenerDatosPresupuesto($almacen->clues,$almacen->proveedor_id,substr($pedido->fecha,5,2));
+	        	$unidad_presupuesto = $this->obtenerDatosPresupuesto($almacen->clues,$almacen->proveedor_id,substr($pedido->fecha,5,2),$almacen->id);
 
 	        	$unidad_presupuesto->causes_comprometido 				-= $causes_unidad_presupuesto;
 	        	$unidad_presupuesto->causes_devengado 					+= $causes_unidad_presupuesto;

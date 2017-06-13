@@ -56,6 +56,12 @@ class PedidoController extends Controller{
                 }
             }
 
+            if(isset($parametros['almacen'])){
+                if($parametros['almacen']){
+                    $presupuesto_unidad_medica = $presupuesto_unidad_medica->where('almacen_id',$parametros['almacen']);
+                }
+            }
+
             $presupuesto_unidad_medica = $presupuesto_unidad_medica->first();
             return Response::json([ 'data' => $presupuesto_unidad_medica],200);
         } catch (\Exception $e) {
@@ -142,7 +148,7 @@ class PedidoController extends Controller{
             if($pedido->status == 'BR'){
                 $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor");
             }else{
-                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
+                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos");
             }
         }
         return Response::json([ 'data' => $pedido],200);
@@ -427,6 +433,7 @@ class PedidoController extends Controller{
                 $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
                                             ->where('clues',$almacen->clues)
                                             //->where('proveedor_id',$almacen->proveedor_id)
+                                            ->where('almacen_id',$almacen->id)
                                             ->where('mes',$fecha[1])
                                             ->where('anio',$fecha[0])
                                             ->first();
@@ -461,7 +468,7 @@ class PedidoController extends Controller{
 
                     $datos_movimiento = [
                         'status' => 'FI',
-                        'tipo_movimiento_id' => 6, //Recepcion de pedido
+                        'tipo_movimiento_id' => 8, //Recepcion de pedido
                         'fecha_movimiento' => $pedido->fecha,
                         'almacen_id' => $almacen_solicitante->id,
                         'observaciones' => 'Entrada en base al pedido '.$pedido->folio.' para la Farmacia Subrogada'

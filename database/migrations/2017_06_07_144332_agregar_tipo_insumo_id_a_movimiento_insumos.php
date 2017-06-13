@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AgregarTipoInsumoAContratosPrecios extends Migration
+class AgregarTipoInsumoIdAMovimientoInsumos extends Migration
 {
     /**
      * Run the migrations.
@@ -12,8 +12,8 @@ class AgregarTipoInsumoAContratosPrecios extends Migration
      */
     public function up()
     {
-        Schema::table('contratos_precios', function (Blueprint $table) {
-            $table->integer('tipo_insumo_id')->unsigned()->nullable()->after('contrato_id');
+        Schema::table('movimiento_insumos', function (Blueprint $table) {
+            $table->integer('tipo_insumo_id')->unsigned()->nullable()->after('movimiento_id');
             $table->foreign('tipo_insumo_id')->references('id')->on('tipos_insumos');
         });
     }
@@ -25,7 +25,7 @@ class AgregarTipoInsumoAContratosPrecios extends Migration
      */
     public function down()
     {
-        Schema::table('contratos_precios', function (Blueprint $table) {
+        Schema::table('movimiento_insumos', function (Blueprint $table) {
             $table->dropForeing(['tipo_insumo_id']);
             $table->dropColumn('tipo_insumo_id');
         });

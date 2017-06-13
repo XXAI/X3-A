@@ -30,6 +30,12 @@ class TiposPedidosSeeder extends Seeder
                 'tipo' => "Pedido por Desabasto",           
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
+            ],
+            [
+                'id' => 'PFS',
+                'tipo' => "Pedido a Farmacia Subrogada",           
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
             ]
         ]);
     }
