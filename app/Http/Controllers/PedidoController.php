@@ -637,44 +637,50 @@ class PedidoController extends Controller{
                     $sheet->mergeCells('A1:K1');
                     $sheet->row(1, array('FOLIO: '.$pedido->folio.$clave_folio));
 
-                    $sheet->mergeCells('A2:K2'); 
-                    $sheet->row(2, array('UNIDAD MEDICA: '.$pedido->almacenSolicitante->unidadMedica->nombre));
+                    $sheet->mergeCells('A2:K2');
+                    $sheet->row(2, array('ENTREGAR A: '.$pedido->almacenSolicitante->nombre));
 
-                    $sheet->mergeCells('A3:K3'); 
-                    $sheet->row(3, array('PROVEEDOR: '.$pedido->proveedor->nombre));
+                    $sheet->mergeCells('A3:K3');
+                    $sheet->row(3, array('NOMBRE DEL PEDIDO: '.$pedido->descripcion));
 
                     $sheet->mergeCells('A4:K4'); 
-                    $sheet->row(4, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0]));
+                    $sheet->row(4, array('UNIDAD MEDICA: '.$pedido->almacenSolicitante->unidadMedica->nombre));
 
                     $sheet->mergeCells('A5:K5'); 
-                    $sheet->row(5, array($tipo));
+                    $sheet->row(5, array('PROVEEDOR: '.$pedido->proveedor->nombre));
 
-                    $sheet->cells("A5:K5", function($cells) {
+                    $sheet->mergeCells('A6:K6'); 
+                    $sheet->row(6, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0]));
+
+                    $sheet->mergeCells('A7:K7'); 
+                    $sheet->row(7, array($tipo));
+
+                    $sheet->cells("A7:K7", function($cells) {
                         $cells->setAlignment('center');
                     });
 
-                    $sheet->mergeCells('D6:F6');
-                    $sheet->mergeCells('G6:I6');
+                    $sheet->mergeCells('D8:F8');
+                    $sheet->mergeCells('G8:I8');
 
-                    $sheet->mergeCells('A6:A7');
-                    $sheet->mergeCells('B6:B7');
-                    $sheet->mergeCells('C6:C7');
-                    $sheet->mergeCells('J6:J7'); 
-                    $sheet->mergeCells('K6:K7');
+                    $sheet->mergeCells('A8:A9');
+                    $sheet->mergeCells('B8:B9');
+                    $sheet->mergeCells('C8:C9');
+                    $sheet->mergeCells('J8:J9'); 
+                    $sheet->mergeCells('K8:K9');
 
-                    $sheet->row(6, array(
+                    $sheet->row(8, array(
                         'NO.', 'CLAVE','DESCRIPCIÓN DE LOS INSUMOS','SOLICITADO','','','RECIBIDO','','','% UNIDADES','% MONTO'
                     ));
 
-                    $sheet->cells("A6:K6", function($cells) {
+                    $sheet->cells("A8:K8", function($cells) {
                         $cells->setAlignment('center');
                     });
 
-                    $sheet->row(7, array(
+                    $sheet->row(9, array(
                         '','','','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','',''
                     ));
 
-                    $sheet->cells("A7:K7", function($cells) {
+                    $sheet->cells("A9:K9", function($cells) {
                         $cells->setAlignment('center');
                     });
 
@@ -706,9 +712,19 @@ class PedidoController extends Controller{
                     $sheet->row(6, function($row) {
                         $row->setBackground('#DDDDDD');
                         $row->setFontWeight('bold');
-                        $row->setFontSize(11);
+                        $row->setFontSize(14);
                     });
                     $sheet->row(7, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(8, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(11);
+                    });
+                    $sheet->row(9, function($row) {
                         // call cell manipulation methods
                         $row->setBackground('#DDDDDD');
                         $row->setFontWeight('bold');
@@ -718,7 +734,7 @@ class PedidoController extends Controller{
                     $iva_solicitado = 0;
                     $iva_recibido = 0;
 
-                    $contador_filas = 7;
+                    $contador_filas = 9;
                     foreach($lista_insumos as $insumo){
                         $contador_filas++;
                         $sheet->appendRow(array(
@@ -752,10 +768,10 @@ class PedidoController extends Controller{
                             '',
                             '',
                             'SUBTOTAL',
-                            '=SUM(F8:F'.($contador_filas).')',
+                            '=SUM(F10:F'.($contador_filas).')',
                             '',
                             '',
-                            '=SUM(I8:I'.($contador_filas).')',
+                            '=SUM(I10:I'.($contador_filas).')',
                         ));
                     $sheet->appendRow(array(
                             '', 
@@ -784,14 +800,14 @@ class PedidoController extends Controller{
 
                     $phpColor = new \PHPExcel_Style_Color();
                     $phpColor->setRGB('DDDDDD'); 
-                    $sheet->getStyle("J8:K$contador_filas")->getFont()->setColor( $phpColor );
+                    $sheet->getStyle("J10:K$contador_filas")->getFont()->setColor( $phpColor );
 
                     $sheet->setColumnFormat(array(
-                        "D8:D$contador_filas" => '#,##0',
-                        "G8:G$contador_filas" => '#,##0',
-                        "E8:F$contador_filas" => '"$" #,##0.00_-',
-                        "H8:I$contador_filas" => '"$" #,##0.00_-',
-                        "J8:K$contador_filas" => '[Green]0.00%;[Red]-0.00%;0.00%',
+                        "D10:D$contador_filas" => '#,##0',
+                        "G10:G$contador_filas" => '#,##0',
+                        "E10:F$contador_filas" => '"$" #,##0.00_-',
+                        "H10:I$contador_filas" => '"$" #,##0.00_-',
+                        "J10:K$contador_filas" => '[Green]0.00%;[Red]-0.00%;0.00%',
                     ));
                 });
             }
