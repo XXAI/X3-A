@@ -110,6 +110,10 @@ class RecepcionPedidoController extends Controller
 
 
 		$almacen = Almacen::find($request->get('almacen_id'));
+
+		if(!$almacen){
+			return Response::json(['error' =>"No se encontró el almacen."], 500);
+		}
         
         /*Recepcion de precios por insumo*/
 		$proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);

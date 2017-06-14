@@ -164,7 +164,7 @@ Route::group(['middleware' => 'jwt'], function () {
 
 
 
-    Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    //Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
 
      
