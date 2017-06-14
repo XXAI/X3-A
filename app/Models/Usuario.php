@@ -28,6 +28,9 @@ class Usuario extends BaseModel implements Authenticatable{
         return $this->hasMany('App\Models\LogInicioSesion','usuario_id');
     }
 
+     public function usuariounidad(){
+        return $this->hasOne('App\Models\UsuarioUnidad','usuario_id');
+    }
 
     /**
      * @return string
