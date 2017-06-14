@@ -134,13 +134,6 @@ Route::group(['middleware' => 'jwt'], function () {
     
     Route::get('entregas-stats',        'EntregaController@stats'); 
 
-    
-    //});
- 
-
-    
-
- 
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
 
  
@@ -163,7 +156,23 @@ Route::group(['middleware' => 'jwt'], function () {
     // catalogos  
 
 
-
+    // # SECCION: Administrador central
+    Route::group(['prefix' => 'admision','namespace' => 'AdmisionUnidad'], function () {
+        Route::resource('paciente', 'PacienteController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('paciente-egreso', 'PacienteEgresoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('admision', 'AdmisionController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('egreso', 'EgresoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('historial', 'HistorialController',    ['only' => ['show']]);
+        
+        /*Catálogos*/
+        Route::resource('municipio', 'MunicipioController',    ['only' => ['index', 'show']]);
+        Route::resource('localidad', 'LocalidadController',    ['only' => ['index', 'show']]);
+        Route::resource('motivo-egreso', 'MotivoEgresoController',    ['only' => ['index', 'show']]);
+        Route::resource('triage', 'TriageController',    ['only' => ['index', 'show']]);
+        Route::resource('grado-lesion', 'GradoLesionController',    ['only' => ['index', 'show']]);
+        
+       
+    });
     Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
 
