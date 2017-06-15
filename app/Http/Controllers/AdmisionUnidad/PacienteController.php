@@ -16,10 +16,10 @@ use App\Models\AreaResponsable;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 
-/*use JWTAuth, JWTFactory;
+use JWTAuth, JWTFactory;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
-*/
+
 class PacienteController extends Controller
 {
     public function index()
