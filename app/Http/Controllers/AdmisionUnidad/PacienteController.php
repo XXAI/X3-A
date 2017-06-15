@@ -202,6 +202,8 @@ class PacienteController extends Controller
             $obj =  JWTAuth::parseToken()->getPayload();
             
             $usuario = Usuario::where("id", $obj->get('id'))->with("usuariounidad")->first();
+
+             return Response::json([ 'data' => $usuario ],500); 
             
             if($usuario->usuariounidad->clues  == $paciente->clues)
                 $paciente->update($inputs);    
@@ -234,7 +236,7 @@ class PacienteController extends Controller
 
             $arreglo_responsable = ["paciente_id"  => $paciente->id, "nombre"  => $inputs['nombre_responsable'], "parentesco"  => $inputs['parentesco'], "domicilio"  => $inputs['domicilio_responsable'], "telefono"  => $inputs['telefono_responsable']];
 
-            return Response::json([ 'data' => $arreglo_responsable ],500); 
+           
 
             Responsable::where("paciente_id" ,$paciente->id)->delete();
             Responsable::create($arreglo_responsable);
