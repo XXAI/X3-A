@@ -25,7 +25,7 @@ class PacienteController extends Controller
     public function index()
     {
         $paciente = Paciente::all();
-        $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+        $resultadosPorPagina = 20;
         $paciente = $paciente->paginate($resultadosPorPagina);
         return Response::json([ 'data' => $paciente ],200);
         
