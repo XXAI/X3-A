@@ -27,7 +27,7 @@ class PacienteController extends Controller
         
         
         $parametros = Input::only('q','page','per_page');
-        /*if ($parametros['q']) {
+        if ($parametros['q']) {
              $paciente =  Paciente::where(function($query) use ($parametros) {
                  $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere(DB::raw("nombre"),'LIKE',"%".$parametros['q']."%");
              })
@@ -42,14 +42,8 @@ class PacienteController extends Controller
             $paciente = $paciente->paginate($resultadosPorPagina);
         } else {
             $paciente = $paciente->get();
-        }*/
+        }
 
-        $paciente =  Paciente::select('*')->with("localidad.municipio", "Ingresoactivos.Unidad", "responsable");
-        $paciente = $paciente->get();
-        
-        /*$paciente =  Paciente::select('*')->with("localidad.municipio", "Ingresoactivos.Unidad", "responsable");
-        $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
-        $paciente = $paciente->paginate($resultadosPorPagina);*/
         
         return Response::json([ 'data' => $paciente ],200);
     }
