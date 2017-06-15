@@ -24,6 +24,8 @@ class PacienteController extends Controller
 {
     public function index()
     {
+        $paciente = Paciente::all();
+        
         $parametros = Input::only('q','page','per_page');
         if ($parametros['q']) {
              $paciente =  Paciente::where(function($query) use ($parametros) {
