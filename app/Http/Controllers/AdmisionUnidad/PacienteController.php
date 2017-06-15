@@ -45,7 +45,7 @@ class PacienteController extends Controller
         }*/
 
 
-        $paciente = Paciente::all();
+        $paciente =  Paciente::select('*')->with("localidad.municipio", "Ingresoactivos.Unidad", "responsable");
         $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
         $paciente = $paciente->paginate(20);
         
