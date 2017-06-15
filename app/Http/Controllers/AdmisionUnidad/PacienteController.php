@@ -16,10 +16,10 @@ use App\Models\AreaResponsable;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 
-use JWTAuth, JWTFactory;
+/*use JWTAuth, JWTFactory;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
-
+*/
 class PacienteController extends Controller
 {
     public function index()
@@ -27,7 +27,7 @@ class PacienteController extends Controller
         
         
         $parametros = Input::only('q','page','per_page');
-        /*if ($parametros['q']) {
+        if ($parametros['q']) {
              $paciente =  Paciente::where(function($query) use ($parametros) {
                  $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere(DB::raw("nombre"),'LIKE',"%".$parametros['q']."%");
              })
@@ -42,13 +42,13 @@ class PacienteController extends Controller
             $paciente = $paciente->paginate($resultadosPorPagina);
         } else {
             $paciente = $paciente->get();
-        }*/
+        }
 
-
-        $paciente =  Paciente::select('*')->with("localidad.municipio", "Ingresoactivos.Unidad", "responsable");
+        
+        /*$paciente =  Paciente::select('*')->with("localidad.municipio", "Ingresoactivos.Unidad", "responsable");
         $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
-        $paciente = $paciente->paginate(20);
-        //$paciente = $paciente->get();
+        $paciente = $paciente->paginate($resultadosPorPagina);*/
+        
         return Response::json([ 'data' => $paciente ],200);
     }
 
