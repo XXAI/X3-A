@@ -44,7 +44,7 @@ class PacienteController extends Controller
             $paciente = $paciente->get();
         }*/
 
-        $paciente =  Paciente::select('*');
+        $paciente =  Paciente::select('*')->with("localidad.municipio");
         $paciente = $paciente->get();
         
         /*$paciente =  Paciente::select('*')->with("localidad.municipio", "Ingresoactivos.Unidad", "responsable");
