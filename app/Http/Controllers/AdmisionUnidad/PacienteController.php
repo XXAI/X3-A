@@ -234,8 +234,10 @@ class PacienteController extends Controller
 
             $arreglo_responsable = ["paciente_id"  => $paciente->id, "nombre"  => $inputs['nombre_responsable'], "parentesco"  => $inputs['parentesco'], "domicilio"  => $inputs['domicilio_responsable'], "telefono"  => $inputs['telefono_responsable']];
 
+            return Response::json([ 'data' => $arreglo_responsable ],500); 
+
             Responsable::where("paciente_id" ,$paciente->id)->delete();
-            Responsable::updateOrCreate($arreglo_responsable);
+            Responsable::create($arreglo_responsable);
         }
 
         
