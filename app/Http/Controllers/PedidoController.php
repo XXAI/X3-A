@@ -329,7 +329,7 @@ class PedidoController extends Controller{
             $parametros['datos']['status'] = 'BR';
         }
 
-        if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL' && $parametros['datos']['status'] == 'PS'){
+        if($almacen_solicitante->nivel_almacen == 1 && ($parametros['datos']['status'] == 'PS' || $parametros['datos']['status'] == 'EF')){ //$almacen_solicitante->tipo_almacen == 'ALMPAL' && 
             //$fecha = date($parametros['datos']['fecha']);
             $fecha_concluido = Carbon::now();
             $fecha_expiracion = strtotime("+20 days", strtotime($fecha_concluido));
@@ -433,7 +433,7 @@ class PedidoController extends Controller{
                 $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
                                             ->where('clues',$almacen->clues)
                                             //->where('proveedor_id',$almacen->proveedor_id)
-                                            ->where('almacen_id',$almacen->id)
+                                            ->where('almacen_id',$almacen_solicitante->id)
                                             ->where('mes',$fecha[1])
                                             ->where('anio',$fecha[0])
                                             ->first();
@@ -517,7 +517,7 @@ class PedidoController extends Controller{
             $almacen->load('unidadMedica');
 
             $pedido->director_id = $almacen->unidadMedica->director_id;
-            $pedido->encargado_almacen_id = $almacen->encargado_almacen_id;
+            $pedido->encargado_almacen_id = $almacen_solicitante->encargado_almacen_id;
 
             $pedido->total_claves_solicitadas = $total_claves;
             $pedido->total_cantidad_solicitada = $total_insumos;
@@ -599,6 +599,11 @@ class PedidoController extends Controller{
         $fecha[1] = $meses[$fecha[1]];
         $pedido->fecha = $fecha;
 
+        $fecha_concluido = substr($pedido->fecha_concluido,0,10);
+        $fecha_concluido = explode('-',$fecha_concluido);
+        $fecha_concluido[1] = $meses[$fecha_concluido[1]];
+        $pedido->fecha_concluido = $fecha_concluido;
+
         $nombre_archivo = 'Pedido '.$pedido->clues;
         if($pedido->folio){
             $nombre_archivo = ' - ' . $pedido->folio;  
@@ -649,8 +654,13 @@ class PedidoController extends Controller{
                     $sheet->mergeCells('A5:K5'); 
                     $sheet->row(5, array('PROVEEDOR: '.$pedido->proveedor->nombre));
 
-                    $sheet->mergeCells('A6:K6'); 
-                    $sheet->row(6, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0]));
+                    $sheet->mergeCells('A6:C6');
+                    $sheet->mergeCells('D6:K6');
+                    $sheet->row(6, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0],'','','FECHA DE NOTIFICACIÓN: '.$pedido->fecha_concluido[2]." DE ".$pedido->fecha_concluido[1]." DEL ".$pedido->fecha_concluido[0]));
+
+                    $sheet->cells("D6:K6", function($cells) {
+                        $cells->setAlignment('right');
+                    });
 
                     $sheet->mergeCells('A7:K7'); 
                     $sheet->row(7, array($tipo));
