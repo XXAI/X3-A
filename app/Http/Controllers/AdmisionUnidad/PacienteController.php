@@ -24,13 +24,10 @@ class PacienteController extends Controller
 {
     public function index()
     {
-        $paciente = Paciente::all();
-        $resultadosPorPagina = 20;
-        //$paciente = $paciente->paginate(20);
-        return Response::json([ 'data' => $paciente ],200);
+        
         
         $parametros = Input::only('q','page','per_page');
-        if ($parametros['q']) {
+        /*if ($parametros['q']) {
              $paciente =  Paciente::where(function($query) use ($parametros) {
                  $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere(DB::raw("nombre"),'LIKE',"%".$parametros['q']."%");
              })
@@ -45,10 +42,13 @@ class PacienteController extends Controller
             $paciente = $paciente->paginate($resultadosPorPagina);
         } else {
             $paciente = $paciente->get();
-        }
+        }*/
 
 
-
+        $paciente = Paciente::all();
+        $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+        $paciente = $paciente->paginate(20);
+        
         return Response::json([ 'data' => $paciente ],200);
     }
 
