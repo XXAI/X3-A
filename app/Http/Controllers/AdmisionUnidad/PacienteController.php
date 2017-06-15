@@ -26,7 +26,7 @@ class PacienteController extends Controller
     {
         $paciente = Paciente::all();
         $resultadosPorPagina = 20;
-        $paciente = $paciente->paginate(20);
+        //$paciente = $paciente->paginate(20);
         return Response::json([ 'data' => $paciente ],200);
         
         $parametros = Input::only('q','page','per_page');
