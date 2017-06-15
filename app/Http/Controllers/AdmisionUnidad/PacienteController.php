@@ -203,7 +203,6 @@ class PacienteController extends Controller
             
             $usuario = Usuario::where("id", $obj->get('id'))->with("usuariounidad")->first();
 
-             return Response::json([ 'data' => $usuario ],500); 
             
             if($usuario->usuariounidad->clues  == $paciente->clues)
                 $paciente->update($inputs);    
