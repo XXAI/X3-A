@@ -40,7 +40,7 @@ class Paciente extends BaseModel
 
     public function responsable()
     {
-        return $this->hasOne('App\Models\responsable','paciente_id');   
+        return $this->hasOne('App\Models\Responsable','paciente_id');   
     }
 
     public function areas(){
