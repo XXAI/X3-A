@@ -25,6 +25,7 @@ class PacienteController extends Controller
     public function index()
     {
         $paciente = Paciente::all();
+        return Response::json([ 'data' => $paciente ],200);
         
         $parametros = Input::only('q','page','per_page');
         if ($parametros['q']) {
