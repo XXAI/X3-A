@@ -16,14 +16,14 @@ use App\Models\UnidadMedica;
 
 
 /** 
-* Controlador Movimientos
+* Controlador MisTurnos
 * 
 * @package    SIAL API
 * @subpackage Controlador
 * @author     Joram Roblero Pérez <joram.roblero@gmail.com>
 * @created    2017-03-22
 *
-* Controlador `Movimientos`: Controlador  para el manejo de entradas y salidas
+* Controlador `MisTurnos`: Controlador  para el manejo de turnos disponibles en la unidad medica
 *
 */
 class MisTurnosController extends Controller
