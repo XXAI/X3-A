@@ -16,14 +16,14 @@ use App\Models\UnidadMedica;
 
 
 /** 
-* Controlador Movimientos
+* Controlador MisServicios
 * 
 * @package    SIAL API
 * @subpackage Controlador
 * @author     Joram Roblero Pérez <joram.roblero@gmail.com>
 * @created    2017-03-22
 *
-* Controlador `MisServicios`: Controlador  para el manejo de mis servicios
+* Controlador `MisServicios`: Controlador  para el manejo de mis servicios disponibles en la unidad medica
 *
 */
 class MisServiciosController extends Controller

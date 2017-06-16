@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
-use App\Models\Servicios;
+use App\Models\Servicio;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response;
@@ -24,12 +24,12 @@ class ServicioController extends Controller
     {
         $parametros = Input::only('q','page','per_page');
         if ($parametros['q']) {
-             $data =  Servicios::where(function($query) use ($parametros) {
+             $data =  Servicio::where(function($query) use ($parametros) {
                  $query->where('id','LIKE',"%".$parametros['q']."%")
                  ->orWhere('nombre','LIKE',"%".$parametros['q']."%");
              });
         } else {
-             $data =  Servicios::where("id","!=", "");
+             $data =  Servicio::where("id","!=", "");
         }
         
 
@@ -72,7 +72,7 @@ class ServicioController extends Controller
 
         try {
            
-            $data = Servicios::create($inputs);
+            $data = Servicio::create($inputs);
 
             return Response::json([ 'data' => $data ],200);
 
@@ -89,7 +89,7 @@ class ServicioController extends Controller
      */
     public function show($id)
     {
-        $data = Servicios::find($id);
+        $data = Servicio::find($id);
 
         if(!$data){
             return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
@@ -126,7 +126,7 @@ class ServicioController extends Controller
         }
 
         try {
-           $data = Servicios::find($id);
+           $data = Servicio::find($id);
            $data->id =  $inputs['id'];
            $data->nombre =  $inputs['nombre'];
             
@@ -147,7 +147,7 @@ class ServicioController extends Controller
     public function destroy($id)
     {
         try {
-			$data = Servicios::destroy($id);
+			$data = Servicio::destroy($id);
 			return Response::json(['data'=>$data],200);
 		} catch (Exception $e) {
 		   return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);

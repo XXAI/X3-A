@@ -65,11 +65,16 @@ class AutoCompleteController extends Controller
     public function insumos()
     {
         $parametros = Input::only('term', 'clues', 'almacen');
+
+        // $CLAVES = CluesClaves::where('clues',$clues)->get("clave");
+///////// agregar abajo de los where para limitar a las claves de la unidad
+        // ->whereIn('im.clave',$CLAVES)
         
-        $data1 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo","g.nombre", "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"))
-        ->join('stock AS s', 's.clave_insumo_medico', '=', 'im.clave')
-        ->join('genericos AS g', 'g.id', '=', 'im.generico_id')
-        ->join('medicamentos AS m', 'm.insumo_medico_clave', '=', 'im.clave')
+        $data1 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo","g.nombre",DB::raw("um.nombre AS unidad_medida"), "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"))
+        ->leftJoin('stock AS s', 's.clave_insumo_medico', '=', 'im.clave')
+        ->leftJoin('genericos AS g', 'g.id', '=', 'im.generico_id')
+        ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'im.clave')
+        ->leftJoin('unidades_medida AS um', 'um.id', '=', 'm.unidad_medida_id')
         ->where('almacen_id', $parametros['almacen'])
         ->where(function($query) use ($parametros) {
             $query->where('im.clave','LIKE',"%".$parametros['term']."%")
@@ -81,9 +86,10 @@ class AutoCompleteController extends Controller
 
         $parametros = Input::only('term', 'clues', 'almacen');
         
-        $data2 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo", "g.nombre", "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"))
-        ->join('genericos AS g', 'g.id', '=', 'im.generico_id')
-        ->join('medicamentos AS m', 'm.insumo_medico_clave', '=', 'im.clave')
+        $data2 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo", "g.nombre",DB::raw("um.nombre AS unidad_medida"), "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"))
+        ->leftJoin('genericos AS g', 'g.id', '=', 'im.generico_id')
+        ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'im.clave')
+        ->leftJoin('unidades_medida AS um', 'um.id', '=', 'm.unidad_medida_id')
         ->where(function($query) use ($parametros) {
             $query->where('im.clave','LIKE',"%".$parametros['term']."%")
             ->orWhere('g.nombre','LIKE',"%".$parametros['term']."%")
