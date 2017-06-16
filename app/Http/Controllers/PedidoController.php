@@ -599,10 +599,15 @@ class PedidoController extends Controller{
         $fecha[1] = $meses[$fecha[1]];
         $pedido->fecha = $fecha;
 
-        $fecha_concluido = substr($pedido->fecha_concluido,0,10);
-        $fecha_concluido = explode('-',$fecha_concluido);
-        $fecha_concluido[1] = $meses[$fecha_concluido[1]];
-        $pedido->fecha_concluido = $fecha_concluido;
+        if($pedido->fecha_concluido){
+            $fecha_concluido = substr($pedido->fecha_concluido,0,10);
+            $fecha_concluido = explode('-',$fecha_concluido);
+            $fecha_concluido[1] = $meses[$fecha_concluido[1]];
+            $pedido->fecha_concluido = $fecha_concluido[2]." DE ".$fecha_concluido[1]." DEL ".$fecha_concluido[0];
+        }else{
+            $pedido->fecha_concluido = 'PEDIDO EN BORRADOR';
+        }
+        
 
         $nombre_archivo = 'Pedido '.$pedido->clues;
         if($pedido->folio){
@@ -656,7 +661,7 @@ class PedidoController extends Controller{
 
                     $sheet->mergeCells('A6:C6');
                     $sheet->mergeCells('D6:K6');
-                    $sheet->row(6, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0],'','','FECHA DE NOTIFICACIÓN: '.$pedido->fecha_concluido[2]." DE ".$pedido->fecha_concluido[1]." DEL ".$pedido->fecha_concluido[0]));
+                    $sheet->row(6, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0],'','','FECHA DE NOTIFICACIÓN: '.$pedido->fecha_concluido));
 
                     $sheet->cells("D6:K6", function($cells) {
                         $cells->setAlignment('right');
