@@ -21,6 +21,7 @@ use App\Models\MovimientoDetalle;
 use App\Models\Receta;
 use App\Models\RecetaDetalle;
 use App\Models\RecetaMovimiento;
+use App\Models\ContratoPrecio;
 
 
 /** 
@@ -749,6 +750,9 @@ class MovimientoController extends Controller
                          if(is_array($value))
                             $value = (object) $value;
 
+                        $precio_insumo = conseguirPrecio($value->clave);
+
+
                         $item_stock = new Stock;
 
                         $item_stock->almacen_id             = $almacen_id;
@@ -775,11 +779,12 @@ class MovimientoController extends Controller
                                 $item_detalles = new MovimientoInsumos;
 
                                 $item_detalles->movimiento_id           = $movimiento_entrada->id; 
-                                $item_detalles->stock_id                = $item_stock_check->id; 
+                                $item_detalles->stock_id                = $item_stock_check->id;
+                                    $item_detalles->clave_insumo_medico     = $value->clave;
                                 $item_detalles->cantidad                = $value->cantidad;
-                                $item_detalles->precio_unitario         = 0;
-                                $item_detalles->iva                     = 0; 
-                                $item_detalles->precio_total            = 0;
+                                $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
+                                $item_detalles->iva                     = $precio_insumo['iva']; 
+                                $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
 
                                 $item_detalles->save(); 
                           }else{   
@@ -792,11 +797,12 @@ class MovimientoController extends Controller
                                         $item_detalles = new MovimientoInsumos;
 
                                         $item_detalles->movimiento_id           = $movimiento_entrada->id; 
-                                        $item_detalles->stock_id                = $item_stock->id; 
+                                        $item_detalles->stock_id                = $item_stock->id;
+                                            $item_detalles->clave_insumo_medico     = $value->clave;
                                         $item_detalles->cantidad                = $item_stock->existencia;
-                                        $item_detalles->precio_unitario         = 0;
-                                        $item_detalles->iva                     = 0; 
-                                        $item_detalles->precio_total            = 0;
+                                        $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
+                                        $item_detalles->iva                     = $precio_insumo['iva']; 
+                                        $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $item_stock->existencia;
 
                                         $item_detalles->save();          
                                     }else{
@@ -868,6 +874,9 @@ class MovimientoController extends Controller
                      {
                          if(is_array($insumo)){ $insumo = (object) $insumo; }
                          $clave_insumo_medico = $insumo->clave;
+                         
+                         $precio = conseguirPrecio($value->clave);
+
                                 foreach($insumo->lotes as $index => $lote)
                                 {
                                      if(is_array($lote)){ $lote = (object) $lote; }
@@ -969,9 +978,9 @@ class MovimientoController extends Controller
                                         $item_detalles->stock_id                = $lote_link->id;
                                         $item_detalles->clave_insumo_medico     = $clave_insumo_medico; 
                                         $item_detalles->cantidad                = $lote_link->cantidad;
-                                        $item_detalles->precio_unitario         = 0;
-                                        $item_detalles->iva                     = 0; 
-                                        $item_detalles->precio_total            = 0;
+                                        $item_detalles->precio_unitario         = $precio['precio_unitario'];
+                                        $item_detalles->iva                     = $precio['iva']; 
+                                        $item_detalles->precio_total            = ( $precio['precio_unitario'] + $precio['iva'] ) * $lote_link->cantidad;
 
                                         $item_detalles->save();
                                     }
@@ -991,9 +1000,9 @@ class MovimientoController extends Controller
                                     $item_detalles->stock_id                = $lote_stock->id;
                                     $item_detalles->clave_insumo_medico     = $clave_insumo_medico;
                                     $item_detalles->cantidad                = $lote->cantidad;
-                                    $item_detalles->precio_unitario         = 0;
-                                    $item_detalles->iva                     = 0; 
-                                    $item_detalles->precio_total            = 0;
+                                    $item_detalles->precio_unitario         = $precio['precio_unitario'];
+                                    $item_detalles->iva                     = $precio['iva']; 
+                                    $item_detalles->precio_total            = ( $precio['precio_unitario'] + $precio['iva'] ) * $lote->cantidad;
 
                                     $item_detalles->save();
                                 
@@ -1076,6 +1085,18 @@ class MovimientoController extends Controller
                      {
                          if(is_array($insumo))
                             $insumo = (object) $insumo;
+
+                            $clave_insumo_medico = $insumo->clave;
+                            $precio_unitario = 0;
+                            $iva             = 0;
+
+                            $contrato_precio = ContratoPrecio::where('insumo_medico_clave',$clave_insumo_medico)->first();
+                            if($contrato_precio){
+                                $precio_unitario = $contrato_precio->precio;
+                                if($tipo_insumo_id == 3){
+                                    $iva = $precio_unitario - ($precio_unitario/1.16 );
+                                }
+                            }
 
                             //****************************************************************************************************
                                 /// AQUI INSERTAR DETALLES DE RECETA 
@@ -1163,9 +1184,9 @@ class MovimientoController extends Controller
                                         $item_detalles->movimiento_id           = $movimiento_ajuste->id; 
                                         $item_detalles->stock_id                = $lote_link->id; 
                                         $item_detalles->cantidad                = $lote_link->cantidad;
-                                        $item_detalles->precio_unitario         = 0;
-                                        $item_detalles->iva                     = 0; 
-                                        $item_detalles->precio_total            = 0;
+                                        $item_detalles->precio_unitario         = $precio_unitario;
+                                        $item_detalles->iva                     = $iva; 
+                                        $item_detalles->precio_total            = ( $precio_unitario + $iva ) * $lote_link->cantidad; 
 
                                         $item_detalles->save();
                                     }
@@ -1201,6 +1222,29 @@ class MovimientoController extends Controller
         
         return $success;
     }
+
+///**************************************************************************************************************************
+///                  F U N C I O N      C O N S E G U I R      P R E C I O    I N S U M O  
+///**************************************************************************************************************************
+ public function conseguirPrecio($clave_insumo_medico)
+ {
+    $precio_unitario = 0; 
+    $iva             = 0;
+    $response = array();
+
+    $contrato_precio = ContratoPrecio::where('insumo_medico_clave',$clave_insumo_medico)->first();
+                            if($contrato_precio){
+                                $precio_unitario = $contrato_precio->precio;
+                                if($tipo_insumo_id == 3){
+                                    $iva = $precio_unitario - ($precio_unitario/1.16 );
+                                }
+                            }
+
+    $response['precio_unitario'] = $precio_unitario;
+    $response['iva']             = $iva;
+
+    return $response;
+ }
 ///**************************************************************************************************************************
 ///**************************************************************************************************************************
      
