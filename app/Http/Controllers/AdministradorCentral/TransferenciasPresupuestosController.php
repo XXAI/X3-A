@@ -91,7 +91,7 @@ class TransferenciasPresupuestosController extends Controller
                             ->where('anio',$parametros['anio'])
                             ->where('presupuesto_id',$presupuesto_activo->id)->with('unidadMedica')->groupBy('clues')->orderBy('clues','asc')->get();
             } else {
-                $items = UnidadMedicaPresupuesto::select('clues')->where('presupuesto_id',$presupuesto_activo->id)->with('unidadMedica')->groupBy('clues')->orderBy('clues','asc')->get();
+                $items = UnidadMedicaPresupuesto::select('clues')->where('presupuesto_id',$presupuesto_activo->id)->with('unidadMedica.almacenes')->groupBy('clues')->orderBy('clues','asc')->get();
             }
             
       
@@ -104,9 +104,9 @@ class TransferenciasPresupuestosController extends Controller
     public function presupuestoUnidadMedica(Request $request){
         try{
 
-            $input = Input::only('clues','mes','anio');
+            $input = Input::only('clues','mes','anio','almacen');
             
-            $item = UnidadMedicaPresupuesto::where('clues',$input['clues'])->where('mes',$input['mes'])->where('anio',$input['anio'])->first();
+            $item = UnidadMedicaPresupuesto::where('clues',$input['clues'])->where('almacen_id',$input['almacen'])->where('mes',$input['mes'])->where('anio',$input['anio'])->first();
       
             return Response::json([ 'data' => $item],200,[], JSON_NUMERIC_CHECK);
         } catch (\Exception $e) {

@@ -58,12 +58,11 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::group(['prefix' => 'administrador-central','namespace' => 'AdministradorCentral'], function () {
         Route::get('abasto', 'AbastoController@lista');
         Route::get('abasto-excel', 'AbastoController@excel');
-
+        
         Route::get('presupuesto-pedidos', 'PedidosController@presupuesto');
         Route::get('pedidos', 'PedidosController@lista');
         Route::get('pedidos-excel', 'PedidosController@excel');
-
-
+        
         // TRANSFERENCIAS DE PRESUPUESTO
         Route::get('unidades-medicas-con-presupuesto', 'TransferenciasPresupuestosController@unidadesMedicasConPresupuesto');
         Route::get('meses-presupuesto-actual', 'TransferenciasPresupuestosController@mesesPresupuestoActual');
@@ -75,19 +74,11 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::post('transferencias-presupuestos', 'TransferenciasPresupuestosController@transferir');
         Route::post('transferencias-saldos-mes-actual', 'TransferenciasPresupuestosController@transferirSaldosAlMesActual');
 
-
         // ENTREGAS DEL MES
-
         Route::get('meses-anios-pedidos', 'EntregasMesController@mesesAnioPresupuestos');
         Route::get('entregas-pedidos-stats-mes-anio', 'EntregasMesController@statsMesAnio');
         Route::get('entregas-pedidos-stats-diarias', 'EntregasMesController@entregasPedidosStatsDiarias');
         Route::get('pedidos-clues-mes-anio', 'EntregasMesController@pedidosAnioMesClues');
-        
-        
-
-
-        
-
     });
     // # FIN SECCION
 

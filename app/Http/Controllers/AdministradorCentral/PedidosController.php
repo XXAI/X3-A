@@ -356,6 +356,8 @@ class PedidosController extends Controller
                     UM.nombre as unidad_medica, 
                     UM.jurisdiccion_id,
                     P.fecha, 
+                    P.fecha_concluido,
+                    P.fecha_expiracion,
                     P.descripcion, 
                     
                     P.total_claves_solicitadas, 

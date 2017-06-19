@@ -16,6 +16,8 @@ class AlterMovimientoInsumosTable extends Migration
         {
                 $table->string('stock_id', 255)->nullable()->change();
                 $table->string('clave_insumo_medico', 45)->after('stock_id');
+
+                $table->foreign('clave_insumo_medico')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
         });
     }
 
@@ -29,7 +31,8 @@ class AlterMovimientoInsumosTable extends Migration
         Schema::table('movimiento_insumos', function (Blueprint $table)
         {
                 $table->string('stock_id', 255)->change();
-                $table->dropColumn('clave_insumo_medico');        
+                $table->dropForeing(['clave_insumo_medico']);
+                $table->dropColumn('clave_insumo_medico');  
         });
     }
 }
