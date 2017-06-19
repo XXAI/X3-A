@@ -126,8 +126,13 @@ Route::group(['middleware' => 'jwt'], function () {
         //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
         Route::resource('catalogo-insumos',  'CatalogoInsumoController',     ['only' => ['index', 'show']]);
 
-         Route::resource('claves-basicas',    'ClavesBasicasController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('claves-basicas',    'ClavesBasicasController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+
+
+        Route::get('unidades-medicas-dependientes',   'UnidadesMedicasController@unidadesMedicasDependientes');
     });
+
+    
 
     Route::get('generar-excel-pedido/{id}', 'PedidoController@generarExcel');
 

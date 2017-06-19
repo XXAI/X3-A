@@ -69,4 +69,40 @@ class UnidadesMedicasController extends Controller
         return Response::json([ 'data' => $items],200);
     }
 
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function unidadesMedicasDependientes(Request $request)
+    {
+       
+        $items = [];
+        try{
+            $clues = $request->get('clues');
+            $unidad_medica = UnidadMedica::find($clues);
+
+            if(!$unidad_medica){
+                throw new Exception("Unidad médica no existe");
+            }
+
+            if($unidad_medica->tipo != 'OA'){
+                throw new Exception("La unidad médica no es jurisdiccional o adminsitrativa");
+            }
+
+            $items = UnidadMedica::where('tipo','CS')->where('jurisdiccion_id',$unidad_medica->jurisdiccion_id) ->get();
+
+            
+        } catch (TokenExpiredException $e) {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_FORBIDDEN);
+        } catch (JWTException $e) {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_FORBIDDEN);
+        } catch (Exception $e) {
+           return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_FORBIDDEN);
+        }
+        
+       
+        return Response::json([ 'data' => $items],200);
+    }
+
 }
