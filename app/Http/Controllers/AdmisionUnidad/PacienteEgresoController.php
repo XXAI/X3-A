@@ -29,45 +29,53 @@ class PacienteEgresoController extends Controller
 
     	$obj =  JWTAuth::parseToken()->getPayload();
         $usuario = Usuario::where("id", $obj->get('id'))->with("usuariounidad")->first();
-        /*$clues = $usuario->usuariounidad->clues;    
+        if(count($usuario->usuariounidad) > 0)
+        {
+            $clues = $usuario->usuariounidad->clues;    
 
-        $usuarios = UsuarioUnidad::where("clues", $clues)->select("usuario_id")->get();
-
-
-
-        /*$pacientes_ingreso_verificador = Paciente::crossJoin("pacientes_admision", "pacientes_admision.paciente_id", "=", "pacientes.id")
-                                        ->where("pacientes_admision.estatus_admision", 0)
-                                        ->whereIn("pacientes_admision.usuario_id", $usuarios)
-                                        ->select("pacientes.id")
-                                        ->get();   
+            $usuarios = UsuarioUnidad::where("clues", $clues)->select("usuario_id")->get();
 
 
-        $arreglo_pacientes = array();                                
-        foreach ($pacientes_ingreso_verificador as $key => $value) {
-       		$arreglo_pacientes[] = $value->id;
-        }     
 
-        $pacientes_ingreso = Paciente::whereIn("id", $arreglo_pacientes);                                
-        
-         $parametros = Input::only('q','page','per_page');
-        if ($parametros['q']) {
-             $pacientes_ingreso =  $pacientes_ingreso->where(function($query) use ($parametros) {
-                 $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere(DB::raw("nombre"),'LIKE',"%".$parametros['q']."%");
-             })
-             ->with("localidad.municipio", "Ingresoactivos.Unidad", "responsable");
-        } else {
-             $pacientes_ingreso =  $pacientes_ingreso->select('*')->with("localidad.municipio", "Ingresoactivos.Unidad", "responsable");
-        }
-        
-        if(isset($parametros['page'])){
+            $pacientes_ingreso_verificador = Paciente::crossJoin("pacientes_admision", "pacientes_admision.paciente_id", "=", "pacientes.id")
+                                            ->where("pacientes_admision.estatus_admision", 0)
+                                            ->whereIn("pacientes_admision.usuario_id", $usuarios)
+                                            ->select("pacientes.id")
+                                            ->get();   
 
+
+            $arreglo_pacientes = array();                                
+            foreach ($pacientes_ingreso_verificador as $key => $value) {
+           		$arreglo_pacientes[] = $value->id;
+            }     
+
+            $pacientes_ingreso = Paciente::whereIn("id", $arreglo_pacientes);                                
+            
+             $parametros = Input::only('q','page','per_page');
+            if ($parametros['q']) {
+                 $pacientes_ingreso =  $pacientes_ingreso->where(function($query) use ($parametros) {
+                     $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere(DB::raw("nombre"),'LIKE',"%".$parametros['q']."%");
+                 })
+                 ->with("localidad.municipio", "Ingresoactivos.Unidad", "responsable");
+            } else {
+                 $pacientes_ingreso =  $pacientes_ingreso->select('*')->with("localidad.municipio", "Ingresoactivos.Unidad", "responsable");
+            }
+            
+            if(isset($parametros['page'])){
+
+                $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+                $pacientes_ingreso = $pacientes_ingreso->paginate($resultadosPorPagina);
+            } else {
+                $pacientes_ingreso = $pacientes_ingreso->get();
+            }
+        }else
+        {
+            $pacientes_ingreso = Paciente::select('*')->with("localidad.municipio", "Ingresoactivos.Unidad", "responsable");
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
             $pacientes_ingreso = $pacientes_ingreso->paginate($resultadosPorPagina);
-        } else {
-            $pacientes_ingreso = $pacientes_ingreso->get();
-        }*/
+        }
 
-        return Response::json([ 'data' => $usuario ],200);
+        return Response::json([ 'data' => $pacientes_ingreso ],200);
     }
 
     public function store(Request $request)
