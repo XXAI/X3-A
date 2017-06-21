@@ -27,7 +27,7 @@ class PacienteEgresoController extends Controller
     public function index()
     {
 
-    	$obj =  JWTAuth::parseToken()->getPayload();
+    	/*$obj =  JWTAuth::parseToken()->getPayload();
         $usuario = Usuario::where("id", $obj->get('id'))->with("usuariounidad")->first();
         $clues = $usuario->usuariounidad->clues;    
 
@@ -67,7 +67,7 @@ class PacienteEgresoController extends Controller
             $pacientes_ingreso = $pacientes_ingreso->get();
         }*/
 
-        return Response::json([ 'data' => $obj , "hola"=>"1"],200);
+        return Response::json([ 'data' => "hola"],200);
     }
 
     public function store(Request $request)
