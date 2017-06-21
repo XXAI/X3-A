@@ -35,7 +35,7 @@ class PacienteEgresoController extends Controller
 
 
 
-        $pacientes_ingreso_verificador = Paciente::crossJoin("pacientes_admision", "pacientes_admision.paciente_id", "=", "pacientes.id")
+        /*$pacientes_ingreso_verificador = Paciente::crossJoin("pacientes_admision", "pacientes_admision.paciente_id", "=", "pacientes.id")
                                         ->where("pacientes_admision.estatus_admision", 0)
                                         ->whereIn("pacientes_admision.usuario_id", $usuarios)
                                         ->select("pacientes.id")
@@ -65,7 +65,7 @@ class PacienteEgresoController extends Controller
             $pacientes_ingreso = $pacientes_ingreso->paginate($resultadosPorPagina);
         } else {
             $pacientes_ingreso = $pacientes_ingreso->get();
-        }
+        }*/
 
         return Response::json([ 'data' => $pacientes_ingreso ],200);
     }
