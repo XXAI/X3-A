@@ -67,7 +67,7 @@ class PacienteEgresoController extends Controller
             $pacientes_ingreso = $pacientes_ingreso->get();
         }*/
 
-        return Response::json([ 'data' => $usuarios ],200);
+        return Response::json([ 'data' => $obj , "hola"=>"1"],200);
     }
 
     public function store(Request $request)
