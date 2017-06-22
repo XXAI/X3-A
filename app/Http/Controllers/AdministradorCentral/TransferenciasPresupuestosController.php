@@ -23,9 +23,13 @@ class TransferenciasPresupuestosController extends Controller
     {
         $parametros = Input::only('clues_origen','clues_destino','mes_origen','mes_destino','anio_origen','anio_destino','page','per_page');
         
-        $items = TransferenciaPresupuesto::select('transferencias_presupuesto.*','unidades_medicas_origen.nombre as unidad_medica_origen', 'unidades_medicas_destino.nombre as unidad_medica_destino')
+        $items = TransferenciaPresupuesto::select('transferencias_presupuesto.*','unidades_medicas_origen.nombre as unidad_medica_origen', 'unidades_medicas_destino.nombre as unidad_medica_destino',
+                                                    'almacenes_origen.nombre as almacen_origen_nombre', 'almacenes_destino.nombre as almacen_destino_nombre',
+                                                    'almacenes_origen.tipo_almacen as almacen_origen_tipo', 'almacenes_destino.tipo_almacen as almacen_destino_tipo')
                 ->leftjoin(DB::raw('unidades_medicas as unidades_medicas_origen'),'unidades_medicas_origen.clues','=','transferencias_presupuesto.clues_origen')
                 ->leftjoin(DB::raw('unidades_medicas as unidades_medicas_destino'),'unidades_medicas_destino.clues','=','transferencias_presupuesto.clues_destino')
+                ->leftjoin(DB::raw('almacenes as almacenes_origen'),'almacenes_origen.id','=','transferencias_presupuesto.almacen_origen')
+                ->leftjoin(DB::raw('almacenes as almacenes_destino'),'almacenes_destino.id','=','transferencias_presupuesto.almacen_destino')
                 ->orderBy('created_at','desc');
 
         if (isset($parametros['clues_origen']) &&  $parametros['clues_origen'] != "") {
@@ -89,7 +93,7 @@ class TransferenciasPresupuestosController extends Controller
                             })
                             ->where('mes',$parametros['mes'])
                             ->where('anio',$parametros['anio'])
-                            ->where('presupuesto_id',$presupuesto_activo->id)->with('unidadMedica')->groupBy('clues')->orderBy('clues','asc')->get();
+                            ->where('presupuesto_id',$presupuesto_activo->id)->with('unidadMedica','almacen')->groupBy('clues')->orderBy('clues','asc')->get();
             } else {
                 $items = UnidadMedicaPresupuesto::select('clues')->where('presupuesto_id',$presupuesto_activo->id)->with('unidadMedica.almacenes')->groupBy('clues')->orderBy('clues','asc')->get();
             }
@@ -212,6 +216,8 @@ class TransferenciasPresupuestosController extends Controller
         $reglas = [
             'clues_origen'      => 'required',
             'clues_destino'     => 'required',
+            'almacen_origen'    => 'required',
+            'almacen_destino'   => 'required',
             'mes_origen'        => 'required',
             'mes_destino'       => 'required',
             'anio_origen'       => 'required',
@@ -221,18 +227,19 @@ class TransferenciasPresupuestosController extends Controller
             'material_curacion' => 'numeric'
         ];
 
-        $input = Input::only('clues_origen','clues_destino','mes_origen','mes_destino', 'anio_origen','anio_destino','causes','no_causes','material_curacion');
+        $input = Input::only('clues_origen','clues_destino','almacen_origen','almacen_destino', 'mes_origen','mes_destino', 'anio_origen','anio_destino','causes','no_causes','material_curacion');
 
         $v = Validator::make($input, $reglas, $mensajes);
 
         if ($v->fails()) {
             return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
         }
+
         DB::beginTransaction();
         try {
 
-            $unidad_medica_origen_presupuesto = UnidadMedicaPresupuesto::where('clues',$input['clues_origen'])->where('mes',$input['mes_origen'])->where('anio',$input['anio_origen'])->first();
-            $unidad_medica_destino_presupuesto = UnidadMedicaPresupuesto::where('clues',$input['clues_destino'])->where('mes',$input['mes_destino'])->where('anio',$input['anio_destino'])->first();
+            $unidad_medica_origen_presupuesto = UnidadMedicaPresupuesto::where('clues',$input['clues_origen'])->where('almacen_id',$input['almacen_origen'])->where('mes',$input['mes_origen'])->where('anio',$input['anio_origen'])->first();
+            $unidad_medica_destino_presupuesto = UnidadMedicaPresupuesto::where('clues',$input['clues_destino'])->where('almacen_id',$input['almacen_destino'])->where('mes',$input['mes_destino'])->where('anio',$input['anio_destino'])->first();
             
             if(!$unidad_medica_origen_presupuesto || !$unidad_medica_destino_presupuesto){
                 throw new Exception("Una de las clues no tiene presupuesto configurado para los valores proporcionados.");

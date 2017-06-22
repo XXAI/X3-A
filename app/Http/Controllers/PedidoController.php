@@ -514,9 +514,9 @@ class PedidoController extends Controller{
                 }
             }
 
-            $almacen->load('unidadMedica');
+            $almacen_solicitante->load('unidadMedica');
 
-            $pedido->director_id = $almacen->unidadMedica->director_id;
+            $pedido->director_id = $almacen_solicitante->unidadMedica->director_id;
             $pedido->encargado_almacen_id = $almacen_solicitante->encargado_almacen_id;
 
             $pedido->total_claves_solicitadas = $total_claves;
