@@ -18,4 +18,8 @@ class UnidadMedicaPresupuesto extends BaseModel
     public function unidadMedica(){
       return $this->belongsTo('App\Models\UnidadMedica','clues','clues');
     }
+
+    public function almacen(){
+      return $this->belongsTo('App\Models\Almacen','almacen_id','id');
+    }
 }

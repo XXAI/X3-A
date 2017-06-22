@@ -19,12 +19,24 @@ class AutenticacionController extends Controller
 
         try {
 
-            /*$usuarios = Usuario::where('su',0)->get();
-            foreach ($usuarios as $usuario) {
+            //$usuarios = Usuario::where('su',0)->get();
+            /*
+            $usuarios_hash = [
+                'hbcoxchuc' => 'hbcoxchuc',
+                'hbcberriozabal' => 'hbcberriozabal',
+                'hbcchiapacorzo' => 'hbcchiapacorzo',
+                'hbcrosas' => 'hbcrosas'
+            ];
+            
+            foreach ($usuarios_hash as $usuario => $hash) {
                 //$usuario->password = str_replace(['á','é','í','ó','ú',' ','.','(',')'],['a','e','i','o','u'], mb_strtolower($usuario->nombre,'UTF-8'));
-                $usuario->password = Hash::make($usuario->password);
-                $usuario->save();
-            }*/
+                //$usuario->password = Hash::make($usuario->password);
+                //$usuario->save();
+                $usuarios_hash[$usuario] = Hash::make($hash);
+            }
+
+            return response()->json(['error' => 'invalid_credentials', 'data'=>$usuarios_hash], 401); 
+            */
            
             $usuario = Usuario::where('id',$credentials['id'])->first();
 
