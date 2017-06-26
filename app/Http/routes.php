@@ -49,9 +49,13 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('almacenes',    'AlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('proveedor',    'ProveedorController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
-    Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+
+    // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
+    Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);    
     Route::get('pedidos-stats',         'PedidoController@stats');
     Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
+
+   
  
     
     // # SECCION: Administrador central
@@ -101,10 +105,14 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('entregas-stats',        'EntregaController@stats');
         Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
-        //Pedidos
+        //Pedidos Akira: Arriba tambien están declarados
         Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::get('pedidos-stats',         'PedidoController@stats');
         Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
+
+        Route::resource('pedidos-jurisdiccionales',         'PedidoJurisdiccionalController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::get('pedidos-jurisdiccionales-stats',        'PedidoJurisdiccionalController@stats');
+        Route::get('pedidos-jurisdiccionales-presupuesto',  'PedidoJurisdiccionalController@obtenerDatosPresupuesto');
 
         Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['show', 'update','destroy']]);
 
@@ -126,6 +134,7 @@ Route::group(['middleware' => 'jwt'], function () {
     
 
     Route::get('generar-excel-pedido/{id}', 'PedidoController@generarExcel');
+    Route::get('generar-excel-pedido-jurisdiccional/{id}', 'PedidoJurisdiccionalController@generarExcel');
 
     
     Route::get('entregas-stats',        'EntregaController@stats'); 

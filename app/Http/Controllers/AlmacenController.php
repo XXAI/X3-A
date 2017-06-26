@@ -94,6 +94,9 @@ class AlmacenController extends Controller
             $almacenes = $almacenes->with('usuarios','tiposMovimientos');
         }
 
+        if(isset($parametros['subrogado'])){
+             $almacenes = $almacenes->where('subrogado',$parametros['subrogado']);
+        }
         //$pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;

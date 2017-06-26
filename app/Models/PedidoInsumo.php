@@ -22,4 +22,9 @@ class PedidoInsumo extends BaseModel
     public function tipoInsumo(){
         return $this->belongsTo('App\Models\TipoInsumo','tipo_insumo_id');
     }
+
+    public function listaClues(){
+        return $this->hasMany('App\Models\PedidoInsumoClues','pedido_insumo_id','id')->conNombre();
+    }
+
 }
