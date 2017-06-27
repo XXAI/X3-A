@@ -3,7 +3,7 @@
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
 
-class PermisosSeeder extends Seeder
+class PermisosPacientesSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -16,7 +16,7 @@ class PermisosSeeder extends Seeder
             [
                 'id' => 'CKXlt7sNZCiWBhvk33xqWEVTnv2lP022',
                 'descripcion' => 'Egreso Pacientes',
-                'grupo' => Admision
+                'grupo' => 'Admision',
                 'su' => 0,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
@@ -24,7 +24,7 @@ class PermisosSeeder extends Seeder
  	    [
                 'id' => 'PpXKhxdG8dGheNKm1rRSCT4EXZYyhRMm',
                 'descripcion' => 'Ver modulo Admision',
-                'grupo' => Admision
+                'grupo' => 'Admision',
                 'su' => 0,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
@@ -32,7 +32,7 @@ class PermisosSeeder extends Seeder
  	    [
                 'id' => 'XE1pZJV6ZprLc0vP45Pkkpm2UlOJEBqV',
                 'descripcion' => 'Ver lista Pacientes',
-                'grupo' => Admision
+                'grupo' => 'Admision',
                 'su' => 0,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
@@ -40,7 +40,7 @@ class PermisosSeeder extends Seeder
  	    [
                 'id' => 'eS7qbng49qtMSs88wsflDnzMBVUfVMlc',
                 'descripcion' => 'Ingresar Pacientes',
-                'grupo' => Admision
+                'grupo' => 'Admision',
                 'su' => 0,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()

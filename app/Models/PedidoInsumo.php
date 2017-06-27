@@ -15,6 +15,10 @@ class PedidoInsumo extends BaseModel
     protected $fillable = [ "pedido_id", "insumo_medico_clave", "cantidad", "cantidad_solicitada", "cantidad_recibida","precio_unitario","tipo_insumo_id","monto","monto_solicitado","monto_recibido", "created_at","updated_at"];
     protected $table = 'pedidos_insumos';
 
+    public function insumoDetalle(){
+        return $this->hasOne('App\Models\Insumo','clave','insumo_medico_clave')->withTrashed();
+    }
+
     public function insumosConDescripcion(){
         return $this->hasOne('App\Models\Insumo','clave','insumo_medico_clave')->conDescripciones()->withTrashed();        
     }

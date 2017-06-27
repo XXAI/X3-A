@@ -94,6 +94,9 @@ class PedidoController extends Controller{
                 case when status = "EX" then 1 else null end
             ) as expirados,
             count(
+                case when status = "EX-CA" then 1 else null end
+            ) as expirados_cancelados,
+            count(
                 case when status = "EF" then 1 else null end
             ) as farmacia
             '
@@ -451,7 +454,8 @@ class PedidoController extends Controller{
                 $presupuesto_unidad->material_curacion_comprometido = round($presupuesto_unidad->material_curacion_comprometido,2) + round($total_monto['material_curacion'],2);
                 $presupuesto_unidad->material_curacion_disponible = round($presupuesto_unidad->material_curacion_disponible,2) - round($total_monto['material_curacion'],2);
                 
-                if($presupuesto_unidad->causes_disponible < 0 || $presupuesto_unidad->no_causes_disponible < 0 || $presupuesto_unidad->material_curacion_disponible < 0){
+                //if($presupuesto_unidad->causes_disponible < 0 || $presupuesto_unidad->no_causes_disponible < 0 || $presupuesto_unidad->material_curacion_disponible < 0){
+                if(($presupuesto_unidad->causes_disponible + $presupuesto_unidad->material_curacion_disponible) < 0 || $presupuesto_unidad->no_causes_disponible < 0){
                     DB::rollBack();
                     return Response::json(['error' => 'El presupuesto es insuficiente para este pedido, los cambios no se guardaron.', 'data'=>[$presupuesto_unidad,$total_monto]], 500);
                 }else{

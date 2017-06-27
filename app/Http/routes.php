@@ -49,15 +49,12 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('almacenes',    'AlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('proveedor',    'ProveedorController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
-
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
-    Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);    
-    Route::get('pedidos-stats',         'PedidoController@stats');
-    Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
+    // Harima: Se colaron en algun merge que hicieron, los tomo como cambios en el commit, probablemente marco conflicto y lo arreglaron dejando estas lineas, los comento, si no hay problemas los elimino en el proximo commit
+    //Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);    
+    //Route::get('pedidos-stats',         'PedidoController@stats');
+    //Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
 
-   
- 
-    
     // # SECCION: Administrador central
     Route::group(['prefix' => 'administrador-central','namespace' => 'AdministradorCentral'], function () {
         Route::get('abasto', 'AbastoController@lista');
@@ -99,16 +96,17 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('almacenes',        'AlmacenController',    ['only' => ['index']]);
         Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
  
-        Route::resource('stock',    'StockController',    ['only' => ['index']]);
+        Route::resource('stock',              'StockController',    ['only' => ['index']]);
         Route::resource('comprobar-stock',    'ComprobarStockController',    ['only' => ['index']]);
 
         Route::get('entregas-stats',        'EntregaController@stats');
         Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-
-        //Pedidos Akira: Arriba tambien están declarados
-        Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::get('pedidos-stats',         'PedidoController@stats');
-        Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
+        
+        //Pedidos
+        Route::resource('pedidos',                      'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::get('pedidos-stats',                     'PedidoController@stats');
+        Route::get('pedidos-presupuesto',               'PedidoController@obtenerDatosPresupuesto');
+        Route::put('cancelar-pedido-transferir/{id}',   'CancelarPedidosController@cancelarYTransferir');
 
         Route::resource('pedidos-jurisdiccionales',         'PedidoJurisdiccionalController',     ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::get('pedidos-jurisdiccionales-stats',        'PedidoJurisdiccionalController@stats');
