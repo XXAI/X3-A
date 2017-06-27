@@ -141,7 +141,7 @@ class RecepcionPedidoController extends Controller
 
 		$pedido = Pedido::where('almacen_solicitante',$almacen->id)->with(['recepciones'=>function($recepciones){
 			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
-		}])->where('status','PS')->find($id);
+		}])->whereIn('status',['PS','EX'])->find($id);
 
 		if(!$pedido){
 			DB::rollBack();

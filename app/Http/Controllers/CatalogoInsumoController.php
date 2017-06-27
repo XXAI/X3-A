@@ -43,10 +43,10 @@ class CatalogoInsumoController extends Controller
         }else{
             $insumos = Insumo::conDescripciones()->with('informacion','generico.grupos');
         }
-
         
-
-
+        if(!isset($parametros['con_descontinuados'])){
+            $insumos = $insumos->where('descontinuado',0);
+        }
 
         //return Response::json([ 'data' => []],200);
         //return Response::json(['error' => ""], HttpResponse::HTTP_UNAUTHORIZED);

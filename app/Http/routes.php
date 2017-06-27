@@ -95,16 +95,17 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('almacenes',        'AlmacenController',    ['only' => ['index']]);
         Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
  
-        Route::resource('stock',    'StockController',    ['only' => ['index']]);
+        Route::resource('stock',              'StockController',    ['only' => ['index']]);
         Route::resource('comprobar-stock',    'ComprobarStockController',    ['only' => ['index']]);
 
         Route::get('entregas-stats',        'EntregaController@stats');
         Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
         //Pedidos
-        Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::get('pedidos-stats',         'PedidoController@stats');
-        Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
+        Route::resource('pedidos',                      'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::get('pedidos-stats',                     'PedidoController@stats');
+        Route::get('pedidos-presupuesto',               'PedidoController@obtenerDatosPresupuesto');
+        Route::put('cancelar-pedido-transferir/{id}',   'CancelarPedidosController@cancelarYTransferir');
 
         Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['show', 'update','destroy']]);
 
