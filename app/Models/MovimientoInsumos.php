@@ -13,7 +13,7 @@ class MovimientoInsumos extends BaseModel{
 
     protected $table = 'movimiento_insumos';
 
-    protected $fillable = ["movimiento_id","stock_id", "cantidad", "precio_unitario", "iva", "precio_total"];
+    protected $fillable = ["movimiento_id","stock_id", "cantidad", "precio_unitario", "iva", "precio_total", "tipo_insumo_id", "clave_insumo_medico"];
 
  
 
