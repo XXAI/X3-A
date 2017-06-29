@@ -11,7 +11,6 @@ use JWTAuth;
 use App\Http\Requests;
 use App\Models\Receta;
 
-
 use App\Models\Usuario;
 
 use Illuminate\Support\Facades\Input;

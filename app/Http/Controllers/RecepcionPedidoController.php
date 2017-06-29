@@ -95,7 +95,7 @@ class RecepcionPedidoController extends Controller
 
         $parametros = Input::all();
 		
-		/*Verifica de primera instancia que no se haya sobrepasado las cantidades solicitadas con la recibida, por error*/
+		/*Verifica de primera instancia que no se sobrepase las cantidades solicitadas con la recibida, por error*/
 		$pedido_verificar = PedidoInsumo::where("pedido_id", $id)
 							->select( DB::raw('SUM(cantidad_solicitada) as cantidad_solicitada'), DB::raw('SUM(cantidad_recibida) as cantidad_recibida') )
 							->groupBy("pedido_id")
@@ -125,16 +125,20 @@ class RecepcionPedidoController extends Controller
         }
 
         //cargamos en un arreglo los insumos, para poder obtener datos, de los insumos que envie 
-        $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad")->withTrashed()->get();
+
+
+        $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad", "contratos_precios.tipo_insumo_id", "medicamentos.cantidad_x_envase")->withTrashed()->get();
         $lista_insumos = array();
         foreach ($insumos as $key => $value) {
         	$array_datos = array();
-        	$array_datos['precio'] 			= $value['precio'];
-        	$array_datos['clave'] 			= $value['clave'];
-        	$array_datos['tipo'] 			= $value['tipo'];
-        	$array_datos['es_causes'] 		= $value['es_causes'];
-        	$array_datos['caducidad'] 		= $value['tiene_fecha_caducidad'];
-        	$lista_insumos[$value['clave']] = $array_datos;
+        	$array_datos['precio'] 				= $value['precio'];
+        	$array_datos['clave'] 				= $value['clave'];
+        	$array_datos['tipo'] 				= $value['tipo'];
+        	$array_datos['tipo_insumo_id'] 		= $value['tipo_insumo_id'];
+        	$array_datos['es_causes'] 			= $value['es_causes'];
+        	$array_datos['caducidad'] 			= $value['tiene_fecha_caducidad'];
+        	$array_datos['cantidad_unidosis'] 	= $value['cantidad_x_envase'];
+        	$lista_insumos[$value['clave']] 	= $array_datos;
         }
 		/**/
 		DB::beginTransaction();
@@ -291,6 +295,8 @@ class RecepcionPedidoController extends Controller
 		        $tipo_insumo 	= $lista_insumos[$value['clave_insumo_medico']]['tipo'];
 		        $es_causes 		= $lista_insumos[$value['clave_insumo_medico']]['es_causes'];
 		        $caducidad 		= $lista_insumos[$value['clave_insumo_medico']]['caducidad'];
+		        $tipo_insumo_id = $lista_insumos[$value['clave_insumo_medico']]['tipo_insumo_id'];
+		        $unidosis 		= $lista_insumos[$value['clave_insumo_medico']]['cantidad_unidosis'];
 		        /**/
 
 		        if($tipo_insumo == "ME")
@@ -347,9 +353,11 @@ class RecepcionPedidoController extends Controller
 								$pedido_insumo->update();  //Actualizamos existencia y  monto de pedidos insumo
 
 								if($insert_stock){
-									$insert_stock->existencia += $value['existencia'];
+									$insert_stock->existencia 			+= $value['existencia'];
+									$insert_stock->existencia_unidosis 	= ($insert_stock->existencia * $unidosis);//***************************
 									$insert_stock->save();
-								}else{					
+								}else{
+									$insert_stock->existencia_unidosis 	= ($value['existencia'] * $unidosis);				
 									$insert_stock = Stock::create($value);
 								}		
 
@@ -383,9 +391,11 @@ class RecepcionPedidoController extends Controller
 
 								if($insert_stock){
 									$insert_stock->existencia += $value['existencia'];
+									$insert_stock->existencia_unidosis 	= ($insert_stock->existencia * $unidosis);
 									$insert_stock->save();
 									
 								}else{					
+									$insert_stock->existencia_unidosis 	= ($value['existencia'] * $unidosis);
 									$insert_stock = Stock::create($value);
 									
 								}
@@ -438,6 +448,8 @@ class RecepcionPedidoController extends Controller
 		            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 		        }
 		        $value['stock_id'] = $insert_stock->id;
+
+		        $value['tipo_insumo_id'] = $tipo_insumo_id;
 
 
 		        /*$pedido_insumo_validador = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos

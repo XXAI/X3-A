@@ -30,8 +30,8 @@ Route::get('insumos-entrada-auto',          'AutoCompleteController@insumos_entr
     Route::get('grafica-entregas',         'ReportePedidoController@graficaEntregas');
     Route::get('estatus-pedidos',         'ReportePedidoController@estatusEntregaPedidos');
 
-    
-   
+
+
 Route::group(['middleware' => 'jwt'], function () {
 
     Route::resource('usuarios', 'UsuarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -89,6 +89,10 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-administrador-proveedores', 'PedidosAdministradorProveedoresController@lista');
         Route::get('pedidos-administrador-proveedores-excel', 'PedidosAdministradorProveedoresController@excel');
         Route::get('pedidos-administrador-proveedores-pedido/{id}', 'PedidosAdministradorProveedoresController@pedido');
+        Route::resource('repository',      'RepositorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
+        Route::get('repository-download/{id}',  'RepositorioController@registro_descarga'); 
+        Route::get('download-file/{id}',  'RepositorioController@descargar'); 
+        
     });
 
     Route::group(['middleware' => 'almacen'], function () {
