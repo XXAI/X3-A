@@ -12,12 +12,13 @@ class CreateLogRepositorioProveedor extends Migration
      */
     public function up()
     {
-        Schema::create('repositorio_log', function (Blueprint $table) {
+        Schema::create('log_repositorio', function (Blueprint $table) {
             $table->string('id', 255);
             $table->integer('incremento');
             $table->string('servidor_id', 4);
             $table->string('repositorio_id', 255);
             $table->string('usuario_id', 255);
+            
             $table->string('ip', 15);
             $table->string('navegador', 255);
             $table->string('accion', 255);

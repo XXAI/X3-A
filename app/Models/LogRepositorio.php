@@ -11,7 +11,7 @@ class LogRepositorio extends BaseModel
     protected $generarID = true;
     protected $guardarIDServidor = true;
     protected $guardarIDUsuario = true;
-    protected $table = 'repositorio_log';
+    protected $table = 'log_repositorio';
 
     protected $fillable = ["repositorio_id", "ip", "usuario_id", "navegador", "accion"];
 

@@ -13,5 +13,5 @@ class Repositorio extends BaseModel
     protected $guardarIDUsuario = true;
     protected $table = 'repositorio';
 
-    protected $fillable = ["pedido_id", "peso", "nombre_archivo", "ubicacion", "extension"];
+    protected $fillable = ["pedido_id", "peso", "nombre_archivo", "ubicacion", "extension", "usuario_deleted_id"];
 }

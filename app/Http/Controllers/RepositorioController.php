@@ -34,7 +34,11 @@ class RepositorioController extends Controller
                             "peso",
                             "nombre_archivo",
                             "created_at",
-                            DB::RAW("(select count(*) from repositorio_log where repositorio_id=repositorio.id and accion='DOWNLOAD') as descargas"))
+                            "usuario_id",
+                            "usuario_deleted_id",
+                            "deleted_at",
+                            DB::RAW("(select count(*) from log_repositorio where repositorio_id=repositorio.id and accion='DOWNLOAD') as descargas"))
+                    ->withTrashed()
                     ->get();
     	return Response::json([ 'data' => $repositorio],200);	
     	
@@ -73,6 +77,12 @@ class RepositorioController extends Controller
      public function destroy($id, Request $request)
      {
         try {
+            $repositorio = Repositorio::find($id);
+            
+            $obj =  JWTAuth::parseToken()->getPayload();
+            $repositorio->usuario_deleted_id = $obj->get('id');
+            $repositorio->save();
+
             $object = Repositorio::destroy($id);
             $arreglo_log = array('repositorio_id' => $id,
                             'ip' =>$request->ip(),
@@ -98,18 +108,25 @@ class RepositorioController extends Controller
         $repositorio = Repositorio::find($id);
 
         return Response::json(['data'=>$repositorio],200);
+        $repositorio = Repositorio::find($id);
 
+        return Response::json(['data'=>$repositorio],200);
     }
     public function descargar($id, Request $request)
      {
+        try{
+             $repositorio = Repositorio::find($id);
+            $directorio_path = "repositorio";
+            $pathToFile = $directorio_path."//".$id.".".$repositorio->extension;
 
-        $repositorio = Repositorio::where("pedido_id",$id)->first();
-        $directorio_path = "repositorio";
-        $pathToFile = $directorio_path."\\".$id.".".$repositorio->extension;
-
-        $headers = array(
+            $headers = array(
               'Content-Type: application/pdf',
             );
-        return response()->download("repositorio\\".$repositorio->id.".pdf", $repositorio->nombre_archivo.".pdf", $headers);
+            return response()->download($pathToFile, $repositorio->nombre_archivo.".pdf", $headers);
+           
+        }catch(Exception $e)
+        {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        }
     }
 }

@@ -20,6 +20,7 @@ class CreateRepositorioProveedor extends Migration
             $table->decimal('peso', 15,2);
             $table->string('extension', 100);
             $table->string('usuario_id', 255);
+            $table->string('usuario_deleted_id', 255);
             $table->string('nombre_archivo', 255);
             $table->string('ubicacion', 255);
             
