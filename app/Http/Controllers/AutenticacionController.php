@@ -7,7 +7,7 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 use Illuminate\Http\Request;
 use \Hash, \Config, Carbon\Carbon;
-use App\Models\Usuario, App\Models\Permiso, App\Models\Almacen, App\Models\UnidadMedica, App\Models\LogInicioSesion;
+use App\Models\Usuario, App\Models\Permiso, App\Models\Almacen, App\Models\UnidadMedica, App\Models\Proveedor, App\Models\LogInicioSesion;
 
 class AutenticacionController extends Controller
 {
@@ -101,7 +101,7 @@ class AutenticacionController extends Controller
                 }
                 
 
-                $usuario = [
+                $usuario_data = [
                     "id" => $usuario->id,
                     "nombre" => $usuario->nombre,
                     "apellidos" => $usuario->apellidos,
@@ -110,6 +110,10 @@ class AutenticacionController extends Controller
                     "unidades_medicas" =>  $unidades_medicas,
                     "modulo_inicio" => $modulo_inicio
                 ];
+
+                if($usuario->su){ //Harima: se agrego para los modulos de los proveedores
+                    $usuario_data["proveedores"] = Proveedor::all();
+                }
 
                 $server_info = [
                     "server_datetime_snap" => getdate(),
@@ -121,7 +125,7 @@ class AutenticacionController extends Controller
 
                 $payload = JWTFactory::make($claims);
                 $token = JWTAuth::encode($payload);
-                return response()->json(['token' => $token->get(), 'usuario'=>$usuario, 'server_info'=> $server_info], 200);
+                return response()->json(['token' => $token->get(), 'usuario'=>$usuario_data, 'server_info'=> $server_info], 200);
             } else {
                 $log_usuario->login_status = 'ERR_PSW';
                 $log_usuario->save();

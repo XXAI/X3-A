@@ -127,7 +127,7 @@ class PedidoController extends Controller{
             $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
         }
 
-        $pedidos = $pedidos->select('pedidos.*',DB::raw('datediff(fecha_expiracion,current_date()) as expira_en_dias'));
+        $pedidos = $pedidos->select('pedidos.*',DB::raw('datediff(fecha_expiracion,current_date()) as expira_en_dias'))->orderBy('updated_at','desc');
         
         //$pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();
         if(isset($parametros['page'])){

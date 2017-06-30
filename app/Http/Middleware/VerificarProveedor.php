@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure, Request, \Exception;
 use App\Models\Usuario;
+use Illuminate\Support\Facades\Input;
 
 class VerificarProveedor
 {
@@ -27,6 +28,9 @@ class VerificarProveedor
                 }
             }else{
                 $proveedor_id = Request::header('X-Proveedor-Id');
+                if(!$proveedor_id){
+                    $proveedor_id = Input::get('proveedor');
+                }
                 if($proveedor_id == null){
                     throw new Exception('Debes especificar un proveedor');
                 }

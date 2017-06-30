@@ -16,8 +16,28 @@ class PedidosAdministradorProveedoresController extends Controller
 {
     public function presupuesto(Request $request){
         try{
-          //  $almacen = Almacen::find($request->get('almacen_id'));
+            $proveedor_id = $request->get('proveedor_id');
+            $contrato = Contrato::where('activo',1)->where('proveedor_id',$proveedor_id)->first();
 
+            $parametros = Input::only('q','status','jurisdicciones','page','per_page', 'mes','anio', 'ordenar_causes','ordenar_no_causes','ordenar_material_curacion');
+            $parametros['proveedor_id'] = $proveedor_id;
+            $parametros['contrato_id'] = $contrato->id;
+
+            $items = self::getItemsQuery($parametros);
+
+            //$items = $items;
+
+            $presupuesto_pedidos_proveedor = [];
+
+            $presupuesto_pedidos_proveedor['causes_comprometido'] = $items->sum('total_monto_causes') - $items->sum('total_monto_causes_recibido');
+            $presupuesto_pedidos_proveedor['causes_devengado'] = $items->sum('total_monto_causes_recibido');
+            $presupuesto_pedidos_proveedor['no_causes_comprometido'] = $items->sum('total_monto_no_causes') - $items->sum('total_monto_no_causes_recibido');
+            $presupuesto_pedidos_proveedor['no_causes_devengado'] = $items->sum('total_monto_no_causes_recibido');
+            $presupuesto_pedidos_proveedor['material_curacion_comprometido'] = $items->sum('total_monto_material_curacion') - $items->sum('total_monto_material_curacion_recibido');
+            $presupuesto_pedidos_proveedor['material_curacion_devengado'] = $items->sum('total_monto_material_curacion_recibido');
+
+            return Response::json([ 'data' => $presupuesto_pedidos_proveedor],200);
+            /*
             $parametros = Input::all();
 
             $presupuesto = Presupuesto::where('activo',1)->first();
@@ -47,6 +67,7 @@ class PedidosAdministradorProveedoresController extends Controller
             
             $presupuesto_unidad_medica = $presupuesto_unidad_medica->first();
             return Response::json([ 'data' => $presupuesto_unidad_medica],200);
+            */
         } catch (\Exception $e) {
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
@@ -96,14 +117,21 @@ class PedidosAdministradorProveedoresController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function excel()
+    public function excel(Request $request)
     {
         $obj =  JWTAuth::parseToken()->getPayload();
         $usuario = Usuario::find($obj->get('id'));
-        $contrato = Contrato::where('activo',1)->where('proveedor_id',$usuario->proveedor_id)->first();
+
+        if($usuario->su){
+            $proveedor_id = $request->get('proveedor_id');
+        }else{
+            $proveedor_id = $usuario->proveedor_id;
+        }
+
+        $contrato = Contrato::where('activo',1)->where('proveedor_id',$proveedor_id)->first();
 
         $parametros = Input::only('q','status','jurisdicciones', 'mes', 'anio', 'ordenar_causes','ordenar_no_causes','ordenar_material_curacion');
-        $parametros['proveedor_id'] = $usuario->proveedor_id;
+        $parametros['proveedor_id'] = $proveedor_id;
         $parametros['contrato_id'] = $contrato->id;
 
         $items = self::getItemsQuery($parametros);
@@ -229,11 +257,11 @@ class PedidosAdministradorProveedoresController extends Controller
                     
                     IF(IMC.total_claves_material_curacion is null, 0, IMC.total_claves_material_curacion) AS total_claves_material_curacion, 
                     IF(IMC.total_cantidad_material_curacion is null, 0, IMC.total_cantidad_material_curacion) AS total_cantidad_material_curacion, 
-                    IF(IMC.total_monto_material_curacion is null, 0, (IMC.total_monto_material_curacion+(IMC.total_monto_material_curacion*16/100))) AS total_monto_material_curacion,
+                    IF(IMC.total_monto_material_curacion is null, 0, round(IMC.total_monto_material_curacion+(IMC.total_monto_material_curacion*16/100),2)) AS total_monto_material_curacion,
 
                     IF(IMC.total_claves_material_curacion_recibidas is null, 0, IMC.total_claves_material_curacion_recibidas) AS total_claves_material_curacion_recibidas, 
                     IF(IMC.total_cantidad_material_curacion_recibida is null, 0, IMC.total_cantidad_material_curacion_recibida) AS total_cantidad_material_curacion_recibida, 
-                    IF(IMC.total_monto_material_curacion_recibido is null, 0, (IMC.total_monto_material_curacion_recibido+(IMC.total_monto_material_curacion_recibido*16/100))) AS total_monto_material_curacion_recibido,
+                    IF(IMC.total_monto_material_curacion_recibido is null, 0, round(IMC.total_monto_material_curacion_recibido+(IMC.total_monto_material_curacion_recibido*16/100),2)) AS total_monto_material_curacion_recibido,
 
                     P.status
 
@@ -283,7 +311,12 @@ class PedidosAdministradorProveedoresController extends Controller
         } 
 
 
-        $mes = isset($parametros['mes']) ? $parametros['mes'] : null;
+        //$mes = isset($parametros['mes']) ? $parametros['mes'] : null;
+        if($parametros['mes']){
+            $mes = $parametros['mes'];
+        }else{
+            $mes = null;
+        }
 
         if ($mes) {
             $items = $items->where(DB::raw('month(fecha)'),"=",$mes);
@@ -304,7 +337,7 @@ class PedidosAdministradorProveedoresController extends Controller
                 $items = $items->whereIn('status',$status);
             }              
         }else{
-            $items = $items->whereIn('status',['PS','FI','EX','EF']);
+            $items = $items->whereIn('status',['PS','FI','EX','EF','EX-CA']);
         }
 
         if(isset($parametros['jurisdicciones']) && $parametros['jurisdicciones'] != ""){
@@ -341,5 +374,5 @@ class PedidosAdministradorProveedoresController extends Controller
         }
         return $items;
     }
-    
+
 }

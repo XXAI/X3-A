@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
-use App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto,  App\Models\TransferenciaPresupuesto, App\Models\Pedido;
+use App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto,  App\Models\TransferenciaPresupuesto, App\Models\Pedido, App\Models\LogPedidoCancelado;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -132,6 +132,18 @@ class CancelarPedidosController extends Controller
 
                     $transferencia = TransferenciaPresupuesto::create($datos_transferencia);
                 }
+
+                $datos_log_pedido_cancelado = [
+                    'pedido_id'=> $pedido->id,
+                    'total_monto_restante'=> $total_causes_disponible + $total_no_causes_disponible + $total_material_curacion_disponible,
+                    'mes_destino'=> $input['transferir_a_mes'],
+                    'anio_destino'=> $input['transferir_a_anio'],
+                    'ip'=> $request->ip(),
+                    'navegador'=> $request->header('User-Agent'),
+                    'updated_at'=> Carbon::now()
+                ];
+
+                $log = LogPedidoCancelado::create($datos_log_pedido_cancelado);
 
                 DB::commit();
                 return Response::json([ 'data' => $pedido ],200);
