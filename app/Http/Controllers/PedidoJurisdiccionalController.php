@@ -43,6 +43,7 @@ class PedidoJurisdiccionalController extends Controller{
                                             DB::raw('sum(material_curacion_autorizado) as material_curacion_autorizado'),DB::raw('sum(material_curacion_modificado) as material_curacion_modificado'),DB::raw('sum(material_curacion_comprometido) as material_curacion_comprometido'),DB::raw('sum(material_curacion_devengado) as material_curacion_devengado'),DB::raw('sum(material_curacion_disponible) as material_curacion_disponible'))
                                             ->where('presupuesto_id',$presupuesto->id)
                                             ->where('clues',$almacen->clues)
+                                            ->where('almacen_id',$almacen->id)
                                             //->where('proveedor_id',$almacen->proveedor_id)
                                             ->groupBy('clues');
             if(isset($parametros['mes'])){
