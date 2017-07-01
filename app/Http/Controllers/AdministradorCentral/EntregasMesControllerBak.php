@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
 
-class EntregasMesController extends Controller
+class EntregasMesControllerBak extends Controller
 {
     public function mesesAnioPresupuestos(Request $request){
         try{
@@ -148,8 +148,8 @@ class EntregasMesController extends Controller
                                 LEFT JOIN movimientos ON movimientos.id = movimiento_pedido.movimiento_id 
                                 WHERE 
 
-                                        YEAR(movimientos.fecha_movimiento)= '.$input['anio'].' AND 
-                                        MONTH(movimientos.fecha_movimiento) = '.$input['mes'].' AND
+                                        YEAR(pedidos.fecha)= '.$input['anio'].' AND 
+                                        MONTH(pedidos.fecha) = '.$input['mes'].' AND
                                         pedidos.proveedor_id = '.$input['proveedor_id'].'
                                 GROUP BY  movimientos.fecha_movimiento 
 
@@ -182,8 +182,8 @@ class EntregasMesController extends Controller
                                         pedidos.status != "BR" AND
                                         insumos_medicos.tipo = "ME" AND
                                         insumos_medicos.es_causes = 1 AND
-                                        YEAR(movimientos.fecha_movimiento)= '.$input['anio'].' AND 
-                                        MONTH(movimientos.fecha_movimiento) = '.$input['mes'].' AND
+                                        YEAR(pedidos.fecha)= '.$input['anio'].' AND 
+                                        MONTH(pedidos.fecha) = '.$input['mes'].' AND
                                         pedidos.proveedor_id = '.$input['proveedor_id'].'
                                     GROUP BY
                                         movimientos.fecha_movimiento,
@@ -220,8 +220,8 @@ class EntregasMesController extends Controller
                                         pedidos.status != "BR" AND
                                         insumos_medicos.tipo = "ME" AND
                                         insumos_medicos.es_causes = 0 AND
-                                        YEAR(movimientos.fecha_movimiento)= '.$input['anio'].' AND 
-                                        MONTH(movimientos.fecha_movimiento) = '.$input['mes'].' AND
+                                        YEAR(pedidos.fecha)= '.$input['anio'].' AND 
+                                        MONTH(pedidos.fecha) = '.$input['mes'].' AND
                                         pedidos.proveedor_id = '.$input['proveedor_id'].'
                                     GROUP BY
                                         movimientos.fecha_movimiento,
@@ -257,8 +257,8 @@ class EntregasMesController extends Controller
                                         movimientos.fecha_movimiento  != "0000-00-00" AND
                                         pedidos.status != "BR" AND
                                         insumos_medicos.tipo = "MC" AND
-                                        YEAR(movimientos.fecha_movimiento)= '.$input['anio'].' AND 
-                                        MONTH(movimientos.fecha_movimiento) = '.$input['mes'].' AND
+                                        YEAR(pedidos.fecha)= '.$input['anio'].' AND 
+                                        MONTH(pedidos.fecha) = '.$input['mes'].' AND
                                         pedidos.proveedor_id = '.$input['proveedor_id'].'
                                     GROUP BY
                                         movimientos.fecha_movimiento,
