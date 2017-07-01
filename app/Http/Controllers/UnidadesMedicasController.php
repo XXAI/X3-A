@@ -51,10 +51,17 @@ class UnidadesMedicasController extends Controller
                 throw new Exception("Usuario no existe");
             }
 
-            if($usuario->su){
-                $items = UnidadMedica::with('almacenes')->orderBy('nombre')->get();
-            } else {
-                $items = $usuario->unidadesMedicas()->with('almacenes')->get();
+            if(Input::get('lista') == 1)
+            {
+                $items = UnidadMedica::all();
+            }else
+            {
+
+                if($usuario->su){
+                    $items = UnidadMedica::with('almacenes')->orderBy('nombre')->get();
+                } else {
+                    $items = $usuario->unidadesMedicas()->with('almacenes')->get();
+                }
             }
             
         } catch (TokenExpiredException $e) {
