@@ -264,7 +264,7 @@ class PedidosAdministradorProveedoresController extends Controller
                     IF(IMC.total_monto_material_curacion_recibido is null, 0, round(IMC.total_monto_material_curacion_recibido+(IMC.total_monto_material_curacion_recibido*16/100),2)) AS total_monto_material_curacion_recibido,
 
                     P.status,
-                    (select count(*) from repositorio where pedido_id=p.id and deleted_at is null) as repositorio
+                    (select count(*) from repositorio where pedido_id=P.id and deleted_at is null) as repositorio
 
                     from pedidos P
 
