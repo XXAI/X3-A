@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ClavesBasicas extends BaseModel
 {
     use SoftDeletes;
-    protected $generarID = true;
-    protected $guardarIDServidor = true;
+    protected $generarID = false;
+    protected $guardarIDServidor = false;
     protected $guardarIDUsuario = true;
+    public $incrementing = true;
     protected $table = 'claves_basicas';
 
     protected $fillable = [ 'nombre', 'clues','tipo'];

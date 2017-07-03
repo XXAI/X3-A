@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\AdministradorCentral;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests;
 use App\Models\ClavesBasicas, App\Models\ClavesBasicasDetalle;
 use Illuminate\Support\Facades\Input;
@@ -18,9 +19,23 @@ class ClavesBasicasController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request)
-    {   
-        $items = ClavesBasicas::where('clues',$request->get('clues'))->get();
+    {   $parametros = Input::only('q','page','per_page');
+        if ($parametros['q']) {
+             $items =  ClavesBasicas::where('nombre','LIKE',"%".$parametros['q']."%");
+        } else {
+             $items =  ClavesBasicas::select('*');
+        }
+
+        if(isset($parametros['page'])){
+
+            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+            $items = $items->paginate($resultadosPorPagina);
+        } else {
+            $items = $items->get();
+        }
+       
         return Response::json([ 'data' => $items],200);
+
     }
 
     /**
@@ -38,11 +53,10 @@ class ClavesBasicasController extends Controller
 
         $reglas = [
             'nombre'        => 'required',
-            'tipo'        => 'required',
             'items'        => 'required|array',
         ];
 
-        $inputs = Input::only('nombre','tipo','items');
+        $inputs = Input::only('nombre','items');
 
         $v = Validator::make($inputs, $reglas, $mensajes);
 
@@ -52,15 +66,6 @@ class ClavesBasicasController extends Controller
 
         DB::beginTransaction();
         try {
-           
-
-
-            $inputs['clues'] = $request->get('clues');
-
-            $comprobar = ClavesBasicas::where('clues',$inputs['clues'])->where('tipo',$inputs['tipo'])->first();
-            if($comprobar){
-                return Response::json(['error' =>  ['tipo' => ['unique']]], HttpResponse::HTTP_CONFLICT);
-            }
 
             $clavesBasicas = ClavesBasicas::create($inputs);
 
@@ -95,9 +100,7 @@ class ClavesBasicasController extends Controller
         if(!$object){
             return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }
-        if($request->get('clues') != $object->clues){
-            return Response::json(['error' =>  'No tienes permiso para editar esta lista'], HttpResponse::HTTP_FORBIDDEN);
-        }
+
         $object =  $object->load("detalles.insumoConDescripcion.informacion","detalles.insumoConDescripcion.generico.grupos");
 
         return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
@@ -119,11 +122,10 @@ class ClavesBasicasController extends Controller
 
         $reglas = [
             'nombre'        => 'required',
-            'tipo'        => 'required',
             'items'        => 'required|array',
         ];
 
-        $inputs = Input::only('nombre','tipo','items');
+        $inputs = Input::only('nombre','items');
         $inputs['clues'] = $request->get('clues');
 
         $clavesBasicas = ClavesBasicas::find($id);
@@ -144,14 +146,10 @@ class ClavesBasicasController extends Controller
         DB::beginTransaction();
         try {
 
-            $comprobar = ClavesBasicas::where('id','!=',$clavesBasicas->id)->where('clues',$inputs['clues'])->where('tipo',$inputs['tipo'])->first();
-            if($comprobar){
-                return Response::json(['error' =>  ['tipo' => ['unique']]], HttpResponse::HTTP_CONFLICT);
-            }
+            
 
 
             $clavesBasicas->nombre = $inputs['nombre'];
-            $clavesBasicas->tipo = $inputs['tipo'];
             $clavesBasicas->save();
 
             $detalles = $clavesBasicas->detalles()->get();

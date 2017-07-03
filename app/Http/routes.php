@@ -84,6 +84,10 @@ Route::group(['middleware' => 'jwt'], function () {
         // CUMPLIMIENTO
         Route::get('cumplimiento-stats-globales', 'CumplimientoController@statsGlobales');
         Route::get('cumplimiento-stats-proveedor/{id}', 'CumplimientoController@statsPorProveedor');
+
+        // CLAVES BASICAS
+        Route::resource('claves-basicas',    'ClavesBasicasController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::get('claves-basicas-clues/{id}', 'ClavesBasicasController@index');
         
     });
     // # FIN SECCION
@@ -132,7 +136,7 @@ Route::group(['middleware' => 'jwt'], function () {
         //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
         Route::resource('catalogo-insumos',  'CatalogoInsumoController',     ['only' => ['index', 'show']]);
 
-        Route::resource('claves-basicas',    'ClavesBasicasController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        
 
 
         Route::get('unidades-medicas-dependientes',   'UnidadesMedicasController@unidadesMedicasDependientes');
