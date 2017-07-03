@@ -132,6 +132,28 @@ class PedidosController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+    public function recepcion($id, Request $request){
+        try{
+            //$pedido = Pedido::with("recepciones.movimiento.movimientoInsumos")->find($id);
+            $pedido = Pedido::with("recepciones.movimiento.movimientoInsumos")->where("id",$id)->first();
+            return Response::json([ 'data' => $pedido],200);
+        } catch (\Exception $e) {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
+    
+    public function regresarBorrador($id, Request $request){
+        try{
+            $pedido = Pedido::find($id);
+            $pedido->status = "BR";
+            $pedido->save();
+            return Response::json([ 'data' => $pedido],200);
+        } catch (\Exception $e) {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
+
     public function excel()
     {
         $parametros = Input::only('q','status','proveedores','jurisdicciones', 'fecha_desde','fecha_hasta', 'ordenar_causes','ordenar_no_causes','ordenar_material_curacion');

@@ -51,7 +51,7 @@ class UnidadesMedicasController extends Controller
                 throw new Exception("Usuario no existe");
             }
 
-            if(Input::get('lista') == 1)
+            if(Input::get('lista'))
             {
                 $items = UnidadMedica::all();
             }else
