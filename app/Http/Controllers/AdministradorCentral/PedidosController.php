@@ -7,7 +7,7 @@ use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests;
-use App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido;
+use App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -145,11 +145,80 @@ class PedidosController extends Controller
     
     public function regresarBorrador($id, Request $request){
         try{
+            DB::beginTransaction();
+            
             $pedido = Pedido::find($id);
             $pedido->status = "BR";
             $pedido->save();
-            return Response::json([ 'data' => $pedido],200);
+
+            $almacen = Almacen::find($pedido->almacen_solicitante);
+
+            if(!$almacen){
+                return Response::json(['error' =>"No se encontró el almacen."], 500);
+            }
+            
+            $proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
+
+            $contrato_activo = $proveedor->contratoActivo;
+            $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad", "contratos_precios.tipo_insumo_id", "medicamentos.cantidad_x_envase")->withTrashed()->get();
+            $lista_insumos = array();
+            foreach ($insumos as $key => $value) {
+                $array_datos = array();
+                $array_datos['precio']              = $value['precio'];
+                $array_datos['clave']               = $value['clave'];
+                $array_datos['tipo']                = $value['tipo'];
+                $array_datos['tipo_insumo_id']      = $value['tipo_insumo_id'];
+                $array_datos['es_causes']           = $value['es_causes'];
+                $array_datos['caducidad']           = $value['tiene_fecha_caducidad'];
+                $array_datos['cantidad_unidosis']   = $value['cantidad_x_envase'];
+                $lista_insumos[$value['clave']]     = $array_datos;
+            }
+
+            $pedido = $pedido->load("insumos");
+
+            $total_causes               = 0;
+            $total_no_causes            = 0;
+            $total_material_curacion    = 0;
+
+            foreach ($pedido->insumos as $key => $value) {
+                if($lista_insumos[$value['insumo_medico_clave']]['tipo'] == "ME")
+                {
+                    if($lista_insumos[$value['insumo_medico_clave']]['es_causes']== 1)
+                    {
+                        $total_causes += $value['monto_solicitado'];
+                    }else
+                    {
+                        $total_no_causes += $value['monto_solicitado'];
+                    }
+                }else
+                {
+                    $total_material_curacion += ($value['monto_solicitado'] * 1.16);
+                }
+            }
+
+            $fecha = explode("-", $pedido->fecha);
+
+            $presupuesto = UnidadMedicaPresupuesto::where("clues", $pedido->clues)
+                                                    ->where("almacen_id", $pedido->almacen_solicitante)            
+                                                    ->where("mes", intVal($fecha[1]))
+                                                    ->where("anio", intVal($fecha[0]))
+                                                    ->where("proveedor_id", $proveedor->id)
+                                                    ->first();
+
+            $presupuesto->causes_comprometido               = ($presupuesto->causes_comprometido - $total_causes);                                         
+            $presupuesto->no_causes_comprometido            = ($presupuesto->no_causes_comprometido - $total_no_causes);                                         
+            $presupuesto->material_curacion_comprometido    = ($presupuesto->material_curacion_comprometido - $total_material_curacion); 
+
+            $presupuesto->causes_disponible                 = ($presupuesto->causes_disponible + $total_causes);     
+            $presupuesto->no_causes_disponible              = ($presupuesto->no_causes_disponible + $total_no_causes);                                         
+            $presupuesto->material_curacion_disponible      = ($presupuesto->material_curacion_disponible + $total_material_curacion);
+
+            $presupuesto->save();                                   
+            DB::commit();
+
+            return Response::json([ 'data' => $presupuesto],200);
         } catch (\Exception $e) {
+            DB::rollBack();
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
     }
