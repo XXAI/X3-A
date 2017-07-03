@@ -561,6 +561,8 @@ class PedidoController extends Controller{
 
     }
 
+    
+
     public function generarExcel($id) {
         $obj =  JWTAuth::parseToken()->getPayload();
         $usuario = Usuario::with('almacenes')->find($obj->get('id'));
