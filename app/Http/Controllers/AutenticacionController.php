@@ -75,6 +75,10 @@ class AutenticacionController extends Controller
                             $lista_permisos.=$permiso->id;
                         }
                     }
+
+                    if($usuario->modulo_inicio){
+                        $modulo_inicio = $usuario->modulo_inicio;
+                    }
                 }
                 
                 $claims = [
