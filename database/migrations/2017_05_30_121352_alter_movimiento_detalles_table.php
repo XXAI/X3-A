@@ -14,10 +14,10 @@ class AlterMovimientoDetallesTable extends Migration
     {
         Schema::table('movimiento_detalles', function (Blueprint $table) {
             $table->string('modo_salida', 1)->after('clave_insumo_medico');
-            $table->integer('cantidad_solicitada_unidosis', 11)->after('cantidad_solicitada');
-            $table->integer('cantidad_existente_unidosis', 11)->after('cantidad_existente');
-            $table->integer('cantidad_surtida_unidosis', 11)->after('cantidad_surtida');
-            $table->integer('cantidad_negada_unidosis', 11)->after('cantidad_negada');
+            $table->integer('cantidad_solicitada_unidosis')->after('cantidad_solicitada');
+            $table->integer('cantidad_existente_unidosis')->after('cantidad_existente');
+            $table->integer('cantidad_surtida_unidosis')->after('cantidad_surtida');
+            $table->integer('cantidad_negada_unidosis')->after('cantidad_negada');
         });
     }
 

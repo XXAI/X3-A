@@ -229,6 +229,7 @@ class PedidosAdministradorProveedoresController extends Controller
                     P.fecha, 
                     P.fecha_concluido,
                     P.fecha_expiracion,
+                    datediff(P.fecha_expiracion,current_date()) as expira_en_dias,
                     P.descripcion, 
                     
                     P.total_claves_solicitadas, 
