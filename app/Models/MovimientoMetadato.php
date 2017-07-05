@@ -13,6 +13,14 @@ class MovimientoMetadato extends BaseModel{
 
     protected $table = 'movimiento_metadatos';
 
+    public function turno(){
+        return $this->belongsTo('App\Models\Turno','turno_id');
+    }
+
+    public function servicio(){
+        return $this->belongsTo('App\Models\Servicio','servicio_id');
+    }
+
   
  
 

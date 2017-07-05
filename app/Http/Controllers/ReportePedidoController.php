@@ -28,9 +28,9 @@ use App\Models\RecetaMovimiento;
 * @package    SIAL API
 * @subpackage Controlador
 * @author     Joram Roblero Pérez <joram.roblero@gmail.com>
-* @created    2017-03-22
+* @created    2017-05-20
 *
-* Controlador `Movimientos`: Controlador  para el manejo de entradas y salidas
+* Controlador `ReportePedido`: Controlador  para reportes de pedidos ( graficas y status de entrega de pedidos )
 *
 */
 class ReportePedidoController extends Controller
@@ -40,12 +40,15 @@ class ReportePedidoController extends Controller
     {
         return Response::json(array("status" => 200,"messages" => "Grafica Entregas"), 200);
     }
+    
 ///***************************************************************************************************************************
 ///***************************************************************************************************************************
+
    public function estatusEntregaPedidos(Request $request)
     {
         return Response::json(array("status" => 200,"messages" => "Estatus Entrega Pedidos"), 200);
     }
+
 ///***************************************************************************************************************************
 ///***************************************************************************************************************************
    
@@ -73,12 +76,12 @@ class ReportePedidoController extends Controller
 
 ///***************************************************************************************************************************
 ///***************************************************************************************************************************
- 
 
     public function update(Request $request, $id)
     {
  
     }
+
 ///***************************************************************************************************************************
 ///***************************************************************************************************************************
       
@@ -86,6 +89,7 @@ class ReportePedidoController extends Controller
     {
         
     }
+
 ///***************************************************************************************************************************
 ///***************************************************************************************************************************
  
