@@ -115,14 +115,14 @@ class RepositorioController extends Controller
     public function descargar($id, Request $request)
      {
         try{
-             $repositorio = Repositorio::find($id);
+            $repositorio = Repositorio::find($id);
             $directorio_path = "repositorio";
             $pathToFile = $directorio_path."//".$id.".".$repositorio->extension;
-
+            
             $headers = array(
               'Content-Type: application/pdf',
             );
-            return response()->download($pathToFile, $repositorio->nombre_archivo.".pdf", $headers);
+            return response()->download($pathToFile, $repositorio->nombre_archivo, $headers);
            
         }catch(Exception $e)
         {

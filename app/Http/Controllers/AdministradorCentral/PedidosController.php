@@ -223,8 +223,7 @@ class PedidosController extends Controller
         } 
     }
 
-    public function excel()
-    {
+    public function excel(){
         $parametros = Input::only('q','status','proveedores','jurisdicciones', 'fecha_desde','fecha_hasta', 'ordenar_causes','ordenar_no_causes','ordenar_material_curacion');
 
         $items = self::getItemsQuery($parametros);
@@ -349,42 +348,42 @@ class PedidosController extends Controller
                     '',
                     '',
 
-/*G*/               "=SUM(G3:G$contador_filas)",
-/*H*/               "=SUM(H3:H$contador_filas)",
-/*I*/               "=SUM(I3:I$contador_filas)",
-/*J*/               "=SUM(J3:J$contador_filas)",
-/*K*/               "=SUM(K3:K$contador_filas)",
-/*L*/               "=SUM(L3:L$contador_filas)",
-/*M*/               "=J".($contador_filas+1)."/G".($contador_filas+1),
-/*N*/               "=K".($contador_filas+1)."/H".($contador_filas+1),
-/*O*/               "=L".($contador_filas+1)."/I".($contador_filas+1),
-/*P*/               "=SUM(P3:P$contador_filas)",
-/*Q*/               "=SUM(Q3:Q$contador_filas)",
-/*R*/               "=SUM(R3:R$contador_filas)",
-/*S*/               "=SUM(S3:S$contador_filas)",
-/*T*/               "=SUM(T3:T$contador_filas)",
-/*U*/               "=SUM(U3:U$contador_filas)",
-/*V*/               "=S".($contador_filas+1)."/P".($contador_filas+1),
-/*W*/               "=T".($contador_filas+1)."/Q".($contador_filas+1),
-/*X*/               "=U".($contador_filas+1)."/R".($contador_filas+1),
-/*Y*/               "=SUM(Y3:Y$contador_filas)",
-/*Z*/               "=SUM(Z3:Z$contador_filas)",
-/*AA*/              "=SUM(AA3:AA$contador_filas)",
-/*AB*/              "=SUM(AB3:AB$contador_filas)",
-/*AC*/              "=SUM(AC3:AC$contador_filas)",
-/*AD*/              "=SUM(AD3:AD$contador_filas)",
-/*AE*/              "=AB".($contador_filas+1)."/Y".($contador_filas+1),
-/*AF*/              "=AC".($contador_filas+1)."/Z".($contador_filas+1),
-/*AG*/              "=AD".($contador_filas+1)."/AA".($contador_filas+1),
-/*AH*/              "=SUM(AH3:AH$contador_filas)",
-/*AI*/              "=SUM(AI3:AI$contador_filas)",
-/*AJ*/              "=SUM(AJ3:AJ$contador_filas)",
-/*AK*/              "=SUM(AK3:AK$contador_filas)",
-/*AL*/              "=SUM(AL3:AL$contador_filas)",
-/*AM*/              "=SUM(AM3:AM$contador_filas)",
-/*AN*/              "=AK".($contador_filas+1)."/AH".($contador_filas+1),
-/*AO*/              "=AL".($contador_filas+1)."/AI".($contador_filas+1),
-/*AP*/              "=AM".($contador_filas+1)."/AJ".($contador_filas+1),
+        /*G*/       "=SUM(G3:G$contador_filas)",
+        /*H*/       "=SUM(H3:H$contador_filas)",
+        /*I*/       "=SUM(I3:I$contador_filas)",
+        /*J*/       "=SUM(J3:J$contador_filas)",
+        /*K*/       "=SUM(K3:K$contador_filas)",
+        /*L*/       "=SUM(L3:L$contador_filas)",
+        /*M*/       "=J".($contador_filas+1)."/G".($contador_filas+1),
+        /*N*/       "=K".($contador_filas+1)."/H".($contador_filas+1),
+        /*O*/       "=L".($contador_filas+1)."/I".($contador_filas+1),
+        /*P*/       "=SUM(P3:P$contador_filas)",
+        /*Q*/       "=SUM(Q3:Q$contador_filas)",
+        /*R*/       "=SUM(R3:R$contador_filas)",
+        /*S*/       "=SUM(S3:S$contador_filas)",
+        /*T*/       "=SUM(T3:T$contador_filas)",
+        /*U*/       "=SUM(U3:U$contador_filas)",
+        /*V*/       "=S".($contador_filas+1)."/P".($contador_filas+1),
+        /*W*/       "=T".($contador_filas+1)."/Q".($contador_filas+1),
+        /*X*/       "=U".($contador_filas+1)."/R".($contador_filas+1),
+        /*Y*/       "=SUM(Y3:Y$contador_filas)",
+        /*Z*/       "=SUM(Z3:Z$contador_filas)",
+        /*AA*/      "=SUM(AA3:AA$contador_filas)",
+        /*AB*/      "=SUM(AB3:AB$contador_filas)",
+        /*AC*/      "=SUM(AC3:AC$contador_filas)",
+        /*AD*/      "=SUM(AD3:AD$contador_filas)",
+        /*AE*/      "=AB".($contador_filas+1)."/Y".($contador_filas+1),
+        /*AF*/      "=AC".($contador_filas+1)."/Z".($contador_filas+1),
+        /*AG*/      "=AD".($contador_filas+1)."/AA".($contador_filas+1),
+        /*AH*/      "=SUM(AH3:AH$contador_filas)",
+        /*AI*/      "=SUM(AI3:AI$contador_filas)",
+        /*AJ*/      "=SUM(AJ3:AJ$contador_filas)",
+        /*AK*/      "=SUM(AK3:AK$contador_filas)",
+        /*AL*/      "=SUM(AL3:AL$contador_filas)",
+        /*AM*/      "=SUM(AM3:AM$contador_filas)",
+        /*AN*/      "=AK".($contador_filas+1)."/AH".($contador_filas+1),
+        /*AO*/      "=AL".($contador_filas+1)."/AI".($contador_filas+1),
+        /*AP*/      "=AM".($contador_filas+1)."/AJ".($contador_filas+1),
 
                     ''
                 ));
@@ -435,7 +434,7 @@ class PedidosController extends Controller
          })->export('xls');
     }
 
-    private function getItemsQuery($parametros){       
+    private function getItemsQuery($parametros){
 
         $items = DB::table(DB::raw('(
                 select
@@ -450,6 +449,8 @@ class PedidosController extends Controller
                     P.fecha_concluido,
                     P.fecha_expiracion,
                     P.descripcion, 
+
+                    count(REP.id) as numero_archivos,
                     
                     P.total_claves_solicitadas, 
                     P.total_cantidad_solicitada, 
@@ -490,6 +491,8 @@ class PedidosController extends Controller
                     left join unidades_medicas UM on UM.clues = P.clues
                     left join proveedores PR on P.proveedor_id = PR.id
 
+                    left join repositorio REP on REP.pedido_id = P.id and REP.deleted_at is null
+
                     left join (
                         select PC.pedido_id, count(PC.insumo_medico_clave) as total_claves_causes, sum(PC.cantidad_solicitada) as total_cantidad_causes, sum(PC.monto_solicitado) as total_monto_causes,
                         sum(if(PC.cantidad_recibida>0,1,0)) as total_claves_causes_recibidas, sum(PC.cantidad_recibida) as total_cantidad_causes_recibida, sum(PC.monto_recibido) as total_monto_causes_recibido
@@ -518,6 +521,8 @@ class PedidosController extends Controller
                     ) as IMC on IMC.pedido_id = P.id
 
                     where P.deleted_at is null
+
+                    group by P.id
                 
             ) as pedidos'));
             

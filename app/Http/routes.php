@@ -103,11 +103,11 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-administrador-proveedores', 'PedidosAdministradorProveedoresController@lista');
         Route::get('pedidos-administrador-proveedores-excel', 'PedidosAdministradorProveedoresController@excel');
         Route::get('pedidos-administrador-proveedores-pedido/{id}', 'PedidosAdministradorProveedoresController@pedido');
-        Route::resource('repository',      'RepositorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-        Route::get('repository-download/{id}',  'RepositorioController@registro_descarga'); 
-        Route::get('download-file/{id}',  'RepositorioController@descargar'); 
-        
+        Route::resource('repository',      'RepositorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     });
+    
+    Route::get('repository-download/{id}',  'RepositorioController@registro_descarga'); 
+    Route::get('download-file/{id}',  'RepositorioController@descargar'); 
 
     Route::group(['middleware' => 'almacen'], function () {
 
