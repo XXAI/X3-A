@@ -622,6 +622,26 @@ class PedidoController extends Controller{
             $nombre_archivo .= ' - ' . $pedido->id;
         }
 
+        $pedido->status_descripcion = 'SIN ESPECIFICAR';
+
+        switch ($pedido->status) {
+            case 'BR':
+                $pedido->status_descripcion = 'BORRADOR';
+                break;
+            case 'PS':
+                $pedido->status_descripcion = 'POR SURTIR';
+                break;
+            case 'FI':
+                $pedido->status_descripcion = 'FINALIZADO';
+                break;
+            case 'EX':
+                $pedido->status_descripcion = 'EXPIRADO';
+                break;
+            case 'EX-CA':
+                $pedido->status_descripcion = 'CANCELADO';
+                break;
+        }
+
         Excel::create($nombre_archivo, function($excel) use($pedido) {
             $insumos_tipo = [];
 
@@ -629,14 +649,6 @@ class PedidoController extends Controller{
                     $tipo = '---';
 
                     $tipo = $insumo->tipoInsumo->nombre;
-
-                    /*if($insumo->insumosConDescripcion->tipo == 'ME' && $insumo->insumosConDescripcion->es_causes){
-                        $tipo = 'CAUSES';
-                    }else if($insumo->insumosConDescripcion->tipo == 'ME' && !$insumo->insumosConDescripcion->es_causes){
-                        $tipo = 'NO CAUSES';
-                    }else if($insumo->insumosConDescripcion->tipo == 'MC'){
-                        $tipo = 'MATERIAL DE CURACIÓN';
-                    }*/
 
                     if(!isset($insumos_tipo[$tipo])){
                         $insumos_tipo[$tipo] = [];
@@ -646,15 +658,51 @@ class PedidoController extends Controller{
 
             foreach($insumos_tipo as $tipo => $lista_insumos){
                 $excel->sheet($tipo, function($sheet) use($pedido,$lista_insumos,$tipo) {
-                    $sheet->setAutoSize(true);
+                    //$sheet->setAutoSize(true);
+                    $estilo_cancelado = array(
+                        'font'  => array(
+                            'bold'  => true,
+                            'color' => array('rgb' => 'FF0000')
+                        )
+                    );
 
                     $clave_folio = '-'.$lista_insumos[0]->tipoInsumo->clave;
                     
-                    $sheet->mergeCells('A1:K1');
-                    $sheet->row(1, array('FOLIO: '.$pedido->folio.$clave_folio));
+                    $sheet->mergeCells('A1:C1');
+                    $sheet->mergeCells('D1:K1');
+                    $sheet->row(1, array('FOLIO: '.$pedido->folio.$clave_folio,'','','PEDIDO '.$pedido->status_descripcion));
 
-                    $sheet->mergeCells('A2:K2');
-                    $sheet->row(2, array('ENTREGAR A: '.$pedido->almacenSolicitante->nombre));
+                    $sheet->cells("D1:K1", function($cells) {
+                        $cells->setAlignment('right');
+                    });
+
+                    if($pedido->status == 'EX-CA'){
+                        $sheet->mergeCells('A2:C2');
+                        $sheet->mergeCells('D2:K2');
+                        $sheet->row(2, array('ENTREGAR A: '.$pedido->almacenSolicitante->nombre,'','','FECHA DE CANCELACIÓN: '.$pedido->fecha_cancelacion));
+
+                        $sheet->cells("D2:K2", function($cells) {
+                            $cells->setAlignment('right');
+                        });
+
+                        $sheet->getStyle('D1')->applyFromArray($estilo_cancelado);
+                        $sheet->getStyle('D2')->applyFromArray($estilo_cancelado);
+                    }else if($pedido->status == 'EX'){
+                        $sheet->mergeCells('A2:C2');
+                        $sheet->mergeCells('D2:K2');
+                        $sheet->row(2, array('ENTREGAR A: '.$pedido->almacenSolicitante->nombre,'','','FECHA DE EXPIRACIÓN: '.$pedido->fecha_expiracion));
+
+                        $sheet->cells("D2:K2", function($cells) {
+                            $cells->setAlignment('right');
+                        });
+
+                        $sheet->getStyle('D1')->applyFromArray($estilo_cancelado);
+                        $sheet->getStyle('D2')->applyFromArray($estilo_cancelado);
+                    }else{
+                        $sheet->mergeCells('A2:K2');
+                        $sheet->row(2, array('ENTREGAR A: '.$pedido->almacenSolicitante->nombre));
+                    }
+                    
 
                     $sheet->mergeCells('A3:K3');
                     $sheet->row(3, array('NOMBRE DEL PEDIDO: '.$pedido->descripcion));
@@ -759,7 +807,7 @@ class PedidoController extends Controller{
                     foreach($lista_insumos as $insumo){
                         $contador_filas++;
                         $sheet->appendRow(array(
-                            ($contador_filas-7), 
+                            ($contador_filas-9), 
                             $insumo->insumo_medico_clave,
                             $insumo->insumosConDescripcion->descripcion,
                             $insumo->cantidad_solicitada,
@@ -777,6 +825,10 @@ class PedidoController extends Controller{
                             $iva_recibido += $insumo->monto_recibido;
                         }
                     }
+
+                    $sheet->cells("A10:K".$contador_filas, function($cells) {
+                        $cells->setValignment('center');
+                    });
 
                     $iva_solicitado = $iva_solicitado*16/100;
                     $iva_recibido = $iva_recibido*16/100;
@@ -818,7 +870,6 @@ class PedidoController extends Controller{
                         ));
                     $contador_filas += 3;
 
-
                     $phpColor = new \PHPExcel_Style_Color();
                     $phpColor->setRGB('DDDDDD'); 
                     $sheet->getStyle("J10:K$contador_filas")->getFont()->setColor( $phpColor );
@@ -830,7 +881,72 @@ class PedidoController extends Controller{
                         "H10:I$contador_filas" => '"$" #,##0.00_-',
                         "J10:K$contador_filas" => '[Green]0.00%;[Red]-0.00%;0.00%',
                     ));
+
+                    $sheet->getStyle('C10:C'.$contador_filas)->getAlignment()->setWrapText(true);
+
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','DIRECTOR DE LA UNIDAD MÉDICA','','ENCARGADO DE ALMACEN','','','',''));
+                    $sheet->appendRow(array('', '',$pedido->director->nombre,'',$pedido->encargadoAlmacen->nombre,'','','',''));
+
+                    $sheet->mergeCells('E'.($contador_filas+7).':I'.($contador_filas+7));
+                    $sheet->mergeCells('E'.($contador_filas+8).':I'.($contador_filas+8));
+
+                    $sheet->cells("A".($contador_filas+6).":K9".($contador_filas+7), function($cells) {
+                        $cells->setAlignment('center');
+                    });
                 });
+                //$excel->getActiveSheet()->setAutoSize(false);
+                //Columna No.
+                $excel->getActiveSheet()->getColumnDimension('A')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('A')->setWidth(5);
+                //Columna Clave
+                $excel->getActiveSheet()->getColumnDimension('B')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('B')->setWidth(18);
+                //Columan Descripción
+                $excel->getActiveSheet()->getColumnDimension('C')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('C')->setWidth(100);
+                //Columnas: Cantidad, Precio Unitario, Total de lo Solicitado
+                $excel->getActiveSheet()->getColumnDimension('D')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('D')->setWidth(10);
+                $excel->getActiveSheet()->getColumnDimension('E')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('E')->setWidth(18);
+                $excel->getActiveSheet()->getColumnDimension('F')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('F')->setWidth(15);
+                //Columnas: Cantidad, Precio Unitario, Total de lo Recibido
+                $excel->getActiveSheet()->getColumnDimension('G')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('G')->setWidth(10);
+                $excel->getActiveSheet()->getColumnDimension('H')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('H')->setWidth(18);
+                $excel->getActiveSheet()->getColumnDimension('I')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('I')->setWidth(15);
+                //Columnas: % Unidades, % Monto
+                $excel->getActiveSheet()->getColumnDimension('J')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('J')->setWidth(13);
+                $excel->getActiveSheet()->getColumnDimension('K')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('K')->setWidth(13);
+
+                $excel->getActiveSheet()->getPageSetup()->setPaperSize(\PHPExcel_Worksheet_PageSetup::PAPERSIZE_LEGAL);
+                $excel->getActiveSheet()->getPageSetup()->setOrientation(\PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE);
+
+                $excel->getActiveSheet()->getPageSetup()->setRowsToRepeatAtTopByStartAndEnd(7,9);
+
+                $excel->getActiveSheet()->getPageSetup()->setFitToPage(true);
+                $excel->getActiveSheet()->getPageSetup()->setFitToWidth(1);
+                $excel->getActiveSheet()->getPageSetup()->setFitToHeight(0);
+
+                $excel->getActiveSheet()->getHeaderFooter()->setDifferentOddEven(false);
+                $excel->getActiveSheet()->getHeaderFooter()->setOddFooter('&L FOLIO: '.$pedido->folio.'-'.$lista_insumos[0]->tipoInsumo->clave.' - FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0].' &R PÁGINA &P DE &N');
+
+                $excel->getActiveSheet()->getPageMargins()->setTop(0.3543307);
+                $excel->getActiveSheet()->getPageMargins()->setBottom(0.3543307);
+
+                $excel->getActiveSheet()->getPageMargins()->setRight(0.1968504);
+                $excel->getActiveSheet()->getPageMargins()->setLeft(0.2755906);
             }
         })->export('xls');
     }
