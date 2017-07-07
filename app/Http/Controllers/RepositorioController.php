@@ -115,6 +115,16 @@ class RepositorioController extends Controller
     public function descargar($id, Request $request)
      {
         try{
+            $arreglo_log = array('repositorio_id' => $id,
+                            'ip' =>$request->ip(),
+                            'navegador' =>$request->header('User-Agent'),
+                            'accion' => 'DOWNLOAD'); 
+            $log_repositorio = LogRepositorio::create($arreglo_log);
+            if(!$log_repositorio)
+            {
+                return Response::json(['error' => "Error al descargar el archivo"], 500); 
+            }
+
             $repositorio = Repositorio::find($id);
             $directorio_path = "repositorio";
             $pathToFile = $directorio_path."//".$id.".".$repositorio->extension;

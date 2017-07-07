@@ -17,11 +17,15 @@ class RecepcionPedidoController extends Controller
 	public function borrarRecepcion($id, Request $request){
         try{
             DB::beginTransaction();
+
+
             
             $movimientos =  Movimiento::with("movimientoInsumosStock", "movimientoPedido.pedido")->find($id);
             
             $pedido_id = $movimientos->movimientoPedido->pedido->id;
             $almacen = Almacen::find($movimientos->almacen_id);
+
+             
 
             if(!$almacen){
             	DB::rollBack();
@@ -96,7 +100,8 @@ class RecepcionPedidoController extends Controller
                 
                 if($cantidad_restante >= 0 || $cantidad_unidosis>=0)
                 {
-                	$stock->existencia = $cantidad_restante;
+                    $stock->existencia = $cantidad_restante;
+                	$stock->existencia_unidosis = $cantidad_unidosis;
                 	$stock->save();
                 }
                 else
@@ -106,7 +111,7 @@ class RecepcionPedidoController extends Controller
                 }
             }
 
-            
+
            	$fecha = explode("-", $movimientos->movimientoPedido->pedido->fecha);
            	$clues = $movimientos->movimientoPedido->pedido->clues;
            	$almacen = $movimientos->movimientoPedido->pedido->almacen_solicitante;
@@ -137,7 +142,14 @@ class RecepcionPedidoController extends Controller
 
              $pedido = Pedido::find($pedido_id);
             $pedido->total_monto_recibido = $pedido->total_monto_recibido - round(($total_causes + $total_no_causes + $total_material_curacion),2);
-            $pedido->total_claves_recibidas = ($pedido->total_claves_recibidas - count($claves));
+            
+            $pedidoInsumo = PedidoInsumo::where("pedido_id", $pedido_id)
+                                        ->whereNotNull("cantidad_recibida")
+                                        ->where("cantidad_recibida", ">", 0)
+                                        ;
+                                        
+                                         
+            $pedido->total_claves_recibidas = $pedidoInsumo->count();
             $pedido->total_cantidad_recibida = ($pedido->total_cantidad_recibida - $total_rows);
             $pedido->status = 'PS';
             $pedido->save(); 
@@ -148,9 +160,6 @@ class RecepcionPedidoController extends Controller
             MovimientoPedido::find($movimientos->movimientoPedido->id)->delete();
             Movimiento::find($id)->delete();
            
-            
-            
-            
             
             /**/         
             DB::commit();
