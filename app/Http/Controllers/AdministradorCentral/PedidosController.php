@@ -221,13 +221,15 @@ class PedidosController extends Controller
                                                     ->where("proveedor_id", $proveedor->id)
                                                     ->first();
 
-            $presupuesto->causes_comprometido               = ($presupuesto->causes_comprometido - $total_causes);                                         
-            $presupuesto->no_causes_comprometido            = ($presupuesto->no_causes_comprometido - $total_no_causes);                                         
-            $presupuesto->material_curacion_comprometido    = ($presupuesto->material_curacion_comprometido - $total_material_curacion); 
-
             $presupuesto->causes_disponible                 = ($presupuesto->causes_disponible + $total_causes);     
             $presupuesto->no_causes_disponible              = ($presupuesto->no_causes_disponible + $total_no_causes);                                         
-            $presupuesto->material_curacion_disponible      = ($presupuesto->material_curacion_disponible + $total_material_curacion);
+            $presupuesto->material_curacion_disponible      = round(($presupuesto->material_curacion_disponible + $total_material_curacion),2);                                        
+
+            $presupuesto->causes_comprometido               = ($presupuesto->causes_comprometido - $total_causes);                                         
+            $presupuesto->no_causes_comprometido            = ($presupuesto->no_causes_comprometido - $total_no_causes);                                         
+            $presupuesto->material_curacion_comprometido    = round(($presupuesto->material_curacion_comprometido - $total_material_curacion),2); 
+
+            
 
             $presupuesto->save();                                   
             DB::commit();
