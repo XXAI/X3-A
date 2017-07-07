@@ -63,6 +63,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('presupuesto-pedidos', 'PedidosController@presupuesto');
         Route::get('pedidos', 'PedidosController@lista');
         Route::get('pedidos-excel', 'PedidosController@excel');
+        Route::get('pedidos-archivos-proveedor/{id}', 'PedidosController@listaArchivosProveedor');
         
         // TRANSFERENCIAS DE PRESUPUESTO
         Route::get('unidades-medicas-con-presupuesto', 'TransferenciasPresupuestosController@unidadesMedicasConPresupuesto');

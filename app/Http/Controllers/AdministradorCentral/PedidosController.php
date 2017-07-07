@@ -7,7 +7,7 @@ use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests;
-use App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen;
+use App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen, App\Models\Repositorio;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -36,10 +36,10 @@ class PedidosController extends Controller
             if (isset($parametros['q']) &&  $parametros['q'] != "") {
                 $items = $items->where(function($query) use ($parametros){
                     $query
-                        ->where('unidad_medica','LIKE',"%".$parametros['q']."%")
-                        ->orWhere('clues','LIKE',"%".$parametros['q']."%")
-                        ->orWhere('folio','LIKE',"%".$parametros['q']."%")
-                        ->orWhere('descripcion','LIKE',"%".$parametros['q']."%");
+                        ->where('unidades_medicas.nombre','LIKE',"%".$parametros['q']."%")
+                        ->orWhere('pedidos.clues','LIKE',"%".$parametros['q']."%")
+                        ->orWhere('pedidos.folio','LIKE',"%".$parametros['q']."%")
+                        ->orWhere('pedidos.descripcion','LIKE',"%".$parametros['q']."%");
                 });
             } 
 
@@ -125,6 +125,21 @@ class PedidosController extends Controller
         }
        
         return Response::json([ 'data' => $items],200);
+    }
+
+    public function listaArchivosProveedor($id, Request $request){
+        $repositorio = Repositorio::where("pedido_id", $id)
+                    ->select("id",
+                            "peso",
+                            "nombre_archivo",
+                            "created_at",
+                            "usuario_id",
+                            "usuario_deleted_id",
+                            "deleted_at",
+                            DB::RAW("(select count(*) from log_repositorio where repositorio_id=repositorio.id and accion='DOWNLOAD') as descargas"))
+                    ->withTrashed()
+                    ->get();
+    	return Response::json([ 'data' => $repositorio],200);	
     }
 
     /**
