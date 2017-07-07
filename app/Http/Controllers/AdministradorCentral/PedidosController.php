@@ -135,8 +135,24 @@ class PedidosController extends Controller
 
     public function recepcion($id, Request $request){
         try{
-            //$pedido = Pedido::with("recepciones.movimiento.movimientoInsumos")->find($id);
-            $pedido = Pedido::with("recepciones.movimiento.movimientoInsumos")->where("id",$id)->first();
+            $pedido = Pedido::with("recepciones.movimiento")
+                 ->where("id",$id)->first();
+
+            
+            foreach ($pedido->recepciones as $key => $value) {
+                //$pedido->recepciones->insumos = 0;
+                $arreglo = array();     
+                $arreglo = $value;
+                
+                $insumos = DB::table("stock")
+                                ->whereRaw("id in (select stock_id from movimiento_insumos where movimiento_id='".$value['movimiento_id']."')")
+                                ->select(DB::RAW("count(distinct(clave_insumo_medico)) as cantidad_insumos"))
+                                ->first();
+
+                $arreglo['cantidad_insumos'] = $insumos->cantidad_insumos;
+                
+                $pedido->recepciones[$key]  = $arreglo;
+            }     
             return Response::json([ 'data' => $pedido],200);
         } catch (\Exception $e) {
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
