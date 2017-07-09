@@ -89,7 +89,9 @@ Route::group(['middleware' => 'jwt'], function () {
 
         // CLAVES BASICAS
         Route::resource('claves-basicas',    'ClavesBasicasController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::get('claves-basicas-clues/{id}', 'ClavesBasicasController@index');
+        Route::get('claves-basicas-clues/{id}', 'ClavesBasicasController@unidadesMedicas');
+        Route::post('claves-basicas-clues', 'ClavesBasicasController@agregarUnidadMedica');
+        Route::delete('claves-basicas-clues/{id}', 'ClavesBasicasController@quitarUnidadMedica');
 
         //Configuuración de pedidos
         Route::get('pedidos-recepcion/{id}', 'PedidosController@recepcion');        
