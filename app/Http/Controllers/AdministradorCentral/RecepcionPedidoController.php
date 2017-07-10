@@ -151,7 +151,7 @@ class RecepcionPedidoController extends Controller
                                          
             $pedido->total_claves_recibidas = $pedidoInsumo->count();
             $pedido->total_cantidad_recibida = ($pedido->total_cantidad_recibida - $total_rows);
-            $pedido->status = 'PS';
+            //$pedido->status = 'PS';
             $pedido->save(); 
             
 
