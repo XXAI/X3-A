@@ -25,16 +25,18 @@ class RecepcionPedidoController extends Controller
             $pedido_id = $movimientos->movimientoPedido->pedido->id;
             $almacen = Almacen::find($movimientos->almacen_id);
 
-             
+              
 
             if(!$almacen){
             	DB::rollBack();
                 return Response::json(['error' =>"No se encontró el almacen."], 500);
             }
-            
+
             $proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
 
             $contrato_activo = $proveedor->contratoActivo;
+
+
             
             $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad", "contratos_precios.tipo_insumo_id", "medicamentos.cantidad_x_envase")->withTrashed()->get();
             $lista_insumos = array();
@@ -60,6 +62,8 @@ class RecepcionPedidoController extends Controller
             $total_cantidad_insumos = 0;
             $claves = array();
             $total_claves = 0;
+
+
             foreach ($movimientos->movimientoInsumosStock as $key => $value) {
                 $total_rows += $value['cantidad'];
                 if($lista_insumos[$value['stock']['clave_insumo_medico']]['tipo'] == "ME")
@@ -110,11 +114,15 @@ class RecepcionPedidoController extends Controller
                 	return Response::json(['error' =>"No se puede eliminar la recepción, porque existe insumos que se encuentran utilizados, ".$value['stock']['clave_insumo_medico']." diferencia ".($cantidad_regresar - $cantidad_actual)], 500);
                 }
             }
-
+           
+            
+            
 
            	$fecha = explode("-", $movimientos->movimientoPedido->pedido->fecha);
            	$clues = $movimientos->movimientoPedido->pedido->clues;
            	$almacen = $movimientos->movimientoPedido->pedido->almacen_solicitante;
+
+            
 
             $presupuesto = UnidadMedicaPresupuesto::where("clues", $clues)
                                                     ->where("almacen_id", $almacen)            
@@ -123,12 +131,15 @@ class RecepcionPedidoController extends Controller
                                                     ->where("proveedor_id", $proveedor->id)
                                                     ->first();
 
-             
+            
+
             if($total_causes > $presupuesto->causes_devengado || $total_no_causes > $presupuesto->no_causes_devengado || round($total_material_curacion,2) > $presupuesto->material_curacion_devengado)
             {
                 DB::rollBack();
                     return Response::json(['error' =>"No se puede eliminar la recepción, porque el monto recibido es mayor al monto solicitado"], 500);
             }
+
+
 
             $presupuesto->causes_devengado               = round((floatval($presupuesto->causes_devengado) - $total_causes),2);                                         
             $presupuesto->no_causes_devengado            = round((floatval($presupuesto->no_causes_devengado) - $total_no_causes),2);                                         
@@ -140,18 +151,23 @@ class RecepcionPedidoController extends Controller
 
             $presupuesto->save();
 
-             $pedido = Pedido::find($pedido_id);
+            $pedido = Pedido::find($pedido_id);
+
             $pedido->total_monto_recibido = $pedido->total_monto_recibido - round(($total_causes + $total_no_causes + $total_material_curacion),2);
             
             $pedidoInsumo = PedidoInsumo::where("pedido_id", $pedido_id)
                                         ->whereNotNull("cantidad_recibida")
-                                        ->where("cantidad_recibida", ">", 0)
-                                        ;
+                                        ->where("cantidad_recibida", ">", 0);
                                         
-                                         
             $pedido->total_claves_recibidas = $pedidoInsumo->count();
             $pedido->total_cantidad_recibida = ($pedido->total_cantidad_recibida - $total_rows);
-            //$pedido->status = 'PS';
+
+            if($this->valida_fecha($pedido->fecha_expiracion))            
+                $pedido->status = 'PS';   
+            else
+                $pedido->status = 'EX';
+            
+        
             $pedido->save(); 
             
 
@@ -160,6 +176,7 @@ class RecepcionPedidoController extends Controller
             MovimientoPedido::find($movimientos->movimientoPedido->id)->delete();
             Movimiento::find($id)->delete();
            
+                                           
             
             /**/         
             DB::commit();
@@ -169,5 +186,22 @@ class RecepcionPedidoController extends Controller
             DB::rollBack();
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
+    }
+
+    private function valida_fecha($fecha)
+    {
+        $date1=date_create($fecha);
+        $fecha2 = new \DateTime;
+        
+        $diff=date_diff($fecha2, $date1, FALSE);
+
+        if($diff->invert == 0)
+        {
+            return true;
+            
+        }else
+        {
+            return false;
+        }
     }
 }
