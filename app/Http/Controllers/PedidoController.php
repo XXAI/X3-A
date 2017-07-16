@@ -11,6 +11,7 @@ use JWTAuth;
 use App\Http\Requests;
 use App\Models\Pedido;
 use App\Models\PedidoInsumo;
+use App\Models\PedidoInsumoClues;
 use App\Models\Usuario;
 use App\Models\Almacen;
 use App\Models\Presupuesto;
@@ -127,8 +128,12 @@ class PedidoController extends Controller{
             $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
         }
 
-        $pedidos = $pedidos->select('pedidos.*',DB::raw('datediff(fecha_expiracion,current_date()) as expira_en_dias'))->orderBy('updated_at','desc');
+        $pedidos = $pedidos->select('pedidos.*',DB::raw('datediff(fecha_expiracion,current_date()) as expira_en_dias'))->orderBy('updated_at','desc');        
         
+        // Akira: dejo comentada esta instrucción por que las juris solo deberían ver este tipo de pedidos
+        // Peeeeeero como ya hay pedidos capturados en el sistema pues no se puede manejar así
+        //$pedidos = $pedidos->where("pedidos.tipo_pedido_id",'PJS');
+
         //$pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
@@ -148,11 +153,25 @@ class PedidoController extends Controller{
         if(!$pedido){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }else{
-            if($pedido->status == 'BR'){
-                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor");
-            }else{
-                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos");
+
+            if($pedido->tipo_pedido_id != 'PJS'){
+                
+                if($pedido->status == 'BR'){
+                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor");
+                }else{
+                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos");
+                }
+            } 
+            // ######### PEDIDOS JURISDICCIONALES #########
+            else {
+                
+                if($pedido->status == 'BR'){
+                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor");
+                }else{
+                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos");
+                }
             }
+            // ############################################
         }
         return Response::json([ 'data' => $pedido],200);
     }
@@ -175,6 +194,7 @@ class PedidoController extends Controller{
 
 
         $almacen = Almacen::find($request->get('almacen_id'));
+        $um = UnidadMedica::find( $almacen->clues);
 
         if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
             $reglas['proveedor_id'] = 'required';
@@ -187,11 +207,21 @@ class PedidoController extends Controller{
         $almacen_solicitante = Almacen::find($parametros['datos']['almacen_solicitante']);
 
         if($almacen_solicitante){
-            if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
-                $tipo_pedido = 'PFS';
-            }else{
-                $tipo_pedido = 'PA';
+            
+            if($um->tipo != 'OA'){
+                if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
+                    $tipo_pedido = 'PFS';
+                }else{
+                    $tipo_pedido = 'PA';
+                }                
+            } 
+            // ######### PEDIDOS JURISDICCIONALES #########
+            else {
+                $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales
             }
+            // ############################################
+
+            
         }else{
             return Response::json(['error' => 'No se encontró el almacen solicitante'], 500);
         }
@@ -258,12 +288,32 @@ class PedidoController extends Controller{
                 }
 
                 $object_insumo = PedidoInsumo::create($insumo);
+
+                // ######### PEDIDOS JURISDICCIONALES #########
+                if($um->tipo == 'OA'){
+                    foreach($value['lista_clues'] as $key_clues => $value_clues){
+                        $insumo_clues = [
+                            'pedido_insumo_id' => $object_insumo->id,
+                            'clues' => $value_clues['clues'],
+                            'cantidad' => $value_clues['cantidad']
+                        ];
+                        PedidoInsumoClues::create($insumo_clues);
+                        
+                    }
+                }
+                // ############################################
+
             }
 
             if($monto_iva > 0){
                 $total_monto += $monto_iva*16/100;
             }
-            
+
+            // Akira: Agrego esto porque hizo falta 
+            $pedido->director_id = $almacen_solicitante->unidadMedica->director_id;
+            $pedido->encargado_almacen_id = $almacen_solicitante->encargado_almacen_id;
+
+
             $pedido->total_claves_solicitadas = $total_claves;
             $pedido->total_cantidad_solicitada = $total_insumos;
             $pedido->total_monto_solicitado = $total_monto;
@@ -293,6 +343,7 @@ class PedidoController extends Controller{
         $parametros = Input::all();
 
         $almacen = Almacen::find($request->get('almacen_id'));
+        $um = UnidadMedica::find( $almacen->clues);
 
         if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
             //$reglas['proveedor_id'] = 'required';
@@ -306,11 +357,20 @@ class PedidoController extends Controller{
 
         $tipo_pedido = '';
         if($almacen_solicitante){
-            if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
-                $tipo_pedido = 'PFS';
-            }else{
-                $tipo_pedido = 'PA';
+
+            if($um->tipo != 'OA'){
+                if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
+                    $tipo_pedido = 'PFS';
+                }else{
+                    $tipo_pedido = 'PA';
+                }                
+            } 
+            // ######### PEDIDOS JURISDICCIONALES #########
+            else {
+                $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales
             }
+            // ############################################
+
         }else{
             return Response::json(['error' => 'No se encontró el almacen seleccionado'], 500);
         }
@@ -406,7 +466,21 @@ class PedidoController extends Controller{
                     $total_monto['material_curacion'] += $value['monto'];
                 }
                 
-                PedidoInsumo::create($insumo);  
+                $object_insumo = PedidoInsumo::create($insumo);  
+
+                // ######### PEDIDOS JURISDICCIONALES #########
+                if($um->tipo == 'OA'){
+                    foreach($value['lista_clues'] as $key_clues => $value_clues){
+                        $insumo_clues = [
+                            'pedido_insumo_id' => $object_insumo->id,
+                            'clues' => $value_clues['clues'],
+                            'cantidad' => $value_clues['cantidad']
+                        ];
+                        PedidoInsumoClues::create($insumo_clues);
+                        
+                    }
+                }
+                // ############################################
             }
 
             if($total_monto['material_curacion'] > 0){
@@ -596,8 +670,12 @@ class PedidoController extends Controller{
         if(!$pedido){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }
-
-        $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
+        
+        if($pedido->tipo_pedido_id != 'PJS'){
+            $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
+        } else {
+            $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.listaClues","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director");
+        }
 
         //return Response::json(['data'=>$pedido],200);
 
@@ -642,6 +720,16 @@ class PedidoController extends Controller{
                 break;
         }
 
+
+        if($pedido->tipo_pedido_id != 'PJS'){
+            self::formatoExcelPedidoGeneral($nombre_archivo, $pedido);
+        } else {
+            self::formatoExcelPedidoJurisdiccional($nombre_archivo, $pedido);
+        }
+        
+    }
+
+    function formatoExcelPedidoGeneral($nombre_archivo, $pedido){
         Excel::create($nombre_archivo, function($excel) use($pedido) {
             $insumos_tipo = [];
 
@@ -891,7 +979,7 @@ class PedidoController extends Controller{
                     $sheet->appendRow(array('', '','','','','','','',''));
                     $sheet->appendRow(array('', '','','','','','','',''));
                     $sheet->appendRow(array('', '','DIRECTOR DE LA UNIDAD MÉDICA','','ENCARGADO DE ALMACEN','','','',''));
-                    $sheet->appendRow(array('', '',$pedido->director->nombre,'',$pedido->encargadoAlmacen->nombre,'','','',''));
+                    $sheet->appendRow(array('', '',(isset($pedido->director->nombre)? $pedido->director->nombre : "" ),'',(isset($pedido->encargadoAlmacen->nombre)? $pedido->encargadoAlmacen->nombre : ""),'','','',''));
 
                     $sheet->mergeCells('E'.($contador_filas+7).':I'.($contador_filas+7));
                     $sheet->mergeCells('E'.($contador_filas+8).':I'.($contador_filas+8));
@@ -949,5 +1037,471 @@ class PedidoController extends Controller{
                 $excel->getActiveSheet()->getPageMargins()->setLeft(0.2755906);
             }
         })->export('xls');
+    }
+
+    function formatoExcelPedidoJurisdiccional($nombre_archivo, $pedido){
+        Excel::create($nombre_archivo, function($excel) use($pedido) {
+            $insumos_tipo = [];
+
+            foreach($pedido->insumos as $insumo){
+                    $tipo = '---';
+
+                    $tipo = $insumo->tipoInsumo->nombre;
+
+                    if(!isset($insumos_tipo[$tipo])){
+                        $insumos_tipo[$tipo] = [];
+                    }
+                    $insumos_tipo[$tipo][] = $insumo;
+                   
+            }
+
+            foreach($insumos_tipo as $tipo => $lista_insumos){
+                $excel->sheet($tipo, function($sheet) use($pedido,$lista_insumos,$tipo) {
+                    $sheet->setAutoSize(true);
+
+                    $clave_folio = '-'.$lista_insumos[0]->tipoInsumo->clave;
+                    
+                    $sheet->mergeCells('A1:K1');
+                    $sheet->row(1, array('FOLIO: '.$pedido->folio.$clave_folio));
+
+                    $sheet->mergeCells('A2:K2');
+                    $sheet->row(2, array('ENTREGAR A: '.$pedido->almacenSolicitante->nombre));
+
+                    $sheet->mergeCells('A3:K3');
+                    $sheet->row(3, array('NOMBRE DEL PEDIDO: '.$pedido->descripcion));
+
+                    $sheet->mergeCells('A4:K4'); 
+                    $sheet->row(4, array('UNIDAD MEDICA: '.$pedido->almacenSolicitante->unidadMedica->nombre));
+
+                    $sheet->mergeCells('A5:K5'); 
+                    $sheet->row(5, array('PROVEEDOR: '.$pedido->proveedor->nombre));
+
+                    $sheet->mergeCells('A6:C6');
+                    $sheet->mergeCells('D6:K6');
+                    $sheet->row(6, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0],'','','FECHA DE NOTIFICACIÓN: '.$pedido->fecha_concluido));
+
+                    $sheet->cells("D6:K6", function($cells) {
+                        $cells->setAlignment('right');
+                    });
+
+                    $sheet->mergeCells('A7:K7'); 
+                    $sheet->row(7, array($tipo));
+
+                    $sheet->cells("A7:K7", function($cells) {
+                        $cells->setAlignment('center');
+                    });
+
+                    $sheet->mergeCells('D8:F8');
+                    $sheet->mergeCells('G8:I8');
+
+                    $sheet->mergeCells('A8:A9');
+                    $sheet->mergeCells('B8:B9');
+                    $sheet->mergeCells('C8:C9');
+                    $sheet->mergeCells('J8:J9'); 
+                    $sheet->mergeCells('K8:K9');
+
+                    $sheet->row(8, array(
+                        'NO.', 'CLAVE','DESCRIPCIÓN DE LOS INSUMOS','SOLICITADO','','','RECIBIDO','','','% UNIDADES','% MONTO'
+                    ));
+
+                    $sheet->cells("A8:K8", function($cells) {
+                        $cells->setAlignment('center');
+                    });
+
+                    $sheet->row(9, array(
+                        '','','','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','',''
+                    ));
+
+                    $sheet->cells("A9:K9", function($cells) {
+                        $cells->setAlignment('center');
+                    });
+
+                    $sheet->row(1, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(16);
+                    });
+                    $sheet->row(2, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(3, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(4, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(5, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(6, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(7, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(8, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(11);
+                    });
+                    $sheet->row(9, function($row) {
+                        // call cell manipulation methods
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(11);
+                    });
+
+                    $iva_solicitado = 0;
+                    $iva_recibido = 0;
+
+                    $contador_filas = 9;
+                    $contador_insumos = 0;
+                    foreach($lista_insumos as $insumo){
+                        $contador_filas++;
+                        $contador_insumos++;
+                        $sheet->appendRow(array(
+                            $contador_insumos, 
+                            $insumo->insumo_medico_clave,
+                            $insumo->insumosConDescripcion->descripcion,
+                            $insumo->cantidad_solicitada,
+                            $insumo->precio_unitario,
+                            $insumo->monto_solicitado,
+                            $insumo->cantidad_recibida | 0,
+                            $insumo->precio_unitario,
+                            ($insumo->monto_recibido)?$insumo->monto_recibido:0,
+                            '=G'.$contador_filas.'/D'.$contador_filas,
+                            '=I'.$contador_filas.'/F'.$contador_filas
+                        ));
+
+                        if($insumo->insumosConDescripcion->tipo == 'MC'){
+                            $iva_solicitado += $insumo->monto_solicitado;
+                            $iva_recibido += $insumo->monto_recibido;
+                        }
+                    }
+
+                    $iva_solicitado = $iva_solicitado*16/100;
+                    $iva_recibido = $iva_recibido*16/100;
+                    
+                    $sheet->setBorder("A1:K$contador_filas", 'thin');
+
+                    $sheet->appendRow(array(
+                            '', 
+                            '',
+                            '',
+                            '',
+                            'SUBTOTAL',
+                            '=SUM(F10:F'.($contador_filas).')',
+                            '',
+                            '',
+                            '=SUM(I10:I'.($contador_filas).')',
+                        ));
+                    $sheet->appendRow(array(
+                            '', 
+                            '',
+                            '',
+                            '',
+                            'IVA',
+                            $iva_solicitado,
+                            '',
+                            '',
+                            $iva_recibido,
+                        ));
+                    $sheet->appendRow(array(
+                            '', 
+                            '',
+                            '',
+                            '',
+                            'TOTAL',
+                            '=SUM(F'.($contador_filas+1).':F'.($contador_filas+2).')',
+                            '',
+                            '',
+                            '=SUM(I'.($contador_filas+1).':I'.($contador_filas+2).')',
+                        ));
+                    $contador_filas += 3;
+
+
+                    $phpColor = new \PHPExcel_Style_Color();
+                    $phpColor->setRGB('DDDDDD'); 
+                    $sheet->getStyle("J10:K$contador_filas")->getFont()->setColor( $phpColor );
+
+                    $sheet->setColumnFormat(array(
+                        "D10:D$contador_filas" => '#,##0',
+                        "G10:G$contador_filas" => '#,##0',
+                        "E10:F$contador_filas" => '"$" #,##0.00_-',
+                        "H10:I$contador_filas" => '"$" #,##0.00_-',
+                        "J10:K$contador_filas" => '[Green]0.00%;[Red]-0.00%;0.00%',
+                    ));
+
+                    $sheet->getStyle('C10:C'.$contador_filas)->getAlignment()->setWrapText(true);
+
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('', '','DIRECTOR DE LA UNIDAD MÉDICA','','ENCARGADO DE ALMACEN','','','',''));
+                    $sheet->appendRow(array('', '',(isset($pedido->director->nombre)? $pedido->director->nombre : "" ),'',(isset($pedido->encargadoAlmacen->nombre)? $pedido->encargadoAlmacen->nombre : ""),'','','',''));
+
+                    $sheet->mergeCells('E'.($contador_filas+7).':I'.($contador_filas+7));
+                    $sheet->mergeCells('E'.($contador_filas+8).':I'.($contador_filas+8));
+
+                    $sheet->cells("A".($contador_filas+6).":K9".($contador_filas+7), function($cells) {
+                        $cells->setAlignment('center');
+                    });
+                    
+                });
+
+                // Desglose
+                $excel->sheet($tipo. " DESGLOSE", function($sheet) use($pedido,$lista_insumos,$tipo) {
+                    $sheet->setAutoSize(true);
+
+                    $clave_folio = '-'.$lista_insumos[0]->tipoInsumo->clave;
+                    
+                    $sheet->mergeCells('A1:K1');
+                    $sheet->row(1, array('FOLIO: '.$pedido->folio.$clave_folio));
+
+                    $sheet->mergeCells('A2:K2');
+                    $sheet->row(2, array('ENTREGAR A: '.$pedido->almacenSolicitante->nombre));
+
+                    $sheet->mergeCells('A3:K3');
+                    $sheet->row(3, array('NOMBRE DEL PEDIDO: '.$pedido->descripcion));
+
+                    $sheet->mergeCells('A4:K4'); 
+                    $sheet->row(4, array('UNIDAD MEDICA: '.$pedido->almacenSolicitante->unidadMedica->nombre));
+
+                    $sheet->mergeCells('A5:K5'); 
+                    $sheet->row(5, array('PROVEEDOR: '.$pedido->proveedor->nombre));
+
+                    $sheet->mergeCells('A6:C6');
+                    $sheet->mergeCells('D6:K6');
+                    $sheet->row(6, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0],'','','FECHA DE NOTIFICACIÓN: '.$pedido->fecha_concluido));
+
+                    $sheet->cells("D6:K6", function($cells) {
+                        $cells->setAlignment('right');
+                    });
+
+                    $sheet->mergeCells('A7:K7'); 
+                    $sheet->row(7, array($tipo));
+
+                    $sheet->cells("A7:K7", function($cells) {
+                        $cells->setAlignment('center');
+                    });
+
+                    $sheet->mergeCells('D8:F8');
+                    $sheet->mergeCells('G8:I8');
+
+                    $sheet->mergeCells('A8:A9');
+                    $sheet->mergeCells('B8:B9');
+                    $sheet->mergeCells('C8:C9');
+                    $sheet->mergeCells('J8:J9'); 
+                    $sheet->mergeCells('K8:K9');
+
+                    $sheet->row(8, array(
+                        'NO.', 'CLAVE','DESCRIPCIÓN DE LOS INSUMOS','SOLICITADO','','','RECIBIDO','','','% UNIDADES','% MONTO'
+                    ));
+
+                    $sheet->cells("A8:K8", function($cells) {
+                        $cells->setAlignment('center');
+                    });
+
+                    $sheet->row(9, array(
+                        '','','','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','CANTIDAD','PRECIO UNITARIO','PRECIO TOTAL','',''
+                    ));
+
+                    $sheet->cells("A9:K9", function($cells) {
+                        $cells->setAlignment('center');
+                    });
+
+                    $sheet->row(1, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(16);
+                    });
+                    $sheet->row(2, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(3, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(4, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(5, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(6, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(7, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(14);
+                    });
+                    $sheet->row(8, function($row) {
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(11);
+                    });
+                    $sheet->row(9, function($row) {
+                        // call cell manipulation methods
+                        $row->setBackground('#DDDDDD');
+                        $row->setFontWeight('bold');
+                        $row->setFontSize(11);
+                    });
+
+                    $iva_solicitado = 0;
+                    $iva_recibido = 0;
+
+                    $contador_filas = 9;
+                    $contador_insumos = 0;
+                    foreach($lista_insumos as $insumo){
+                        $contador_filas++;
+                        $contador_insumos++;
+                        $sheet->appendRow(array(
+                            $contador_insumos, 
+                            $insumo->insumo_medico_clave,
+                            $insumo->insumosConDescripcion->descripcion,
+                            $insumo->cantidad_solicitada,
+                            $insumo->precio_unitario,
+                            $insumo->monto_solicitado,
+                            $insumo->cantidad_recibida | 0,
+                            $insumo->precio_unitario,
+                            ($insumo->monto_recibido)?$insumo->monto_recibido:0,
+                            '=G'.$contador_filas.'/D'.$contador_filas,
+                            '=I'.$contador_filas.'/F'.$contador_filas
+                        ));
+
+                        if($insumo->insumosConDescripcion->tipo == 'MC'){
+                            $iva_solicitado += $insumo->monto_solicitado;
+                            $iva_recibido += $insumo->monto_recibido;
+                        }
+
+                        $sheet->row($contador_filas, function($row) {
+                            $row->setBackground('#FFDD00');
+                        });
+
+                        $contador_filas++;
+                        $sheet->appendRow(array(
+                                "", 
+                               "CLUES (".count($insumo->listaClues).")",
+                                "NOMBRE DE LA UNIDAD",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                ""
+                        ));
+                        
+                        $sheet->mergeCells('D'.$contador_filas.':K'.$contador_filas);
+
+                        $sheet->row($contador_filas, function($row) {
+                            //$row->setBackground('#FFDD00');
+                            $row->setFontWeight('bold');
+                            //$row->setFontSize(14);
+                        });
+                        
+                        foreach($insumo->listaClues as $item_clues){
+                            $contador_filas++;
+                            $sheet->appendRow(array(
+                                "", 
+                                $item_clues->clues,
+                                $item_clues->nombre,
+                                $item_clues->cantidad,
+                                "",
+                                $item_clues->cantidad * $insumo->precio_unitario,
+                                "",
+                                "",
+                                "",
+                                "",
+                                ""
+                            ));
+                            $sheet->mergeCells('G'.$contador_filas.':K'.$contador_filas);
+                        }
+
+                    }
+
+                    $iva_solicitado = $iva_solicitado*16/100;
+                    $iva_recibido = $iva_recibido*16/100;
+                    
+                    $sheet->setBorder("A1:K$contador_filas", 'thin');
+
+                    $sheet->appendRow(array(
+                            '', 
+                            '',
+                            '',
+                            '',
+                            'SUBTOTAL',
+                            '=SUM(F10:F'.($contador_filas).')',
+                            '',
+                            '',
+                            '=SUM(I10:I'.($contador_filas).')',
+                        ));
+                    $sheet->appendRow(array(
+                            '', 
+                            '',
+                            '',
+                            '',
+                            'IVA',
+                            $iva_solicitado,
+                            '',
+                            '',
+                            $iva_recibido,
+                        ));
+                    $sheet->appendRow(array(
+                            '', 
+                            '',
+                            '',
+                            '',
+                            'TOTAL',
+                            '=SUM(F'.($contador_filas+1).':F'.($contador_filas+2).')',
+                            '',
+                            '',
+                            '=SUM(I'.($contador_filas+1).':I'.($contador_filas+2).')',
+                        ));
+                    $contador_filas += 3;
+
+
+                    $phpColor = new \PHPExcel_Style_Color();
+                    $phpColor->setRGB('DDDDDD'); 
+                    $sheet->getStyle("J10:K$contador_filas")->getFont()->setColor( $phpColor );
+
+                    $sheet->setColumnFormat(array(
+                        "D10:D$contador_filas" => '#,##0',
+                        "G10:G$contador_filas" => '#,##0',
+                        "E10:F$contador_filas" => '"$" #,##0.00_-',
+                        "H10:I$contador_filas" => '"$" #,##0.00_-',
+                        "J10:K$contador_filas" => '[Green]0.00%;[Red]-0.00%;0.00%',
+                    ));
+                });
+            }
+
+            
+        })->setActiveSheetIndex(0)->export('xls');
     }
 }

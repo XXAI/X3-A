@@ -130,9 +130,9 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-presupuesto',               'PedidoController@obtenerDatosPresupuesto');
         Route::put('cancelar-pedido-transferir/{id}',   'CancelarPedidosController@cancelarYTransferir');
 
-        Route::resource('pedidos-jurisdiccionales',         'PedidoJurisdiccionalController',     ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::get('pedidos-jurisdiccionales-stats',        'PedidoJurisdiccionalController@stats');
-        Route::get('pedidos-jurisdiccionales-presupuesto',  'PedidoJurisdiccionalController@obtenerDatosPresupuesto');
+        //Route::resource('pedidos-jurisdiccionales',         'PedidoJurisdiccionalController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+        //Route::get('pedidos-jurisdiccionales-stats',        'PedidoJurisdiccionalController@stats');
+        //Route::get('pedidos-jurisdiccionales-presupuesto',  'PedidoJurisdiccionalController@obtenerDatosPresupuesto');
 
         Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['show', 'update','destroy']]);
 
