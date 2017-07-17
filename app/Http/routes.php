@@ -198,6 +198,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
 
     Route::group(['prefix' => 'sync','namespace' => 'Sync'], function () {
+        Route::get('lista',      'SincronizacionController@lista');
         Route::get('manual',    'SincronizacionController@manual');        
         Route::get('auto',      'SincronizacionController@auto');
         Route::post('importar', 'SincronizacionController@importarSync');
