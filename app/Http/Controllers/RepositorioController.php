@@ -116,6 +116,7 @@ class RepositorioController extends Controller
     public function descargar($id, Request $request)
      {
         try{
+
             $variables = Input::all();
 
             $usuario = Usuario::with(['roles.permisos'=>function($permisos){
