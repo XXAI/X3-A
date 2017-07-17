@@ -116,15 +116,10 @@ class RepositorioController extends Controller
     public function descargar($id, Request $request)
      {
         try{
-            $variables = Input::all();
-            $permisos = explode("|", $variables['permisos']);
-            
-            if(in_array('MrL06vIO12iNhchP14h57Puvg71eUmYb', $permisos))
-            {
-               $arreglo_log = array('repositorio_id' => $id,
-                            'ip' =>$request->ip(),
-                            'navegador' =>$request->header('User-Agent'),
-                            'accion' => 'DOWNLOAD'); 
+           $arreglo_log = array('repositorio_id' => $id,
+                        'ip' =>$request->ip(),
+                        'navegador' =>$request->header('User-Agent'),
+                        'accion' => 'DOWNLOAD'); 
             $log_repositorio = LogRepositorio::create($arreglo_log);
             if(!$log_repositorio)
             {
@@ -139,13 +134,7 @@ class RepositorioController extends Controller
               'Content-Type: application/pdf',
             );
             return response()->download($pathToFile, $repositorio->nombre_archivo, $headers);
-            }else
-            {
-                return Response::json(['error' =>"No tiene permisos para ingresar a este modulo" ], 500);
-            }
-            
-            /**/
-           
+                                   
         }catch(Exception $e)
         {
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);

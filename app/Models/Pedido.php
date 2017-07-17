@@ -23,6 +23,10 @@ class Pedido extends BaseModel
         return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id')->orderBy("created_at");
     }
 
+    public function recepcionesBorrados(){
+        return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id')->withTrashed()->orderBy("created_at");
+    }
+
     public function director(){
         return $this->hasOne('App\Models\PersonalClues','id','director_id');
     }

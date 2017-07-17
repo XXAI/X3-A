@@ -183,7 +183,7 @@ class RecepcionPedidoController extends Controller
 								
 			if($movimiento_validador->count() > 1)
 			{
-				return Response::json(['error' => "Error, se ha detectado un movimiento con los mismos datos, por favor oprima la tecla F5, y verifique sus datos."], 500);		
+				return Response::json(['error' => "Error, se ha encontrado una recepcion con los mismos datos, por favor sustituya alguno de los valores (entrega, recibe, fecha uu observacion) y vuelva a intentarlo"], 500);		
 			}									
 		}
 		/**/

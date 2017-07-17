@@ -48,4 +48,5 @@ class Movimiento extends BaseModel{
         return $this->hasOne('App\Models\Almacen','id','almacen_id');
     }
 
+   
 }

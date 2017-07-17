@@ -7,7 +7,7 @@ use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests;
-use App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen, App\Models\Repositorio;
+use App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen, App\Models\Repositorio, App\Models\LogPedidoBorrador;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -150,21 +150,46 @@ class PedidosController extends Controller
 
     public function recepcion($id, Request $request){
         try{
-            $pedido = Pedido::with("recepciones.movimiento")
+            $pedido = Pedido::with("recepcionesBorrados.movimientoBorrados")
                  ->where("id",$id)->first();
 
             
-            foreach ($pedido->recepciones as $key => $value) {
-                //$pedido->recepciones->insumos = 0;
+            foreach ($pedido->recepcionesBorrados as $key => $value) {
+                
                 $arreglo = array();     
                 $arreglo = $value;
                 
-                $insumos = DB::table("stock")
+                $claves = DB::table("stock")
                                 ->whereRaw("id in (select stock_id from movimiento_insumos where movimiento_id='".$value['movimiento_id']."')")
                                 ->select(DB::RAW("count(distinct(clave_insumo_medico)) as cantidad_insumos"))
                                 ->first();
 
-                $arreglo['cantidad_insumos'] = $insumos->cantidad_insumos;
+                $insumos = DB::table("movimiento_insumos")
+                                ->join("movimientos", "movimientos.id", "=", "movimiento_insumos.movimiento_id")
+                                ->where("movimiento_id","=",$value['movimiento_id'])
+                                ->where("movimientos.status","=","FI")
+                                ->select(DB::RAW("sum(cantidad) as cantidad"),
+                                        DB::RAW("sum(precio_total + iva) as monto"))
+                                ->first();    
+
+                $borrado = DB::table("log_recepcion_borrador")
+                                ->where("movimiento_id","=",$value['movimiento_id'])
+                                ->where("accion","=","RECEPCION ELIMINADA")
+                                ->select("created_at",
+                                        "usuario_id")
+                                ->first();                                
+
+                $arreglo['total_claves'] = $claves->cantidad_insumos;
+                $arreglo['total_cantidad'] = $insumos->cantidad;
+                $arreglo['total_monto'] = $insumos->monto;
+                if($borrado)
+                {
+                    $pedido->recepcionesBorrados[$key]['borrado_al'] = $borrado->created_at;
+                    $pedido->recepcionesBorrados[$key]['borrado_por'] = $borrado->usuario_id;
+                }else{
+                    $pedido->recepcionesBorrados[$key]['borrado_al'] = null;
+                    $pedido->recepcionesBorrados[$key]['borrado_por'] = null;
+                }
                 
                 $pedido->recepciones[$key]  = $arreglo;
             }     
@@ -178,10 +203,38 @@ class PedidosController extends Controller
         try{
             DB::beginTransaction();
             
-            $pedido = Pedido::find($id);
+            $pedido = Pedido::with("recepciones.movimiento")->find($id);
+            $bandera = 0;
+            $validador_recepcion = 0;
+            if (count($pedido->recepciones) >0) {
+                $validador_recepcion++;
+                foreach ($pedido->recepciones as $key => $value) {
+                    if($value['movimiento']['status'] == "BR")
+                            $bandera++;
+                }
+            }
+            if($bandera > 0)
+            {
+                return Response::json(['error' =>"No se puede regresar el pedido a borrador por que existen recepciones abiertas"], 500);
+            }
+            if($pedido->status == "BR")
+            {
+                return Response::json(['error' =>"El pedido ya se encuentra en borrador, por favor refivicar"], 500);
+            }
+            
             $pedido->status = "BR";
             $pedido->save();
 
+            if($validador_recepcion > 0)
+            {
+                $arreglo_log = array("pedido_id"=>$id,
+                                     'ip' =>$request->ip(),
+                                     'navegador' =>$request->header('User-Agent'),
+                                     "accion"=>"REGRESO BORRADOR");
+                LogPedidoBorrador::create($arreglo_log);
+                DB::commit();
+                return Response::json([ 'data' => $pedido],200);
+            }
             $almacen = Almacen::find($pedido->almacen_solicitante);
 
             if(!$almacen){
@@ -244,11 +297,16 @@ class PedidosController extends Controller
             $presupuesto->no_causes_comprometido            = ($presupuesto->no_causes_comprometido - $total_no_causes);                                         
             $presupuesto->material_curacion_comprometido    = round(($presupuesto->material_curacion_comprometido - $total_material_curacion),2); 
 
-            
+            $presupuesto->save(); 
 
-            $presupuesto->save();                                   
+            $arreglo_log = array("pedido_id"=>$id,
+                                     'ip' =>$request->ip(),
+                                     'navegador' =>$request->header('User-Agent'),
+                                     "accion"=>"PEDIDO BORRADOR");
+            LogPedidoBorrador::create($arreglo_log);
+
             DB::commit();
-
+            
             return Response::json([ 'data' => $presupuesto],200);
         } catch (\Exception $e) {
             DB::rollBack();
