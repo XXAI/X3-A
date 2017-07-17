@@ -117,37 +117,54 @@ class RepositorioController extends Controller
      {
         try{
             $variables = Input::all();
-            $permisos = explode("|", $variables['permisos']);
+
+            $usuario = Usuario::with(['roles.permisos'=>function($permisos){
+                $permisos->where('id','MrL06vIO12iNhchP14h57Puvg71eUmYb')->orWhere('id','bsIbPL3qv6XevcAyrRm1GxJufDbzLOax');
+            }])->find($request->get('usuario_id'));
             
-            if(in_array('MrL06vIO12iNhchP14h57Puvg71eUmYb', $permisos))
-            {
+            $tiene_acceso = false;
+
+            if(!$usuario->su){
+                $permisos = [];
+                foreach ($usuario->roles as $index => $rol) {
+                    foreach ($rol->permisos as $permiso) {
+                        $permisos[$permiso->id] = true;
+                    }
+                }
+                if(count($permisos)){
+                    $tiene_acceso = true;
+                }else{
+                    $tiene_acceso = false;
+                }
+            }else{
+                $tiene_acceso = true;
+            }
+            
+            if($tiene_acceso){
                $arreglo_log = array('repositorio_id' => $id,
                             'ip' =>$request->ip(),
                             'navegador' =>$request->header('User-Agent'),
                             'accion' => 'DOWNLOAD'); 
-            $log_repositorio = LogRepositorio::create($arreglo_log);
-            if(!$log_repositorio)
-            {
-                return Response::json(['error' => "Error al descargar el archivo"], 500); 
-            }
 
-            $repositorio = Repositorio::find($id);
-            $directorio_path = "repositorio";
-            $pathToFile = $directorio_path."//".$id.".".$repositorio->extension;
-            
-            $headers = array(
-              'Content-Type: application/pdf',
-            );
-            return response()->download($pathToFile, $repositorio->nombre_archivo, $headers);
-            }else
-            {
+                $log_repositorio = LogRepositorio::create($arreglo_log);
+
+                if(!$log_repositorio)
+                {
+                    return Response::json(['error' => "Error al descargar el archivo"], 500); 
+                }
+
+                $repositorio = Repositorio::find($id);
+                $directorio_path = "repositorio";
+                $pathToFile = $directorio_path."//".$id.".".$repositorio->extension;
+                
+                $headers = array(
+                    'Content-Type: application/pdf',
+                );
+                return response()->download($pathToFile, $repositorio->nombre_archivo, $headers);
+            }else{
                 return Response::json(['error' =>"No tiene permisos para ingresar a este modulo" ], 500);
             }
-            
-            /**/
-           
-        }catch(Exception $e)
-        {
+        }catch(Exception $e){
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         }
     }
