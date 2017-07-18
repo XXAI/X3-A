@@ -214,13 +214,13 @@ class PedidosController extends Controller
                 }
             }
             
-            if($bandera > 0)
+            /*if($bandera > 0)
             {
-                return Response::json(['error' =>"No se puede regresar el pedido a borrador por que existen recepciones abiertas"], 500);
-            }
+                return Response::json(['error' =>"Error, debe de finalizar todas las recepciones para poder regresar a borrador"], 500);
+            }*/
             if($pedido->status == "BR")
             {
-                return Response::json(['error' =>"El pedido ya se encuentra en borrador, por favor refivicar"], 500);
+                return Response::json(['error' =>"El pedido ya se encuentra en borrador, por favor verificar"], 500);
             }
             
             $pedido->status = "BR";
@@ -231,7 +231,7 @@ class PedidosController extends Controller
                 $arreglo_log = array("pedido_id"=>$id,
                                      'ip' =>$request->ip(),
                                      'navegador' =>$request->header('User-Agent'),
-                                     "accion"=>"REGRESO BORRADOR");
+                                     "accion"=>"REGRESO BORRADOR CON RECEPCIONES");
                 LogPedidoBorrador::create($arreglo_log);
                 DB::commit();
                 return Response::json([ 'data' => $pedido],200);
@@ -303,7 +303,7 @@ class PedidosController extends Controller
             $arreglo_log = array("pedido_id"=>$id,
                                      'ip' =>$request->ip(),
                                      'navegador' =>$request->header('User-Agent'),
-                                     "accion"=>"PEDIDO BORRADOR");
+                                     "accion"=>"REGRESO BORRADOR SIN RECEPCIONES");
             LogPedidoBorrador::create($arreglo_log);
 
             DB::commit();

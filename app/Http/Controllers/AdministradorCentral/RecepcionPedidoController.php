@@ -19,11 +19,27 @@ class RecepcionPedidoController extends Controller
             $parametros = Input::all();
             DB::beginTransaction();
              $movimientos =  Movimiento::with("movimientoInsumosStock", "movimientoPedido.pedido")->find($id);
+            $pedido_id = $movimientos->movimientoPedido->pedido->id;
+                
             if($movimientos->movimientoPedido->pedido->status != "BR")
             {
+                if($parametros['type'] == 2)
+                {
+                    $pedido = Pedido::with("recepciones.movimiento")->find($pedido_id);
+                    $bandera = 0;
+                    if (count($pedido->recepciones) >0) {
+                        foreach ($pedido->recepciones as $key => $value) {
+                            if($value['movimiento']['status'] == "BR")
+                                    $bandera++;
+                        }
+                    }
+                    
+                    if($bandera > 0)
+                    {
+                        return Response::json(['error' =>"Error, Debe de finalizar todas las recepciones antes de regresar a borrador una recepcion"], 500);
+                    }
+                }    
                 
-                $pedido_id = $movimientos->movimientoPedido->pedido->id;
-
                 $almacen = Almacen::find($movimientos->almacen_id);
 
                 if(!$almacen){
@@ -194,21 +210,6 @@ class RecepcionPedidoController extends Controller
                     $movimiento->status = "BR";
                     $movimiento->update();
                     LogRecepcionBorrador::create($arreglo_log);
-
-                    
-                    $pedido = Pedido::with("recepciones.movimiento")->find($pedido_id);
-                    $bandera = 0;
-                    if (count($pedido->recepciones) >0) {
-                        foreach ($pedido->recepciones as $key => $value) {
-                            if($value['movimiento']['status'] == "BR")
-                                    $bandera++;
-                        }
-                    }
-                    
-                    if($bandera > 0)
-                    {
-                        return Response::json(['error' =>"No se puede regresar la recepcion a borrador por que existe una recepcion en borrador"], 500);
-                    }
                 }         
                 DB::commit();
                 return Response::json([ 'data' => $movimientos->movimientoPedido->pedido],200);    

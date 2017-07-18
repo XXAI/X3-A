@@ -145,13 +145,17 @@ class RecepcionPedidoController extends Controller
 
 		$pedido = Pedido::where('almacen_solicitante',$almacen->id)->with(['recepciones'=>function($recepciones){
 			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
-		}])->whereIn('status',['PS','EX'])->find($id);
+		}])->whereIn('status',['PS','EX', 'BR'])->find($id);
 
 		if(!$pedido){
 			DB::rollBack();
 			return Response::json(['error' => 'No se encontró el pedido'],500);
 		}
 
+		if($pedido->status ==  "BR"){
+			DB::rollBack();
+			return Response::json(['error' => 'No se puede guardar la recepción porque el pedido se ha modificado a borrador, contactese con el administrador para mayor información'],500);
+		}
 
 		if(count($pedido->recepciones) > 1){
 			return Response::json(['error' => 'El pedido tiene mas de una recepción abierta'], 500);
@@ -451,17 +455,8 @@ class RecepcionPedidoController extends Controller
 
 		        $value['tipo_insumo_id'] = $tipo_insumo_id;
 
-
-		        /*$pedido_insumo_validador = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
-		       
-		        if(($pedido_insumo_validador->cantidad_solicitada) >= ($pedido_insumo_validador->cantidad_recibida + $value['existencia']))
-				{*/
-		        	$movimiento_insumo = MovimientoInsumos::Create($value);	  //Aqui debo de verificar     
-		        /*}else
-				{
-					DB::rollBack();
-					return Response::json(['error' => 'Existe un error,el insumo '.$value['clave_insumo_medico'].' se ha sobrepasado el monto solicitando, por favor contactese con soporte de la aplicación'], 500);
-				}*/	 	
+		        $movimiento_insumo = MovimientoInsumos::Create($value);	  //Aqui debo de verificar     
+		        	 	
 	        }
 	        
 		     
