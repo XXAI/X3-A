@@ -7,7 +7,7 @@ use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests;
-use App\Models\Movimiento, App\Models\MovimientoInsumos, App\Models\MovimientoPedido, App\Models\Almacen, App\Models\Proveedor, App\Models\Pedido, App\Models\PedidoInsumo, App\Models\Insumo, App\Models\UnidadMedicaPresupuesto, App\Models\Stock, App\Models\LogRecepcionBorrador ;
+use App\Models\Usuario, App\Models\Movimiento, App\Models\MovimientoInsumos, App\Models\MovimientoPedido, App\Models\Almacen, App\Models\Proveedor, App\Models\Pedido, App\Models\PedidoInsumo, App\Models\Insumo, App\Models\UnidadMedicaPresupuesto, App\Models\Stock, App\Models\LogRecepcionBorrador ;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 
@@ -16,6 +16,28 @@ class RecepcionPedidoController extends Controller
 {
 	public function borrarRecepcion($id, Request $request){
         try{
+            $usuario = Usuario::with(['roles.permisos'=>function($permisos){
+                $permisos->where('id','pgDHA25rRlWvMxdb6aH38xG5p1HUFznS');
+            }])->find($request->get('usuario_id'));
+            
+            $tiene_acceso = false;
+
+            if(!$usuario->su){
+                $permisos = [];
+                foreach ($usuario->roles as $index => $rol) {
+                    if(count($rol->permisos) > 0){
+                        $tiene_acceso = true;
+                        break;
+                    }
+                }
+            }else{
+                $tiene_acceso = true;
+            }
+
+            if(!$tiene_acceso){
+                return Response::json(['error' =>"No tiene permiso para realizar esta acción."], 500);
+            }
+
             $parametros = Input::all();
             DB::beginTransaction();
              $movimientos =  Movimiento::with("movimientoInsumosStock", "movimientoPedido.pedido")->find($id);
