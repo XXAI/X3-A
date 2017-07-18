@@ -21,16 +21,17 @@ class RecepcionPedidoController extends Controller
              $movimientos =  Movimiento::with("movimientoInsumosStock", "movimientoPedido.pedido")->find($id);
             if($movimientos->movimientoPedido->pedido->status != "BR")
             {
+                
                 $pedido_id = $movimientos->movimientoPedido->pedido->id;
-                $almacen = Almacen::find($movimientos->almacen_id);
 
-                  
+                $almacen = Almacen::find($movimientos->almacen_id);
 
                 if(!$almacen){
                     DB::rollBack();
                     return Response::json(['error' =>"No se encontró el almacen."], 500);
                 }
 
+                
                 $proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
 
                 $contrato_activo = $proveedor->contratoActivo;
@@ -193,6 +194,21 @@ class RecepcionPedidoController extends Controller
                     $movimiento->status = "BR";
                     $movimiento->update();
                     LogRecepcionBorrador::create($arreglo_log);
+
+                    
+                    $pedido = Pedido::with("recepciones.movimiento")->find($pedido_id);
+                    $bandera = 0;
+                    if (count($pedido->recepciones) >0) {
+                        foreach ($pedido->recepciones as $key => $value) {
+                            if($value['movimiento']['status'] == "BR")
+                                    $bandera++;
+                        }
+                    }
+                    
+                    if($bandera > 0)
+                    {
+                        return Response::json(['error' =>"No se puede regresar la recepcion a borrador por que existe una recepcion en borrador"], 500);
+                    }
                 }         
                 DB::commit();
                 return Response::json([ 'data' => $movimientos->movimientoPedido->pedido],200);    

@@ -213,6 +213,7 @@ class PedidosController extends Controller
                             $bandera++;
                 }
             }
+            
             if($bandera > 0)
             {
                 return Response::json(['error' =>"No se puede regresar el pedido a borrador por que existen recepciones abiertas"], 500);
