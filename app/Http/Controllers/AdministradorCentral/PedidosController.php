@@ -7,7 +7,7 @@ use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests;
-use App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen, App\Models\Repositorio, App\Models\LogPedidoBorrador;
+use App\Models\Usuario, App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen, App\Models\Repositorio, App\Models\LogPedidoBorrador, App\Models\PedidoPresupuestoApartado;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -201,6 +201,28 @@ class PedidosController extends Controller
     
     public function regresarBorrador($id, Request $request){
         try{
+            $usuario = Usuario::with(['roles.permisos'=>function($permisos){
+                $permisos->where('id','pgDHA25rRlWvMxdb6aH38xG5p1HUFznS');
+            }])->find($request->get('usuario_id'));
+            
+            $tiene_acceso = false;
+
+            if(!$usuario->su){
+                $permisos = [];
+                foreach ($usuario->roles as $index => $rol) {
+                    if(count($rol->permisos) > 0){
+                        $tiene_acceso = true;
+                        break;
+                    }
+                }
+            }else{
+                $tiene_acceso = true;
+            }
+
+            if(!$tiene_acceso){
+                return Response::json(['error' =>"No tiene permiso para realizar esta acción."], 500);
+            }
+
             DB::beginTransaction();
             
             $pedido = Pedido::with("recepciones.movimiento")->find($id);
@@ -227,6 +249,53 @@ class PedidosController extends Controller
 
             if($validador_recepcion > 0)
             {
+                //Harima: Como regresamos el pedido a borrador aun teniendo recepciones, guardamos el presupuesto del pedido que tenemos actualmente en comprometido/devengado para poder hacer los ajustes despues de finalizar el proyecto
+                $pedido->load('insumos.insumoDetalle');
+                $causes_solicitado = 0;
+                $causes_recibido = 0;
+                $no_causes_solicitado = 0;
+                $no_causes_recibido = 0;
+                $material_curacion_solicitado = 0;
+                $material_curacion_recibido = 0;
+
+                foreach ($pedido->insumos as $insumo) {
+                    if($insumo->insumoDetalle->tipo == "ME"){
+                        if($insumo->insumoDetalle->es_causes == 1){
+                            $causes_solicitado += $insumo->monto_solicitado;
+                            $causes_recibido += ($insumo->monto_recibido+0);
+                        }else{
+                            $no_causes_solicitado += $insumo->monto_solicitado;
+                            $no_causes_recibido += ($insumo->monto_recibido+0);
+                        }
+                    }else{
+                        $material_curacion_solicitado += $insumo->monto_solicitado;
+                        $material_curacion_recibido += ($insumo->monto_recibido+0);
+                    }
+                }
+
+                if($material_curacion_solicitado > 0){
+                    $material_curacion_solicitado += $material_curacion_solicitado*16/100;
+                }
+
+                if($material_curacion_recibido > 0){
+                    $material_curacion_recibido += $material_curacion_recibido*16/100;
+                }
+
+                $fecha = explode("-", $pedido->fecha);
+
+                PedidoPresupuestoApartado::create(array(
+                    'clues' => $pedido->clues,
+                    'pedido_id' => $pedido->id,
+                    'almacen_id' => $pedido->almacen_solicitante,
+                    'mes' => $fecha[1],
+                    'causes_comprometido' => ($causes_solicitado-$causes_recibido),
+                    'causes_devengado' => $causes_recibido,
+                    'no_causes_comprometido' => ($no_causes_solicitado-$no_causes_recibido),
+                    'no_causes_devengado' => $no_causes_recibido,
+                    'material_curacion_comprometido' => ($material_curacion_solicitado-$material_curacion_recibido),
+                    'material_curacion_devengado' => $material_curacion_recibido
+                ));
+
                 $arreglo_log = array("pedido_id"=>$id,
                                      'ip' =>$request->ip(),
                                      'navegador' =>$request->header('User-Agent'),

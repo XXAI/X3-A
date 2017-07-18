@@ -85,7 +85,7 @@ class AlmacenController extends Controller
         if(isset($parametros['filtro_usuario'])){
             $almacen = Almacen::find($request->get('almacen_id'));
 
-            $almacenes = $almacenes->where('clues',$almacen->clues)->orderBy('nivel_almacen')->orderBy('nombre');
+            $almacenes = $almacenes->where('clues',$almacen->clues)->where('nivel_almacen',1)->orderBy('nivel_almacen')->orderBy('tipo_almacen')->orderBy('nombre');
             //$obj =  JWTAuth::parseToken()->getPayload();
             //$usuario = Usuario::find($obj->get('id'));
             //$almacenes_id = $usuario->almacenes()->lists('almacenes.id');

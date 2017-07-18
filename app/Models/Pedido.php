@@ -58,4 +58,8 @@ class Pedido extends BaseModel
     public function proveedor(){
         return $this->belongsTo('App\Models\Proveedor','proveedor_id','id');
     }
+
+    public function presupuestoApartado(){
+      return $this->hasOne('App\Models\PedidoPresupuestoApartado','pedido_id');
+    }
 }

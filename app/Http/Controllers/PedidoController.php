@@ -157,7 +157,7 @@ class PedidoController extends Controller{
             if($pedido->tipo_pedido_id != 'PJS'){
                 
                 if($pedido->status == 'BR'){
-                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor");
+                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuestoApartado");
                 }else{
                     $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos");
                 }
@@ -166,7 +166,7 @@ class PedidoController extends Controller{
             else {
                 
                 if($pedido->status == 'BR'){
-                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor");
+                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuestoApartado");
                 }else{
                     $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos");
                 }
@@ -191,8 +191,6 @@ class PedidoController extends Controller{
 
         $parametros = Input::all();
 
-
-
         $almacen = Almacen::find($request->get('almacen_id'));
         $um = UnidadMedica::find( $almacen->clues);
 
@@ -207,21 +205,15 @@ class PedidoController extends Controller{
         $almacen_solicitante = Almacen::find($parametros['datos']['almacen_solicitante']);
 
         if($almacen_solicitante){
-            
-            if($um->tipo != 'OA'){
+            if($um->tipo == 'OA' && $almacen_solicitante->subrogado == 0 && $almacen_solicitante->nivel_almacen == 1){  // ######### PEDIDOS JURISDICCIONALES #########
+                $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales, solo cuando el almacen solictante no sea subrogado, sea de nivel 1 y la clues sea Oficina Administrativa
+            }else{ // ############################################
                 if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
                     $tipo_pedido = 'PFS';
                 }else{
                     $tipo_pedido = 'PA';
-                }                
-            } 
-            // ######### PEDIDOS JURISDICCIONALES #########
-            else {
-                $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales
+                }
             }
-            // ############################################
-
-            
         }else{
             return Response::json(['error' => 'No se encontró el almacen solicitante'], 500);
         }
@@ -290,7 +282,7 @@ class PedidoController extends Controller{
                 $object_insumo = PedidoInsumo::create($insumo);
 
                 // ######### PEDIDOS JURISDICCIONALES #########
-                if($um->tipo == 'OA'){
+                if($um->tipo == 'OA' && $tipo_pedido == 'PJS'){
                     foreach($value['lista_clues'] as $key_clues => $value_clues){
                         $insumo_clues = [
                             'pedido_insumo_id' => $object_insumo->id,
@@ -357,20 +349,15 @@ class PedidoController extends Controller{
 
         $tipo_pedido = '';
         if($almacen_solicitante){
-
-            if($um->tipo != 'OA'){
+            if($um->tipo == 'OA' && $almacen_solicitante->subrogado == 0 && $almacen_solicitante->nivel_almacen == 1){  // ######### PEDIDOS JURISDICCIONALES #########
+                $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales, solo cuando el almacen solictante no sea subrogado, sea de nivel 1 y la clues sea Oficina Administrativa
+            }else{ // ############################################
                 if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
                     $tipo_pedido = 'PFS';
                 }else{
                     $tipo_pedido = 'PA';
-                }                
-            } 
-            // ######### PEDIDOS JURISDICCIONALES #########
-            else {
-                $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales
+                }
             }
-            // ############################################
-
         }else{
             return Response::json(['error' => 'No se encontró el almacen seleccionado'], 500);
         }
@@ -420,6 +407,15 @@ class PedidoController extends Controller{
                 return Response::json(['error' => 'El pedido ya no puede editarse.'], 500);
             }
 
+            //Harima:checamos si el pedido tiene presupuetso apartado, esto para ver si cambio almacen o mes del pedido, por lo pronto mandamos error al intentar hacer este cambio.
+            $pedido->load('presupuestoApartado');
+            if($pedido->presupuestoApartado){
+                $fecha = explode('-',$parametros['datos']['fecha']);
+                if($parametros['datos']['almacen_solicitante'] != $pedido->presupuestoApartado->almacen_id || $fecha[1] != $pedido->presupuestoApartado->mes){
+                    return Response::json(['error' => 'El cambio de mes y almacen para este pedido no se encuentra autorizado'], 500);
+                }
+            }
+
              DB::beginTransaction();
 
             $pedido->update($parametros['datos']);
@@ -450,6 +446,8 @@ class PedidoController extends Controller{
                     'insumo_medico_clave' => $value['clave'],
                     'cantidad_solicitada' => $value['cantidad'],
                     'monto_solicitado' => $value['cantidad']*$value['precio'], //$value['monto'],
+                    'cantidad_recibida' => ($value['cantidad_recibida'])?$value['cantidad_recibida']:null,
+                    'monto_recibido' => ($value['cantidad_recibida'])?$value['cantidad_recibida']*$value['precio']:null,
                     'precio_unitario' => $value['precio'],
                     'tipo_insumo_id' => $value['tipo_insumo_id'],
                     'pedido_id' => $pedido->id
@@ -469,7 +467,7 @@ class PedidoController extends Controller{
                 $object_insumo = PedidoInsumo::create($insumo);  
 
                 // ######### PEDIDOS JURISDICCIONALES #########
-                if($um->tipo == 'OA'){
+                if($um->tipo == 'OA' && $tipo_pedido == 'PJS'){
                     foreach($value['lista_clues'] as $key_clues => $value_clues){
                         $insumo_clues = [
                             'pedido_insumo_id' => $object_insumo->id,
@@ -502,9 +500,35 @@ class PedidoController extends Controller{
                 $pedido->folio = $folio_template . str_pad($prox_folio, 3, "0", STR_PAD_LEFT);
             }
 
+            $almacen_solicitante->load('unidadMedica');
+
+            $pedido->director_id = $almacen_solicitante->unidadMedica->director_id;
+            $pedido->encargado_almacen_id = $almacen_solicitante->encargado_almacen_id;
+
+            $pedido->total_claves_solicitadas = $total_claves;
+            $pedido->total_cantidad_solicitada = $total_insumos;
+            $pedido->total_monto_solicitado = round($total_monto['causes'],2) + round($total_monto['no_causes'],2) + round($total_monto['material_curacion'],2);
+            $pedido->save();
+
             //Harima: Ajustamos el presupuesto, colocamos los totales en comprometido
-            //if($pedido->status == 'PS' || $pedido->status == 'ET'){
+            //if($pedido->status == 'PS' || $pedido->status == 'ET'){ //OJO falta checar si cambian almacen y mes
             if($pedido->status != 'BR'){
+
+                if($pedido->total_monto_solicitado == $pedido->total_monto_recibido){
+                    $pedido->status = 'FI';
+                    $pedido->save();
+                }
+
+                //Harima: Cargamos presupuesto apartado, en caso de que el pedido se este corrigiendo, y ya tenga recepciones
+                //$pedido->load('presupuestoApartado');
+                if($pedido->presupuestoApartado){
+                    $presupuesto_apartado = $pedido->presupuestoApartado;
+                    $total_monto['causes'] -= ($presupuesto_apartado->causes_comprometido + $presupuesto_apartado->causes_devengado);
+                    $total_monto['no_causes'] -= ($presupuesto_apartado->no_causes_comprometido + $presupuesto_apartado->no_causes_devengado);
+                    $total_monto['material_curacion'] -= ($presupuesto_apartado->material_curacion_comprometido + $presupuesto_apartado->material_curacion_devengado);
+                    $pedido->presupuestoApartado->delete();
+                }
+
                 $fecha = explode('-',$pedido->fecha);
                 $presupuesto = Presupuesto::where('activo',1)->first();
                 $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
@@ -519,14 +543,14 @@ class PedidoController extends Controller{
                     return Response::json(['error' => 'No existe presupuesto asignado al mes y/o año del pedido'], 500);
                 }
                 
-                $presupuesto_unidad->causes_comprometido = round($presupuesto_unidad->causes_comprometido,2) + round($total_monto['causes'],2);
-                $presupuesto_unidad->causes_disponible = round($presupuesto_unidad->causes_disponible,2) - round($total_monto['causes'],2);
+                $presupuesto_unidad->causes_comprometido = $presupuesto_unidad->causes_comprometido + round($total_monto['causes'],2);
+                $presupuesto_unidad->causes_disponible = $presupuesto_unidad->causes_disponible - round($total_monto['causes'],2);
 
-                $presupuesto_unidad->no_causes_comprometido = round($presupuesto_unidad->no_causes_comprometido,2) + round($total_monto['no_causes'],2);
-                $presupuesto_unidad->no_causes_disponible = round($presupuesto_unidad->no_causes_disponible,2) - round($total_monto['no_causes'],2);
+                $presupuesto_unidad->no_causes_comprometido = $presupuesto_unidad->no_causes_comprometido + round($total_monto['no_causes'],2);
+                $presupuesto_unidad->no_causes_disponible = $presupuesto_unidad->no_causes_disponible - round($total_monto['no_causes'],2);
 
-                $presupuesto_unidad->material_curacion_comprometido = round($presupuesto_unidad->material_curacion_comprometido,2) + round($total_monto['material_curacion'],2);
-                $presupuesto_unidad->material_curacion_disponible = round($presupuesto_unidad->material_curacion_disponible,2) - round($total_monto['material_curacion'],2);
+                $presupuesto_unidad->material_curacion_comprometido = $presupuesto_unidad->material_curacion_comprometido + round($total_monto['material_curacion'],2);
+                $presupuesto_unidad->material_curacion_disponible = $presupuesto_unidad->material_curacion_disponible - round($total_monto['material_curacion'],2);
                 
                 //if($presupuesto_unidad->causes_disponible < 0 || $presupuesto_unidad->no_causes_disponible < 0 || $presupuesto_unidad->material_curacion_disponible < 0){
                 if(($presupuesto_unidad->causes_disponible + $presupuesto_unidad->material_curacion_disponible) < 0 || $presupuesto_unidad->no_causes_disponible < 0){
@@ -591,16 +615,6 @@ class PedidoController extends Controller{
                     }
                 }
             }
-
-            $almacen_solicitante->load('unidadMedica');
-
-            $pedido->director_id = $almacen_solicitante->unidadMedica->director_id;
-            $pedido->encargado_almacen_id = $almacen_solicitante->encargado_almacen_id;
-
-            $pedido->total_claves_solicitadas = $total_claves;
-            $pedido->total_cantidad_solicitada = $total_insumos;
-            $pedido->total_monto_solicitado = $total_monto['causes'] + $total_monto['no_causes'] + $total_monto['material_curacion'];
-            $pedido->save();
              
              DB::commit(); 
 
@@ -704,13 +718,16 @@ class PedidoController extends Controller{
 
         switch ($pedido->status) {
             case 'BR':
-                $pedido->status_descripcion = 'BORRADOR';
+                $pedido->status_descripcion = 'EN BORRADOR';
                 break;
             case 'PS':
                 $pedido->status_descripcion = 'POR SURTIR';
                 break;
             case 'FI':
                 $pedido->status_descripcion = 'FINALIZADO';
+                break;
+            case 'EF':
+                $pedido->status_descripcion = 'EN FARMACIA';
                 break;
             case 'EX':
                 $pedido->status_descripcion = 'EXPIRADO';

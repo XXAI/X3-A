@@ -24,6 +24,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('identificar-pedidos-expirados')->daily();
+        $schedule->command('identificar-pedidos-expirados')->dailyAt('00:05');
     }
 }
