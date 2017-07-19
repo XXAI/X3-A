@@ -379,17 +379,6 @@ class PedidoController extends Controller{
             $parametros['datos']['status'] = 'BR';
         }
 
-        if($almacen_solicitante->nivel_almacen == 1 && ($parametros['datos']['status'] == 'PS' || $parametros['datos']['status'] == 'EF')){ //$almacen_solicitante->tipo_almacen == 'ALMPAL' && 
-            //$fecha = date($parametros['datos']['fecha']);
-            $fecha_concluido = Carbon::now();
-            $fecha_expiracion = strtotime("+20 days", strtotime($fecha_concluido));
-            $parametros['datos']['fecha_concluido'] = $fecha_concluido;
-            $parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
-        }else{
-            $parametros['datos']['fecha_concluido'] = null;
-            $parametros['datos']['fecha_expiracion'] = null;
-        }
-
         $v = Validator::make($parametros['datos'], $reglas, $mensajes);
 
         if ($v->fails()) {
@@ -416,7 +405,20 @@ class PedidoController extends Controller{
                 }
             }
 
-             DB::beginTransaction();
+            if($almacen_solicitante->nivel_almacen == 1 && ($parametros['datos']['status'] == 'PS' || $parametros['datos']['status'] == 'EF')){ //$almacen_solicitante->tipo_almacen == 'ALMPAL' && 
+                //$fecha = date($parametros['datos']['fecha']);
+                if(!$pedido->fecha_concluido){
+                    $fecha_concluido = Carbon::now();
+                    $fecha_expiracion = strtotime("+20 days", strtotime($fecha_concluido));
+                    $parametros['datos']['fecha_concluido'] = $fecha_concluido;
+                    $parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
+                }
+            }/*else{
+                $parametros['datos']['fecha_concluido'] = null;
+                $parametros['datos']['fecha_expiracion'] = null;
+            }*/
+
+            DB::beginTransaction();
 
             $pedido->update($parametros['datos']);
 

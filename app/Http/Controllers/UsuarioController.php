@@ -59,7 +59,7 @@ class UsuarioController extends Controller
         ];
 
         $reglas = [
-            'id'            => 'required|email|unique:usuarios',
+            'id'            => 'required|unique:usuarios',
             'password'      => 'required',
             'nombre'        => 'required',
             'apellidos'     => 'required'
@@ -132,7 +132,7 @@ class UsuarioController extends Controller
         ];
 
         $reglas = [
-            'id'            => 'required|email|unique:usuarios,id,'.$id,
+            'id'            => 'required|unique:usuarios,id,'.$id,
             'password'      => 'required_with:cambiarPassword',
             'nombre'        => 'required',
             'apellidos'     => 'required'
