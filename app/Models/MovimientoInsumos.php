@@ -15,7 +15,9 @@ class MovimientoInsumos extends BaseModel{
 
     protected $fillable = ["movimiento_id","stock_id", "cantidad", "precio_unitario", "iva", "precio_total", "tipo_insumo_id", "clave_insumo_medico"];
 
- 
+    public function detalles(){
+        return $this->hasOne('App\Models\Insumo','clave','clave_insumo_medico')->withTrashed();
+    }
 
     public function stock(){
         return $this->belongsTo('App\Models\Stock','stock_id');

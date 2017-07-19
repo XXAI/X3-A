@@ -20,6 +20,10 @@ class Movimiento extends BaseModel{
         return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id')->with('stock.marca');
     }
 
+    public function insumosDetalles(){
+        return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id')->with('detalles');
+    }
+
     public function movimientoInsumos(){
         return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id')->with('stockGrupo');
     }

@@ -81,7 +81,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('entregas-pedidos-stats-mes-anio', 'EntregasMesController@statsMesAnio');
         Route::get('entregas-pedidos-stats-diarias', 'EntregasMesController@entregasPedidosStatsDiarias');
         Route::get('pedidos-clues-mes-anio', 'EntregasMesController@pedidosAnioMesClues');
-
+        Route::get('pedidos-recepciones-clues-mes-anio', 'EntregasMesController@pedidosRecepcionesClues');
 
         // CUMPLIMIENTO
         Route::get('cumplimiento-stats-globales', 'CumplimientoController@statsGlobales');
