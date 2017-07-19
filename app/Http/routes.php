@@ -63,6 +63,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('presupuesto-pedidos', 'PedidosController@presupuesto');
         Route::get('pedidos', 'PedidosController@lista');
         Route::get('pedidos-excel', 'PedidosController@excel');
+        Route::get('pedidos-archivos-proveedor/{id}', 'PedidosController@listaArchivosProveedor');
         
         // TRANSFERENCIAS DE PRESUPUESTO
         Route::get('unidades-medicas-con-presupuesto', 'TransferenciasPresupuestosController@unidadesMedicasConPresupuesto');
@@ -88,11 +89,14 @@ Route::group(['middleware' => 'jwt'], function () {
 
         // CLAVES BASICAS
         Route::resource('claves-basicas',    'ClavesBasicasController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::get('claves-basicas-clues/{id}', 'ClavesBasicasController@index');
+        Route::get('claves-basicas-clues/{id}', 'ClavesBasicasController@unidadesMedicas');
+        Route::post('claves-basicas-clues', 'ClavesBasicasController@agregarUnidadMedica');
+        Route::delete('claves-basicas-clues/{id}', 'ClavesBasicasController@quitarUnidadMedica');
 
         //Configuuración de pedidos
         Route::get('pedidos-recepcion/{id}', 'PedidosController@recepcion');        
-        Route::get('pedidos-borrador/{id}', 'PedidosController@regresarBorrador');        
+        Route::get('pedidos-borrador/{id}', 'PedidosController@regresarBorrador');
+        Route::get('recepcion-borrador/{id}', 'RecepcionPedidoController@borrarRecepcion');        
 
     });
     // # FIN SECCION
@@ -103,17 +107,16 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-administrador-proveedores', 'PedidosAdministradorProveedoresController@lista');
         Route::get('pedidos-administrador-proveedores-excel', 'PedidosAdministradorProveedoresController@excel');
         Route::get('pedidos-administrador-proveedores-pedido/{id}', 'PedidosAdministradorProveedoresController@pedido');
-        Route::resource('repository',      'RepositorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-        Route::get('repository-download/{id}',  'RepositorioController@registro_descarga'); 
-        Route::get('download-file/{id}',  'RepositorioController@descargar'); 
-
+ 
         Route::resource('listar-pedidos-proveedor', 'SincronizacionProveedorController@listarPedidos', ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('analizar-sincronizacion-proveedor', 'SincronizacionProveedorController@analizarJson', ['only' => ['index', 'show', 'store','update','destroy']]);
 
-        
-
-        
+        Route::resource('repository',      'RepositorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+ 
     });
+    
+    Route::get('repository-download/{id}',  'RepositorioController@registro_descarga'); 
+    Route::get('download-file/{id}',  'RepositorioController@descargar'); 
 
     Route::group(['middleware' => 'almacen'], function () {
 
@@ -133,9 +136,9 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-presupuesto',               'PedidoController@obtenerDatosPresupuesto');
         Route::put('cancelar-pedido-transferir/{id}',   'CancelarPedidosController@cancelarYTransferir');
 
-        Route::resource('pedidos-jurisdiccionales',         'PedidoJurisdiccionalController',     ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::get('pedidos-jurisdiccionales-stats',        'PedidoJurisdiccionalController@stats');
-        Route::get('pedidos-jurisdiccionales-presupuesto',  'PedidoJurisdiccionalController@obtenerDatosPresupuesto');
+        //Route::resource('pedidos-jurisdiccionales',         'PedidoJurisdiccionalController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+        //Route::get('pedidos-jurisdiccionales-stats',        'PedidoJurisdiccionalController@stats');
+        //Route::get('pedidos-jurisdiccionales-presupuesto',  'PedidoJurisdiccionalController@obtenerDatosPresupuesto');
 
         Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['show', 'update','destroy']]);
 
@@ -201,6 +204,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
 
     Route::group(['prefix' => 'sync','namespace' => 'Sync'], function () {
+        Route::get('lista',      'SincronizacionController@lista');
         Route::get('manual',    'SincronizacionController@manual');        
         Route::get('auto',      'SincronizacionController@auto');
         Route::post('importar', 'SincronizacionController@importarSync');

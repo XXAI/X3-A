@@ -39,9 +39,9 @@ class CancelarPedidosController extends Controller
         }
 
         //return Response::json([ 'data' => $pedido, 'error' => 'error en el servidor bla bla bla' ],500);
-
-        DB::beginTransaction();
         try {
+            DB::beginTransaction();
+            
             $total_causes_disponible = 0.00;
             $total_no_causes_disponible = 0.00;
             $total_material_curacion_disponible = 0.00;

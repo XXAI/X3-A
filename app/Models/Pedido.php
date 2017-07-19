@@ -23,6 +23,10 @@ class Pedido extends BaseModel
         return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id')->orderBy("created_at");
     }
 
+    public function recepcionesBorrados(){
+        return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id')->withTrashed()->orderBy("created_at");
+    }
+
     public function director(){
         return $this->hasOne('App\Models\PersonalClues','id','director_id');
     }
@@ -53,5 +57,9 @@ class Pedido extends BaseModel
 
     public function proveedor(){
         return $this->belongsTo('App\Models\Proveedor','proveedor_id','id');
+    }
+
+    public function presupuestoApartado(){
+      return $this->hasOne('App\Models\PedidoPresupuestoApartado','pedido_id');
     }
 }

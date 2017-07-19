@@ -19,6 +19,10 @@ class MovimientoPedido extends BaseModel{
         return $this->belongsTo('App\Models\Movimiento','movimiento_id');
     }
 
+    public function movimientoBorrados(){
+        return $this->belongsTo('App\Models\Movimiento','movimiento_id')->withTrashed();
+    }
+
     public function entradaAbierta(){
         return $this->belongsTo('App\Models\Movimiento','movimiento_id')->where('tipo_movimiento_id',4)->where('status','BR');
     }

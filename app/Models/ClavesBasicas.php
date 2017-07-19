@@ -20,5 +20,9 @@ class ClavesBasicas extends BaseModel
         return $this->hasMany('App\Models\ClavesBasicasDetalle','claves_basicas_id');
     }
 
+    public function unidadesMedicas(){
+        return $this->hasMany('App\Models\ClavesBasicasUnidadMedica','claves_basicas_id');
+    }
+
     
 }

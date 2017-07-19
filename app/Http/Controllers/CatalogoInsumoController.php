@@ -15,7 +15,7 @@ use App\Models\GrupoInsumo;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 
-use App\Models\Stock;
+use App\Models\Stock, App\Models\ClavesBasicas, App\Models\ClavesBasicasDetalle,App\Models\ClavesBasicasUnidadMedica;
 
 
 class CatalogoInsumoController extends Controller
@@ -81,6 +81,29 @@ class CatalogoInsumoController extends Controller
                 case 'MC': $insumos = $insumos->where("insumos_medicos.tipo","MC"); break;
             }
         }
+        /*//////////////////////////////////////////////////*/
+        // AKIRA: CLAVES BÁSICAS Asignadas a la clues
+        /*//////////////////////////////////////////////////*/
+        
+        $claves_basicas_clues = ClavesBasicasUnidadMedica::where('clues',$request->get('clues'))->get();
+        // Si tiene asignada una  o más listas aplicamos el filtro, si no tiene se devolverían todos los insumos
+        // a menos que se quiera restringir podemos devolver una lista vacía si debe tener asignada una lista a la fuerza        
+        if(count($claves_basicas_clues)>0){
+            // Obtenemos los ids de todas las listas que tenga
+            $claves_basicas_ids = [];
+            foreach($claves_basicas_clues as $item){
+                $claves_basicas_ids[] = $item->claves_basicas_id;
+            }
+
+            $insumos_medicos = ClavesBasicasDetalle::whereIn('claves_basicas_id', $claves_basicas_ids)->groupBy('insumo_medico_clave')->get();
+            // Obtenemos las claves
+            $claves = [];
+            foreach($insumos_medicos as $item){
+                $claves[] = $item->insumo_medico_clave;
+            }
+            $insumos = $insumos->whereIn('clave',$claves);
+        }
+        /*//////////////////////////////////////////////////*/
 
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;

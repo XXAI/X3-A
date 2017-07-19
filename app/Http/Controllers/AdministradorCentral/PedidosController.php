@@ -7,7 +7,7 @@ use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests;
-use App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen;
+use App\Models\Usuario, App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen, App\Models\Repositorio, App\Models\LogPedidoBorrador, App\Models\PedidoPresupuestoApartado;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -36,10 +36,10 @@ class PedidosController extends Controller
             if (isset($parametros['q']) &&  $parametros['q'] != "") {
                 $items = $items->where(function($query) use ($parametros){
                     $query
-                        ->where('unidad_medica','LIKE',"%".$parametros['q']."%")
-                        ->orWhere('clues','LIKE',"%".$parametros['q']."%")
-                        ->orWhere('folio','LIKE',"%".$parametros['q']."%")
-                        ->orWhere('descripcion','LIKE',"%".$parametros['q']."%");
+                        ->where('unidades_medicas.nombre','LIKE',"%".$parametros['q']."%")
+                        ->orWhere('pedidos.clues','LIKE',"%".$parametros['q']."%")
+                        ->orWhere('pedidos.folio','LIKE',"%".$parametros['q']."%")
+                        ->orWhere('pedidos.descripcion','LIKE',"%".$parametros['q']."%");
                 });
             } 
 
@@ -127,6 +127,21 @@ class PedidosController extends Controller
         return Response::json([ 'data' => $items],200);
     }
 
+    public function listaArchivosProveedor($id, Request $request){
+        $repositorio = Repositorio::where("pedido_id", $id)
+                    ->select("id",
+                            "peso",
+                            "nombre_archivo",
+                            "created_at",
+                            "usuario_id",
+                            "usuario_deleted_id",
+                            "deleted_at",
+                            DB::RAW("(select count(*) from log_repositorio where repositorio_id=repositorio.id and accion='DOWNLOAD') as descargas"))
+                    ->withTrashed()
+                    ->get();
+    	return Response::json([ 'data' => $repositorio],200);	
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -135,8 +150,49 @@ class PedidosController extends Controller
 
     public function recepcion($id, Request $request){
         try{
-            //$pedido = Pedido::with("recepciones.movimiento.movimientoInsumos")->find($id);
-            $pedido = Pedido::with("recepciones.movimiento.movimientoInsumos")->where("id",$id)->first();
+            $pedido = Pedido::with("recepcionesBorrados.movimientoBorrados")
+                 ->where("id",$id)->first();
+
+            
+            foreach ($pedido->recepcionesBorrados as $key => $value) {
+                
+                $arreglo = array();     
+                $arreglo = $value;
+                
+                $claves = DB::table("stock")
+                                ->whereRaw("id in (select stock_id from movimiento_insumos where movimiento_id='".$value['movimiento_id']."')")
+                                ->select(DB::RAW("count(distinct(clave_insumo_medico)) as cantidad_insumos"))
+                                ->first();
+
+                $insumos = DB::table("movimiento_insumos")
+                                ->join("movimientos", "movimientos.id", "=", "movimiento_insumos.movimiento_id")
+                                ->where("movimiento_id","=",$value['movimiento_id'])
+                                ->where("movimientos.status","=","FI")
+                                ->select(DB::RAW("sum(cantidad) as cantidad"),
+                                        DB::RAW("sum(precio_total + iva) as monto"))
+                                ->first();    
+
+                $borrado = DB::table("log_recepcion_borrador")
+                                ->where("movimiento_id","=",$value['movimiento_id'])
+                                ->where("accion","=","RECEPCION ELIMINADA")
+                                ->select("created_at",
+                                        "usuario_id")
+                                ->first();                                
+
+                $arreglo['total_claves'] = $claves->cantidad_insumos;
+                $arreglo['total_cantidad'] = $insumos->cantidad;
+                $arreglo['total_monto'] = $insumos->monto;
+                if($borrado)
+                {
+                    $pedido->recepcionesBorrados[$key]['borrado_al'] = $borrado->created_at;
+                    $pedido->recepcionesBorrados[$key]['borrado_por'] = $borrado->usuario_id;
+                }else{
+                    $pedido->recepcionesBorrados[$key]['borrado_al'] = null;
+                    $pedido->recepcionesBorrados[$key]['borrado_por'] = null;
+                }
+                
+                $pedido->recepciones[$key]  = $arreglo;
+            }     
             return Response::json([ 'data' => $pedido],200);
         } catch (\Exception $e) {
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
@@ -145,12 +201,110 @@ class PedidosController extends Controller
     
     public function regresarBorrador($id, Request $request){
         try{
+            $usuario = Usuario::with(['roles.permisos'=>function($permisos){
+                $permisos->where('id','pgDHA25rRlWvMxdb6aH38xG5p1HUFznS');
+            }])->find($request->get('usuario_id'));
+            
+            $tiene_acceso = false;
+
+            if(!$usuario->su){
+                $permisos = [];
+                foreach ($usuario->roles as $index => $rol) {
+                    if(count($rol->permisos) > 0){
+                        $tiene_acceso = true;
+                        break;
+                    }
+                }
+            }else{
+                $tiene_acceso = true;
+            }
+
+            if(!$tiene_acceso){
+                return Response::json(['error' =>"No tiene permiso para realizar esta acción."], 500);
+            }
+
             DB::beginTransaction();
             
-            $pedido = Pedido::find($id);
+            $pedido = Pedido::with("recepciones.movimiento")->find($id);
+            $bandera = 0;
+            $validador_recepcion = 0;
+            if (count($pedido->recepciones) >0) {
+                $validador_recepcion++;
+                foreach ($pedido->recepciones as $key => $value) {
+                    if($value['movimiento']['status'] == "BR")
+                            $bandera++;
+                }
+            }
+            
+            /*if($bandera > 0)
+            {
+                return Response::json(['error' =>"Error, debe de finalizar todas las recepciones para poder regresar a borrador"], 500);
+            }*/
+            if($pedido->status == "BR")
+            {
+                return Response::json(['error' =>"El pedido ya se encuentra en borrador, por favor verificar"], 500);
+            }
+            
             $pedido->status = "BR";
             $pedido->save();
 
+            if($validador_recepcion > 0)
+            {
+                //Harima: Como regresamos el pedido a borrador aun teniendo recepciones, guardamos el presupuesto del pedido que tenemos actualmente en comprometido/devengado para poder hacer los ajustes despues de finalizar el proyecto
+                $pedido->load('insumos.insumoDetalle');
+                $causes_solicitado = 0;
+                $causes_recibido = 0;
+                $no_causes_solicitado = 0;
+                $no_causes_recibido = 0;
+                $material_curacion_solicitado = 0;
+                $material_curacion_recibido = 0;
+
+                foreach ($pedido->insumos as $insumo) {
+                    if($insumo->insumoDetalle->tipo == "ME"){
+                        if($insumo->insumoDetalle->es_causes == 1){
+                            $causes_solicitado += $insumo->monto_solicitado;
+                            $causes_recibido += ($insumo->monto_recibido+0);
+                        }else{
+                            $no_causes_solicitado += $insumo->monto_solicitado;
+                            $no_causes_recibido += ($insumo->monto_recibido+0);
+                        }
+                    }else{
+                        $material_curacion_solicitado += $insumo->monto_solicitado;
+                        $material_curacion_recibido += ($insumo->monto_recibido+0);
+                    }
+                }
+
+                if($material_curacion_solicitado > 0){
+                    $material_curacion_solicitado += $material_curacion_solicitado*16/100;
+                }
+
+                if($material_curacion_recibido > 0){
+                    $material_curacion_recibido += $material_curacion_recibido*16/100;
+                }
+
+                $fecha = explode("-", $pedido->fecha);
+
+                PedidoPresupuestoApartado::create(array(
+                    'clues' => $pedido->clues,
+                    'pedido_id' => $pedido->id,
+                    'almacen_id' => $pedido->almacen_solicitante,
+                    'mes' => $fecha[1],
+                    'causes_comprometido' => ($causes_solicitado-$causes_recibido),
+                    'causes_devengado' => $causes_recibido,
+                    'no_causes_comprometido' => ($no_causes_solicitado-$no_causes_recibido),
+                    'no_causes_devengado' => $no_causes_recibido,
+                    'material_curacion_comprometido' => ($material_curacion_solicitado-$material_curacion_recibido),
+                    'material_curacion_devengado' => $material_curacion_recibido
+                ));
+
+                $arreglo_log = array("pedido_id"=>$id,
+                                     'ip' =>$request->ip(),
+                                     'navegador' =>$request->header('User-Agent'),
+                                     "accion"=>"REGRESO BORRADOR CON RECEPCIONES");
+                LogPedidoBorrador::create($arreglo_log);
+                DB::commit();
+                return Response::json([ 'data' => $pedido],200);
+            }
             $almacen = Almacen::find($pedido->almacen_solicitante);
 
             if(!$almacen){
@@ -205,17 +359,24 @@ class PedidosController extends Controller
                                                     ->where("proveedor_id", $proveedor->id)
                                                     ->first();
 
-            $presupuesto->causes_comprometido               = ($presupuesto->causes_comprometido - $total_causes);                                         
-            $presupuesto->no_causes_comprometido            = ($presupuesto->no_causes_comprometido - $total_no_causes);                                         
-            $presupuesto->material_curacion_comprometido    = ($presupuesto->material_curacion_comprometido - $total_material_curacion); 
-
             $presupuesto->causes_disponible                 = ($presupuesto->causes_disponible + $total_causes);     
             $presupuesto->no_causes_disponible              = ($presupuesto->no_causes_disponible + $total_no_causes);                                         
-            $presupuesto->material_curacion_disponible      = ($presupuesto->material_curacion_disponible + $total_material_curacion);
+            $presupuesto->material_curacion_disponible      = round(($presupuesto->material_curacion_disponible + $total_material_curacion),2);                                        
 
-            $presupuesto->save();                                   
+            $presupuesto->causes_comprometido               = ($presupuesto->causes_comprometido - $total_causes);                                         
+            $presupuesto->no_causes_comprometido            = ($presupuesto->no_causes_comprometido - $total_no_causes);                                         
+            $presupuesto->material_curacion_comprometido    = round(($presupuesto->material_curacion_comprometido - $total_material_curacion),2); 
+
+            $presupuesto->save(); 
+
+            $arreglo_log = array("pedido_id"=>$id,
+                                     'ip' =>$request->ip(),
+                                     'navegador' =>$request->header('User-Agent'),
+                                     "accion"=>"REGRESO BORRADOR SIN RECEPCIONES");
+            LogPedidoBorrador::create($arreglo_log);
+
             DB::commit();
-
+            
             return Response::json([ 'data' => $presupuesto],200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -223,8 +384,7 @@ class PedidosController extends Controller
         } 
     }
 
-    public function excel()
-    {
+    public function excel(){
         $parametros = Input::only('q','status','proveedores','jurisdicciones', 'fecha_desde','fecha_hasta', 'ordenar_causes','ordenar_no_causes','ordenar_material_curacion');
 
         $items = self::getItemsQuery($parametros);
@@ -349,42 +509,42 @@ class PedidosController extends Controller
                     '',
                     '',
 
-/*G*/               "=SUM(G3:G$contador_filas)",
-/*H*/               "=SUM(H3:H$contador_filas)",
-/*I*/               "=SUM(I3:I$contador_filas)",
-/*J*/               "=SUM(J3:J$contador_filas)",
-/*K*/               "=SUM(K3:K$contador_filas)",
-/*L*/               "=SUM(L3:L$contador_filas)",
-/*M*/               "=J".($contador_filas+1)."/G".($contador_filas+1),
-/*N*/               "=K".($contador_filas+1)."/H".($contador_filas+1),
-/*O*/               "=L".($contador_filas+1)."/I".($contador_filas+1),
-/*P*/               "=SUM(P3:P$contador_filas)",
-/*Q*/               "=SUM(Q3:Q$contador_filas)",
-/*R*/               "=SUM(R3:R$contador_filas)",
-/*S*/               "=SUM(S3:S$contador_filas)",
-/*T*/               "=SUM(T3:T$contador_filas)",
-/*U*/               "=SUM(U3:U$contador_filas)",
-/*V*/               "=S".($contador_filas+1)."/P".($contador_filas+1),
-/*W*/               "=T".($contador_filas+1)."/Q".($contador_filas+1),
-/*X*/               "=U".($contador_filas+1)."/R".($contador_filas+1),
-/*Y*/               "=SUM(Y3:Y$contador_filas)",
-/*Z*/               "=SUM(Z3:Z$contador_filas)",
-/*AA*/              "=SUM(AA3:AA$contador_filas)",
-/*AB*/              "=SUM(AB3:AB$contador_filas)",
-/*AC*/              "=SUM(AC3:AC$contador_filas)",
-/*AD*/              "=SUM(AD3:AD$contador_filas)",
-/*AE*/              "=AB".($contador_filas+1)."/Y".($contador_filas+1),
-/*AF*/              "=AC".($contador_filas+1)."/Z".($contador_filas+1),
-/*AG*/              "=AD".($contador_filas+1)."/AA".($contador_filas+1),
-/*AH*/              "=SUM(AH3:AH$contador_filas)",
-/*AI*/              "=SUM(AI3:AI$contador_filas)",
-/*AJ*/              "=SUM(AJ3:AJ$contador_filas)",
-/*AK*/              "=SUM(AK3:AK$contador_filas)",
-/*AL*/              "=SUM(AL3:AL$contador_filas)",
-/*AM*/              "=SUM(AM3:AM$contador_filas)",
-/*AN*/              "=AK".($contador_filas+1)."/AH".($contador_filas+1),
-/*AO*/              "=AL".($contador_filas+1)."/AI".($contador_filas+1),
-/*AP*/              "=AM".($contador_filas+1)."/AJ".($contador_filas+1),
+        /*G*/       "=SUM(G3:G$contador_filas)",
+        /*H*/       "=SUM(H3:H$contador_filas)",
+        /*I*/       "=SUM(I3:I$contador_filas)",
+        /*J*/       "=SUM(J3:J$contador_filas)",
+        /*K*/       "=SUM(K3:K$contador_filas)",
+        /*L*/       "=SUM(L3:L$contador_filas)",
+        /*M*/       "=J".($contador_filas+1)."/G".($contador_filas+1),
+        /*N*/       "=K".($contador_filas+1)."/H".($contador_filas+1),
+        /*O*/       "=L".($contador_filas+1)."/I".($contador_filas+1),
+        /*P*/       "=SUM(P3:P$contador_filas)",
+        /*Q*/       "=SUM(Q3:Q$contador_filas)",
+        /*R*/       "=SUM(R3:R$contador_filas)",
+        /*S*/       "=SUM(S3:S$contador_filas)",
+        /*T*/       "=SUM(T3:T$contador_filas)",
+        /*U*/       "=SUM(U3:U$contador_filas)",
+        /*V*/       "=S".($contador_filas+1)."/P".($contador_filas+1),
+        /*W*/       "=T".($contador_filas+1)."/Q".($contador_filas+1),
+        /*X*/       "=U".($contador_filas+1)."/R".($contador_filas+1),
+        /*Y*/       "=SUM(Y3:Y$contador_filas)",
+        /*Z*/       "=SUM(Z3:Z$contador_filas)",
+        /*AA*/      "=SUM(AA3:AA$contador_filas)",
+        /*AB*/      "=SUM(AB3:AB$contador_filas)",
+        /*AC*/      "=SUM(AC3:AC$contador_filas)",
+        /*AD*/      "=SUM(AD3:AD$contador_filas)",
+        /*AE*/      "=AB".($contador_filas+1)."/Y".($contador_filas+1),
+        /*AF*/      "=AC".($contador_filas+1)."/Z".($contador_filas+1),
+        /*AG*/      "=AD".($contador_filas+1)."/AA".($contador_filas+1),
+        /*AH*/      "=SUM(AH3:AH$contador_filas)",
+        /*AI*/      "=SUM(AI3:AI$contador_filas)",
+        /*AJ*/      "=SUM(AJ3:AJ$contador_filas)",
+        /*AK*/      "=SUM(AK3:AK$contador_filas)",
+        /*AL*/      "=SUM(AL3:AL$contador_filas)",
+        /*AM*/      "=SUM(AM3:AM$contador_filas)",
+        /*AN*/      "=AK".($contador_filas+1)."/AH".($contador_filas+1),
+        /*AO*/      "=AL".($contador_filas+1)."/AI".($contador_filas+1),
+        /*AP*/      "=AM".($contador_filas+1)."/AJ".($contador_filas+1),
 
                     ''
                 ));
@@ -435,7 +595,7 @@ class PedidosController extends Controller
          })->export('xls');
     }
 
-    private function getItemsQuery($parametros){       
+    private function getItemsQuery($parametros){
 
         $items = DB::table(DB::raw('(
                 select
@@ -450,6 +610,8 @@ class PedidosController extends Controller
                     P.fecha_concluido,
                     P.fecha_expiracion,
                     P.descripcion, 
+
+                    count(REP.id) as numero_archivos,
                     
                     P.total_claves_solicitadas, 
                     P.total_cantidad_solicitada, 
@@ -490,6 +652,8 @@ class PedidosController extends Controller
                     left join unidades_medicas UM on UM.clues = P.clues
                     left join proveedores PR on P.proveedor_id = PR.id
 
+                    left join repositorio REP on REP.pedido_id = P.id and REP.deleted_at is null
+
                     left join (
                         select PC.pedido_id, count(PC.insumo_medico_clave) as total_claves_causes, sum(PC.cantidad_solicitada) as total_cantidad_causes, sum(PC.monto_solicitado) as total_monto_causes,
                         sum(if(PC.cantidad_recibida>0,1,0)) as total_claves_causes_recibidas, sum(PC.cantidad_recibida) as total_cantidad_causes_recibida, sum(PC.monto_recibido) as total_monto_causes_recibido
@@ -518,6 +682,8 @@ class PedidosController extends Controller
                     ) as IMC on IMC.pedido_id = P.id
 
                     where P.deleted_at is null
+
+                    group by P.id
                 
             ) as pedidos'));
             

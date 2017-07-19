@@ -43,7 +43,5 @@ return [
 
     'tablas' => [
         "usuarios",
-        "tabla_a", // Esta tabla es demo puede ser borrada
-        "tabla_b", // Esta tabla es demo puede ser borrada si se borro la tabla_a
     ],
 ];

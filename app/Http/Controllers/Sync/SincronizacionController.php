@@ -7,11 +7,34 @@ use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
 use \DB, \Storage, \ZipArchive, \Hash, \Response, \Config;
+use Illuminate\Support\Facades\Input;
 use App\Models\Sincronizacion, App\Models\Servidor; 
 use App\Librerias\Sync\ArchivoSync;
 
 class SincronizacionController extends \App\Http\Controllers\Controller
 {
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function lista()
+    {
+
+        $parametros = Input::only('page','per_page','q');
+        $items = Sincronizacion::select('sincronizaciones.*', 'servidores.nombre as servidor_nombre')->leftjoin("servidores","servidores.id","=","sincronizaciones.servidor_id")->orderBy('created_at','desc');
+        
+        
+        
+        if(isset($parametros['page'])){
+            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+            $items = $items->paginate($resultadosPorPagina);
+        } else {
+            $items = $items->get();
+        }
+       
+        return Response::json([ 'data' => $items],200);
+    }
     
     /**
      * Crea un archivo comprimido para sincronización protegido con SECRET KEY 
@@ -134,7 +157,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                 throw new \Exception("No se pudo crear el archivo");
             }
         } catch (\Exception $e) {    
-            echo " Sync Manual Excepción: ".$e->getMessage();
+            //echo " Sync Manual Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Manual Excepción: ".$e->getMessage());  
             Storage::deleteDirectory("sync");     
             return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);   
@@ -347,7 +370,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                 throw new \Exception("No hay archivo.");
             }
         } catch (\Illuminate\Database\QueryException $e){
-            echo " Sync Importación Excepción: ".$e->getMessage();
+            //echo " Sync Importación Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Importación Excepción: ".$e->getMessage());
             DB::rollback();
             return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
@@ -484,6 +507,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
      */
     public function auto()
     {
+        $log = "";
         $ultima_sincronizacion =  Sincronizacion::select('fecha_generacion')->where("servidor_id",env("SERVIDOR_ID"))->orderBy('fecha_generacion','desc')->first();
         $fecha_generacion = date('Y-m-d H:i:s');
         
@@ -498,10 +522,10 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         }
         
         try {
-            echo "[#] Inicia Sincronización al: $fecha_generacion [#] \n\n";
+            $log .= "[#] Inicia Sincronización al: $fecha_generacion [#] \n\n";
 
             // Sincronizamos tablas de local a remoto 
-            echo "### Tablas [local -> remoto]: ----------------------- ### \n";
+            $log .= "### Tablas [local -> remoto]: ----------------------- ### \n";
             foreach(Config::get("sync.tablas")as $key){
                 
                 if ($ultima_sincronizacion) {
@@ -548,13 +572,13 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                    
                     $conexion_remota->statement($statement);
 
-                    echo "Tabla: ".$key."\t=> ".count($rows)." registros sincronizados \n";
+                    $log .= "Tabla: ".$key."\t=> ".count($rows)." registros sincronizados \n";
                 } else {
-                    echo "Tabla: ".$key."\t=> 0 registros sincronizados \n";
+                    $log .= "Tabla: ".$key."\t=> 0 registros sincronizados \n";
                 }
             }   
             //  Sincronizamos catálogos de remoto a local
-            echo "\n### Catálogos [remoto -> local]: -------------------- ### \n";
+            $log .= "\n### Catálogos [remoto -> local]: -------------------- ### \n";
             foreach (Config::get("sync.catalogos") as $key) {
                    
                 $ultima_actualizacion_local = DB::table($key)->max("updated_at");                 
@@ -608,9 +632,9 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                    
                     DB::statement($statement);
 
-                    echo "Tabla: ".$key."\t=> ".count($rows)." registros sincronizados \n";
+                    $log .= "Tabla: ".$key."\t=> ".count($rows)." registros sincronizados \n";
                 } else {
-                    echo "Tabla: ".$key."\t=> 0 registros sincronizados \n";
+                    $log .= "Tabla: ".$key."\t=> 0 registros sincronizados \n";
                 } 
 
                 
@@ -635,25 +659,31 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             DB::commit();
             $conexion_remota->commit();
 
-            echo "\n[#] Fin de Sincronización [#] \n";
+            $log .= "\n[#] Fin de Sincronización [#] \n";
+
+
+            return \Response::json([ 'data' => $log],200);
 
         } catch (\Illuminate\Database\QueryException $e){
-            echo " Sync Auto Excepción: ".$e->getMessage();
+            $log .= " Sync Auto Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Auto Excepción: ".$e->getMessage());
             DB::rollback();
             $conexion_remota->rollback();
+            return \Response::json([ 'data' => $log],500);
         }
         catch (\ErrorException $e) {
-            echo " Sync Auto Excepción: ".$e->getMessage();
+            $log .= " Sync Auto Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Auto Excepción: ".$e->getMessage());
             DB::rollback();
             $conexion_remota->rollback();
+            return \Response::json([ 'data' => $log],500);
         } 
         catch (\Exception $e) {            
-            echo " Sync Auto Excepción: ".$e->getMessage();
+            $log .= " Sync Auto Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Auto Excepción: ".$e->getMessage());
             DB::rollback();
             $conexion_remota->rollback();
+            return \Response::json([ 'data' => $log],500);
         }
     }
 }

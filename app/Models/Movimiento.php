@@ -3,6 +3,8 @@ namespace App\Models;
 
 use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use \DB;
+
 
 class Movimiento extends BaseModel{
     
@@ -20,6 +22,10 @@ class Movimiento extends BaseModel{
 
     public function movimientoInsumos(){
         return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id')->with('stockGrupo');
+    }
+
+    public function movimientoInsumosStock(){
+        return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id')->with('stock');
     }
 
     public function movimientoPedido(){
@@ -41,6 +47,6 @@ class Movimiento extends BaseModel{
     public function almacen(){
         return $this->hasOne('App\Models\Almacen','id','almacen_id');
     }
- 
 
+   
 }
