@@ -51,7 +51,9 @@ class MisClavesController extends Controller
             ->leftJoin('insumos_medicos', 'insumos_medicos.clave', '=' , 'clues_claves.clave_insumo_medico')
             ->select('clues_claves.clues','clues_claves.clave_insumo_medico','clues_claves.usuario_id','clues_claves.created_at','clues_claves.updated_at',
                      'insumos_medicos.clave','insumos_medicos.tipo','insumos_medicos.es_causes','insumos_medicos.descripcion')
-            ->where("clues", $clues)->get();
+            ->where("clues", $clues)
+            ->where("clues_claves.deleted_at", NULL)
+            ->get();
             return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $data), 200);
         }  
     }

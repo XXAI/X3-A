@@ -106,12 +106,6 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('repository',      'RepositorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
         Route::get('repository-download/{id}',  'RepositorioController@registro_descarga'); 
         Route::get('download-file/{id}',  'RepositorioController@descargar'); 
-
-        Route::resource('listar-pedidos-proveedor', 'SincronizacionProveedorController@listarPedidos', ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::resource('analizar-sincronizacion-proveedor', 'SincronizacionProveedorController@analizarJson', ['only' => ['index', 'show', 'store','update','destroy']]);
-
-        
-
         
     });
 
