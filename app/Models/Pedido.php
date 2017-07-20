@@ -20,7 +20,7 @@ class Pedido extends BaseModel
     }
 
     public function recepciones(){
-        return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id')->orderBy("created_at");
+        return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id');
     }
 
     public function recepcionesBorrados(){

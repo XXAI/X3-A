@@ -303,8 +303,10 @@ class EntregasMesController extends Controller
                             ->where(DB::raw('month(fecha)'),$input['mes'])
                             ->where(DB::raw('year(fecha)'),$input['anio'])
                             ->where('status','!=','BR')
-                            ->with(['recepciones.entrada'=>function($entrada){
-                                $entrada->orderBy('fecha_movimiento','asc');
+                            ->with(['recepciones'=>function($entrada){
+                                $entrada->select('movimiento_pedido.*','movimientos.fecha_movimiento')
+                                        ->leftjoin('movimientos','movimientos.id','=','movimiento_pedido.movimiento_id')
+                                        ->orderBy('movimientos.fecha_movimiento');
                             },'recepciones.entrada.insumosDetalles'])->get();
             
             return Response::json([ 'data' => $pedidos],200);
