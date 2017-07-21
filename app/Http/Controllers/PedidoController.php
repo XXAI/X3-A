@@ -194,7 +194,7 @@ class PedidoController extends Controller{
         $almacen = Almacen::find($request->get('almacen_id'));
         $um = UnidadMedica::find( $almacen->clues);
 
-        if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
+        if($almacen->nivel_almacen == 1 && ($almacen->tipo_almacen == 'ALMPAL' || $almacen->tipo_almacen == 'FARSBR')){
             $reglas['proveedor_id'] = 'required';
             $parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
             $parametros['datos']['almacen_proveedor'] = null;
@@ -337,9 +337,9 @@ class PedidoController extends Controller{
         $almacen = Almacen::find($request->get('almacen_id'));
         $um = UnidadMedica::find( $almacen->clues);
 
-        if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
+        if($almacen->nivel_almacen == 1 && ($almacen->tipo_almacen == 'ALMPAL' || $almacen->tipo_almacen == 'FARSBR')){
             //$reglas['proveedor_id'] = 'required';
-            //$parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
+            $parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
             $parametros['datos']['almacen_proveedor'] = null;
         }elseif($almacen->nivel_almacen == 2){
             $reglas['almacen_proveedor'] = 'required';
