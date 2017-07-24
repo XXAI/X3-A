@@ -7,7 +7,7 @@ use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests;
-use App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen, App\Models\Repositorio, App\Models\LogPedidoBorrador;
+use App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen, App\Models\Repositorio, App\Models\LogPedidoBorrador, App\Models\LogPedidoCancelado;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -214,12 +214,9 @@ class PedidosController extends Controller
                 }
             }
             
-            /*if($bandera > 0)
-            {
-                return Response::json(['error' =>"Error, debe de finalizar todas las recepciones para poder regresar a borrador"], 500);
-            }*/
             if($pedido->status == "BR")
             {
+                BD::rollBack();
                 return Response::json(['error' =>"El pedido ya se encuentra en borrador, por favor verificar"], 500);
             }
             
@@ -309,6 +306,127 @@ class PedidosController extends Controller
             DB::commit();
             
             return Response::json([ 'data' => $presupuesto],200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
+
+      public function regresarBorradorCancelado($id, Request $request){
+        try{
+            DB::beginTransaction();
+            
+            $pedido = Pedido::with("recepciones.movimiento")->find($id);
+
+            $almacen = Almacen::find($pedido->almacen_solicitante);
+
+            if(!$almacen){
+                return Response::json(['error' =>"No se encontró el almacen."], 500);
+            }
+            
+            $proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
+
+            $contrato_activo = $proveedor->contratoActivo;
+            $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad", "contratos_precios.tipo_insumo_id", "medicamentos.cantidad_x_envase")->withTrashed()->get();
+            $lista_insumos = array();
+            foreach ($insumos as $key => $value) {
+                $array_datos = array();
+                $array_datos['precio']              = $value['precio'];
+                $array_datos['clave']               = $value['clave'];
+                $array_datos['tipo']                = $value['tipo'];
+                $array_datos['tipo_insumo_id']      = $value['tipo_insumo_id'];
+                $array_datos['es_causes']           = $value['es_causes'];
+                $array_datos['caducidad']           = $value['tiene_fecha_caducidad'];
+                $array_datos['cantidad_unidosis']   = $value['cantidad_x_envase'];
+                $lista_insumos[$value['clave']]     = $array_datos;
+            }
+
+            $pedido = $pedido->load("insumos");
+
+            $total_causes               = 0;
+            $total_no_causes            = 0;
+            $total_material_curacion    = 0;
+
+            foreach ($pedido->insumos as $key => $value) {
+                if($lista_insumos[$value['insumo_medico_clave']]['tipo'] == "ME")
+                {
+                    if($lista_insumos[$value['insumo_medico_clave']]['es_causes']== 1)
+                    {
+                        $total_causes += ($value['monto_solicitado'] - $value['monto_recibido']);
+                    }else
+                    {
+                        $total_no_causes += ($value['monto_solicitado'] - $value['monto_recibido']);
+                    }
+                }else
+                {
+                    $total_material_curacion += (($value['monto_solicitado'] - $value['monto_recibido']) * 1.16);
+                }
+            }
+
+            //return Response::json([ 'data' => $total_causes." - ".$total_no_causes." - ".$total_material_curacion],500);
+            $logPedidoCancelado = LogPedidoCancelado::where("pedido_id", $id)->first();
+
+            if(!$logPedidoCancelado)
+            {
+                 BD::rollBack();
+                return Response::json(['error' =>"No se encuentra el registro de cancelación, por favor contacte al administrador"], 500);
+            }
+
+            $total = $total_causes + $total_no_causes + round($total_material_curacion);
+
+            if($total > $logPedidoCancelado->total_monto_restante)
+            {
+                BD::rollBack();
+                return Response::json(['error' =>"Ha ocurrido un desajuste en el monto de algún insumo, por favor contacte al administrador"], 500);   
+            }
+
+            $unidad_medica = UnidadMedicaPresupuesto::where("almacen_id", $pedido->almacen_solicitante)
+                                                      ->where("clues", $pedido->clues)  
+                                                      ->where("mes", $logPedidoCancelado->mes_destino)  
+                                                      ->where("anio", $logPedidoCancelado->anio_destino)
+                                                      ->first();  
+
+            //return Response::json([ 'data' => $unidad_medica->causes_disponible."-".$total_causes." -- ".$unidad_medica->no_causes_disponible."-".$total_no_causes." -- ".$unidad_medica->material_curacion_disponible."-".$total_material_curacion],500);                                          
+            if($unidad_medica->causes_disponible < $total_causes || $unidad_medica->no_causes_disponible < $total_no_causes || $unidad_medica->material_curacion_disponible < $total_material_curacion)
+            {
+                DB::rollBack();
+                return Response::json(['error' =>"No existe presupuesto suficiente para generar este proceso, por favor contacte al administrador"], 500);
+            }                                          
+
+            $unidad_medica->causes_modificado -= $total_causes;
+            $unidad_medica->causes_disponible -= $total_causes;
+            $unidad_medica->no_causes_modificado -= $total_no_causes;
+            $unidad_medica->no_causes_disponible -= $total_no_causes;
+            $unidad_medica->material_curacion_modificado -= $total_material_curacion;
+            $unidad_medica->material_curacion_disponible -= $total_material_curacion;
+
+            $unidad_medica->save();
+            $fecha = explode("-", $pedido->fecha);
+
+            $unidad_medica_destino = UnidadMedicaPresupuesto::where("almacen_id", $pedido->almacen_solicitante)
+                                                      ->where("clues", $pedido->clues)  
+                                                      ->where("mes", intVal($fecha[1]))
+                                                      ->where("anio", intVal($fecha[0]))
+                                                      ->first();  
+
+            //return Response::json([ 'data' => $pedido->almacen_solicitante." - ".$pedido->clues." - ".intVal($fecha[1])." - ".intVal($fecha[0])],500);                                          
+            $unidad_medica_destino->causes_comprometido += $total_causes;
+            $unidad_medica_destino->causes_modificado += $total_causes;
+            $unidad_medica_destino->no_causes_comprometido += $total_no_causes;
+            $unidad_medica_destino->no_causes_modificado += $total_no_causes;
+            $unidad_medica_destino->material_curacion_comprometido += $total_material_curacion;
+            $unidad_medica_destino->material_curacion_modificado += $total_material_curacion;
+
+            $unidad_medica_destino->save();
+        
+            LogPedidoCancelado::where("pedido_id", $id)->delete();
+
+             $pedido->status = "EX";
+             $pedido->save();
+             
+             DB::commit();
+            
+            return Response::json([ 'data' => $unidad_medica_destino],200);
         } catch (\Exception $e) {
             DB::rollBack();
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);

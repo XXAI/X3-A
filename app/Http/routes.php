@@ -96,6 +96,7 @@ Route::group(['middleware' => 'jwt'], function () {
         //Configuuración de pedidos
         Route::get('pedidos-recepcion/{id}', 'PedidosController@recepcion');        
         Route::get('pedidos-borrador/{id}', 'PedidosController@regresarBorrador');
+        Route::get('pedidos-borrador-cancelado/{id}', 'PedidosController@regresarBorradorCancelado');
         Route::get('recepcion-borrador/{id}', 'RecepcionPedidoController@borrarRecepcion');        
 
     });
