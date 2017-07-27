@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AlterMovimientoMetadatosTable extends Migration
+class AlterTablaMovimientoMetadatos extends Migration
 {
     /**
      * Run the migrations.
@@ -14,7 +14,7 @@ class AlterMovimientoMetadatosTable extends Migration
     {
         Schema::table('movimiento_metadatos', function (Blueprint $table)
         {
-                $table->integer('servicio_id')->nullable()->change();
+                $table->integer('servicio_id')->nullable()->unsigned()->change();
                 
         });
     }

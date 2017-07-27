@@ -108,8 +108,9 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-administrador-proveedores-excel', 'PedidosAdministradorProveedoresController@excel');
         Route::get('pedidos-administrador-proveedores-pedido/{id}', 'PedidosAdministradorProveedoresController@pedido');
  
-        Route::resource('listar-pedidos-proveedor', 'SincronizacionProveedorController@listarPedidos', ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::resource('analizar-sincronizacion-proveedor', 'SincronizacionProveedorController@analizarJson', ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::get('listar-pedidos-proveedor', 'SincronizacionProveedorController@listarPedidos');
+        Route::post('analizar-json-proveedor', 'SincronizacionProveedorController@analizarJson');
+        Route::post('procesar-json-proveedor', 'SincronizacionProveedorController@procesarJson');
 
         Route::resource('repository',      'RepositorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
  

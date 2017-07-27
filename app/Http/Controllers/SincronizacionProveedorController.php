@@ -15,10 +15,12 @@ use App\Models\CluesTurno;
 use App\Models\UnidadMedica;
 use App\Models\Pedido;
 use App\Models\PedidoInsumo;
+use App\Models\MovimientoPedido;
 use App\Models\Usuario;
 use App\Models\Almacen;
 use App\Models\Contrato;
 use App\Models\Proveedor;
+use App\Models\Receta;
 
 
 /** 
@@ -43,19 +45,6 @@ class SincronizacionProveedorController extends Controller
     {
         //var_dump(json_encode($request)); die();
 
-        $proveedor_id = $request->get('proveedor_id');
-
-        $items = Pedido::where('proveedor_id',$proveedor_id);
-        
-        if(isset($parametros['page'])){
-            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
-            $items = $items->paginate($resultadosPorPagina);
-        } else {
-            $items = $items->get();
-        }
-       
-        return Response::json([ 'data' => $items],200);
-    
     }
 
  ///***************************************************************************************************************************
@@ -105,16 +94,20 @@ public function listarPedidos(Request $request)
 {
     $proveedor_id = $request->get('proveedor_id');
 
-    $items = Pedido::where('proveedor_id',$proveedor_id);
+    $data = Pedido::where('proveedor_id',$proveedor_id);
         
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
-            $items = $items->paginate($resultadosPorPagina);
+            $data = $data->paginate($resultadosPorPagina);
         } else {
-            $items = $items->get();
+            $data = $data->get();
         }
        
-        return Response::json([ 'data' => $items],200);
+        
+        //return Response::json(["data"=>$data], 200);
+    return Response::json(array("data" => array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data, "total" => count($data))), 200);
+
+
 }
 
 ///***************************************************************************************************************************
@@ -126,35 +119,249 @@ public function analizarJson(Request $request)
 
     $input_data = (object)Input::json()->all();
 
-    $errors                  = 0;
+    $pedido_id      = $input_data->pedido;
+    $json_proveedor = $input_data->json;
+
+    if(is_array($json_proveedor))
+    { $json_proveedor = (object)$json_proveedor; }
+
+    $errors                  = array();
+
+    $total_recetas           = 0;
     $recetas_validas         = 0;
     $recetas_invalidas       = 0;
+
+    $total_colectivos        = 0;
     $colectivos_validos      = 0;
     $colectivos_invalidos    = 0;
 
-    if(property_exists($input_data, "recetas"))
+    if(property_exists($json_proveedor, "recetas"))
     {
-        foreach($input_data['recetas'] as $receta)
-        {
-            $folio = $receta->folio;
+        foreach($json_proveedor->recetas as $receta)
+        {   $total_recetas++;
+            $receta = (object) $receta;
+
+            $folio_buscar = $receta->folio;
+
+            $receta_buscar = Receta::where("folio",$folio_buscar);
+            if($receta_buscar)
+            { $recetas_invalidas++; }else{ $recetas_validas++; }
+        }
+
+    }else{
+            array_push($errors, array(array('recetas' => array('no_exite_recetas'))));
+         }
+
+    if(property_exists($json_proveedor, "colectivos"))
+    {
+        foreach($json_proveedor->colectivos as $colectivo)
+        {   $total_colectivos++;
+            $colectivo = (object) $colectivo;
+
+            $folio_buscar = $colectivo->folio;
+
+            $colectivo_buscar = Receta::where("folio",$folio_buscar);
+            if($colectivo_buscar)
+            { $colectivos_invalidos++; }else{ $colectivos_validos++; }
+        }
+
+    }else{
+            array_push($errors, array(array('colectivos' => array('no_exite_colectivos'))));
+         }
+
+    if( count($errors) > 0 )
+    {
+        return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+    }else{
+
+        $data = array(
+                     "total_recetas" => $total_recetas,
+                     "recetas_validas" => $recetas_validas,
+                     "recetas_invalidas" => $recetas_invalidas,
+                     "total_colectivos" => $total_colectivos,
+                     "colectivos_validos" => $colectivos_validos,
+                     "colectivos_invalidos" => $colectivos_invalidos);
+
+        return Response::json(array("data" => array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data)), 200);
+
+    }
+        
+            
+        
+         
+
+
+            
+}
+
+////////////////////////   P R O C E S A R      J S O N                              P R O C E S A R      J S O N  
+///***************************************************************************************************************************
+///***************************************************************************************************************************
+
+ public function procesarJson(Request $request)
+{
+    $proveedor_id = $request->get('proveedor_id');
+
+    $input_data = (object)Input::json()->all();
+
+    $pedido_id      = $input_data->pedido;
+    $json_proveedor = $input_data->json;
+
+    if(is_array($json_proveedor))
+    { $json_proveedor = (object)$json_proveedor; }
+
+    $errors                  = array();
+
+    $total_recetas           = 0;
+    $recetas_validas         = 0;
+    $recetas_invalidas       = 0;
+
+    $total_colectivos        = 0;
+    $colectivos_validos      = 0;
+    $colectivos_invalidos    = 0;
+
+    if(property_exists($json_proveedor, "recetas"))
+    {
+        foreach($json_proveedor->recetas as $receta)
+        {   $total_recetas++;
+            $receta = (object) $receta;
+
+            $folio_buscar = $receta->folio;
+
+            $receta_buscar = Receta::where("folio",$folio_buscar);
+            if($receta_buscar)
+            { $recetas_invalidas++; }else{ $recetas_validas++; }
+
+            $movimiento = new Movimiento();
+            $movimiento->almacen_id                     = $json_proveedor->almacen_id;
+            $movimiento->tipo_movimiento_id             = 9;
+            $movimiento->status                         = "FI";
+            $movimiento->fecha_movimiento               = $receta->fecha;
+
+            if($movimiento->save())
+            {
+                $receta = new Receta();
+                $receta_insertar->movimiento_id  = $movimiento->id;
+                $receta_insertar->folio          = $receta->folio;
+                $receta_insertar->folio_receta   = $receta->folio_receta;
+                $receta_insertar->fecha_receta   = $receta->fecha_receta;
+                $receta_insertar->fecha_surtido  = $receta->fecha_surtido;
+                $receta_insertar->tipo_receta_id = $receta->tipo_receta_id;
+                $receta_insertar->doctor         = $receta->doctor;
+                $receta_insertar->paciente       = $receta->paciente;
+                $receta_insertar->diagnostico    = $receta->diagnostico;
+
+                if($receta_insertar->save())
+                {
+                    foreach ($receta->insumos as $key => $receta_insumo){
+
+                        $receta_detalles = new RecetaDetalle();
+                        $receta_detalles->clave_insumo_medico    = $receta_insumo->clave_insumo_medico;
+                        $receta_detalles->cantidad_recetada      = $receta_insumo->cantidad_recetada;
+                        $receta_detalles->cantidad               = $receta_insumo->cantidad_surtida;
+                        $receta_detalles->dosis                  = $receta_insumo->dosis;
+                        $receta_detalles->frecuencia             = $receta_insumo->frecuencia;
+                        $receta_detalles->duracion               = $receta_insumo->duracion;
+
+                        if($receta_detalles->save())
+                        {
+                            // CONSEGUIR PRECIO Y DETALLES DEL iNSUMO 
+                            ///*************************************************************************************************************
+                            $pedido            = Pedido::find($pedido_id);
+                            $movimiento_pedido = MovimientoPedido::where('pedido_id',$pedido_id);
+                            $movimiento_insumo = MovimientoInsumo::where('movimiento_id',$movimiento_pedido->movimiento_id)
+                                                ->where('clave_insumo_medico',$receta_insumo->clave_insumo_medico);
+
+                            ///stock de donde se sacará lo indicado en la receta                    
+                            $stock = Stock::where('stock_id',$movimiento_insumo->stock_id);
+
+                            $clave_insumo_medico = $receta_insumo->clave_insumo_medico;
+                            $insumo = Insumo::conDescripciones()->with('informacionAmpliada')->find($clave_insumo_medico);
+                            $cantidad_x_envase = $insumo->informacion_ampliada->cantidad_x_envase;
+
+                            $precios = $this->conseguirPrecio($clave_insumo_medico);
+                            ///*************************************************************************************************************
+
+                            
+
+                            $movimiento_insumo = new MovimientoInsumo();
+                            $movimiento_insumo->movimiento_id        = $movimiento->id; 
+                            $movimiento_insumo->stock_id             = $stock->id;
+                            $movimiento_insumo->clave_insumo_medico  = $receta_insumo->clave_insumo_medico;
+                            $movimiento_insumo->modo_salida          = "N";
+                            $movimiento_insumo->cantidad             = $receta_insumo->cantidad_surtida;
+                            $movimiento_insumo->cantidad_unidosis    = $cantidad_x_envase * $receta_insumo->cantidad_surtida;
+                            $movimiento_insumo->precio_unitario      = $precios->precio_unitario;
+                            $movimiento_insumo->iva                  = $precios->iva;
+                            $movimiento_insumo->precio_total         = $receta_insumo->cantidad_surtida * ( $precio_unitario + $precios->iva);
+
+                            $stock->existencia          = $stock->existencia - $receta_insumo->cantidad_surtida;
+                            $stock->existencia_unidosis = $stock->existencia_unidosis - ($cantidad_x_envase * $receta_insumo->cantidad_surtida);
+                            $stock->save();
+
+                            
+
+
+
+
+                        }else{
+
+                        }
+
+                    }
+                    
+
+                }else{
+
+                }
+
+            }else{
+
+            }
+
 
 
         }
 
     }else{
-
+            array_push($errors, array(array('recetas' => array('no_exite_recetas'))));
          }
 
+    if(property_exists($json_proveedor, "colectivos"))
+    {
+        foreach($json_proveedor->colectivos as $colectivo)
+        {   $total_colectivos++;
+            $colectivo = (object) $colectivo;
 
-        
-        if(isset($parametros['page'])){
-            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
-            $items = $items->paginate($resultadosPorPagina);
-        } else {
-            $items = $items->get();
+            $folio_buscar = $colectivo->folio;
+
+            $colectivo_buscar = Receta::where("folio",$folio_buscar);
+            if($colectivo_buscar)
+            { $colectivos_invalidos++; }else{ $colectivos_validos++; }
         }
-       
-        return Response::json([ 'data' => $items],200);
+
+    }else{
+            array_push($errors, array(array('colectivos' => array('no_exite_colectivos'))));
+         }
+
+    if( count($errors) > 0 )
+    {
+        return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+    }else{
+
+        $data = array(
+                     "total_recetas" => $total_recetas,
+                     "recetas_validas" => $recetas_validas,
+                     "recetas_invalidas" => $recetas_invalidas,
+                     "total_colectivos" => $total_colectivos,
+                     "colectivos_validos" => $colectivos_validos,
+                     "colectivos_invalidos" => $colectivos_invalidos);
+
+        return Response::json(array("data" => array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data)), 200);
+
+    }
+        
+            
 }
 
 ///***************************************************************************************************************************
@@ -172,7 +379,7 @@ public function analizarJson(Request $request)
 
         $reglas = array();
         $reglas = [
-                    'tipo_movimiento_id' => 'required|integer|in:1,2,3,4,5,6,7,8',
+                    'tipo_movimiento_id' => 'required|integer|in:1,2,3,4,5,6,7,8,9',
                   ];
 
         if($request['movimiento_metadato'] != NULL)
@@ -391,6 +598,29 @@ public function analizarJson(Request $request)
 
 ///***************************************************************************************************************************
 ///***************************************************************************************************************************
-  
+  ///                  F U N C I O N      C O N S E G U I R      P R E C I O    I N S U M O  
+///**************************************************************************************************************************
+ public function conseguirPrecio($clave_insumo_medico)
+ {
+    $precio_unitario = 0; 
+    $iva             = 0;
+    $response = array();
+
+    $contrato_precio = ContratoPrecio::where('insumo_medico_clave',$clave_insumo_medico)->first();
+                            if($contrato_precio){
+                                $precio_unitario = $contrato_precio->precio;
+                                if($contrato_precio->tipo_insumo_id == 3){
+                                    $iva = $precio_unitario - ($precio_unitario/1.16 );
+                                }
+                            }
+
+    $response['precio_unitario'] = $precio_unitario;
+    $response['iva']             = $iva;
+
+    return (object)$response;
+ }
+///**************************************************************************************************************************
+///**************************************************************************************************************************
+     
 
 }
