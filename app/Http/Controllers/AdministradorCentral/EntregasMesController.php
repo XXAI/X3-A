@@ -277,8 +277,43 @@ class EntregasMesController extends Controller
         } 
     }
 
+    public function pedidosRecepcionesClues(Request $request){
+        try{
+            $input = Input::only('mes','anio','clues','proveedor_id');
+            $mensajes = [
+                'required'      => "required",
+                'integer'      => "integer",
+            ];
+            $reglas = [
+                'mes'        			=> 'required|integer',
+                'anio'                  => 'required|integer',
+                'clues'                 => 'required',
+                'proveedor_id'          => 'required'
+            ];
 
+        
+            $v = Validator::make($input, $reglas, $mensajes);
 
+            if ($v->fails()) {
+                return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+            }
+
+            $pedidos = Pedido::where('clues',$input['clues'])
+                            ->where('proveedor_id',$input['proveedor_id'])
+                            ->where(DB::raw('month(fecha)'),$input['mes'])
+                            ->where(DB::raw('year(fecha)'),$input['anio'])
+                            ->where('status','!=','BR')
+                            ->with(['recepciones'=>function($entrada){
+                                $entrada->select('movimiento_pedido.*','movimientos.fecha_movimiento')
+                                        ->leftjoin('movimientos','movimientos.id','=','movimiento_pedido.movimiento_id')
+                                        ->orderBy('movimientos.fecha_movimiento');
+                            },'recepciones.entrada.insumosDetalles'])->get();
+            
+            return Response::json([ 'data' => $pedidos],200);
+        } catch (\Exception $e) {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        }
+    }
 
     public function pedidosAnioMesClues(Request $request){
         try{
@@ -305,6 +340,7 @@ class EntregasMesController extends Controller
             $items = DB::table(
                         DB::raw('(
                             SELECT 
+                                unidades_medicas.total_pedidos,
                                 unidades_medicas.clues,
                                 unidades_medicas.nombre as unidad_medica,
                                 IF(CAUSES.cantidad_recibida IS NULL, 0, CAUSES.cantidad_recibida) as causes_cantidad_recibida,
@@ -317,6 +353,7 @@ class EntregasMesController extends Controller
                             FROM
                             (
                                 SELECT
+                                count(distinct pedidos.id) as total_pedidos,
                                 unidades_medicas.clues,
                                 unidades_medicas.nombre
                                 FROM pedidos 

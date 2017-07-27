@@ -81,7 +81,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('entregas-pedidos-stats-mes-anio', 'EntregasMesController@statsMesAnio');
         Route::get('entregas-pedidos-stats-diarias', 'EntregasMesController@entregasPedidosStatsDiarias');
         Route::get('pedidos-clues-mes-anio', 'EntregasMesController@pedidosAnioMesClues');
-
+        Route::get('pedidos-recepciones-clues-mes-anio', 'EntregasMesController@pedidosRecepcionesClues');
 
         // CUMPLIMIENTO
         Route::get('cumplimiento-stats-globales', 'CumplimientoController@statsGlobales');
@@ -96,6 +96,7 @@ Route::group(['middleware' => 'jwt'], function () {
         //Configuuración de pedidos
         Route::get('pedidos-recepcion/{id}', 'PedidosController@recepcion');        
         Route::get('pedidos-borrador/{id}', 'PedidosController@regresarBorrador');
+        Route::get('pedidos-borrador-cancelado/{id}', 'PedidosController@regresarBorradorCancelado');
         Route::get('recepcion-borrador/{id}', 'RecepcionPedidoController@borrarRecepcion');        
 
     });

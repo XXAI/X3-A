@@ -194,7 +194,7 @@ class PedidoController extends Controller{
         $almacen = Almacen::find($request->get('almacen_id'));
         $um = UnidadMedica::find( $almacen->clues);
 
-        if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
+        if($almacen->nivel_almacen == 1 && ($almacen->tipo_almacen == 'ALMPAL' || $almacen->tipo_almacen == 'FARSBR')){
             $reglas['proveedor_id'] = 'required';
             $parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
             $parametros['datos']['almacen_proveedor'] = null;
@@ -337,9 +337,9 @@ class PedidoController extends Controller{
         $almacen = Almacen::find($request->get('almacen_id'));
         $um = UnidadMedica::find( $almacen->clues);
 
-        if($almacen->nivel_almacen == 1 && $almacen->tipo_almacen == 'ALMPAL'){
+        if($almacen->nivel_almacen == 1 && ($almacen->tipo_almacen == 'ALMPAL' || $almacen->tipo_almacen == 'FARSBR')){
             //$reglas['proveedor_id'] = 'required';
-            //$parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
+            $parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
             $parametros['datos']['almacen_proveedor'] = null;
         }elseif($almacen->nivel_almacen == 2){
             $reglas['almacen_proveedor'] = 'required';
@@ -379,17 +379,6 @@ class PedidoController extends Controller{
             $parametros['datos']['status'] = 'BR';
         }
 
-        if($almacen_solicitante->nivel_almacen == 1 && ($parametros['datos']['status'] == 'PS' || $parametros['datos']['status'] == 'EF')){ //$almacen_solicitante->tipo_almacen == 'ALMPAL' && 
-            //$fecha = date($parametros['datos']['fecha']);
-            $fecha_concluido = Carbon::now();
-            $fecha_expiracion = strtotime("+20 days", strtotime($fecha_concluido));
-            $parametros['datos']['fecha_concluido'] = $fecha_concluido;
-            $parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
-        }else{
-            $parametros['datos']['fecha_concluido'] = null;
-            $parametros['datos']['fecha_expiracion'] = null;
-        }
-
         $v = Validator::make($parametros['datos'], $reglas, $mensajes);
 
         if ($v->fails()) {
@@ -416,7 +405,20 @@ class PedidoController extends Controller{
                 }
             }
 
-             DB::beginTransaction();
+            if($almacen_solicitante->nivel_almacen == 1 && ($parametros['datos']['status'] == 'PS' || $parametros['datos']['status'] == 'EF')){ //$almacen_solicitante->tipo_almacen == 'ALMPAL' && 
+                //$fecha = date($parametros['datos']['fecha']);
+                if(!$pedido->fecha_concluido){
+                    $fecha_concluido = Carbon::now();
+                    $fecha_expiracion = strtotime("+20 days", strtotime($fecha_concluido));
+                    $parametros['datos']['fecha_concluido'] = $fecha_concluido;
+                    $parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
+                }
+            }/*else{
+                $parametros['datos']['fecha_concluido'] = null;
+                $parametros['datos']['fecha_expiracion'] = null;
+            }*/
+
+            DB::beginTransaction();
 
             $pedido->update($parametros['datos']);
 
