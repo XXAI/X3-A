@@ -150,6 +150,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                 header('Content-Type: application/zip');
                 header('Content-disposition: attachment; filename='.$zipname);
                 header('Content-Length: ' . filesize($zippath.$zipname));
+             
                 readfile($zippath.$zipname);
                 Storage::delete($zipname);
                 exit();
@@ -225,7 +226,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
 
                                     // Verificamos que esta actualiacion no se haya aplicado antes                     
                                     if(Sincronizacion::where('servidor_id',$servidor->id)->where('fecha_generacion',$header_vars['FECHA_SYNC'])->count() > 0){
-                                        Storage::deleteDirectory("importar/".$servidor->id);
+                                        //Storage::deleteDirectory("importar/".$servidor->id);
                                         throw new \Exception("No se puede importar más de una vez el mismo archivo de sincronización. La fecha del archivo indica que ya fue cargado previamente.");
                                     }                                   
 
@@ -323,6 +324,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     $zipname = "sync.confirmacion.".$servidor->id.".zip";                                   
 
                                     exec("zip -P ".$servidor->secret_key." -j -r ".$zippath.$zipname." \"".$zippath."/importar/".$servidor->id."/confirmacion\"");
+                                    //exec("zip  -j -r ".$zippath.$zipname." \"".$zippath."/importar/".$servidor->id."/confirmacion\"");
                                     $zip_status = $zip->open($zippath.$zipname);
 
                                     if ($zip_status === true) {
@@ -400,7 +402,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                     $nombreArray = explode(".",$file->getClientOriginalName());
                     
                     $servidor_id = $nombreArray[2];                    
-                   
+                    
                     if($servidor_id == env('SERVIDOR_ID')){
 
                         Storage::put(
@@ -447,8 +449,10 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     }          
                                     
                                     $contents = Storage::get("confirmacion/catalogos.sync");
-                                    DB::connection()->getpdo()->exec($contents);
-
+                                    if($contents != ""){
+                                        DB::connection()->getpdo()->exec($contents);
+                                    }
+                                    
                                     // Registramos la sincronización en la base de datos. 
                                     $sincronizacion = new Sincronizacion;
                                     $sincronizacion->servidor_id = env('SERVIDOR_ID');

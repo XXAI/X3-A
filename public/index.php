@@ -2,8 +2,8 @@
 header("Access-Control-Allow-Methods: GET, PUT, POST, DELETE, HEAD, OPTIONS");
 
 header("Access-Control-Allow-Origin: *");
-
-header("Access-Control-Allow-Headers:X-Requested-With, X-Clues, X-Almacen-Id, X-Proveedor-Id, Authorization, X-Huzu-User, Content-Type, Accept");
+header("Access-Control-Expose-Headers: Content-Disposition");
+header("Access-Control-Allow-Headers:X-Requested-With, X-Clues, X-Almacen-Id, X-Proveedor-Id, Authorization, X-Huzu-User, Content-Type, Accept, Content-Disposition");
 /**
  * Laravel - A PHP Framework For Web Artisans
  *

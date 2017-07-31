@@ -25,7 +25,18 @@ return [
     'catalogos' => [
         "permisos",
         "roles",
-        //"permiso_rol",
+        //"permiso_rol", Esta tabla hay que agregarle los timestamps
+        "claves_basicas",
+        "claves_basicas_detalles",
+        "claves_basicas_unidades_medicas",        
+        "presupuestos",
+        "transferencias_presupuesto",
+        "unidad_medica_presupuesto",
+        "usuario_unidad_medica",
+        "proveedores",   
+        "puestos",
+        "turnos"
+        
     ],
 
     /*
@@ -43,5 +54,27 @@ return [
 
     'tablas' => [
         "usuarios",
+        "almacenes",
+        //"almacen_usuario", Esta tabla no tiene el formato offline
+        "stock",
+        "pedidos",
+        "pedido_proveedor_insumos",
+        "pedidos_insumos",
+        "pedidos_insumos_clues",  
+        "movimientos",
+        "movimiento_detalles",
+        "movimiento_pedido",
+        "movimiento_metadatos",
+        "movimiento_insumos",
+        "personal_clues",
+        "personal_puesto",
+        "actas",
+        "pacientes",
+        "pacientes_admision",
+        "pacientes_area_responsable",
+        "pacientes_responsable",
+        "recetas",
+        "receta_movimientos",
+        "receta_detalles"
     ],
 ];
