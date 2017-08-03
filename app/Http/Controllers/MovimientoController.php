@@ -1070,7 +1070,8 @@ class MovimientoController extends Controller
 ///**************************************************************************************************************************
        
 
-    private function validarTransaccionSalida($datos, $movimiento_salida,$almacen_id){
+    private function validarTransaccionSalida($datos, $movimiento_salida,$almacen_id)
+    {
 		$success = false;
 
         //comprobar que el servidor id no me lo envian por parametro, si no poner el servidor por default de la configuracion local, si no seleccionar el servidor del parametro
@@ -1260,10 +1261,6 @@ class MovimientoController extends Controller
                                 $tipo_insumo_id = $contrato_precio->tipo_insumo_id;
                             }
 
-
-
-
-
                             // Si no existe registro para resusitar, se comprueba existencia de registro activo
                             $negacion = NegacionInsumo::where('almacen_id',$almacen_id)
                                                 ->where('clave_insumo_medico',$clave_insumo_medico)
@@ -1282,7 +1279,7 @@ class MovimientoController extends Controller
                                         DB::update("update negaciones_insumos set deleted_at = null where id = '".$negacion->id."'");
                                         $negacion_resusitada = 1;
                                     } 
-                                 }
+                            }
 
                             $negacion_insumo = null;
                             $almacen = Almacen::find($almacen_id);
@@ -1429,19 +1426,24 @@ class MovimientoController extends Controller
                             //FOREACH SEGUNDA PASADA A INSUMOS PARA ACTUALIZAR STOCK DE SALIDA
                                 foreach($lotes_master as $index => $lote)
                                 {
-                                    $lote_stock = Stock::find($lote->id);
+                                    $lote_stock          = Stock::find($lote->id);
+                                    $insumo_temp         = Insumo::find($lote_stock->clave_insumo_medico);
+                                                                                                        
+                                    $insumo              = Insumo::datosUnidosis()->where('clave',$lote_stock->clave_insumo_medico)->first();
+
+                                    $cantidad_x_envase   = $insumo->cantidad_x_envase; 
+
                                     
                                     /// INICIA CALCULO DEL NUEVO STOCK SEGUN EL MODO ELEGIDO
                                     if($lote->modo_salida == "N")
                                     {
                                         $lote_stock->existencia          = ($lote_stock->existencia - $lote->cantidad );
-                                        $lote_stock->existencia_unidosis = ($lote_stock->existencia_unidosis - ( $lote->cantidad * $insumo->cantidad_x_envase) );
+                                        $lote_stock->existencia_unidosis = ($lote_stock->existencia_unidosis - ( $lote->cantidad * $cantidad_x_envase) );
 
                                     }else{ 
                                             /// la variable cantidad se interpreta para existencia_unidosis
-                                            $para_salir = ($lote->cantidad / $insumo->cantidad_x_envase);
+                                            $para_salir = ($lote->cantidad / $cantidad_x_envase);
                                             $enteros_salir = 0;
-
                                             if($lote->cantidad <= $lote_stock->unidosis_sueltas)
                                             {
                                                 $enteros_salir = 0;
@@ -1451,13 +1453,11 @@ class MovimientoController extends Controller
                                                     {
                                                         $enteros_salir = 1;
                                                     }else{                                        
-
                                                             if($para_salir != intval($para_salir))
                                                             { // es un decimal y tambien es mayor que uno
-                                                                
                                                                 // valida si para surtir la unidosis solicitada es necesario abrir una caja nueva 
                                                                 // ( aparte de la que ya esta abierta )
-                                                                if( ( $lote_stock->unidosis_sueltas + (intval($para_salir)*$insumo->cantidad_x_envase)) >= $lote->cantidad )
+                                                                if( ( $lote_stock->unidosis_sueltas + (intval($para_salir)*$cantidad_x_envase)) >= $lote->cantidad )
                                                                 {
                                                                     $enteros_salir = intval($para_salir);
                                                                 }else{ $enteros_salir = intval($para_salir)+1; }
@@ -1467,11 +1467,12 @@ class MovimientoController extends Controller
                                                                 }
                                                          }
                                                  }
-
+                                            
+                                        
                                             $nueva_existencia            =  $lote_stock->existencia - $enteros_salir;
                                             $nueva_existencia_unidosis   =  $lote_stock->existencia_unidosis - $lote->cantidad;
 
-                                            $unidosis_enteras  = ( $nueva_existencia * $insumo->cantidad_x_envase );
+                                            $unidosis_enteras  = ( $nueva_existencia * $cantidad_x_envase );
                                             $unidosis_sueltas  = $nueva_existencia_unidosis - $unidosis_enteras;
 
                                             $lote_stock->existencia          = $nueva_existencia;
@@ -1483,7 +1484,7 @@ class MovimientoController extends Controller
                                                 $lote_stock->envases_parciales   = 1;
                                             }else{
                                                     $lote_stock->envases_parciales   = 0;
-                                                }
+                                                 }
                                      
                                     }// fin else ( si es salida unidosis )
 
@@ -1510,7 +1511,7 @@ class MovimientoController extends Controller
                                     $item_detalles->precio_unitario         = $precio['precio_unitario'];
                                     $item_detalles->iva                     = $precio['iva'];
 
-                        $item_detalles->precio_total            = ( $precio['precio_unitario'] + $precio['iva'] ) * $item_detalles->cantidad;
+                                    $item_detalles->precio_total            = ( $precio['precio_unitario'] + $precio['iva'] ) * $item_detalles->cantidad;
 
                                     $item_detalles->save();
                                 

@@ -13,6 +13,7 @@ use \Validator,\Hash, \Response, DB;
 
 use App\Models\CluesTurno;
 use App\Models\UnidadMedica;
+use App\Models\Insumo;
 use App\Models\Pedido;
 use App\Models\PedidoInsumo;
 use App\Models\MovimientoPedido;
@@ -20,7 +21,11 @@ use App\Models\Usuario;
 use App\Models\Almacen;
 use App\Models\Contrato;
 use App\Models\Proveedor;
+use App\Models\Movimiento;
+use App\Models\MovimientoInsumos;
 use App\Models\Receta;
+use App\Models\RecetaDetalle;
+use App\Models\Stock;
 
 
 /** 
@@ -222,6 +227,7 @@ public function analizarJson(Request $request)
 
     if(property_exists($json_proveedor, "recetas"))
     {
+        // recorrido de recetas (por cada receta se genera un movimiento )
         foreach($json_proveedor->recetas as $receta)
         {   $total_recetas++;
             $receta = (object) $receta;
@@ -236,11 +242,11 @@ public function analizarJson(Request $request)
             $movimiento->almacen_id                     = $json_proveedor->almacen_id;
             $movimiento->tipo_movimiento_id             = 9;
             $movimiento->status                         = "FI";
-            $movimiento->fecha_movimiento               = $receta->fecha;
+            $movimiento->fecha_movimiento               = $json_proveedor->fecha;
 
             if($movimiento->save())
             {
-                $receta = new Receta();
+                $receta_insertar = new Receta();
                 $receta_insertar->movimiento_id  = $movimiento->id;
                 $receta_insertar->folio          = $receta->folio;
                 $receta_insertar->folio_receta   = $receta->folio_receta;
@@ -253,9 +259,11 @@ public function analizarJson(Request $request)
 
                 if($receta_insertar->save())
                 {
-                    foreach ($receta->insumos as $key => $receta_insumo){
+                    foreach ($receta->insumos as $key => $receta_insumo)
+                    { $receta_insumo = (object) $receta_insumo;
 
                         $receta_detalles = new RecetaDetalle();
+                        $receta_detalles->receta_id              = $receta_insertar->id;
                         $receta_detalles->clave_insumo_medico    = $receta_insumo->clave_insumo_medico;
                         $receta_detalles->cantidad_recetada      = $receta_insumo->cantidad_recetada;
                         $receta_detalles->cantidad               = $receta_insumo->cantidad_surtida;
@@ -268,23 +276,35 @@ public function analizarJson(Request $request)
                             // CONSEGUIR PRECIO Y DETALLES DEL iNSUMO 
                             ///*************************************************************************************************************
                             $pedido            = Pedido::find($pedido_id);
-                            $movimiento_pedido = MovimientoPedido::where('pedido_id',$pedido_id);
-                            $movimiento_insumo = MovimientoInsumo::where('movimiento_id',$movimiento_pedido->movimiento_id)
-                                                ->where('clave_insumo_medico',$receta_insumo->clave_insumo_medico);
+                            //var_dump(json_encode($pedido)); die();
+                            $movimiento_pedido = MovimientoPedido::where('pedido_id',$pedido_id)->first();
+                            //$movimiento_origen = Movimiento
+                            //var_dump(json_encode($movimiento_pedido)); die();
+                            $movimiento_insumo = (object)MovimientoInsumos::where('movimiento_id',$movimiento_pedido->movimiento_id)
+                                                ->where('clave_insumo_medico',$receta_insumo->clave_insumo_medico)->first();
+                            //var_dump(json_encode($movimiento_insumo)); die();
 
                             ///stock de donde se sacará lo indicado en la receta                    
                             $stock = Stock::where('stock_id',$movimiento_insumo->stock_id);
 
                             $clave_insumo_medico = $receta_insumo->clave_insumo_medico;
-                            $insumo = Insumo::conDescripciones()->with('informacionAmpliada')->find($clave_insumo_medico);
-                            $cantidad_x_envase = $insumo->informacion_ampliada->cantidad_x_envase;
+                            $insumo = Insumo::with('informacionAmpliada')->find($clave_insumo_medico);
 
+                            //dd($insumo);  
+                            $info = (object) $insumo['informacion_ampliada'];
+                            //dd($info);  
+                            $cantidad_x_envase = 0;
+                            if($info==NULL)
+                            {
+                                $cantidad_x_envase = 1;
+                            }else{
+                                    $cantidad_x_envase = $info->cantidad_x_envase;
+                            }
+                             
                             $precios = $this->conseguirPrecio($clave_insumo_medico);
                             ///*************************************************************************************************************
 
-                            
-
-                            $movimiento_insumo = new MovimientoInsumo();
+                            $movimiento_insumo = new MovimientoInsumos();
                             $movimiento_insumo->movimiento_id        = $movimiento->id; 
                             $movimiento_insumo->stock_id             = $stock->id;
                             $movimiento_insumo->clave_insumo_medico  = $receta_insumo->clave_insumo_medico;
@@ -295,18 +315,16 @@ public function analizarJson(Request $request)
                             $movimiento_insumo->iva                  = $precios->iva;
                             $movimiento_insumo->precio_total         = $receta_insumo->cantidad_surtida * ( $precio_unitario + $precios->iva);
 
+                            $movimiento_insumo->save();
+                            
                             $stock->existencia          = $stock->existencia - $receta_insumo->cantidad_surtida;
                             $stock->existencia_unidosis = $stock->existencia_unidosis - ($cantidad_x_envase * $receta_insumo->cantidad_surtida);
                             $stock->save();
 
-                            
-
-
-
-
+                        
                         }else{
 
-                        }
+                             }
 
                     }
                     

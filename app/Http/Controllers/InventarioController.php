@@ -10,6 +10,10 @@ use App\Http\Requests;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, DB;
 
+use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+
 
 use App\Models\Movimiento;
 use App\Models\Stock;
@@ -42,88 +46,136 @@ class InventarioController extends Controller
      
     public function index(Request $request)
     {
-        $parametros = Input::only('q','page','per_page','almacen','tipo','es_causes');
+        //buscar_en:  MC , TC,       seleccionar :  NO_EXISTENTE, EXISTENTE
+        $parametros = Input::only('q','page','per_page','almacen','tipo','es_causes','buscar_en','seleccionar');
+        
 
         $parametros['almacen'] = $request->get('almacen_id');
 
         if(!$request->get('almacen_id')){
             return Response::json(array("status" => 404,"messages" => "Debe especificar un almacen."), 200);
-        }                
+        }     
 
-        if ($parametros['q'])
-        {
-            if($parametros['tipo'])
+        $data = array();
+        $claves = NULL;
+
+        $almacen_id = $request->get('almacen_id');
+
+            if($parametros['buscar_en'] == "MIS_CLAVES")
             {
-                $data = DB::table("stock AS s")
-                            ->join('insumos_medicos AS im', 'im.clave', '=', 's.clave_insumo_medico')
-                            ->where('im.tipo',$parametros['tipo'])
-                            ->where('im.es_causes',$parametros['es_causes'])
-                            ->where('s.almacen_id',$parametros['almacen'])
-                            ->select(DB::raw('SUM(s.existencia) as existencia'),
-                                     DB::raw('SUM(s.existencia_unidosis) as existencia_unidosis'),
-                                     's.clave_insumo_medico','s.almacen_id','s.updated_at','im.descripcion',
-                                     'im.tipo','im.es_causes','es_unidosis')
-                            ->groupBy('s.clave_insumo_medico');
-            }else{
-                    //BUSQUEDA POR DESCRIPCIÓN DEL NOMBRE Ó POR CLAVE
-                    $data = DB::table("stock AS s")
-                            ->leftJoin('insumos_medicos AS im', 'im.clave', '=', 's.clave_insumo_medico')
-                            ->where('s.almacen_id',$parametros['almacen'])
-                            ->where(function($query) use ($parametros) {
-                                $query->where('im.descripcion','LIKE',"%".$parametros['q']."%")
-                                      ->orWhere('s.clave_insumo_medico','LIKE',"%".$parametros['q']."%");
-                            })
-                            ->select(DB::raw('SUM(s.existencia) as existencia'),
-                                     DB::raw('SUM(s.existencia_unidosis) as existencia_unidosis'),
-                                     's.clave_insumo_medico','s.almacen_id','s.updated_at','im.descripcion',
-                                     'im.tipo','im.es_causes','es_unidosis')
-                            ->groupBy('s.clave_insumo_medico');
-                 }
+                $claves = DB::table("clues_claves AS cc")->leftJoin('insumos_medicos AS im', 'im.clave', '=', 'cc.clave_insumo_medico')
+                              ->select('cc.clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','es_unidosis');
+            }
+            if($parametros['buscar_en'] == "TODAS_LAS_CLAVES")
+            {
+                $claves = DB::table('insumos_medicos AS im')
+                              ->select('im.clave AS clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','es_unidosis');
+            }
 
-        } else {
-            
-                 if($parametros['tipo'])
-                 {
-                    $data =  Stock::with('insumo')
-                                        ->where('almacen_id',$parametros['almacen'])
-                                        ->where('tipo_movimiento_id',$parametros['tipo'])
-                                        ->orderBy('updated_at','DESC');
-                 }else{
-                     
-                        // LEE TODOS LOS STOCKS DEL ALMACEN
-                        $data = DB::table("stock AS s")
-                            ->leftJoin('insumos_medicos AS im', 'im.clave', '=', 's.clave_insumo_medico')
-                            ->where('s.almacen_id',$parametros['almacen'])
-                            ->select(DB::raw('SUM(s.existencia) as existencia'),
-                                     DB::raw('SUM(s.existencia_unidosis) as existencia_unidosis'),
-                                     's.clave_insumo_medico','s.almacen_id','s.updated_at','im.descripcion',
-                                     'im.tipo','im.es_causes','es_unidosis')
-                            ->groupBy('s.clave_insumo_medico');
+            if($parametros['q'])
+            {
+                $claves = $claves->where(function($query) use ($parametros) {
+                                                $query->where('im.descripcion','LIKE',"%".$parametros['q']."%")
+                                                ->orWhere('im.clave','LIKE',"%".$parametros['q']."%");
+                                                });
+            }
 
-                      }
+            $claves = $claves->get();
 
-               }
+            foreach($claves as $clave)
+            {
+                $existencia = 0; $existencia_unidosis = 0;
+                $updated_at = NULL;
+                $stocks = Stock::where('almacen_id',$almacen_id)->where('clave_insumo_medico',$clave->clave_insumo_medico)->get();
 
-        if(isset($parametros['page'])){
+                if($stocks)
+                {
+                    foreach ($stocks as $key => $stock) 
+                    {
+                        $existencia          += $stock->existencia;
+                        $existencia_unidosis += $stock->existencia_unidosis;
+                        //$updated_at           = $stock->updated_at;
+                    }
+                }
+                
+                $clave->existencia          = property_exists($clave, "existencia") ? $clave->existencia : $existencia;
+                $clave->existencia_unidosis = property_exists($clave, "existencia_unidosis") ? $clave->existencia_unidosis : $existencia_unidosis;
+                $clave->updated_at          = property_exists($clave, "updated_at") ? $clave->updated_at : $updated_at;
+                array_push($data,$clave);
+            }
+
+            $data_existente    = array();
+            $data_no_existente = array();
+
+            foreach ($data as $key => $clave) 
+            {
+                $clave = (object) ($clave);
+
+                    if($clave->existencia > 0)
+                    {
+                        array_push($data_existente,$clave);
+                    }else{
+                            array_push($data_no_existente,$clave);
+                         }
+            }
+
+            if($parametros['seleccionar'] == "EXISTENTE")
+            {
+                $data = $data_existente;
+            }
+            if($parametros['seleccionar'] == "NO_EXISTENTE")
+            {
+                $data = $data_no_existente;
+            }
+
+            $currentPage = LengthAwarePaginator::resolveCurrentPage();
+            $itemCollection = new Collection($data);
+            $perPage = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+            $currentPageItems = $itemCollection->slice(($currentPage * $perPage) - $perPage, $perPage)->all();
+
+    ///************************************************************************
+                    $dataz;
+                    if($currentPage > 1)
+                    {
+                        $tempdata = $currentPageItems;
+                        foreach ($tempdata as $key => $value)
+                        {
+                            $dataz[] = $value;
+                        }
+                    }
+                    else
+                    {   $dataz = $currentPageItems; }
+    ///************************************************************************
+            $data2= new LengthAwarePaginator($dataz , count($itemCollection), $perPage);
+            //$data2= new LengthAwarePaginator($currentPageItems , count($itemCollection), $perPage);
+    
+            $data2->setPath($request->url());
+
+
+ /*
+         if(isset($parametros['page'])){
 
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
-            $data = $data->paginate($resultadosPorPagina);
-           // $data = \App\Movimientos::paginate($resultadosPorPagina);
+            
+            $data2 = $this->paginadorMaster($data,$resultadosPorPagina);
 
         } else {
-
-            $data = $data->get();
-
+            $data2 = $data;
         }
+ */
 
-        if(count($data) <= 0){
+        if(count($data2) <= 0){
 
-            return Response::json(array("status" => 404,"messages" => "No hay resultados","data" => $data), 200);
+            return Response::json(array("status" => 404,"messages" => "No hay resultados","data" => $data2), 200);
         } 
         else{
-            return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data, "total" => count($data)), 200);
-            
-        }
+                return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data2, "total" => count($data2)), 200);
+            }
+
+ ///****************************************************************************************************************************************
+ ///****************************************************************************************************************************************
+ ///****************************************************************************************************************************************       
+        
     }
 
    
@@ -157,5 +209,19 @@ class InventarioController extends Controller
     {
         
     }
+
+    public function paginadorMaster($items,$perPage)
+{
+    $pageStart = \Request::get('page', 1);
+    // Start displaying items from this number;
+    $offSet = ($pageStart * $perPage) - $perPage; 
+
+    // Get only the items you need using array_slice 
+    $itemsForCurrentPage = array_slice($items, $offSet, $perPage, true);
+
+    
+
+    return new LengthAwarePaginator($itemsForCurrentPage, count($items), $perPage,Paginator::resolveCurrentPage(), array('path' => Paginator::resolveCurrentPath()));
+}
 
 }
