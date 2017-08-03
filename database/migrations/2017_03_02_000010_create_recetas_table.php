@@ -11,6 +11,7 @@ class CreateRecetasTable extends Migration{
      * @return void
      */
     public function up(){
+
         Schema::create('recetas', function(Blueprint $table) {
             $table->engine = 'InnoDB';
         
@@ -31,6 +32,7 @@ class CreateRecetasTable extends Migration{
             $table->timestamps();
             $table->softDeletes();
         });
+        
     }
 
     /**
