@@ -34,9 +34,15 @@ class Insumo extends BaseModel{
                 });
                 //->leftjoin('grupos_insumos','grupos_insumos.id','=','genericos.grupo_insumo_id'); //Se elimino relación uno a uno, se hizo de uno a muchos
     }
-
+/*
     public function scopeDatosUnidosis($query){
         return $query->select('insumos_medicos.*',DB::raw('IF(insumos_medicos.tipo = "ME",medicamentos.cantidad_x_envase,material_curacion.cantidad_x_envase) as cantidad_x_envase')) 
+                ->leftjoin('medicamentos','medicamentos.insumo_medico_clave','=','insumos_medicos.clave')
+                ->leftjoin('material_curacion','material_curacion.insumo_medico_clave','=','insumos_medicos.clave');
+    }
+*/
+    public function scopeDatosUnidosis($query){
+        return $query->select('insumos_medicos.*',DB::raw('(CASE WHEN insumos_medicos.tipo = "ME" THEN medicamentos.cantidad_x_envase ELSE CASE WHEN insumos_medicos.tipo = "MC" THEN material_curacion.cantidad_x_envase ELSE null END END) as cantidad_x_envase')) 
                 ->leftjoin('medicamentos','medicamentos.insumo_medico_clave','=','insumos_medicos.clave')
                 ->leftjoin('material_curacion','material_curacion.insumo_medico_clave','=','insumos_medicos.clave');
     }
