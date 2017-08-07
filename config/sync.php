@@ -67,7 +67,7 @@ return [
         "movimiento_metadatos",
         "movimiento_insumos",
         "personal_clues",
-        "personal_puesto",
+        "personal_clues_puesto",
         "actas",
         "pacientes",
         "pacientes_admision",

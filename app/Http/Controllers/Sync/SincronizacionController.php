@@ -43,7 +43,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
      */
     public function manual()
     {
-
+        ini_set('memory_limit', '-1');
         // 1. Debemos generar el link de descarga en una carpeta con una cadena aleatoria
         // 2. Cuando generemos el link en el controlador debe existir un middleware que al descargar el archivo lo borre del sistema
 
@@ -75,40 +75,50 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                 }
                
                 if($rows){
-                    Storage::append('sync/sumami.sync', "REPLACE INTO ".$key." VALUES ");
-                    
+                    $query = "";
+                    $rows_chunks = array_chunk($rows, 50);
                     $columnas = DB::getSchemaBuilder()->getColumnListing($key);
-                    $index_replace = 0;
-                       
-                    foreach($rows as $row){
-                        if ($index_replace!=0){
-                            $item = ", (";
-                        } else {
-                            $item = "(";
-                        }
-                        
-                        $index_items = 0;
-                        foreach($columnas as $nombre){
-                            if ($index_items!=0){
-                                $item .= ",";
-                            }
 
-                            $tipo  = gettype($row->$nombre);
-                            
-                            switch($tipo){
-                                case "string": $item .= "\"".$row->$nombre."\""; break;
-                                case "NULL": $item .= "NULL"; break;
-                                default: $item .= $row->$nombre;
+                    foreach($rows_chunks as $row_chunk){
+                        //Storage::append('sync/sumami.sync', "REPLACE INTO ".$key." VALUES ");
+                        $query .= "REPLACE INTO ".$key." VALUES ";
+
+                        $index_replace = 0;
+                        
+                        foreach($row_chunk as $row){
+                            if ($index_replace!=0){
+                                $item = ", (";
+                            } else {
+                                $item = "(";
                             }
                             
-                            $index_items += 1;
+                            $index_items = 0;
+                            foreach($columnas as $nombre){
+                                if ($index_items!=0){
+                                    $item .= ",";
+                                }
+
+                                $tipo  = gettype($row->$nombre);
+                                
+                                switch($tipo){
+                                    case "string": $item .= "\"".addslashes($row->$nombre)."\""; break;
+                                    case "NULL": $item .= "NULL"; break;
+                                    default: $item .= addslashes($row->$nombre);
+                                }
+                                
+                                $index_items += 1;
+                            }
+                            $item .= ") ";
+                            $index_replace += 1;
+                            
+                            //Storage::append('sync/sumami.sync', $item);                       
+                            $query .= $item;
                         }
-                        $item .= ") ";
-                        $index_replace += 1;
-                        
-                        Storage::append('sync/sumami.sync', $item);                       
+                        $query .= "; \n";
+                        //Storage::append('sync/sumami.sync', "; \n");
                     }
-                    Storage::append('sync/sumami.sync', "; \n");
+                    Storage::append('sync/sumami.sync', $query);
+
                 } 
             }
            
@@ -173,15 +183,19 @@ class SincronizacionController extends \App\Http\Controllers\Controller
      */
     public function importarSync(Request $request)
     {
-        
+       
+        ini_set('memory_limit', '-1');
         DB::beginTransaction();
         try {
              
             Storage::makeDirectory("importar");
+            //echo php_ini_loaded_file();
+            //var_dump($request);
             if ($request->hasFile('sync')){
+                
                 $file = $request->file('sync');
                 if ($file->isValid()) {
-                    
+                     
                     Storage::put(
                         "importar/".$file->getClientOriginalName(),
                         file_get_contents($file->getRealPath())
@@ -191,7 +205,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
 
                     $servidor_id = $nombreArray[1];                    
                     $servidor = Servidor::find($servidor_id);                    
-
+                    
                     if($servidor){
                         $storage_path = storage_path();
                         $zip = new ZipArchive();
@@ -201,7 +215,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
 
                         $zip_status = $zip->open($zippath.$zipname) ;
             
-            
+                         
 
                         if ($zip_status === true) {
 
@@ -247,39 +261,51 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                                 $rows = DB::table($key)->whereBetween('updated_at',[$cat_ultima_actualizacion,$principal_ultima_actualizacion])->get();                                               
                                                  
                                                 if($rows){
-                                                    
-                                                    Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", "REPLACE INTO ".$key." VALUES ");
+                                                    $query = "";
+                                                    $rows_chunks = array_chunk($rows, 50);    
                                                     $columnas = DB::getSchemaBuilder()->getColumnListing($key);
-                                                    $index_replace = 0;
-                                                    foreach($rows as $row){
-                                                        if ($index_replace!=0){
-                                                            $item = ", (";
-                                                        } else {
-                                                            $item = "(";
-                                                        }
-                                                        
-                                                        $index_items = 0;
-                                                        foreach($columnas as $nombre){
-                                                            if ($index_items!=0){
-                                                                $item .= ",";
-                                                            }
 
-                                                            $tipo  = gettype($row->$nombre);
-                                                            
-                                                            switch($tipo){
-                                                                case "string": $item .= "\"".$row->$nombre."\""; break;
-                                                                case "NULL": $item .= "NULL"; break;
-                                                                default: $item .= $row->$nombre;
+                                                    foreach($rows_chunks as $row_chunk){
+                                                        //Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", "REPLACE INTO ".$key." VALUES ");
+                                                        $query .= "REPLACE INTO ".$key." VALUES ";
+                                                        
+                                                        $index_replace = 0;
+                                                        foreach($row_chunk as $row){
+                                                            if ($index_replace!=0){
+                                                                $item = ", (";
+                                                            } else {
+                                                                $item = "(";
                                                             }
                                                             
-                                                            $index_items += 1;
+                                                            $index_items = 0;
+                                                            foreach($columnas as $nombre){
+                                                                if ($index_items!=0){
+                                                                    $item .= ",";
+                                                                }
+
+                                                                $tipo  = gettype($row->$nombre);
+                                                                
+                                                                switch($tipo){
+                                                                    case "string": $item .= "\"".addslashes($row->$nombre)."\""; break;
+                                                                    case "NULL": $item .= "NULL"; break;
+                                                                    default: $item .= addslashes($row->$nombre);
+                                                                }
+                                                                
+                                                                $index_items += 1;
+                                                            }
+                                                            $item .= ") ";
+                                                            $index_replace += 1;
+                                                            
+                                                            //Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", $item);                       
+                                                            $query .= $item;
                                                         }
-                                                        $item .= ") ";
-                                                        $index_replace += 1;
-                                                        
-                                                        Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", $item);                       
+                                                        $query .= "; \n";
+                                                        //Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", "; \n");
                                                     }
-                                                    Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", "; \n");
+
+                                                    Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", $query);
+
+                                                    
                                                 } 
 
                                             }
@@ -302,8 +328,11 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     } else {
                                         $actualizar_software = "false";
                                     }
+                                   
                                     $contents = Storage::get("importar/".$servidor->id."/sumami.sync");
+                                    DB::statement('SET FOREIGN_KEY_CHECKS=0');
                                     DB::connection()->getpdo()->exec($contents);
+                                    DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
                                     // Registramos la sincronización en la base de datos. 
                                     $sincronizacion = new Sincronizacion;
@@ -369,6 +398,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                     }
                 }
             } else {
+                 
                 throw new \Exception("No hay archivo.");
             }
         } catch (\Illuminate\Database\QueryException $e){
@@ -511,6 +541,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
      */
     public function auto()
     {
+        ini_set('memory_limit', '-1');
         $log = "";
         $ultima_sincronizacion =  Sincronizacion::select('fecha_generacion')->where("servidor_id",env("SERVIDOR_ID"))->orderBy('fecha_generacion','desc')->first();
         $fecha_generacion = date('Y-m-d H:i:s');
@@ -518,7 +549,14 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         try {
             $conexion_remota = DB::connection('mysql_sync');
             DB::beginTransaction();
+
             $conexion_remota->beginTransaction();
+
+            //DB::statement('SET GLOBAL max_allowed_packet=134217728');//128MB
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
+            //$conexion_remota->statement('SET GLOBAL max_allowed_packet=134217728');//128MB
+            $conexion_remota->statement('SET FOREIGN_KEY_CHECKS=0');
         } 
         catch (\Exception $e) {     
             Storage::append('log.sync', $fecha_generacion." Sync Auto Excepción: ".$e->getMessage());
@@ -539,43 +577,50 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                 }                
 
                 if($rows){                    
-                  
-                    $statement = "REPLACE INTO ".$key." VALUES ";                    
+
+                    // Separamos los registros porque cuando son demasiados marca un error de ejecución
+                    $rows_chunks = array_chunk($rows, 50);
+
                     $columnas = DB::getSchemaBuilder()->getColumnListing($key);
 
-                    $index_replace = 0;
-                    foreach($rows as $row){
-                        if ($index_replace!=0){
-                            $item = ", (";
-                        } else {
-                            $item = "(";
-                        }
-                        
-                        $index_items = 0;
-                        foreach($columnas as $nombre){
-                            if ($index_items!=0){
-                                $item .= ",";
-                            }
+                    foreach($rows_chunks as $row_chunk){
 
-                            $tipo  = gettype($row->$nombre);
-                            
-                            switch($tipo){
-                                case "string": $item .= "\"".$row->$nombre."\""; break;
-                                case "NULL": $item .= "NULL"; break;
-                                default: $item .= $row->$nombre;
+                        $statement = "REPLACE INTO ".$key." VALUES ";                    
+                       
+                        $index_replace = 0;
+
+
+                        foreach($row_chunk as $row){
+                            if ($index_replace!=0){
+                                $item = ", (";
+                            } else {
+                                $item = "(";
                             }
                             
-                            $index_items += 1;
+                            $index_items = 0;
+                            foreach($columnas as $nombre){
+                                if ($index_items!=0){
+                                    $item .= ",";
+                                }
+
+                                $tipo  = gettype($row->$nombre);
+                                
+                                switch($tipo){
+                                    case "string": $item .= "\"".addslashes($row->$nombre)."\""; break;
+                                    case "NULL": $item .= "NULL"; break;
+                                    default: $item .= addslashes($row->$nombre);
+                                }
+                                
+                                $index_items += 1;
+                            }
+                            $item .= ") ";
+                            $index_replace += 1;
+                            
+                            $statement.= $item;                      
                         }
-                        $item .= ") ";
-                        $index_replace += 1;
-                        
-                        $statement.= $item;                      
+                        $statement .= ";";
+                        $conexion_remota->statement($statement);
                     }
-                    $statement .= ";";
-                   
-                    $conexion_remota->statement($statement);
-
                     $log .= "Tabla: ".$key."\t=> ".count($rows)." registros sincronizados \n";
                 } else {
                     $log .= "Tabla: ".$key."\t=> 0 registros sincronizados \n";
@@ -600,42 +645,47 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                 }
 
                 if ($rows) {
-                    $statement = "REPLACE INTO ".$key." VALUES ";                    
+
+                    // Separamos los registros porque cuando son demasiados marca un error de ejecución
+                    $rows_chunks = array_chunk($rows, 50);
                     $columnas = DB::getSchemaBuilder()->getColumnListing($key);
 
-                    $index_replace = 0;
-                    foreach($rows as $row){
-                        if ($index_replace!=0){
-                            $item = ", (";
-                        } else {
-                            $item = "(";
-                        }
-                        
-                        $index_items = 0;
-                        foreach($columnas as $nombre){
-                            if ($index_items!=0){
-                                $item .= ",";
-                            }
+                    foreach($rows_chunks as $row_chunk){
+                        $statement = "REPLACE INTO ".$key." VALUES ";   
 
-                            $tipo  = gettype($row->$nombre);
-                            
-                            switch($tipo){
-                                case "string": $item .= "\"".$row->$nombre."\""; break;
-                                case "NULL": $item .= "NULL"; break;
-                                default: $item .= $row->$nombre;
+                        $index_replace = 0;
+                        foreach($row_chunk as $row){
+                            if ($index_replace!=0){
+                                $item = ", (";
+                            } else {
+                                $item = "(";
                             }
                             
-                            $index_items += 1;
+                            $index_items = 0;
+                            foreach($columnas as $nombre){
+                                if ($index_items!=0){
+                                    $item .= ",";
+                                }
+
+                                $tipo  = gettype($row->$nombre);
+                                
+                                switch($tipo){
+                                    case "string": $item .= "\"".$row->$nombre."\""; break;
+                                    case "NULL": $item .= "NULL"; break;
+                                    default: $item .= $row->$nombre;
+                                }
+                                
+                                $index_items += 1;
+                            }
+                            $item .= ") ";
+                            $index_replace += 1;
+                            
+                            $statement.= $item;                      
                         }
-                        $item .= ") ";
-                        $index_replace += 1;
-                        
-                        $statement.= $item;                      
+                        $statement .= ";";
+                    
+                        DB::statement($statement);
                     }
-                    $statement .= ";";
-                   
-                    DB::statement($statement);
-
                     $log .= "Tabla: ".$key."\t=> ".count($rows)." registros sincronizados \n";
                 } else {
                     $log .= "Tabla: ".$key."\t=> 0 registros sincronizados \n";
@@ -660,6 +710,10 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             $sincronizacion->fecha_generacion = $fecha_generacion;
             $sincronizacion->save();
 
+
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            $conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
+
             DB::commit();
             $conexion_remota->commit();
 
@@ -671,6 +725,8 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         } catch (\Illuminate\Database\QueryException $e){
             $log .= " Sync Auto Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Auto Excepción: ".$e->getMessage());
+            //DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            //$conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
             DB::rollback();
             $conexion_remota->rollback();
             return \Response::json([ 'data' => $log],500);
@@ -678,6 +734,8 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         catch (\ErrorException $e) {
             $log .= " Sync Auto Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Auto Excepción: ".$e->getMessage());
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            $conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
             DB::rollback();
             $conexion_remota->rollback();
             return \Response::json([ 'data' => $log],500);
@@ -685,6 +743,8 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         catch (\Exception $e) {            
             $log .= " Sync Auto Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Auto Excepción: ".$e->getMessage());
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            $conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
             DB::rollback();
             $conexion_remota->rollback();
             return \Response::json([ 'data' => $log],500);

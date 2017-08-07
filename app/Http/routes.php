@@ -55,6 +55,13 @@ Route::group(['middleware' => 'jwt'], function () {
     //Route::get('pedidos-stats',         'PedidoController@stats');
     //Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
 
+
+    // # SECCION: Opciones avanzadas 
+    Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
+
+        Route::get('actualizar-plataforma-git', 'ActualizarPlataformaController@git');
+    });
+
     // # SECCION: Administrador central
     Route::group(['prefix' => 'administrador-central','namespace' => 'AdministradorCentral'], function () {
         Route::get('abasto', 'AbastoController@lista');
@@ -185,7 +192,7 @@ Route::group(['middleware' => 'jwt'], function () {
 
     // catalogos  
 
-    // # SECCION: Administrador central
+    
     Route::group(['prefix' => 'admision','namespace' => 'AdmisionUnidad'], function () {
         Route::resource('paciente', 'PacienteController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('paciente-egreso', 'PacienteEgresoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
