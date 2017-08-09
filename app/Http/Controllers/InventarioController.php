@@ -61,10 +61,14 @@ class InventarioController extends Controller
 
         $almacen_id = $request->get('almacen_id');
 
+        $almacen = Almacen::find($almacen_id);
+        $clues   = $almacen->clues;
+
             if($parametros['buscar_en'] == "MIS_CLAVES")
             {
                 $claves = DB::table("clues_claves AS cc")->leftJoin('insumos_medicos AS im', 'im.clave', '=', 'cc.clave_insumo_medico')
-                              ->select('cc.clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','es_unidosis');
+                              ->select('cc.clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','es_unidosis')
+                              ->where('clues',$clues);
             }
             if($parametros['buscar_en'] == "TODAS_LAS_CLAVES")
             {

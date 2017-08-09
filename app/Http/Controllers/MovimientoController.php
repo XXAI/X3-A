@@ -1240,16 +1240,9 @@ class MovimientoController extends Controller
 
                              } 
                         
-                        
-
-                        
                         $movimiento_detalle->save();
 
-
-
-
                         // AQUI  LA TABLA DE ESTADISTICAS PARA NEGACIONES
-
                         if($movimiento_detalle->cantidad_negada > 0)
                         {
                             $negacion_resusitada = 0;
@@ -1428,6 +1421,7 @@ class MovimientoController extends Controller
                                 {
                                     $lote_stock          = Stock::find($lote->id);
                                     $insumo_temp         = Insumo::find($lote_stock->clave_insumo_medico);
+                                    $precio              = $this->conseguirPrecio($lote_stock->clave_insumo_medico);
                                                                                                         
                                     $insumo              = Insumo::datosUnidosis()->where('clave',$lote_stock->clave_insumo_medico)->first();
 
@@ -1494,7 +1488,7 @@ class MovimientoController extends Controller
 
                                     $item_detalles->movimiento_id           = $movimiento_salida->id; 
                                     $item_detalles->stock_id                = $lote_stock->id;
-                                    $item_detalles->clave_insumo_medico     = $clave_insumo_medico;
+                                    $item_detalles->clave_insumo_medico     = $lote_stock->clave_insumo_medico; /// CORRECCION ORIGEN DE CLAVE
 
                                     // se agregan las cantidades correspondientes segun el modo de salida
                                     if($lote->modo_salida == "N")
