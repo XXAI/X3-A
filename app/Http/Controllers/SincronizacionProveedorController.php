@@ -179,13 +179,13 @@ public function analizarJson(Request $request)
         return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
     }else{
 
-        $data = array(
-                     "total_recetas" => $total_recetas,
-                     "recetas_validas" => $recetas_validas,
-                     "recetas_invalidas" => $recetas_invalidas,
-                     "total_colectivos" => $total_colectivos,
-                     "colectivos_validos" => $colectivos_validos,
-                     "colectivos_invalidos" => $colectivos_invalidos);
+            $data = array(
+                        "total_recetas" => $total_recetas,
+                        "recetas_validas" => $recetas_validas,
+                        "recetas_invalidas" => $recetas_invalidas,
+                        "total_colectivos" => $total_colectivos,
+                        "colectivos_validos" => $colectivos_validos,
+                        "colectivos_invalidos" => $colectivos_invalidos);
 
         return Response::json(array("data" => array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data)), 200);
 
@@ -199,7 +199,7 @@ public function analizarJson(Request $request)
             
 }
 
-////////////////////////   P R O C E S A R      J S O N                              P R O C E S A R      J S O N  
+////////////////////////   P R O C E S A R   J S O N     ---    P R O C E S A R   J S O N  
 ///***************************************************************************************************************************
 ///***************************************************************************************************************************
 
@@ -211,6 +211,9 @@ public function analizarJson(Request $request)
 
     $pedido_id      = $input_data->pedido;
     $json_proveedor = $input_data->json;
+    $almacen_id     = $json_proveedor->almacen_id;
+
+    $pedido         = Pedido::find($pedido_id);
 
     if(is_array($json_proveedor))
     { $json_proveedor = (object)$json_proveedor; }
@@ -236,131 +239,267 @@ public function analizarJson(Request $request)
 
             $receta_buscar = Receta::where("folio",$folio_buscar);
             if($receta_buscar)
-            { $recetas_invalidas++; }else{ $recetas_validas++; }
+            { 
+                $recetas_invalidas++; 
+            }else{ 
+                    $recetas_validas++;
 
-            $movimiento = new Movimiento();
-            $movimiento->almacen_id                     = $json_proveedor->almacen_id;
-            $movimiento->tipo_movimiento_id             = 9;
-            $movimiento->status                         = "FI";
-            $movimiento->fecha_movimiento               = $json_proveedor->fecha;
+                    $movimiento = new Movimiento();
+                    $movimiento->almacen_id                     = $json_proveedor->almacen_id;
+                    $movimiento->tipo_movimiento_id             = 9;
+                    $movimiento->status                         = "FI";
+                    $movimiento->fecha_movimiento               = $json_proveedor->fecha;
 
-            if($movimiento->save())
-            {
-                $receta_insertar = new Receta();
-                $receta_insertar->movimiento_id  = $movimiento->id;
-                $receta_insertar->folio          = $receta->folio;
-                $receta_insertar->folio_receta   = $receta->folio_receta;
-                $receta_insertar->fecha_receta   = $receta->fecha_receta;
-                $receta_insertar->fecha_surtido  = $receta->fecha_surtido;
-                $receta_insertar->tipo_receta_id = $receta->tipo_receta_id;
-                $receta_insertar->doctor         = $receta->doctor;
-                $receta_insertar->paciente       = $receta->paciente;
-                $receta_insertar->diagnostico    = $receta->diagnostico;
+                    $movimiento->save();
+            
+                    $receta_insertar = new Receta();
+                    $receta_insertar->movimiento_id  = $movimiento->id;
+                    $receta_insertar->folio          = $receta->folio;
+                    $receta_insertar->folio_receta   = $receta->folio_receta;
+                    $receta_insertar->fecha_receta   = $receta->fecha_receta;
+                    $receta_insertar->fecha_surtido  = $receta->fecha_surtido;
+                    $receta_insertar->tipo_receta_id = $receta->tipo_receta_id;
+                    $receta_insertar->doctor         = $receta->doctor;
+                    $receta_insertar->paciente       = $receta->paciente;
+                    $receta_insertar->diagnostico    = $receta->diagnostico;
 
-                if($receta_insertar->save())
-                {
-                    foreach ($receta->insumos as $key => $receta_insumo)
+                    $receta_insertar->save();
+                
+                    $monto_recibido_receta = 0;
+
+                foreach ($receta->insumos as $key => $receta_insumo)
                     { $receta_insumo = (object) $receta_insumo;
 
                         $receta_detalles = new RecetaDetalle();
                         $receta_detalles->receta_id              = $receta_insertar->id;
                         $receta_detalles->clave_insumo_medico    = $receta_insumo->clave_insumo_medico;
                         $receta_detalles->cantidad_recetada      = $receta_insumo->cantidad_recetada;
-                        $receta_detalles->cantidad               = $receta_insumo->cantidad_surtida;
+                        $receta_detalles->cantidad               = $receta_insumo->cantidad_surtida; // 2
                         $receta_detalles->dosis                  = $receta_insumo->dosis;
                         $receta_detalles->frecuencia             = $receta_insumo->frecuencia;
                         $receta_detalles->duracion               = $receta_insumo->duracion;
 
-                        if($receta_detalles->save())
-                        {
+                        $receta_detalles->save();
+                        
                             // CONSEGUIR PRECIO Y DETALLES DEL iNSUMO 
                             ///*************************************************************************************************************
-                            $pedido            = Pedido::find($pedido_id);
-                            //var_dump(json_encode($pedido)); die();
-                            $movimiento_pedido = MovimientoPedido::where('pedido_id',$pedido_id)->first();
-                            //$movimiento_origen = Movimiento
-                            //var_dump(json_encode($movimiento_pedido)); die();
-                            $movimiento_insumo = (object)MovimientoInsumos::where('movimiento_id',$movimiento_pedido->movimiento_id)
+                            
+                        $movimiento_pedido = MovimientoPedido::where('pedido_id',$pedido_id)->first();
+                        $movimiento_insumo = (object)MovimientoInsumos::where('movimiento_id',$movimiento_pedido->movimiento_id)
                                                 ->where('clave_insumo_medico',$receta_insumo->clave_insumo_medico)->first();
-                            //var_dump(json_encode($movimiento_insumo)); die();
 
                             ///stock de donde se sacará lo indicado en la receta                    
-                            $stock = Stock::where('stock_id',$movimiento_insumo->stock_id);
-
-                            $clave_insumo_medico = $receta_insumo->clave_insumo_medico;
-                            $insumo = Insumo::with('informacionAmpliada')->find($clave_insumo_medico);
-
-                            //dd($insumo);  
-                            $info = (object) $insumo['informacion_ampliada'];
-                            //dd($info);  
-                            $cantidad_x_envase = 0;
-                            if($info==NULL)
-                            {
-                                $cantidad_x_envase = 1;
-                            }else{
-                                    $cantidad_x_envase = $info->cantidad_x_envase;
-                            }
-                             
-                            $precios = $this->conseguirPrecio($clave_insumo_medico);
-                            ///*************************************************************************************************************
-
-                            $movimiento_insumo = new MovimientoInsumos();
-                            $movimiento_insumo->movimiento_id        = $movimiento->id; 
-                            $movimiento_insumo->stock_id             = $stock->id;
-                            $movimiento_insumo->clave_insumo_medico  = $receta_insumo->clave_insumo_medico;
-                            $movimiento_insumo->modo_salida          = "N";
-                            $movimiento_insumo->cantidad             = $receta_insumo->cantidad_surtida;
-                            $movimiento_insumo->cantidad_unidosis    = $cantidad_x_envase * $receta_insumo->cantidad_surtida;
-                            $movimiento_insumo->precio_unitario      = $precios->precio_unitario;
-                            $movimiento_insumo->iva                  = $precios->iva;
-                            $movimiento_insumo->precio_total         = $receta_insumo->cantidad_surtida * ( $precio_unitario + $precios->iva);
-
-                            $movimiento_insumo->save();
+                        $stock = Stock::where('stock_id',$movimiento_insumo->stock_id);
+                        if($stock->existencia < $receta_insumo->cantidad_surtida)
+                        {
                             
-                            $stock->existencia          = $stock->existencia - $receta_insumo->cantidad_surtida;
-                            $stock->existencia_unidosis = $stock->existencia_unidosis - ($cantidad_x_envase * $receta_insumo->cantidad_surtida);
-                            $stock->save();
+                        }
 
-                        
-                        }else{
+                        $clave_insumo_medico = $receta_insumo->clave_insumo_medico;
+                        $insumo = Insumo::datosUnidosis()->where($clave_insumo_medico)->first();
+                        $cantidad_x_envase = $insumo->cantidad_x_envase;
+                          
+                             
+                        $precios = $this->conseguirPrecio($clave_insumo_medico);
+                        ///*************************************************************************************************************
 
-                             }
+                        $movimiento_insumo = new MovimientoInsumos();
+                        $movimiento_insumo->movimiento_id        = $movimiento->id; 
+                        $movimiento_insumo->stock_id             = $stock->id;
+                        $movimiento_insumo->clave_insumo_medico  = $receta_insumo->clave_insumo_medico;
+                        $movimiento_insumo->modo_salida          = "N";
+                        $movimiento_insumo->cantidad             = $receta_insumo->cantidad_surtida;
+                        $movimiento_insumo->cantidad_unidosis    = $cantidad_x_envase * $receta_insumo->cantidad_surtida;
+                        $movimiento_insumo->precio_unitario      = $precios->precio_unitario;
+                        $movimiento_insumo->iva                  = $precios->iva;
+                        $movimiento_insumo->precio_total         = $receta_insumo->cantidad_surtida * ( $precio_unitario + $precios->iva);
 
-                    }
+                        $movimiento_insumo->save();
+
+
+                        $movimiento_detalles = new MovimientoDetalle();
+                        $movimiento_detalles->movimiento_id                 = $movimiento->id;
+                        $movimiento_detalles->clave_insumo_medico           = $clave_insumo_medico;
+                        $movimiento_detalles->modo_salida                   = "N";
+                        $movimiento_detalles->cantidad_solicitada           = $receta_insumo->cantidad_solicitada;
+                        $movimiento_detalles->cantidad_solicitada_unidosis  = ($receta_insumo->cantidad_solicitada * $cantidad_x_envase);
+                        $movimiento_detalles->existente                     = $stock->existencia;
+                        $movimiento_detalles->cantidad_existente_unidosis   = $stock->existencia_unidosis;
+                        $movimiento_detalles->cantidad_surtida              = $receta_insumo->cantidad_surtida;
+                        $movimiento_detalles->cantidad_surtidad_unidosis    = ($receta_insumo->cantidad_surtida * $cantidad_x_envase);
+                        $movimiento_detalles->cantidad_negada               = ($receta_insumo->cantidad_solicitada - $receta_insumo->cantidad_surtida);
+                        $movimiento_detalles->cantidad_negada_unidosis      = ($receta_insumo->cantidad_solicitada - $receta_insumo->cantidad_surtida) * $cantidad_x_envase;
+                        $movimiento_detalles->save();
+                            
+                        $stock->existencia          = $stock->existencia - $receta_insumo->cantidad_surtida;
+                        $stock->existencia_unidosis = $stock->existencia_unidosis - ($cantidad_x_envase * $receta_insumo->cantidad_surtida);
+                        $stock->save();
+
+                        $monto_recibido_receta += $movimiento_insumo->precio_total;
+                        ///*****
+                        $total_cantidad_recibida  += $movimiento_insumo->cantidad_surtida;
+
+                        //***********************************************************************************************************************************************************************
+                        if($receta_insumo->cantidad_surtida < $receta_insumo->cantidad_solicitada)
+                        {   
+                            $cantidad_negada = $receta_insumo->cantidad_solicitada - $receta_insumo->cantidad_surtida ;           
+                            $this->guardarEstadisticaNegacion($clave_insumo_medico,$almacen_id,$cantidad_negada);
+                        }
+                        //***********************************************************************************************************************************************************************
+                        $pedido_insumo = PedidoInsumo::where('insumo_medico_clave',$clave_insumo_medico)->where('pedido_id',$pedido_id)->first();
+                        $pedido_insumo->cantidad_recibida = $pedido_insumo->cantidad_recibida + $receta_insumo->cantidad_surtida;
+                        $pedido_insumo->monto_recibido    = $pedido_insumo->monto_recibido    + $movimiento_insumo->precio_total;
+
+                        $pedido_insumo->save();
+
+                        ///*****
+
+                    }// fin foreach insumos receta
+
+                    $pedido->total_monto_recibido = ( $pedido->total_monto_recibido + $monto_recibido_receta );
+                    $pedido->save();
+
+                    ///****
+                    $total_claves = PedidoInsumo::where('pedido_id',$pedido_id)
+                                                ->where(function($query) use ($parametros) {
+                                                            $query->where('cantidad_recibida','<>',NULL)
+                                                                  ->orWhere('cantidad_recibida','>',0);
+                                                        })->count();
+
+                    $pedido->total_monto_recibido     = ( $pedido->total_monto_recibido + $monto_recibido_receta );
+                    $pedido->total_claves_recibidas   = $total_claves;
+                    $pedido->total_cantidad_recibida  = ( $pedido->total_cantidad_recibida + $receta_insumo->cantidad_surtida );
+                    $pedido->save();
+                    ///****
                     
+                 }/// fin else ( receta no repetida para procesar)
 
-                }else{
-
-                }
-
-            }else{
-
-            }
-
-
-
-        }
+        }/// fin foreach recetas
 
     }else{
             array_push($errors, array(array('recetas' => array('no_exite_recetas'))));
          }
 
+
+
+
+//////   P R O C E S A R      C O L E C T I V O S   
+//////*********************************************************************************************************************************************
+//////*********************************************************************************************************************************************
+
     if(property_exists($json_proveedor, "colectivos"))
     {
         foreach($json_proveedor->colectivos as $colectivo)
-        {   $total_colectivos++;
+        {   
+            $total_colectivos++;
             $colectivo = (object) $colectivo;
 
             $folio_buscar = $colectivo->folio;
 
-            $colectivo_buscar = Receta::where("folio",$folio_buscar);
+            $colectivo_buscar = MovimientoMetadato::where("folio_colectivo",$folio_buscar)->first();
+
             if($colectivo_buscar)
-            { $colectivos_invalidos++; }else{ $colectivos_validos++; }
-        }
+            { /// se ignoran los colectivos ya existentes.
+                $colectivos_invalidos++; 
+            }else{  // solo se procesan colectivos validos
+                    $colectivos_validos++; 
+
+                    $movimiento_colectivo = new Movimiento();
+                    $movimiento_colectivo->almacen_id                     = $json_proveedor->almacen_id;
+                    $movimiento_colectivo->tipo_movimiento_id             = 9;
+                    $movimiento_colectivo->status                         = "FI";
+                    $movimiento_colectivo->fecha_movimiento               = $json_proveedor->fecha;
+                    $movimiento_colectivo->save();
+
+                    $monto_recibido_colectivo = 0;
+                    $total_cantidad_recibida  = 0;
+
+                    foreach ($colectivo->insumos as $key => $colectivo_insumo)
+                    {
+                        $movimiento_pedido = MovimientoPedido::where('pedido_id',$pedido_id)->first();
+                        $movimiento_insumo = (object)MovimientoInsumos::where('movimiento_id',$movimiento_pedido->movimiento_id)
+                                             ->where('clave_insumo_medico',$colectivo_insumo->clave)->first();
+
+                        //stock de donde se sacará lo indicado en la receta                    
+                        $stock = Stock::where('stock_id',$movimiento_insumo->stock_id);
+                        
+                        $clave_insumo_medico = $colectivo_insumo->clave;
+                        $insumo = Insumo::datosUnidosis()->where($clave_insumo_medico)->first();
+                        $cantidad_x_envase = $insumo->cantidad_x_envase;
+                               
+                        $precios = $this->conseguirPrecio($clave_insumo_medico);
+
+                        $movimiento_insumo = new MovimientoInsumo();
+                        $movimiento_insumo->movimiento_id        = $movimiento_colectivo->id;
+                        $movimiento_insumo->tipo_insumo_id       = $precios->tipo_insumo_id;
+                        $movimiento_insumo->stock_id             = $stock->id;
+                        $movimiento_insumo->clave_insumo_medico  = $colectivo_insumo->clave;
+                        $movimiento_insumo->modo_salida          = "N";
+                        $movimiento_insumo->cantidad             = $colectivo_insumo->cantidad_surtida;
+                        $movimiento_insumo->cantidad_unidosis    = ( $colectivo_insumo->cantidad_surtida * $cantidad_x_envase );
+                        $movimiento_insumo->precio_unitario      = $precios->precio_unitario;
+                        $movimiento_insumo->iva                  = $precios->iva;
+                        $movimiento_insumo->precio_total         = ($colectivo_insumo->cantidad_surtida) * ($precios->precio_unitario + $precios->iva);
+
+                        $movimiento_insumo->save();
+
+                        $movimiento_detalles = new MovimientoDetalle();
+                        $movimiento_detalles->movimiento_id                 = $movimiento_colectivo->id;
+                        $movimiento_detalles->clave_insumo_medico           = $clave_insumo_medico;
+                        $movimiento_detalles->modo_salida                   = "N";
+                        $movimiento_detalles->cantidad_solicitada           = $colectivo_insumo->cantidad_solicitada;
+                        $movimiento_detalles->cantidad_solicitada_unidosis  = ($colectivo_insumo->cantidad_solicitada * $cantidad_x_envase);
+                        $movimiento_detalles->existente                     = $stock->existencia;
+                        $movimiento_detalles->cantidad_existente_unidosis   = $stock->existencia_unidosis;
+                        $movimiento_detalles->cantidad_surtida              = $colectivo_insumo->cantidad_surtida;
+                        $movimiento_detalles->cantidad_surtidad_unidosis    = ($colectivo_insumo->cantidad_surtida * $cantidad_x_envase);
+                        $movimiento_detalles->cantidad_negada               = ($colectivo_insumo->cantidad_solicitada - $colectivo_insumo->cantidad_surtida);
+                        $movimiento_detalles->cantidad_negada_unidosis      = ($colectivo_insumo->cantidad_solicitada - $colectivo_insumo->cantidad_surtida) * $cantidad_x_envase;
+                        $movimiento_detalles->save();
+
+                        $stock->existencia          = $stock->existencia - $colectivo_insumo->cantidad_surtida;
+                        $stock->existencia_unidosis = $stock->existencia_unidosis - ($cantidad_x_envase * $colectivo_insumo->cantidad_surtida);
+                        $stock->save();
+
+                        $monto_recibido_colectivo += $movimiento_insumo->precio_total;
+                        $total_cantidad_recibida  += $movimiento_insumo->cantidad_surtida;
+
+                        //***********************************************************************************************************************************************************************
+                        if($colectivo_insumo->cantidad_surtida < $colectivo_insumo->cantidad_solicitada)
+                        {   
+                            $cantidad_negada = $colectivo_insumo->cantidad_solicitada - $colectivo_insumo->cantidad_surtida ;     
+                            $this->guardarEstadisticaNegacion($clave_insumo_medico,$almacen_id,$cantidad_negada);
+                        }
+                        //***********************************************************************************************************************************************************************
+                        $pedido_insumo = PedidoInsumo::where('insumo_medico_clave',$clave_insumo_medico)->where('pedido_id',$pedido_id)->first();
+                        $pedido_insumo->cantidad_recibida = $pedido_insumo->cantidad_recibida + $colectivo_insumo->cantidad_surtida;
+                        $pedido_insumo->monto_recibido    = $pedido_insumo->monto_recibido    + $movimiento_insumo->precio_total;
+
+                        $pedido_insumo->save();
+                         
+                    } /// fin foreach insumos de cada colectivo
+
+                    $total_claves = PedidoInsumo::where('pedido_id',$pedido_id)
+                                                ->where(function($query) use ($parametros) {
+                                                            $query->where('cantidad_recibida','<>',NULL)
+                                                                  ->orWhere('cantidad_recibida','>',0);
+                                                        })->count();
+
+                    $pedido->total_monto_recibido     = ( $pedido->total_monto_recibido + $monto_recibido_colectivo );
+                    $pedido->total_claves_recibidas   = $total_claves;
+                    $pedido->total_cantidad_recibida  = ( $pedido->total_cantidad_recibida + $colectivo_insumo->cantidad_surtida );
+                    $pedido->save();
+
+                 }/// fin else ( colectivo no repetida para procesar)
+        }/// fin foreach colectvos
 
     }else{
             array_push($errors, array(array('colectivos' => array('no_exite_colectivos'))));
          }
+
+
+
+
 
     if( count($errors) > 0 )
     {
@@ -622,23 +761,126 @@ public function analizarJson(Request $request)
  {
     $precio_unitario = 0; 
     $iva             = 0;
+    $tipo_insumo_id  = 0;
     $response = array();
 
     $contrato_precio = ContratoPrecio::where('insumo_medico_clave',$clave_insumo_medico)->first();
                             if($contrato_precio){
+                                $tipo_insumo_id = $contrato_precio->tipo_insumo_id;
                                 $precio_unitario = $contrato_precio->precio;
                                 if($contrato_precio->tipo_insumo_id == 3){
                                     $iva = $precio_unitario - ($precio_unitario/1.16 );
                                 }
                             }
 
+    $response['tipo_insumo_id'] = $tipo_insumo_id;
     $response['precio_unitario'] = $precio_unitario;
     $response['iva']             = $iva;
 
     return (object)$response;
  }
+////***************        GUARDAR ESTADISTICA PARA NEGACION DE INSUMO    ***************************************************
 ///**************************************************************************************************************************
-///**************************************************************************************************************************
-     
+
+public function guardarEstadisticaNegacion($clave_insumo_medico,$almacen_id,$cantidad_negada)
+    {
+
+        $negacion_resusitada = 0;
+        $precios             = $this->conseguirPrecio($clave_insumo_medico);
+        $insumo              = Insumo::datosUnidosis()->where('clave',$clave_insumo_medico)->first();
+        $cantidad_x_envase   = $insumo->cantidad_x_envase;
+
+                            // Si no existe registro para resusitar, se comprueba existencia de registro activo
+                            $negacion = NegacionInsumo::where('almacen_id',$almacen_id)->where('clave_insumo_medico',$clave_insumo_medico)->first();
+                            if(!$negacion)
+                            {
+                                // Busqueda de registro de negación a resusitar para el insumo negado
+                                $negacion = DB::table('negaciones_insumos')->where('clave_insumo_medico',$clave_insumo_medico)->where('deleted_at','!=',NULL)->first();
+                                // Si existe registro muerto se resusita
+                                if($negacion)
+                                {
+                                    DB::update("update negaciones_insumos set deleted_at = null where id = '".$negacion->id."'");
+                                    $negacion_resusitada = 1;
+                                } 
+                            }
+
+                            $negacion_insumo = NULL;
+                            $almacen = Almacen::find($almacen_id);
+                            ///*************************************************************************************************
+                            // Encontrar ultima entrada al almacen del insumo negado
+                            $ultima_entrada                  = NULL;
+                            $cantidad_entrada                = 0;
+                            $cantidad_entrada_unidosis       = 0;
+
+                            $ultima_entrada_insumo = DB::table('movimientos')
+                                            ->join('movimiento_insumos', 'movimientos.id', '=', 'movimiento_insumos.movimiento_id')
+                                            ->select('movimientos.*', 'movimiento_insumos.clave_insumo_medico', 'movimiento_insumos.cantidad', 'movimiento_insumos.cantidad_unidosis')
+                                            ->where('movimientos.almacen_id',$almacen_id)
+                                            ->where('movimiento_insumos.clave_insumo_medico',$clave_insumo_medico)
+                                            ->where('movimientos.tipo_movimiento_id',1)
+                                            ->orderBy('created_at','DESC')
+                                            ->first();
+
+                            if($ultima_entrada_insumo)
+                            {
+                                $ultima_entrada                = $ultima_entrada_insumo->created_at;
+                                $cantidad_entrada              = $ultima_entrada_insumo->cantidad;
+                                $cantidad_entrada_unidosis     = $ultima_entrada_insumo->cantidad_unidosis;
+                            }
+                            ///**************************************************************************************************************************
+                            $cantidad_negada          = $cantidad_negada;
+                            $cantidad_negada_unidosis = ($cantidad_negada * $cantidad_x_envase);
+                                 
+                            // Si existe registro de negación de insumo ( activo ó resusitado )
+                            if($negacion)
+                            { 
+                                $negacion_insumo  = NegacionInsumo::find($negacion->id);
+
+                                if($negacion_resusitada == 1)
+                                {
+                                    $negacion_insumo->fecha_inicio                  = date("Y-m-d");
+                                    $negacion_insumo->fecha_fin                     = date("Y-m-d");
+                                    $negacion_insumo->cantidad_acumulada            = $cantidad_negada;
+                                    $negacion_insumo->cantidad_acumulada_unidosis   = $cantidad_negada_unidosis;
+                                    $negacion_insumo->ultima_entrada                = $ultima_entrada;
+                                    $negacion_insumo->cantidad_entrada              = $cantidad_entrada;
+                                    $negacion_insumo->cantidad_entrada_unidosis     = $cantidad_entrada_unidosis;
+
+                                }else{
+                                        $negacion_insumo->cantidad_acumulada            = $negacion_insumo->cantidad_acumulada + $cantidad_negada;
+                                        $negacion_insumo->cantidad_acumulada_unidosis   = $negacion_insumo->cantidad_acumulada_unidosis + $cantidad_negada_unidosis;
+                                        $negacion_insumo->fecha_fin                     = date("Y-m-d");
+                                        $negacion_insumo->ultima_entrada                = $ultima_entrada;
+                                        $negacion_insumo->cantidad_entrada              = $cantidad_entrada;
+                                        $negacion_insumo->cantidad_entrada_unidosis     = $cantidad_entrada_unidosis; 
+                                     }
+
+                                $negacion_insumo->save();     
+                                
+                            }else{
+                                    $negacion_insumo = new NegacionInsumo;
+
+                                    $negacion_insumo->clave_insumo_medico           = $clave_insumo_medico;
+                                    $negacion_insumo->clues                         = $almacen->clues;
+                                    $negacion_insumo->almacen_id                    = $almacen_id;
+                                    $negacion_insumo->tipo_insumo                   = $precios->tipo_insumo_id;
+                                    $negacion_insumo->fecha_inicio                  = date("Y-m-d");
+                                    $negacion_insumo->fecha_fin                     = date("Y-m-d");
+                                    $negacion_insumo->cantidad_acumulada            = $cantidad_negada;
+                                    $negacion_insumo->cantidad_acumulada_unidosis   = $cantidad_negada_unidosis;
+                                    $negacion_insumo->ultima_entrada                = $ultima_entrada;
+                                    $negacion_insumo->cantidad_entrada              = $cantidad_entrada;
+                                    $negacion_insumo->cantidad_entrada_unidosis     = $cantidad_entrada_unidosis;
+
+                                    $negacion_insumo->save();
+                                 }
+                        
+
+
+
+
+    }
+////*************************************************************************************************************************
+////*************************************************************************************************************************     
 
 }
