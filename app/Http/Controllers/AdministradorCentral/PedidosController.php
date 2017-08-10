@@ -439,7 +439,7 @@ class PedidosController extends Controller
 
             if(!$logPedidoCancelado)
             {
-                 BD::rollBack();
+                 DB::rollBack();
                 return Response::json(['error' =>"No se encuentra el registro de cancelación, por favor contacte al administrador"], 500);
             }
 
@@ -447,7 +447,7 @@ class PedidosController extends Controller
 
             if($total > $logPedidoCancelado->total_monto_restante)
             {
-                BD::rollBack();
+                DB::rollBack();
                 return Response::json(['error' =>"Ha ocurrido un desajuste en el monto de algún insumo, por favor contacte al administrador"], 500);   
             }
 
