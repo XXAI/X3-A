@@ -152,10 +152,64 @@ class PedidosController extends Controller
 
     public function recepcion($id, Request $request){
         try{
-            $pedido = Pedido::with("recepcionesBorrados.movimientoBorrados")
-                 ->where("id",$id)->first();
+            $pedido = Pedido::with("recepcionesBorrados.movimientoBorrados", "logPedidoCancelado")->where("id",$id)->first();
 
-            
+            if($pedido->status == "EX-CA")
+            {
+                //Calculo de causes, no causes y material de curacion
+                $almacen = Almacen::find($pedido->almacen_solicitante);
+
+                if(!$almacen){
+                    return Response::json(['error' =>"No se encontró el almacen."], 500);
+                }
+                
+                $proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
+
+                $contrato_activo = $proveedor->contratoActivo;
+                $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad", "contratos_precios.tipo_insumo_id", "medicamentos.cantidad_x_envase")->withTrashed()->get();
+                $lista_insumos = array();
+                foreach ($insumos as $key => $value) {
+                    $array_datos = array();
+                    $array_datos['precio']              = $value['precio'];
+                    $array_datos['clave']               = $value['clave'];
+                    $array_datos['tipo']                = $value['tipo'];
+                    $array_datos['tipo_insumo_id']      = $value['tipo_insumo_id'];
+                    $array_datos['es_causes']           = $value['es_causes'];
+                    $array_datos['caducidad']           = $value['tiene_fecha_caducidad'];
+                    $array_datos['cantidad_unidosis']   = $value['cantidad_x_envase'];
+                    $lista_insumos[$value['clave']]     = $array_datos;
+                }
+
+                $pedido = $pedido->load("insumos");
+
+                $total_causes               = 0;
+                $total_no_causes            = 0;
+                $total_material_curacion    = 0;
+
+                foreach ($pedido->insumos as $key => $value) {
+                    if($lista_insumos[$value['insumo_medico_clave']]['tipo'] == "ME")
+                    {
+                        if($lista_insumos[$value['insumo_medico_clave']]['es_causes']== 1)
+                        {
+                            $total_causes += ($value['monto_solicitado'] - $value['monto_recibido']);
+                        }else
+                        {
+                            $total_no_causes += ($value['monto_solicitado'] - $value['monto_recibido']);
+                        }
+                    }else
+                    {
+                        $total_material_curacion += (($value['monto_solicitado'] - $value['monto_recibido']) * 1.16);
+                    }
+                }
+
+                //Agregamos los datos
+                $pedido->logPedidoCancelado->mes_texto = $this->conversion_mes_texto($pedido->logPedidoCancelado->mes_destino);
+                $pedido->logPedidoCancelado->causes = $total_causes;
+                $pedido->logPedidoCancelado->no_causes = $total_no_causes;
+                $pedido->logPedidoCancelado->material_curacion = round($total_material_curacion,2);
+            }
+
+
             foreach ($pedido->recepcionesBorrados as $key => $value) {
                 
                 $arreglo = array();     
@@ -448,7 +502,7 @@ class PedidosController extends Controller
             if($total > $logPedidoCancelado->total_monto_restante)
             {
                 DB::rollBack();
-                return Response::json(['error' =>"Ha ocurrido un desajuste en el monto de algún insumo, por favor contacte al administrador"], 500);   
+                return Response::json(['error' =>"Saldo insuficiente por $".(($total - $logPedidoCancelado->total_monto_restante)).", verifique la disponibilidad del saldo o comuniquese con el administrador"], 500);   
             }
 
             $unidad_medica = UnidadMedicaPresupuesto::where("almacen_id", $pedido->almacen_solicitante)
@@ -504,6 +558,52 @@ class PedidosController extends Controller
         } 
     }
 
+    private function conversion_mes_texto($mes){
+        $texto_mes = "";
+        switch ($mes) {
+            case 1:
+                $texto_mes = "ENERO";
+                break;
+            case 2:
+                $texto_mes = "FEBRERO";
+                break;
+            case 3:
+                $texto_mes = "MARZO";
+                break;
+            case 4:
+                $texto_mes = "ABRIL";
+                break;
+            case 5:
+                $texto_mes = "MAYO";
+                break;
+            case 6:
+                $texto_mes = "JUNIO";
+                break;
+            case 7:
+                $texto_mes = "JULIO";
+                break;
+            case 8:
+                $texto_mes = "AGOSTO";
+                break;
+            case 9:
+                $texto_mes = "SEPTIEMBRE";
+                break;
+            case 10:
+                $texto_mes = "OCTUBRE";
+                break;
+            case 11:
+                $texto_mes = "NOVIEMBRE";
+                break;
+            case 12:
+                $texto_mes = "DICIEMBRE";
+                break;                                            
+            
+            default:
+                $texto_mes = "VERIFICAR MES";
+                break;
+        }
+        return $texto_mes;
+    }
     public function excel(){
         $parametros = Input::only('q','status','proveedores','jurisdicciones', 'fecha_desde','fecha_hasta', 'ordenar_causes','ordenar_no_causes','ordenar_material_curacion');
 

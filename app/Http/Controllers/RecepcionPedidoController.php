@@ -319,7 +319,7 @@ class RecepcionPedidoController extends Controller
 		        	$value['fecha_caducidad'] = null;
 
 		        
-		        if($this->validacion_fecha_caducidad($value['fecha_caducidad'], $caducidad)) //Validacion de Fecha de caducidad
+		        if($this->validacion_fecha_caducidad($pedido->fecha ,$value['fecha_caducidad'], $caducidad)) //Validacion de Fecha de caducidad
 		        {
 		          if(!isset($value['fecha_caducidad'])){
 						$value['fecha_caducidad'] = null;
@@ -534,20 +534,13 @@ class RecepcionPedidoController extends Controller
     }
 
 
-    private function validacion_fecha_caducidad($fecha_validar, $caducidad){
+    private function validacion_fecha_caducidad($fecha_inicio, $fecha_validar, $caducidad){
     	if($caducidad == 1){
 
     		if($this->valida_fecha($fecha_validar))
     		{
-    			return $this->valida_caducidad($fecha_validar);
-	   	    	/*$fecha = date('Y-m-j');
-				$nuevafecha = strtotime ( '+6 month' , strtotime ( $fecha ) ) ;
-				$fecha_validar_convertida = strtotime ( $fecha_validar ) ; 
-		    	
-		    	if($nuevafecha < $fecha_validar_convertida)
-		    		return true;
-		    	else
-		    		return false;*/
+    			return $this->valida_caducidad($fecha_inicio, $fecha_validar);
+	   	    	
 		    }else{
 		    	return false;
 		    }	
@@ -557,15 +550,8 @@ class RecepcionPedidoController extends Controller
 	    	{
 		    	if($this->valida_fecha($fecha_validar))
 	    		{
-	    			return $this->valida_caducidad($fecha_validar);
-		   	    	/*$fecha = date('Y-m-j');
-					$nuevafecha = strtotime ( '+6 month' , strtotime ( $fecha ) ) ;
-					$fecha_validar_convertida = strtotime ( $fecha_validar ) ; 
-			    	
-			    	if($nuevafecha < $fecha_validar_convertida)
-			    		return true;
-			    	else
-			    		return false;*/
+	    			return $this->valida_caducidad($fecha_inicio, $fecha_validar);
+		   	   
 			    }else{
 			    	return false;
 			    }
@@ -574,10 +560,10 @@ class RecepcionPedidoController extends Controller
     	}
 	}
 
-	private function valida_caducidad($fecha)
+	private function valida_caducidad($fecha_inicio, $fecha)
 	{
-		$date1=date_create($fecha);
-		$fecha2 = new DateTime;
+		$date1 = date_create($fecha);
+		$fecha2 = date_create($fecha_inicio);
 		$fecha2->modify("+6 month");
 
 		$diff=date_diff($fecha2, $date1, FALSE);

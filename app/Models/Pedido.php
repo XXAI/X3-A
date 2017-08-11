@@ -62,4 +62,9 @@ class Pedido extends BaseModel
     public function presupuestoApartado(){
       return $this->hasOne('App\Models\PedidoPresupuestoApartado','pedido_id');
     }
+
+    public function logPedidoCancelado()
+    {
+        return $this->hasOne('App\Models\LogPedidoCancelado', "pedido_id");
+    }
 }
