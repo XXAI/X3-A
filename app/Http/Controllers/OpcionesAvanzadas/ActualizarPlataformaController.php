@@ -23,6 +23,7 @@ class ActualizarPlataformaController extends Controller
 				cd $base_path
 				pwd
 				git pull origin master
+				php artisan migrate
 			"; 
 			$output .= shell_exec($script_api);
 			$output .= "\nLOG CLIENTE:\n";	

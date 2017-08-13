@@ -60,6 +60,8 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
 
         Route::get('actualizar-plataforma-git', 'ActualizarPlataformaController@git');
+        Route::get('exportar-base-datos', 'BaseDatosController@exportar');
+        Route::post('importar-base-datos', 'BaseDatosController@importar');
     });
 
     // # SECCION: Administrador central
