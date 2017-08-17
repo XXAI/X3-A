@@ -274,7 +274,7 @@ public function analizarJson(Request $request)
                         $receta_detalles->receta_id              = $receta_insertar->id;
                         $receta_detalles->clave_insumo_medico    = $receta_insumo->clave_insumo_medico;
                         $receta_detalles->cantidad_recetada      = $receta_insumo->cantidad_recetada;
-                        $receta_detalles->cantidad               = $receta_insumo->cantidad_surtida; // 2
+                        $receta_detalles->cantidad               = $receta_insumo->cantidad_surtida; // 2L
                         $receta_detalles->dosis                  = $receta_insumo->dosis;
                         $receta_detalles->frecuencia             = $receta_insumo->frecuencia;
                         $receta_detalles->duracion               = $receta_insumo->duracion;
@@ -290,9 +290,11 @@ public function analizarJson(Request $request)
 
                             ///stock de donde se sacará lo indicado en la receta                    
                         $stock = Stock::where('stock_id',$movimiento_insumo->stock_id);
+                        
+                        $diferencia_faltante = 0;
                         if($stock->existencia < $receta_insumo->cantidad_surtida)
                         {
-                            
+                            $diferencia_faltante = $receta_insumo->cantidad_surtir - $stock->existencia;
                         }
 
                         $clave_insumo_medico = $receta_insumo->clave_insumo_medico;
