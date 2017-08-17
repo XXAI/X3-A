@@ -10,6 +10,10 @@ use App\Http\Requests;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, DB;
 
+use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+
 
 use App\Models\Movimiento;
 use App\Models\Stock;
@@ -24,6 +28,11 @@ use App\Models\RecetaMovimiento;
 use App\Models\ContratoPrecio;
 use App\Models\NegacionInsumo;
 use App\Models\Almacen;
+use App\Models\CluesTurno;
+use App\Models\CluesServicio;
+use App\Models\Turno;
+use App\Models\Servicio;
+
 
 
 /** 
@@ -42,64 +51,153 @@ class MovimientoController extends Controller
      
     public function index(Request $request)
     {
-        $parametros = Input::only('q','page','per_page','almacen','tipo');
-
+        $parametros = Input::only('q','page','per_page','almacen','tipo','fecha_desde','fecha_hasta','recibe','turno','servicio');
         $parametros['almacen'] = $request->get('almacen_id');
+
+        
 
         if(!$request->get('almacen_id')){
             return Response::json(array("status" => 404,"messages" => "Debe especificar un almacen."), 200);
-        }                
+        }  
+        
+        $almacen = Almacen::find($parametros['almacen']);
+        $movimientos = null;
+        $data = null;
 
-        if ($parametros['q'])
+        $movimientos = DB::table("movimientos AS mov")
+                             ->leftJoin('movimiento_metadatos AS mm', 'mm.movimiento_id', '=', 'mov.id')
+                             ->leftJoin('usuarios AS users', 'users.id', '=', 'mov.usuario_id')
+                             ->select('mov.*','mm.servicio_id','mm.turno_id','users.nombre')
+                             ->where('mov.almacen_id',$parametros['almacen'])
+                             ->where('mov.tipo_movimiento_id',$parametros['tipo'])
+                             ->orderBy('mov.updated_at','DESC');
+
+        if( ($parametros['fecha_desde']!="") && ($parametros['fecha_hasta']!="") )
         {
-            if($parametros['tipo'])
-            {
-                $data = Movimiento::with('movimientoMetadato','movimientoUsuario')
-                                    ->where('id','LIKE',"%".$parametros['q']."%")
-                                    ->where('tipo_movimiento_id',$parametros['tipo'])
-                                    ->where('almacen_id',$parametros['almacen'])
-                                    ->orderBy('updated_at','DESC');
-            }else{
-                    $data = Movimiento::with('movimientoMetadato','movimientoUsuario')
-                                        ->where('id','LIKE',"%".$parametros['q']."%")
-                                        ->where('almacen_id',$parametros['almacen'])
-                                        ->orderBy('updated_at','DESC');
-                 }
-
-        } else {
+            $movimientos = $movimientos->where('mov.fecha_movimiento','>=',$parametros['fecha_desde'])
+                                       ->where('mov.fecha_movimiento','<=',$parametros['fecha_hasta']);
             
-                 if($parametros['tipo'])
-                 {
-                    $data =  Movimiento::with('movimientoMetadato','movimientoUsuario')
-                                        ->where('almacen_id',$parametros['almacen'])
-                                        ->where('tipo_movimiento_id',$parametros['tipo'])
-                                        ->orderBy('updated_at','DESC');
-                 }else{
-                        $data =  Movimiento::with('movimientoMetadato','movimientoUsuario')
-                                ->where('almacen_id',$parametros['almacen'])
-                                ->orderBy('updated_at','DESC');
-                      }
+        }else{
+                if( $parametros['fecha_desde'] != "" )
+                {
 
-               }
+                    $movimientos = $movimientos->where('mov.fecha_movimiento','>=',$parametros['fecha_desde']);
+                }
+                if( $parametros['fecha_hasta'] != "" )
+                {
+                    $movimientos = $movimientos->where('mov.fecha_movimiento','<=',$parametros['fecha_hasta']);
+                }
 
-        if(isset($parametros['page'])){
+             }   
 
-            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
-            $data = $data->paginate($resultadosPorPagina);
-           // $data = \App\Movimientos::paginate($resultadosPorPagina);
-
-        } else {
-
-            $data = $data->get();
-
+        if ($parametros['turno'] != "")
+        {
+            $movimientos = $movimientos->where('mm.turno_id','=',$parametros['turno']);
+        }
+        if ($parametros['servicio'] != "")
+        {
+            $movimientos = $movimientos->where('mm.servicio_id','=',$parametros['servicio']);
+        }
+        if ($parametros['recibe'] != "")
+        {
+            $movimientos = $movimientos->where(function($query) use ($parametros) {
+                                                $query->where('mm.persona_recibe','LIKE',"%".$parametros['recibe']."%");
+                                                });
         }
 
-        if(count($data) <= 0){
+        $movimientos = $movimientos->get();
 
+        $data = array();
+        foreach($movimientos as $mov)
+        {
+            $movimiento_response = Movimiento::with('movimientoMetadato','movimientoUsuario')
+                                             ->where('id',$mov->id)->first();
+            array_push($data,$movimiento_response);
+        }
+
+
+        $indice_adds = 0;
+
+        if(isset($parametros['page']))
+        {
+            //$resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+            //$data = $data->paginate($resultadosPorPagina);
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////            
+            $currentPage = LengthAwarePaginator::resolveCurrentPage();
+            $itemCollection = new Collection($data);
+            $perPage = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+            $currentPageItems = $itemCollection->slice(($currentPage * $perPage) - $perPage, $perPage)->all();
+
+            $indice_adds = count($currentPageItems);
+
+            ///************************************************************************
+                    $dataz;
+                    if($currentPage > 1)
+                    {
+                        $tempdata = $currentPageItems;
+                        foreach ($tempdata as $key => $value)
+                        { $dataz[] = $value; }
+                    }
+                    else
+                    {   $dataz = $currentPageItems; }
+            ///************************************************************************
+            $data2= new LengthAwarePaginator($dataz , count($itemCollection), $perPage);
+    
+            $data2->setPath($request->url());
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        } 
+
+
+        
+        if(count($data) <= 0)
+        { 
+            $array_turnos     = array();
+            $array_servicios  = array();
+
+            $turno = new Turno();
+            $turno->id = 0;
+            $turno->nombre = "Todos";
+            $turno->descripcion = "";
+
+            $servicio = new Servicio();
+            $servicio->id = 0;
+            $servicio->nombre = "Todos";
+
+            array_push($array_turnos,$turno); 
+            array_push($array_servicios,$servicio);
+
+            $data[0] = array ("turnos_disponibles" => $array_turnos, "servicios_disponibles" => $array_servicios);
             return Response::json(array("status" => 404,"messages" => "No hay resultados","data" => $data), 200);
         } 
         else{
-            return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data, "total" => count($data)), 200);
+                ///***************************************************************************************************************************************
+                $movimientos_all = Movimiento::with('movimientoMetadato','movimientoUsuario')
+                                            ->where('tipo_movimiento_id',$parametros['tipo'])
+                                            ->where('almacen_id',$parametros['almacen'])
+                                            ->orderBy('updated_at','DESC')->get();
+                $array_turnos     = array();
+                $array_servicios  = array();
+
+                foreach($movimientos_all as $mov)
+                {
+                    if(!in_array($mov->movimientoMetadato['turno'],$array_turnos))
+                    {
+                        array_push($array_turnos,$mov->movimientoMetadato['turno']);
+                    }
+                    if(!in_array($mov->movimientoMetadato['servicio'],$array_servicios))
+                    {
+                        array_push($array_servicios,$mov->movimientoMetadato['servicio']);
+                    }
+                }
+                $array_turnos    = array_filter($array_turnos, function($v){return $v !== null;});
+                $array_servicios = array_filter($array_servicios, function($v){return $v !== null;});
+
+                $total = count($data);
+
+                ////**************************************************************************************************************************************
+                $data2[$indice_adds] = array ("turnos_disponibles" => $array_turnos, "servicios_disponibles" => $array_servicios);
+
+            return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data2, "total" => $total), 200);
             
         }
     }
@@ -1368,11 +1466,7 @@ class MovimientoController extends Controller
                                     $negacion_insumo->save();
                                  }
                         }
-
-                        
-
-        
-                        
+                 
 
                     }///FIN IF INSUMO != NULL
                 }////   FIN FOREACH     I N S U M O S     -> PRIMERA PASADA
