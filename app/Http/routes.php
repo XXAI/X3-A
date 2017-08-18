@@ -58,7 +58,6 @@ Route::group(['middleware' => 'jwt'], function () {
 
     // # SECCION: Opciones avanzadas 
     Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
-
         Route::get('actualizar-plataforma-git', 'ActualizarPlataformaController@git');
         Route::get('exportar-base-datos', 'BaseDatosController@exportar');
         Route::post('importar-base-datos', 'BaseDatosController@importar');
@@ -130,6 +129,10 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('download-file/{id}',  'RepositorioController@descargar'); 
 
     Route::group(['middleware' => 'almacen'], function () {
+
+        Route::group(['prefix' => 'inventario','namespace' => 'Inventario'], function () {
+            Route::resource('inicializacion-inventario',         'InicializacionInventarioController',  ['only' => ['index', 'show', 'store','update','destroy']]);
+        });
 
         Route::resource('almacenes',        'AlmacenController',    ['only' => ['index']]);
         Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
