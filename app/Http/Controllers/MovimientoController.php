@@ -112,6 +112,15 @@ class MovimientoController extends Controller
         {
             $movimiento_response = Movimiento::with('movimientoMetadato','movimientoUsuario')
                                              ->where('id',$mov->id)->first();
+
+            $numero_claves  = MovimientoInsumos::where('movimiento_id',$movimiento_response->id)->distinct('clave_insumo_medico')->count();
+            $cantidad_insumos = DB::table('movimiento_insumos')->where('movimiento_id', '=', $movimiento_response->id)->sum('cantidad');
+
+            $movimiento_response->numero_claves  = $numero_claves;
+            $movimiento_response->numero_insumos = $cantidad_insumos;
+
+            
+
             array_push($data,$movimiento_response);
         }
 
