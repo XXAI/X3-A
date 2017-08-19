@@ -14,5 +14,5 @@ class AvanceDetalles extends BaseModel
     protected $guardarIDUsuario = true;
     
     protected $table = 'avance_detalles';  
-    protected $fillable = ["nombre","extension", "comentario", "porcentaje", "usuario_id"];
+    protected $fillable = ["nombre","extension", "comentario", "porcentaje", "usuario_id", "avance_id"];
 }

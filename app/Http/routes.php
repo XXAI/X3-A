@@ -222,6 +222,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('avance-detalle',       'AvanceDetalleController',             ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::get('download-file-avance/{id}', 'AvanceDetalleController@descargar'); 
     Route::get('view-file-avance/{id}',     'AvanceDetalleController@view'); 
+    Route::resource('avance_repository',     'AvanceDetalleController@store');
 
     Route::group(['prefix' => 'sync','namespace' => 'Sync'], function () {
         Route::get('lista',      'SincronizacionController@lista');

@@ -24,7 +24,7 @@ class AvanceController extends Controller
 		
        if ($parametros['q']) {
             $avance =  $avance->where(function($query) use ($parametros) {
-                 $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere('tema','LIKE',"%".$parametros['q']."%")->orWhere('responsable','LIKE',"%".$parametros['q']."%");
+                 $query->where('area','LIKE',"%".$parametros['q']."%")->orWhere('tema','LIKE',"%".$parametros['q']."%")->orWhere('responsable','LIKE',"%".$parametros['q']."%");
              });
         }
 

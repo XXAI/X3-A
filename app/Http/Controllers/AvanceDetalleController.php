@@ -23,7 +23,7 @@ class AvanceDetalleController extends Controller
         $parametros = Input::only('status','q','page','per_page', 'identificador');
         $avancedetalle = DB::table('avance_detalles')->where("avance_id", $parametros['identificador'])->orderBy('created_at', 'desc');
 		
-       if ($parametros['q']) {
+		if ($parametros['q']) {
             $avancedetalle =  $avancedetalle->where(function($query) use ($parametros) {
                  $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere('nombre','LIKE',"%".$parametros['q']."%")->orWhere('comentario','LIKE',"%".$parametros['q']."%");
              });
@@ -32,6 +32,7 @@ class AvanceDetalleController extends Controller
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
             $avancedetalle = $avancedetalle->paginate($resultadosPorPagina);
+            
         } else {
             $avancedetalle = $avancedetalle->get();
         }
@@ -39,6 +40,46 @@ class AvanceDetalleController extends Controller
         return Response::json([ 'data' => $avancedetalle],200);
     }
 
+    public function store(Request $request){
+        $mensajes = [
+            'required'      => "required",
+        ];
+
+        $reglas = [
+            'porcentaje'        => 'required',
+            'comentario'   => 'required',
+            
+        ];
+
+        $parametros = Input::all();
+
+        
+
+        $v = Validator::make($parametros, $reglas, $mensajes);
+
+        if ($v->fails()) {
+            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+        }
+
+        try {
+
+        	$directorio_destino_path = "avances";
+       		$extension = explode(".", strtolower($_FILES['file']['name']));
+            DB::beginTransaction();
+            $parametros['nombre'] = $extension[0];
+            $parametros['extension'] = $extension[1];
+            $avance_detalle = AvanceDetalles::create($parametros);
+
+             \Request::file('file')->move($directorio_destino_path, $avance_detalle->id.".".$extension[1]);
+            
+            DB::commit();
+            return Response::json([ 'data' => $avance_detalle ],200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
     public function descargar($id, Request $request)
      {
         try{
@@ -153,5 +194,22 @@ class AvanceDetalleController extends Controller
         }catch(Exception $e){
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         }
+    }
+
+    function destroy(Request $request, $id){
+        try {
+            $avanceDetalle = AvanceDetalles::find($id);
+            if($avanceDetalle){
+                   $avanceDetalle->delete();
+                }else{
+                    return Response::json(['error' => 'Este avance ya no puede eliminarse'], 500);
+                }
+           
+            //$object = Pedido::where('almacen_proveedor',$request->get('almacen_id'))->where('id',$id)->delete();
+            return Response::json(['data'=>$avanceDetalle],200);
+        } catch (Exception $e) {
+           return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        }
+
     }
 }
