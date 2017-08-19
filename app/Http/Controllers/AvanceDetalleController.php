@@ -176,19 +176,22 @@ class AvanceDetalleController extends Controller
                 {
                     return Response::json(['error' => "Error al descargar el archivo"], 500); 
                 }*/
-
-                $avancedetalle = AvanceDetalles::find($id);
-                return Response::json(['data'=>$avanceDetalle],200);
-                $directorio_path = "avances";
-                $pathToFile = $directorio_path."//".$id.".".$avancedetalle->extension;
-                
-                $headers = array(
-                    'Content-Type: application/pdf',
-                );
-                return Response::make(file_get_contents($pathToFile), 200, [
-				    'Content-Type' => 'application/pdf',
-				    'Content-Disposition' => 'inline; filename="'.$id.".".$avancedetalle->extension.'"'
-				]);
+                try {
+	                $avancedetalle = AvanceDetalles::find($id);
+	                return Response::json(['data'=>$avanceDetalle],200);
+	                $directorio_path = "avances";
+	                $pathToFile = $directorio_path."//".$id.".".$avancedetalle->extension;
+	                
+	                $headers = array(
+	                    'Content-Type: application/pdf',
+	                );
+	                return Response::make(file_get_contents($pathToFile), 200, [
+					    'Content-Type' => 'application/pdf',
+					    'Content-Disposition' => 'inline; filename="'.$id.".".$avancedetalle->extension.'"'
+					]);
+				 } catch (Exception $e) {
+		           return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+		        }	
             /*}else{
                 return Response::json(['error' =>"No tiene permisos para ingresar a este modulo" ], 500);
             }*/
