@@ -178,6 +178,7 @@ class AvanceDetalleController extends Controller
                 }*/
 
                 $avancedetalle = AvanceDetalles::find($id);
+                return Response::json(['data'=>$avanceDetalle],200);
                 $directorio_path = "avances";
                 $pathToFile = $directorio_path."//".$id.".".$avancedetalle->extension;
                 
