@@ -177,8 +177,7 @@ class AvanceDetalleController extends Controller
                     return Response::json(['error' => "Error al descargar el archivo"], 500); 
                 }*/
                 try {
-	                $avancedetalle = AvanceDetalles::find($id);
-	                return Response::json(['data'=>$avancedetalle],200);
+	                $avancedetalle = AvanceDetalles::withTrashed()->find($id);
 	                $directorio_path = "avances";
 	                $pathToFile = $directorio_path."//".$id.".".$avancedetalle->extension;
 	                
