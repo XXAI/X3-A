@@ -23,9 +23,11 @@ return [
     */
 
     'catalogos' => [
+        
         "permisos",
         "roles",
         //"permiso_rol", Esta tabla hay que agregarle los timestamps
+        "servidores",
         "claves_basicas",
         "claves_basicas_detalles",
         "claves_basicas_unidades_medicas",        
