@@ -113,10 +113,13 @@ class MovimientoController extends Controller
             $movimiento_response = Movimiento::with('movimientoMetadato','movimientoUsuario')
                                              ->where('id',$mov->id)->first();
 
-            $numero_claves  = MovimientoInsumos::where('movimiento_id',$movimiento_response->id)->distinct('clave_insumo_medico')->count();
+            $cantidad_claves  = MovimientoInsumos::where('movimiento_id',$movimiento_response->id)->distinct('clave_insumo_medico')->count();
             $cantidad_insumos = DB::table('movimiento_insumos')->where('movimiento_id', '=', $movimiento_response->id)->sum('cantidad');
 
-            $movimiento_response->numero_claves  = $numero_claves;
+            if($cantidad_claves  == NULL){ $cantidad_claves  = 0 ; }
+            if($cantidad_insumos == NULL){ $cantidad_insumos = 0 ; }
+
+            $movimiento_response->numero_claves  = $cantidad_claves;
             $movimiento_response->numero_insumos = $cantidad_insumos;
 
             
@@ -160,6 +163,7 @@ class MovimientoController extends Controller
         
         if(count($data) <= 0)
         { 
+            /*
             $array_turnos     = array();
             $array_servicios  = array();
 
@@ -174,9 +178,40 @@ class MovimientoController extends Controller
 
             array_push($array_turnos,$turno); 
             array_push($array_servicios,$servicio);
+            */
+
+            ///***************************************************************************************************************************************
+                $movimientos_all = Movimiento::with('movimientoMetadato','movimientoUsuario')
+                                            ->where('tipo_movimiento_id',$parametros['tipo'])
+                                            ->where('almacen_id',$parametros['almacen'])
+                                            ->orderBy('updated_at','DESC')->get();
+                $array_turnos     = array();
+                $array_servicios  = array();
+
+                foreach($movimientos_all as $mov)
+                {
+                    if(!in_array($mov->movimientoMetadato['turno'],$array_turnos))
+                    {
+                        array_push($array_turnos,$mov->movimientoMetadato['turno']);
+                    }
+                    if(!in_array($mov->movimientoMetadato['servicio'],$array_servicios))
+                    {
+                        array_push($array_servicios,$mov->movimientoMetadato['servicio']);
+                    }
+                }
+                $array_turnos    = array_filter($array_turnos, function($v){return $v !== null;});
+                $array_servicios = array_filter($array_servicios, function($v){return $v !== null;});
+
+                $total = count($data);
+
+                ////**************************************************************************************************************************************
+
+
 
             $data[0] = array ("turnos_disponibles" => $array_turnos, "servicios_disponibles" => $array_servicios);
             return Response::json(array("status" => 404,"messages" => "No hay resultados","data" => $data), 200);
+
+          //return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data2, "total" => $total), 200);
         } 
         else{
                 ///***************************************************************************************************************************************
@@ -1410,17 +1445,8 @@ class MovimientoController extends Controller
                                 }
                              ///**************************************************************************************************************************
                            
-                           $cantidad_negada          = 0;
-                           $cantidad_negada_unidosis = 0;
-
-                                if($insumo->modo_salida == 'N')
-                                {
-                                    $cantidad_negada          = $movimiento_detalle->cantidad_negada;
-                                    $cantidad_negada_unidosis = $movimiento_detalle->cantidad_negada * $insumo->cantidad_x_envase;
-                                }else{
-                                        $cantidad_negada          = $movimiento_detalle->cantidad_negada / $insumo->cantidad_x_envase;
-                                        $cantidad_negada_unidosis = $movimiento_detalle->cantidad_negada;
-                                     }
+                           $cantidad_negada          = $movimiento_detalle->cantidad_negada;
+                           $cantidad_negada_unidosis = $movimiento_detalle->cantidad_negada_unidosis;        
                            
                             // Si existe registro de negación de insumo ( activo ó resusitado )
                             if($negacion)

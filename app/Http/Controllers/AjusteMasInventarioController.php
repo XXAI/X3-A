@@ -38,10 +38,10 @@ use App\Models\Almacen;
 * @author     Joram Roblero Pérez <joram.roblero@gmail.com>
 * @created    2017-03-22
 *
-* Controlador `Inventario`: Controlador  para la consulta de inventarios
+* Controlador `AjusteMasInventario`: Controlador  para los ajustes más de inventario de insumos medicos
 *
 */
-class InventarioController extends Controller
+class AjusteMasInventarioController extends Controller
 {
      
     public function index(Request $request)
@@ -49,7 +49,6 @@ class InventarioController extends Controller
         //buscar_en:  MC , TC,       seleccionar :  NO_EXISTENTE, EXISTENTE
         $parametros = Input::only('q','page','per_page','almacen','tipo','es_causes','buscar_en','seleccionar');
         
-
         $parametros['almacen'] = $request->get('almacen_id');
 
         if(!$request->get('almacen_id')){
@@ -61,85 +60,18 @@ class InventarioController extends Controller
 
         $almacen_id = $request->get('almacen_id');
 
+///*******************************************************************
+        $input_data = (object)Input::json()->all();
+
+        $pedido_id      = $input_data->pedido;
+        $json_proveedor = $input_data->json;
+        $almacen_id     = $json_proveedor->almacen_id;
+///*******************************************************************
+
         $almacen = Almacen::find($almacen_id);
         $clues   = $almacen->clues;
 
 
-            if($parametros['buscar_en'] == "MIS_CLAVES")
-            {
-                $claves = DB::table("clues_claves AS cc")->leftJoin('insumos_medicos AS im', 'im.clave', '=', 'cc.clave_insumo_medico')
-                              ->select('cc.clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','es_unidosis')
-                              ->where('clues',$clues);
-            }
-            if($parametros['buscar_en'] == "TODAS_LAS_CLAVES")
-            {
-                $claves = DB::table('insumos_medicos AS im')
-                              ->select('im.clave AS clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','im.es_unidosis');
-            }
-
-
-            if($parametros['tipo'] == "TODO")
-            {
-            }else{
-                    $claves = $claves->where('im.tipo','=',$parametros['tipo']);
-                 }
-
-
-            if($parametros['q'])
-            {
-                $claves = $claves->where(function($query) use ($parametros) {
-                                                $query->where('im.descripcion','LIKE',"%".$parametros['q']."%")
-                                                ->orWhere('im.clave','LIKE',"%".$parametros['q']."%");
-                                                });
-            }
-
-            $claves = $claves->get();
-
-            foreach($claves as $clave)
-            {
-                $existencia = 0; $existencia_unidosis = 0;
-                $updated_at = NULL;
-                $stocks = Stock::where('almacen_id',$almacen_id)->where('clave_insumo_medico',$clave->clave_insumo_medico)->get();
-
-                if($stocks)
-                {
-                    foreach ($stocks as $key => $stock) 
-                    {
-                        $existencia          += $stock->existencia;
-                        $existencia_unidosis += $stock->existencia_unidosis;
-                        //$updated_at           = $stock->updated_at;
-                    }
-                }
-                
-                $clave->existencia          = property_exists($clave, "existencia") ? $clave->existencia : $existencia;
-                $clave->existencia_unidosis = property_exists($clave, "existencia_unidosis") ? $clave->existencia_unidosis : $existencia_unidosis;
-                $clave->updated_at          = property_exists($clave, "updated_at") ? $clave->updated_at : $updated_at;
-                array_push($data,$clave);
-            }
-
-            $data_existente    = array();
-            $data_no_existente = array();
-
-            foreach ($data as $key => $clave) 
-            {
-                $clave = (object) ($clave);
-
-                    if($clave->existencia > 0)
-                    {
-                        array_push($data_existente,$clave);
-                    }else{
-                            array_push($data_no_existente,$clave);
-                         }
-            }
-
-            if($parametros['seleccionar'] == "EXISTENTE")
-            {
-                $data = $data_existente;
-            }
-            if($parametros['seleccionar'] == "NO_EXISTENTE")
-            {
-                $data = $data_no_existente;
-            }
 
             $currentPage = LengthAwarePaginator::resolveCurrentPage();
             $itemCollection = new Collection($data);
@@ -194,7 +126,28 @@ class InventarioController extends Controller
    
     public function store(Request $request)
     {
-       
+        $input_data = (object)Input::json()->all();
+
+        $insumos  = NULL;
+        if(property_exists($input_data, "insumos"))
+        {
+            foreach($input_data->insumos as $insumo)
+            {
+                $insumo = (object) $insumo;
+
+                foreach($insumo->lotes as $lote)
+                {
+                    $lote = (object) $lote;
+                    
+
+
+                }
+
+            }
+        }else{
+
+             }
+
     }
 
 
