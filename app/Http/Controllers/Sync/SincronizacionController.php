@@ -419,7 +419,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
      */
     public function confirmarSync(Request $request)
     {
-        
+        ini_set('memory_limit', '-1');
         DB::beginTransaction();
         try {
              
@@ -480,7 +480,9 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     
                                     $contents = Storage::get("confirmacion/catalogos.sync");
                                     if($contents != ""){
+                                        DB::statement('SET FOREIGN_KEY_CHECKS=0');
                                         DB::connection()->getpdo()->exec($contents);
+                                        DB::statement('SET FOREIGN_KEY_CHECKS=1');
                                     }
                                     
                                     // Registramos la sincronización en la base de datos. 
