@@ -100,6 +100,11 @@ class InicializacionInventarioController extends Controller{
 
             $response = $this->guardarDatosInventario($nuevo_inventario,$parametros['lista_insumos']);
 
+            if($response['status'] == 200){
+                return Response::json([ 'data' => $nuevo_inventario],200);
+            }else{
+                return Response::json(['error' => $response['error']], HttpResponse::HTTP_CONFLICT);
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
@@ -107,19 +112,61 @@ class InicializacionInventarioController extends Controller{
     }
 
     private function guardarDatosInventario($inventario,$lista_insumos_form){
-        $lista_insumos_db = InventarioDetalle::where('inventario_id',$inventario->id)->get();
+        try{
+            DB::beginTransaction();
 
-        if(count($lista_insumos_db) > count($lista_insumos_form)){
-            $accion_faltantes = 'eliminar';
-        }else{
-            $accion_faltantes = 'crear';
-        }
+            $lista_insumos_db = InventarioDetalle::where('inventario_id',$inventario->id)->withTrashed()->get();
+            
+            if(count($lista_insumos_db) > count($lista_insumos_form)){
+                $total_max_insumos = count($lista_insumos_db);
+            }else{
+                $total_max_insumos = count($lista_insumos_form);
+            }
+            
+            for ($i=0; $i < $total_max_insumos ; $i++) {
+                if(isset($lista_insumos_db[$i])){ //Si existen en la base de datos se editan o eliminan.
+                    $insumo_db = $lista_insumos_db[$i];
+                    if(isset($lista_insumos_form[$i])){ //Si hay insumos desde el fomulario, editamos el insumo de la base de datos.
+                        $insumo_form = $lista_insumos_form[$i];
+    
+                        $insumo_db->deleted_at = null; //Por si el elemento ya esta liminado, lo restauramos
+                        $insumo_db->insumo_medico_clave = $lista_insumos_form['clave'];
+                        $insumo_db->codigo_barras = $lista_insumos_form['codigo_barras'];
+                        $insumo_db->lote = $lista_insumos_form['lote'];
+                        $insumo_db->fecha_caducidad = $lista_insumos_form['fecha_caducidad'];
+                        $insumo_db->cantidad = $lista_insumos_form['cantidad'];
+                        $insumo_db->precio_unitario = $lista_insumos_form['precio_unitario'];
+                        $insumo_db->monto = $lista_insumos_form['monto'];
+    
+                        $insumo_db->save();
+                    }else{ //de lo contrario eliminamos el insumo de la base de datos.
+                        $insumo_db->delete();
+                    }
+                }else{ //SI no existen en la base de datos, se crean nuevos
+                    $insumo_db = new InventarioDetalle();
 
-        for ($i=0; $i < count($lista_insumos_db) ; $i++) { 
-            $insumo_db = $lista_insumos_db[$i];
-        }
-        foreach ($lista_insumos_db as $index => $detalle) {
-            //
+                    $insumo_db->inventario_id = $inventario->id;
+                    $insumo_db->insumo_medico_clave = $lista_insumos_form['clave'];
+                    $insumo_db->codigo_barras = $lista_insumos_form['codigo_barras'];
+                    $insumo_db->lote = $lista_insumos_form['lote'];
+                    $insumo_db->fecha_caducidad = $lista_insumos_form['fecha_caducidad'];
+                    $insumo_db->cantidad = $lista_insumos_form['cantidad'];
+                    $insumo_db->precio_unitario = $lista_insumos_form['precio_unitario'];
+                    $insumo_db->monto = $lista_insumos_form['monto'];
+
+                    $insumo_db->save();
+                }
+            }
+
+            //Falta sumar los totales, de claves y montos
+
+            DB::commit();
+
+            return array('status'=>200, 'msg'=>'Exito');
+
+        }catch (\Exception $e) {
+            DB::rollBack();
+            return array('status'=>HttpResponse::HTTP_CONFLICT, 'error'=>$e->getMessage());
         }
     }
 }
