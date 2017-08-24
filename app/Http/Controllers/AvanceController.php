@@ -9,6 +9,7 @@ use JWTAuth;
 use App\Http\Requests;
 use App\Models\Avance;
 use App\Models\AvanceDetalles;
+use App\Models\AvanceUsuarioPrivilegio;
 use App\Models\Usuario;
 use Carbon\Carbon;
 
@@ -66,7 +67,10 @@ class AvanceController extends Controller
 			$avance = DB::table('avances')->whereNull("deleted_at");
 		else if($normal)
 		{
-			$avance = DB::table('avances')->where("usuario_id", $request->get('usuario_id'))->whereNull("deleted_at");
+
+			$avance = DB::table('avances')
+                            ->whereRaw("avances.id in (select avance_id from avance_usuario_privilegio where usuario_id='".$request->get('usuario_id')."')" );
+
 		}else
 		{
 			return Response::json(['error' => "Error, no tiene permisos "], 500); 
@@ -149,6 +153,12 @@ class AvanceController extends Controller
             
             $avance = Avance::create($parametros);
 
+            $arreglo_privilegios = array("avance_id"    => $avance->id,
+                                         "usuario_id"   => $request->get('usuario_id'),
+                                         "agregar"      => 1,
+                                         "editar"       => 1,
+                                         "eliminar"     => 1);
+            $avance_usuario = AvanceUsuarioPrivilegio::create($arreglo_privilegios);
             DB::commit();
             return Response::json([ 'data' => $avance ],200);
 

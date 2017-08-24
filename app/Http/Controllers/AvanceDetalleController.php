@@ -10,6 +10,7 @@ use JWTAuth;
 use App\Http\Requests;
 use App\Models\Avance;
 use App\Models\AvanceDetalles;
+use App\Models\AvanceUsuarioPrivilegio;
 use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Input;
@@ -17,11 +18,13 @@ use \Validator,\Hash, \Response, DB;
 
 class AvanceDetalleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         
         $parametros = Input::only('status','q','page','per_page', 'identificador');
-        $avancedetalle = DB::table('avance_detalles')->where("avance_id", $parametros['identificador'])->orderBy('created_at', 'desc');
+        $avancedetalle = DB::table('avance_detalles')->where("avance_id", $parametros['identificador'])
+                        ->whereRaw("avance_detalles.avance_id in (select avance_id from avance_usuario_privilegio where usuario_id='".$request->get('usuario_id')."')" )
+                        ->orderBy('created_at', 'desc');
 		
 		if ($parametros['q']) {
             $avancedetalle =  $avancedetalle->where(function($query) use ($parametros) {
@@ -68,10 +71,18 @@ class AvanceDetalleController extends Controller
             DB::beginTransaction();
             $parametros['nombre'] = $extension[0];
             $parametros['extension'] = $extension[1];
-            $avance_detalle = AvanceDetalles::create($parametros);
 
-             \Request::file('file')->move($directorio_destino_path, $avance_detalle->id.".".$extension[1]);
-            
+            $privilegios = AvanceUsuarioPrivilegio::where("usuario_id", $request->get('usuario_id'))->where("avance_id", $parametros['avance_id'])->first();
+            if($privilegios->agregar == "1")
+            {
+                $avance_detalle = AvanceDetalles::create($parametros);
+
+                 \Request::file('file')->move($directorio_destino_path, $avance_detalle->id.".".$extension[1]);
+            }else
+            {
+                DB::rollBack();
+                return Response::json('No tiene privilegios para realizar esta accion.', 500);
+            }    
             DB::commit();
             return Response::json([ 'data' => $avance_detalle ],200);
 
@@ -202,14 +213,22 @@ class AvanceDetalleController extends Controller
     function destroy(Request $request, $id){
         try {
             $avanceDetalle = AvanceDetalles::find($id);
-            if($avanceDetalle){
-                   $avanceDetalle->delete();
-                }else{
-                    return Response::json(['error' => 'Este avance ya no puede eliminarse'], 500);
-                }
-           
-            //$object = Pedido::where('almacen_proveedor',$request->get('almacen_id'))->where('id',$id)->delete();
-            return Response::json(['data'=>$avanceDetalle],200);
+            $privilegios = AvanceUsuarioPrivilegio::where("usuario_id", $request->get('usuario_id'))->where("avance_id", $avanceDetalle->avance_id)->first();
+            if($privilegios->eliminar == "1")
+            {
+                
+                if($avanceDetalle){
+                       $avanceDetalle->delete();
+                    }else{
+                        return Response::json(['error' => 'Este avance ya no puede eliminarse'], 500);
+                    }
+               
+                //$object = Pedido::where('almacen_proveedor',$request->get('almacen_id'))->where('id',$id)->delete();
+                return Response::json(['data'=>$avanceDetalle],200);
+            }else
+            {
+                return Response::json(['error'=>"No tiene privilegios para eliminar este avance"],500);
+            }
         } catch (Exception $e) {
            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         }

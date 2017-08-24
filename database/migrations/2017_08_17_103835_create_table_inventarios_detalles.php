@@ -32,7 +32,7 @@ class CreateTableInventariosDetalles extends Migration
             $table->softDeletes();
 
             $table->foreign('inventario_id')->references('id')->on('inventarios');
-            $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
+            //$table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
             $table->foreign('usuario_id')->references('id')->on('usuarios');
             $table->primary('id');
         });
