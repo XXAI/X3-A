@@ -32,17 +32,17 @@ use App\Models\Almacen;
 
 
 /** 
-* Controlador Ajuste Más Inventario
+* Controlador Ajuste Menos
 * 
 * @package    SIAL API
 * @subpackage Controlador
 * @author     Joram Roblero Pérez <joram.roblero@gmail.com>
 * @created    2017-03-22
 *
-* Controlador `AjusteMasInventario`: Controlador  para los ajustes más de inventario de insumos medicos
+* Controlador `AjusteMenosInventario`: Controlador  para los ajustes menoss de inventario de insumos medicos
 *
 */
-class AjusteMasInventarioController extends Controller
+class AjusteMenosInventarioController extends Controller
 {
      
     public function index(Request $request)
@@ -63,7 +63,7 @@ class AjusteMasInventarioController extends Controller
                              ->leftJoin('usuarios AS users', 'users.id', '=', 'mov.usuario_id')
                              ->select('mov.*','users.nombre')
                              ->where('mov.almacen_id',$parametros['almacen'])
-                             ->where('mov.tipo_movimiento_id',6)
+                             ->where('mov.tipo_movimiento_id',7)
                              ->orderBy('mov.updated_at','DESC');
 
         if( ($parametros['fecha_desde']!="") && ($parametros['fecha_hasta']!="") )
@@ -324,12 +324,12 @@ class AjusteMasInventarioController extends Controller
                     {
                         if($lote->nuevo == 0)
                         {
-                            $lote_check =  Stock::where('clave_insumo_medico',$insumo['clave'])->find($lote->id);
+                            $lote_check =  Stock::find($lote->id);
                             if($lote_check)
                             {
                                 if(property_exists($lote, 'nueva_existencia'))
                                     {
-                                        if($lote_check->existencia > $lote->nueva_existencia)
+                                        if( $lote->nueva_existencia >= $lote_check->existencia )
                                         {
                                             $v->errors()->add('lote_'.$lote->id.'_', 'cantidad_invalida');
                                         }
@@ -386,7 +386,7 @@ class AjusteMasInventarioController extends Controller
     public function ejecutarAjusteMas($input_data,$movimiento, $almacen_id )
     {
         $movimiento->almacen_id          = $almacen_id; 
-        $movimiento->tipo_movimiento_id  = 6;
+        $movimiento->tipo_movimiento_id  = 7;
         $movimiento->status              = "FI";
         $movimiento->fecha_movimiento    = date("Y-m-d");
         $movimiento->observaciones       = $input_data->observaciones;

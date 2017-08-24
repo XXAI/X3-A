@@ -163,23 +163,6 @@ class MovimientoController extends Controller
         
         if(count($data) <= 0)
         { 
-            /*
-            $array_turnos     = array();
-            $array_servicios  = array();
-
-            $turno = new Turno();
-            $turno->id = 0;
-            $turno->nombre = "Todos";
-            $turno->descripcion = "";
-
-            $servicio = new Servicio();
-            $servicio->id = 0;
-            $servicio->nombre = "Todos";
-
-            array_push($array_turnos,$turno); 
-            array_push($array_servicios,$servicio);
-            */
-
             ///***************************************************************************************************************************************
                 $movimientos_all = Movimiento::with('movimientoMetadato','movimientoUsuario')
                                             ->where('tipo_movimiento_id',$parametros['tipo'])
@@ -1681,12 +1664,11 @@ class MovimientoController extends Controller
             if(property_exists($datos,"receta"))
             {
                 $receta->folio          = $datos->receta['folio'];
-                $receta->tipo_receta    = $datos->receta['tipo_receta'];
+                $receta->tipo_receta_id = $datos->receta['tipo_receta'];
                 $receta->fecha_receta   = $datos->receta['fecha_receta'];
                 $receta->doctor         = $datos->receta['doctor'];
                 $receta->paciente       = $datos->receta['paciente'];
                 $receta->diagnostico    = $datos->receta['diagnostico'];
-                $receta->imagen_receta  = $datos->receta['imagen_receta'];
 
                 $receta->save();
 
@@ -1760,32 +1742,32 @@ class MovimientoController extends Controller
                                                              where('codigo_barras',$lote->codigo_barras)->where('clave_insumo_medico',$insumo->clave)->orderBy('created_at','DESC')->first();
 
                                         if($lote_temp){ /// si ya existe un lote vacio con esos detalles : se agrega un
-                                                $lote_temp->existencia = $lote->existencia;
-                                                $lote_temp->save();
-                                                // adicion del campo cantidad al objeto lote/stock
-                                                $lote_temp->cantidad = property_exists($lote_temp, "cantidad") ? $lote_temp->cantidad : $lote->cantidad;
+                                                        $lote_temp->existencia = $lote->existencia;
+                                                        $lote_temp->save();
+                                                        // adicion del campo cantidad al objeto lote/stock
+                                                        $lote_temp->cantidad = property_exists($lote_temp, "cantidad") ? $lote_temp->cantidad : $lote->cantidad;
 
-                                                array_push($lotes_nuevos,$lote_temp);
-                                                array_push($lotes_master,$lote_temp);
-                                          }else{
-                                                    $lote_insertar = new Stock;
+                                                        array_push($lotes_nuevos,$lote_temp);
+                                                        array_push($lotes_master,$lote_temp);
+                                                       }else{
+                                                                    $lote_insertar = new Stock;
 
-                                                    $lote_insertar->almacen_id             = $movimiento_salida_receta->almacen_id;
-                                                    $lote_insertar->clave_insumo_medico    = $insumo->clave;
-                                                    $lote_insertar->marca_id               = NULL;
-                                                    $lote_insertar->lote                   = $lote->lote;
-                                                    $lote_insertar->fecha_caducidad        = $lote->fecha_caducidad;
-                                                    $lote_insertar->codigo_barras          = $lote->codigo_barras;
-                                                    $lote_insertar->existencia             = $lote->existencia;
-                                                    $lote_insertar->existencia_unidosis    = ( $insumo->cantidad_x_envase * $lote->cantidad );
+                                                                    $lote_insertar->almacen_id             = $movimiento_salida_receta->almacen_id;
+                                                                    $lote_insertar->clave_insumo_medico    = $insumo->clave;
+                                                                    $lote_insertar->marca_id               = NULL;
+                                                                    $lote_insertar->lote                   = $lote->lote;
+                                                                    $lote_insertar->fecha_caducidad        = $lote->fecha_caducidad;
+                                                                    $lote_insertar->codigo_barras          = $lote->codigo_barras;
+                                                                    $lote_insertar->existencia             = $lote->existencia;
+                                                                    $lote_insertar->existencia_unidosis    = ( $insumo->cantidad_x_envase * $lote->cantidad );
 
-                                                    $lote_insertar->save();
-                                                    // adicion del campo cantidad al objeto lote/stock
-                                                    $lote_insertar->cantidad = property_exists($lote_insertar, "cantidad") ? $lote_insertar->cantidad : $lote->cantidad;
+                                                                    $lote_insertar->save();
+                                                                    // adicion del campo cantidad al objeto lote/stock
+                                                                    $lote_insertar->cantidad = property_exists($lote_insertar, "cantidad") ? $lote_insertar->cantidad : $lote->cantidad;
 
-                                                    array_push($lotes_nuevos,$lote_insertar);
-                                                    array_push($lotes_master,$lote_insertar);
-                                               }
+                                                                    array_push($lotes_nuevos,$lote_insertar);
+                                                                    array_push($lotes_master,$lote_insertar);
+                                                            }
 
                                     }else{
                                             // aqui ya trae el campo cantidad el objeto lote/stock
