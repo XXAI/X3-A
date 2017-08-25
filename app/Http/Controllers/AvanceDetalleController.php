@@ -11,6 +11,7 @@ use App\Http\Requests;
 use App\Models\Avance;
 use App\Models\AvanceDetalles;
 use App\Models\AvanceUsuarioPrivilegio;
+use App\Models\Usuario;
 use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Input;
@@ -22,9 +23,14 @@ class AvanceDetalleController extends Controller
     {
         
         $parametros = Input::only('status','q','page','per_page', 'identificador');
-        $avancedetalle = DB::table('avance_detalles')->where("avance_id", $parametros['identificador'])
-                        ->whereRaw("avance_detalles.avance_id in (select avance_id from avance_usuario_privilegio where usuario_id='".$request->get('usuario_id')."')" )
-                        ->orderBy('created_at', 'desc');
+        $usuario = Usuario::find($request->get('usuario_id'));
+
+        $avancedetalle = DB::table('avance_detalles')->where("avance_id", $parametros['identificador']);
+
+        if($usuario->su !=1)
+            $avancedetalle = $avancedetalle->whereRaw("avance_detalles.avance_id in (select avance_id from avance_usuario_privilegio where usuario_id='".$request->get('usuario_id')."')" );
+
+        $avancedetalle = $avancedetalle->orderBy('created_at', 'desc');
 		
 		if ($parametros['q']) {
             $avancedetalle =  $avancedetalle->where(function($query) use ($parametros) {
@@ -227,7 +233,7 @@ class AvanceDetalleController extends Controller
                 return Response::json(['data'=>$avanceDetalle],200);
             }else
             {
-                return Response::json(['error'=>"No tiene privilegios para eliminar este avance"],500);
+                return Response::json(['error'=>"No tiene privilegios para eliminar este avance"],401);
             }
         } catch (Exception $e) {
            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);

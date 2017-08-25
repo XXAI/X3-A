@@ -11,7 +11,7 @@ class Avance extends BaseModel
     
     protected $generarID = true;
     protected $guardarIDServidor = true;
-    protected $guardarIDUsuario = true;
+    protected $guardarIDUsuario = false;
     
     protected $table = 'avances';  
     protected $fillable = ["tema","responsable", "area", "comentario", "usuario_id"];

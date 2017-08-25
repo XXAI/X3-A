@@ -185,8 +185,16 @@ class AvanceController extends Controller
         try {
             DB::beginTransaction();
             
-            $avance = Avance::find($id);
-            $avance->update($parametros);
+            $privilegios = AvanceUsuarioPrivilegio::where("avance_id",$id)->where("usuario_id", $request->get('usuario_id'))->first();
+            $usuario = Usuario::find($request->get('usuario_id'));    
+
+            if($privilegios->editar == 1 || $usuario->su == 1)
+            {
+                $avance = Avance::find($id);
+                $avance->update($parametros);
+            }else{
+                return Response::json([ 'error' => "No tiene permisos para hacer esta modificacion" ],401);
+            }   
 
             DB::commit();
             return Response::json([ 'data' => $avance ],200);

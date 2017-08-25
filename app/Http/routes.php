@@ -221,11 +221,12 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
 
     //Modulo de Avances
-    Route::resource('avance',               'AvanceController',             ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('avance-detalle',       'AvanceDetalleController',             ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::get('download-file-avance/{id}', 'AvanceDetalleController@descargar'); 
-    Route::get('view-file-avance/{id}',     'AvanceDetalleController@view'); 
-    Route::resource('avance_repository',     'AvanceDetalleController@store');
+    Route::resource('avance',                       'AvanceController',             ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('avance-detalle',               'AvanceDetalleController',             ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('avance-usuario-privilegio',    'AvanceUsuarioPrivilegioController',             ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::get('download-file-avance/{id}',         'AvanceDetalleController@descargar'); 
+    Route::get('view-file-avance/{id}',             'AvanceDetalleController@view'); 
+    Route::resource('avance_repository',            'AvanceDetalleController@store');
 
     Route::group(['prefix' => 'sync','namespace' => 'Sync'], function () {
         Route::get('lista',      'SincronizacionController@lista');

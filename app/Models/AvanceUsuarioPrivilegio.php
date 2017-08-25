@@ -10,7 +10,7 @@ class AvanceUsuarioPrivilegio extends BaseModel
     
     protected $generarID = true;
     protected $guardarIDServidor = true;
-    protected $guardarIDUsuario = true;
+    protected $guardarIDUsuario = false;
     
     protected $table = 'avance_usuario_privilegio';  
     protected $fillable = ["usuario_id","avance_id", "agregar", "editar", "eliminar"];
