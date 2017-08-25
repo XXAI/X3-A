@@ -52,7 +52,9 @@ class AvanceUsuarioPrivilegioController extends Controller
         try {
             DB::beginTransaction();
             $privilegios = Avance::where("id",$parametros['avance_id'])->where("usuario_id", $request->get('usuario_id'))->first();
-            if($privilegios)
+
+            $usuario = Usuario::find($request->get('usuario_id'));
+            if($privilegios || $usuario->su == 1)
             {
             	$avance = AvanceUsuarioPrivilegio::create($parametros);
             }else{
@@ -71,9 +73,9 @@ class AvanceUsuarioPrivilegioController extends Controller
     function destroy(Request $request, $id){
         try {
         	$usuarios = AvanceUsuarioPrivilegio::find($id);
-            
+            $usuario = Usuario::find($request->get('usuario_id'));
             $privilegios = Avance::where("id",$usuarios->avance_id)->where("usuario_id", $request->get('usuario_id'))->first();
-            if($privilegios)
+            if($privilegios || $usuario->su==1)
             {
                 $usuarios->delete();
                 return Response::json(['data'=>$usuarios],200);
