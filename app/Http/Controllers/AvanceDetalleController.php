@@ -78,8 +78,10 @@ class AvanceDetalleController extends Controller
             $parametros['nombre'] = $extension[0];
             $parametros['extension'] = $extension[1];
 
+            $usuario = Usuario::find($request->get('usuario_id'));
+
             $privilegios = AvanceUsuarioPrivilegio::where("usuario_id", $request->get('usuario_id'))->where("avance_id", $parametros['avance_id'])->first();
-            if($privilegios->agregar == "1")
+            if($privilegios->agregar == "1" || $usuario->su == 1)
             {
                 $avance_detalle = AvanceDetalles::create($parametros);
 
@@ -220,7 +222,10 @@ class AvanceDetalleController extends Controller
         try {
             $avanceDetalle = AvanceDetalles::find($id);
             $privilegios = AvanceUsuarioPrivilegio::where("usuario_id", $request->get('usuario_id'))->where("avance_id", $avanceDetalle->avance_id)->first();
-            if($privilegios->eliminar == "1")
+
+            $usuario = Usuario::find($request->get('usuario_id'));
+
+            if($privilegios->eliminar == "1" || $usuario->su == 1)
             {
                 
                 if($avanceDetalle){
