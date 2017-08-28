@@ -51,6 +51,7 @@ Route::group(['middleware' => 'jwt'], function () {
     
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
     // Harima: Se colaron en algun merge que hicieron, los tomo como cambios en el commit, probablemente marco conflicto y lo arreglaron dejando estas lineas, los comento, si no hay problemas los elimino en el proximo commit
+    // Akira: Excelente jaja vaya manera de conversar
     //Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);    
     //Route::get('pedidos-stats',         'PedidoController@stats');
     //Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
@@ -234,6 +235,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('auto',      'SincronizacionController@auto');
         Route::post('importar', 'SincronizacionController@importarSync');
         Route::post('confirmar', 'SincronizacionController@confirmarSync');
+        Route::resource('servidores', 'ServidoresController',['only' => ['index', 'show', 'store','update','destroy']]);
     });
     
 });
