@@ -27,7 +27,25 @@ class AvanceDetalleController extends Controller
 
         $avancedetalle = DB::table('avance_detalles')->where("avance_id", $parametros['identificador']);
 
-        if($usuario->su !=1)
+        $general = false;
+        $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
+            $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+        }])->find($request->get('usuario_id'));
+
+        foreach ($usuario_general->roles as $index => $rol) {
+            foreach ($rol->permisos as $permiso) {
+                $permisos[$permiso->id] = true;
+
+                if(count($permisos)){
+                    $general = true;
+                }
+            }
+        }
+        if(count($permisos)){
+            $general = true;
+        }
+
+        if($usuario->su !=1 && !$general)
             $avancedetalle = $avancedetalle->whereRaw("avance_detalles.avance_id in (select avance_id from avance_usuario_privilegio where usuario_id='".$request->get('usuario_id')."')" );
 
         $avancedetalle = $avancedetalle->orderBy('created_at', 'desc');
