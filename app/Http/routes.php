@@ -108,6 +108,12 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-borrador-cancelado/{id}', 'PedidosController@regresarBorradorCancelado');
         Route::get('recepcion-borrador/{id}', 'RecepcionPedidoController@borrarRecepcion');        
 
+        // Pedidos Alternos
+        Route::get('pedidos-alternos', 'PedidosAlternosController@lista');     
+        Route::get('pedidos-alternos/{id}', 'PedidosAlternosController@ver');      
+        Route::put('pedidos-alternos/validacion/{id}', 'PedidosAlternosController@validar');
+        Route::put('pedidos-alternos/proveedor/{id}', 'PedidosAlternosController@asignarProveedor');        
+
     });
     // # FIN SECCION
 
@@ -121,7 +127,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('listar-pedidos-proveedor', 'SincronizacionProveedorController@listarPedidos');
         Route::post('analizar-json-proveedor', 'SincronizacionProveedorController@analizarJson');
         Route::post('procesar-json-proveedor', 'SincronizacionProveedorController@procesarJson');
-
+        
         Route::resource('repository',      'RepositorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
  
     });

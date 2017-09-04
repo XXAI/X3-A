@@ -19,6 +19,10 @@ class Pedido extends BaseModel
         return $this->hasMany('App\Models\PedidoInsumo','pedido_id','id');
     }
 
+    public function pedidoAlterno(){
+        return $this->hasMany('App\Models\PedidoAlterno','pedido_id', 'id');
+    }
+
     public function recepciones(){
         return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id');
     }
@@ -34,10 +38,17 @@ class Pedido extends BaseModel
     public function encargadoAlmacen(){
       return $this->hasOne('App\Models\PersonalClues','id','encargado_almacen_id');
     }
+
+
+   
     
     public function acta(){
         return $this->belongsTo('App\Models\Acta','acta_id','id');
     }
+
+    public function unidadMedica(){
+        return $this->belongsTo('App\Models\UnidadMedica','clues','clues');
+      }
 
     public function tipoInsumo(){
         return $this->belongsTo('App\Models\TipoInsumo','tipo_insumo_id','id');        
