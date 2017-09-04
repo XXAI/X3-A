@@ -81,7 +81,26 @@ class AvanceDetalleController extends Controller
             $usuario = Usuario::find($request->get('usuario_id'));
 
             $privilegios = AvanceUsuarioPrivilegio::where("usuario_id", $request->get('usuario_id'))->where("avance_id", $parametros['avance_id'])->first();
-            if($privilegios->agregar == "1" || $usuario->su == 1)
+            
+            $general = false;
+            $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
+                $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+            }])->find($request->get('usuario_id'));
+
+            foreach ($usuario_general->roles as $index => $rol) {
+                foreach ($rol->permisos as $permiso) {
+                    $permisos[$permiso->id] = true;
+
+                    if(count($permisos)){
+                        $general = true;
+                    }
+                }
+            }
+            if(count($permisos)){
+                $general = true;
+            }
+
+            if($privilegios->agregar == "1" || $usuario->su == 1 || $general)
             {
                 $avance_detalle = AvanceDetalles::create($parametros);
 
@@ -224,8 +243,25 @@ class AvanceDetalleController extends Controller
             $privilegios = AvanceUsuarioPrivilegio::where("usuario_id", $request->get('usuario_id'))->where("avance_id", $avanceDetalle->avance_id)->first();
 
             $usuario = Usuario::find($request->get('usuario_id'));
+            $general = false;
+            $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
+                $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+            }])->find($request->get('usuario_id'));
 
-            if($privilegios->eliminar == "1" || $usuario->su == 1)
+            foreach ($usuario_general->roles as $index => $rol) {
+                foreach ($rol->permisos as $permiso) {
+                    $permisos[$permiso->id] = true;
+
+                    if(count($permisos)){
+                        $general = true;
+                    }
+                }
+            }
+            if(count($permisos)){
+                $general = true;
+            }
+
+            if($privilegios->eliminar == "1" || $usuario->su == 1 || $general)
             {
                 
                 if($avanceDetalle){
