@@ -28,6 +28,7 @@ class AvanceDetalleController extends Controller
         $avancedetalle = DB::table('avance_detalles')->where("avance_id", $parametros['identificador']);
 
         $general = false;
+        $permisos = [];
         $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
             $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
         }])->find($request->get('usuario_id'));
@@ -101,6 +102,7 @@ class AvanceDetalleController extends Controller
             $privilegios = AvanceUsuarioPrivilegio::where("usuario_id", $request->get('usuario_id'))->where("avance_id", $parametros['avance_id'])->first();
             
             $general = false;
+            $permisos = [];
             $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
                 $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
             }])->find($request->get('usuario_id'));
@@ -262,6 +264,7 @@ class AvanceDetalleController extends Controller
 
             $usuario = Usuario::find($request->get('usuario_id'));
             $general = false;
+            $permisos = [];
             $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
                 $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
             }])->find($request->get('usuario_id'));
