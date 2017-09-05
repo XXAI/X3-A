@@ -281,7 +281,7 @@ class AvanceDetalleController extends Controller
                 $general = true;
             }
 
-            if($privilegios->eliminar == "1" || $usuario->su == 1 || $general)
+            if($usuario->su == 1 || $general || (isset($privilegios) && $privilegios->eliminar == "1"))
             {
                 
                 if($avanceDetalle){

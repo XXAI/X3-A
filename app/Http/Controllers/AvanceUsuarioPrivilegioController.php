@@ -31,7 +31,26 @@ class AvanceUsuarioPrivilegioController extends Controller
         							->whereNull("usuarios.deleted_at")
         							->get();
 
-        if($usuario->su == 1 || $avance->usuario_id == $request->get('usuario_id') )
+        $general = false;
+        $permisos = [];
+        $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
+            $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+        }])->find($request->get('usuario_id'));
+
+        foreach ($usuario_general->roles as $index => $rol) {
+            foreach ($rol->permisos as $permiso) {
+                $permisos[$permiso->id] = true;
+
+                if(count($permisos)){
+                    $general = true;
+                }
+            }
+        }
+        if(count($permisos)){
+            $general = true;
+        }                            
+
+        if($usuario->su == 1 || $general || $avance->usuario_id == $request->get('usuario_id') )
         	$privilegio = true;
         else
         	$privilegio = false;
@@ -54,7 +73,27 @@ class AvanceUsuarioPrivilegioController extends Controller
             $privilegios = Avance::where("id",$parametros['avance_id'])->where("usuario_id", $request->get('usuario_id'))->first();
 
             $usuario = Usuario::find($request->get('usuario_id'));
-            if($privilegios || $usuario->su == 1)
+
+            $general = false;
+            $permisos = [];
+            $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
+                $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+            }])->find($request->get('usuario_id'));
+
+            foreach ($usuario_general->roles as $index => $rol) {
+                foreach ($rol->permisos as $permiso) {
+                    $permisos[$permiso->id] = true;
+
+                    if(count($permisos)){
+                        $general = true;
+                    }
+                }
+            }
+            if(count($permisos)){
+                $general = true;
+            }     
+
+            if($privilegios || $general || $usuario->su == 1)
             {
             	$avance = AvanceUsuarioPrivilegio::create($parametros);
             }else{
@@ -75,7 +114,27 @@ class AvanceUsuarioPrivilegioController extends Controller
         	$usuarios = AvanceUsuarioPrivilegio::find($id);
             $usuario = Usuario::find($request->get('usuario_id'));
             $privilegios = Avance::where("id",$usuarios->avance_id)->where("usuario_id", $request->get('usuario_id'))->first();
-            if($privilegios || $usuario->su==1)
+
+            $general = false;
+            $permisos = [];
+            $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
+                $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+            }])->find($request->get('usuario_id'));
+
+            foreach ($usuario_general->roles as $index => $rol) {
+                foreach ($rol->permisos as $permiso) {
+                    $permisos[$permiso->id] = true;
+
+                    if(count($permisos)){
+                        $general = true;
+                    }
+                }
+            }
+            if(count($permisos)){
+                $general = true;
+            }     
+
+            if($privilegios || $general || $usuario->su==1)
             {
                 $usuarios->delete();
                 return Response::json(['data'=>$usuarios],200);
