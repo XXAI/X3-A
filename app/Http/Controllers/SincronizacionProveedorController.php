@@ -97,21 +97,24 @@ class SincronizacionProveedorController extends Controller
  
 public function listarPedidos(Request $request)
 {
+    $parametros = Input::only('q','page','per_page','almacen','tipo','fecha_desde','fecha_hasta','clues');
     $proveedor_id = $request->get('proveedor_id');
 
-    $data = Pedido::where('proveedor_id',$proveedor_id);
-        
+    $pedidos = Pedido::where('proveedor_id',$proveedor_id);
+    if($parametros['clues'] != "")
+    {
+        $pedidos = $pedidos->where('clues',$parametros['clues']);
+    }
+     
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
-            $data = $data->paginate($resultadosPorPagina);
+            $pedidos = $pedidos->paginate($resultadosPorPagina);
         } else {
-            $data = $data->get();
+            $pedidos = $pedidos->get();
         }
        
         
-        //return Response::json(["data"=>$data], 200);
-    return Response::json(array("data" => array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data, "total" => count($data))), 200);
-
+    return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $pedidos, "total" => count($pedidos)), 200);
 
 }
 
@@ -139,6 +142,17 @@ public function analizarJson(Request $request)
     $total_colectivos        = 0;
     $colectivos_validos      = 0;
     $colectivos_invalidos    = 0;
+
+    $clues_json   = $json_proveedor->clues;
+    $pedido       = Pedido::find($pedido_id);
+    $clues_pedido = $pedido->clues;
+
+    if($clues_pedido != $clues_json)
+    {
+        array_push($errors, array(array('recetas' => array('Clues incorrecta'))));
+        return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+    }
+
 
     if(property_exists($json_proveedor, "recetas"))
     {

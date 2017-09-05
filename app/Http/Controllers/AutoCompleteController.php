@@ -47,7 +47,7 @@ class AutoCompleteController extends Controller
     {
         $parametros = Input::only('term');
         
-		$data =  UnidadMedica::where(function($query) use ($parametros) {
+		$data =  UnidadMedica::with('jurisdiccion')->where(function($query) use ($parametros) {
 		 	$query->where('clues','LIKE',"%".$parametros['term']."%")
 		 	->orWhere('nombre','LIKE',"%".$parametros['term']."%");
 		});
