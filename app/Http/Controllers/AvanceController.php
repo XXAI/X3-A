@@ -200,7 +200,7 @@ class AvanceController extends Controller
             $privilegios = AvanceUsuarioPrivilegio::where("avance_id",$id)->where("usuario_id", $request->get('usuario_id'))->first();
             $usuario = Usuario::find($request->get('usuario_id'));    
 
-            if($privilegios->editar == 1 || $usuario->su == 1)
+            if($usuario->su == 1)
             {
                 $avance = Avance::find($id);
                 $avance->update($parametros);
