@@ -122,8 +122,19 @@ class AvanceController extends Controller
     }
 
     public function show(Request $request, $id){
-      
+        
+        $parametros = Input::all();
+        
         $avance = Avance::find($id);
+
+        if(isset($parametros['informacion']))
+        {
+            $avance = $avance->load('avanceDetalles', "usuario");
+            $avance->actualizacion = count($avance->avanceDetalles);
+            $avance->creado_por = $avance->usuario->nombre." ".$avance->usuario->apellidos;
+        }
+
+       
         
         if(!$avance){
             return Response::json(['error' => "No se encuentra el tema que esta buscando."], HttpResponse::HTTP_NOT_FOUND);

@@ -21,7 +21,6 @@ class AvanceDetalleController extends Controller
 {
     public function index(Request $request)
     {
-        
         $parametros = Input::only('status','q','page','per_page', 'identificador');
         $usuario = Usuario::find($request->get('usuario_id'));
 
