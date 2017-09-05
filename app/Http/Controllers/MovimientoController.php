@@ -13,6 +13,8 @@ use \Validator,\Hash, \Response, DB;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Carbon\Carbon;
+use DateTime;
 
 
 use App\Models\Movimiento;
@@ -921,7 +923,7 @@ class MovimientoController extends Controller
                             {
                             }else{
                                     $v->errors()->add('lote_'.$lote->id.'_', 'lote_insuficiente');
-                                }
+                                 }
                         }else {
                                 if($lote->cantidad <= $lote_check->existencia_unidosis)
                                 {
@@ -929,6 +931,19 @@ class MovimientoController extends Controller
                                         $v->errors()->add('lote_'.$lote->id.'_', 'lote_insuficiente');
                                     }
                                }
+                        
+                        $fecha_caducidad = new DateTime($lote_check->fecha_caducidad);
+                        $now = new DateTime("now");
+
+                        if($lote_check->fecha_caducidad == "" || $lote_check->fecha_caducidad == NULL)
+                        {
+                        }else{
+                                if($now >= $fecha_caducidad )
+                                {
+                                    $v->errors()->add('lote_'.$lote->id.'_', 'lote_caducado');
+                                }
+                             }
+                        
                         
 
                     }else{
@@ -943,7 +958,20 @@ class MovimientoController extends Controller
                             }else{
                                     $v->errors()->add('lote_'.$lote->id.'_', 'no_existe'); 
                                  }
-                         }
+
+                            $fecha_caducidad = new DateTime($lote_check->fecha_caducidad);
+                            $now = new DateTime("now");
+                            
+                            if($lote_check->fecha_caducidad == "" || $lote_check->fecha_caducidad == NULL)
+                            {
+                            }else{
+                                    if($now >= $fecha_caducidad )
+                                    {
+                                        $v->errors()->add('lote_'.$lote->id.'_', 'lote_caducado');
+                                    }
+                                 }
+                            
+                            }
                   ///****************************************************************************************    
                      
                   
@@ -1663,6 +1691,7 @@ class MovimientoController extends Controller
 
             if(property_exists($datos,"receta"))
             {
+                $receta->movimiento_id  = $movimiento_salida_receta->id;
                 $receta->folio          = $datos->receta['folio'];
                 $receta->tipo_receta_id = $datos->receta['tipo_receta'];
                 $receta->fecha_receta   = $datos->receta['fecha_receta'];

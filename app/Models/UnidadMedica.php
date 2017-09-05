@@ -25,4 +25,8 @@ class UnidadMedica extends BaseModel{
     public function director(){
       return $this->hasOne('App\Models\PersonalClues','id','director_id');
     }
+
+    public function jurisdiccion(){
+      return $this->hasOne('App\Models\Jurisdiccion','id','jurisdiccion_id');
+    }
 }
