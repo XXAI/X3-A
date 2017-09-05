@@ -162,6 +162,7 @@ class AvanceController extends Controller
         try {
             DB::beginTransaction();
             
+            $parametros['usuario_id'] = $request->get('usuario_id');
             $avance = Avance::create($parametros);
 
             $arreglo_privilegios = array("avance_id"    => $avance->id,
