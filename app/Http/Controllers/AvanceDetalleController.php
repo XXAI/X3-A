@@ -119,7 +119,7 @@ class AvanceDetalleController extends Controller
                 $general = true;
             }
 
-            if($privilegios->agregar == "1" || $usuario->su == 1 || $general)
+            if($general || $usuario->su == 1 || (isset($privilegios)  && $privilegios->agregar == "1") )
             {
                 $avance_detalle = AvanceDetalles::create($parametros);
 
