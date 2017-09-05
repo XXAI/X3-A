@@ -19,4 +19,8 @@ class Avance extends BaseModel
     public function avanceDetalles(){
       return $this->hasMany('App\Models\AvanceDetalles','avance_id');
     }
+
+    public function usuario(){
+      return $this->belongsTo('App\Models\Usuario','usuario_id');
+    }
 }
