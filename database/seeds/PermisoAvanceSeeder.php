@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use Carbon\Carbon;
 
 class PermisoAvanceSeeder extends Seeder
 {
@@ -35,6 +36,6 @@ class PermisoAvanceSeeder extends Seeder
                 'su' => 0,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now()
-            ]);
+            ]]);
     }
 }
