@@ -15,5 +15,7 @@ class AvanceUsuarioPrivilegio extends BaseModel
     protected $table = 'avance_usuario_privilegio';  
     protected $fillable = ["usuario_id","avance_id", "agregar", "editar", "eliminar"];
 
-    
+    public function usuario(){
+      return $this->belongsTo('App\Models\Usuario','usuario_id');
+    }
 }

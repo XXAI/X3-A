@@ -23,7 +23,7 @@ class AvanceUsuarioPrivilegioController extends Controller
         $parametros = Input::only('status','q','page','per_page', 'identificador');
         $usuario = Usuario::find($request->get('usuario_id'));
         $avance = Avance::find($parametros['identificador']);
-        $avanceusuario = AvanceUsuarioPrivilegio::where("avance_id", $parametros['identificador'])->whereNotIn("usuario_id", [$request->get('usuario_id'), $avance->usuario_id])->get();
+        $avanceusuario = AvanceUsuarioPrivilegio::with('usuario')->where("avance_id", $parametros['identificador'])->whereNotIn("usuario_id", [$request->get('usuario_id'), $avance->usuario_id])->get();
         
         $usuarios = DB::table("usuarios")->join("rol_usuario", "rol_usuario.usuario_id", "=", "usuarios.id")
         							->WhereIn("rol_usuario.rol_id", [9,10])
