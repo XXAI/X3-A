@@ -21,10 +21,11 @@ class AvanceDetalleController extends Controller
 {
     public function index(Request $request)
     {
-        $parametros = Input::only('status','q','page','per_page', 'identificador');
+        $parametros = Input::only('status','q','page','per_page', 'identificador', 'tipo');
         $usuario = Usuario::find($request->get('usuario_id'));
 
         $avancedetalle = DB::table('avance_detalles')->where("avance_id", $parametros['identificador']);
+        $avance = Avance::find($parametros['identificador']);
 
         $general = false;
         $permisos = [];
@@ -49,6 +50,23 @@ class AvanceDetalleController extends Controller
             $avancedetalle = $avancedetalle->whereRaw("avance_detalles.avance_id in (select avance_id from avance_usuario_privilegio where usuario_id='".$request->get('usuario_id')."')" );
 
         $avancedetalle = $avancedetalle->orderBy('created_at', 'desc');
+
+        if($parametros['tipo'] == 1)
+        {
+            $registros = abs(($avancedetalle->count())- 1);
+            $avancedetalle = $avancedetalle->whereRaw("created_at in (select max(created_at) from avance_detalles as avance_consulta where avance_consulta.avance_id=avance_detalles.avance_id and avance_consulta.deleted_at is null)");
+            
+            
+            $avancedetalle = $avancedetalle->paginate(1);
+            $avancedetalle->registros = 0;
+            $avancedetalle->nombre_tema = $avance->tema;
+
+            return Response::json([ 'data' => array("registros"=>$avancedetalle, 'datos_tema'=>$avance, 'historial'=>$registros)],200);
+
+        }else if($parametros['tipo'] == 2)
+        {
+            $avancedetalle = $avancedetalle->whereRaw("created_at not in (select max(created_at) from avance_detalles as avance_consulta where avance_consulta.avance_id=avance_detalles.avance_id and avance_consulta.deleted_at is null)");
+        }
 		
 		if ($parametros['q']) {
             $avancedetalle =  $avancedetalle->where(function($query) use ($parametros) {
@@ -58,13 +76,14 @@ class AvanceDetalleController extends Controller
 
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
+            $registros = abs($avancedetalle->count());
             $avancedetalle = $avancedetalle->paginate($resultadosPorPagina);
             
         } else {
             $avancedetalle = $avancedetalle->get();
         }
 
-        return Response::json([ 'data' => $avancedetalle],200);
+        return Response::json([ 'data' => array("registros"=>$avancedetalle, 'datos_tema'=>$avance, 'historial'=>$registros)],200);
     }
 
     public function store(Request $request){
@@ -179,13 +198,22 @@ class AvanceDetalleController extends Controller
                 }*/
 
                 $avancedetalle = AvanceDetalles::find($id);
-                $directorio_path = "avances";
-                $pathToFile = $directorio_path."//".$id.".".$avancedetalle->extension;
-                
-                $headers = array(
-                    'Content-Type: application/pdf',
-                );
-                return response()->download($pathToFile, $avancedetalle->nombre_archivo, $headers);
+                if($avancedetalle)
+                {
+                    $directorio_path = "avances";
+                    $pathToFile = $directorio_path."//".$id.".".$avancedetalle->extension;
+                    
+                    $headers = array(
+                        'Content-Type: application/pdf',
+                    );
+                    if(!file_exists($pathToFile))
+                        return Response::make("No se encontro el recurso solicitado, por favor comuniquese al área de soporte", 500);
+                    else
+                        return response()->download($pathToFile, $avancedetalle->nombre_archivo, $headers);
+                }else
+                {
+                    return Response::make("No se encontro el recurso solicitado, por favor comuniquese al área de soporte", 500);
+                }
             /*}else{
                 return Response::json(['error' =>"No tiene permisos para ingresar a este modulo" ], 500);
             }*/
@@ -235,16 +263,25 @@ class AvanceDetalleController extends Controller
                 }*/
                 try {
 	                $avancedetalle = AvanceDetalles::withTrashed()->find($id);
-	                $directorio_path = "avances";
-	                $pathToFile = $directorio_path."//".$id.".".$avancedetalle->extension;
-	                
-	                $headers = array(
-	                    'Content-Type: application/pdf',
-	                );
-	                return Response::make(file_get_contents($pathToFile), 200, [
-					    'Content-Type' => 'application/pdf',
-					    'Content-Disposition' => 'inline; filename="'.$id.".".$avancedetalle->extension.'"'
-					]);
+	                if($avancedetalle)
+                    {
+                        $directorio_path = "avances";
+    	                $pathToFile = $directorio_path."//".$id.".".$avancedetalle->extension;
+    	                
+    	                $headers = array(
+    	                    'Content-Type: application/pdf',
+    	                );
+                        if(!file_exists($pathToFile))
+                            return Response::make("No se encontro el recurso solicitado, por favor comuniquese al área de soporte", 500);
+                        else
+    	                   return Response::make(file_get_contents($pathToFile), 200, [
+    					    'Content-Type' => 'application/pdf',
+    					    'Content-Disposition' => 'inline; filename="'.$id.".".$avancedetalle->extension.'"'
+    					]);
+                    }else
+                    {
+                        return Response::make("No se encontro el recurso solicitado, por favor comuniquese al área de soporte", 500);
+                    }
 				 } catch (Exception $e) {
 		           return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
 		        }	
