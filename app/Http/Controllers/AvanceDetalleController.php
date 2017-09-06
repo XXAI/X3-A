@@ -53,7 +53,10 @@ class AvanceDetalleController extends Controller
 
         if($parametros['tipo'] == 1)
         {
-            $registros = abs(($avancedetalle->count())- 1);
+            $registros = $avancedetalle->count();
+            if($registros > 0)
+                $registros = $registros -1;
+            
             $avancedetalle = $avancedetalle->whereRaw("created_at in (select max(created_at) from avance_detalles as avance_consulta where avance_consulta.avance_id=avance_detalles.avance_id and avance_consulta.deleted_at is null)");
             
             
