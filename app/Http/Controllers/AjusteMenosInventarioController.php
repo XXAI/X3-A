@@ -429,8 +429,8 @@ class AjusteMenosInventarioController extends Controller
                             $movimiento_ajuste->observaciones                = "";
                             $movimiento_ajuste->save();
 
-                            $lote_temp->existencia          = $lote_temp->existencia + $lote->existencia;
-                            $lote_temp->existencia_unidosis = $lote_temp->existencia_unidosis + ($lote->existencia * $cantidad_x_envase);
+                            $lote_temp->existencia          = $lote_temp->existencia + $lote->nueva_existencia;
+                            $lote_temp->existencia_unidosis = $lote_temp->existencia_unidosis + ($lote->nueva_existencia * $cantidad_x_envase);
                             $lote_temp->save();                                   
                         }else{
                                     $lote_nuevo = new Stock();
@@ -441,8 +441,8 @@ class AjusteMenosInventarioController extends Controller
                                     $lote_nuevo->lote                = $lote->lote;
                                     $lote_nuevo->fecha_caducidad     = $lote->fecha_caducidad;
                                     $lote_nuevo->codigo_barras       = $lote->codigo_barras;                     
-                                    $lote_nuevo->existencia          = $lote->existencia;
-                                    $lote_nuevo->existencia_unidosis = $lote->existencia * $cantidad_x_envase;
+                                    $lote_nuevo->existencia          = $lote->nueva_existencia;
+                                    $lote_nuevo->existencia_unidosis = $lote->nueva_existencia * $cantidad_x_envase;
                                     $lote_nuevo->unidosis_sueltas    = 0;
                                     $lote_nuevo->envases_parciales   = 0;
                                     $lote_nuevo->save();
@@ -452,8 +452,8 @@ class AjusteMenosInventarioController extends Controller
                                     $movimiento_ajuste->clave_insumo_medico          = $insumo->clave;
                                     $movimiento_ajuste->existencia_anterior          = 0;
                                     $movimiento_ajuste->existencia_unidosis_anterior = 0;
-                                    $movimiento_ajuste->nueva_existencia             = $lote->existencia;
-                                    $movimiento_ajuste->nueva_existencia_unidosis    = $lote->existencia * $cantidad_x_envase;
+                                    $movimiento_ajuste->nueva_existencia             = $lote->nueva_existencia;
+                                    $movimiento_ajuste->nueva_existencia_unidosis    = $lote->nueva_existencia * $cantidad_x_envase;
                                     $movimiento_ajuste->observaciones                = "";
                                     $movimiento_ajuste->save(); 
                                 }

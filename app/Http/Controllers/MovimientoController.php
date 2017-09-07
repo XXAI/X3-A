@@ -728,9 +728,8 @@ class MovimientoController extends Controller
                         }
                     }
 
-                    $insumo_detalles       = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
-                    //$insumo_detalles_temp  = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
-                    //$nombre_temp           = $insumo_detalles_temp->informacionAmpliada->nombre;
+                     $insumo_detalles       = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
+                     //$nombre_temp           = $insumo_detalles_temp->informacionAmpliada->nombre;
 
                     $detalle = NULL;
                     foreach ($receta_detalles as $key => $item_detalle)
@@ -959,10 +958,10 @@ class MovimientoController extends Controller
                                     $v->errors()->add('lote_'.$lote->id.'_', 'no_existe'); 
                                  }
 
-                            $fecha_caducidad = new DateTime($lote_check->fecha_caducidad);
+                            $fecha_caducidad = new DateTime($lote->fecha_caducidad);
                             $now = new DateTime("now");
                             
-                            if($lote_check->fecha_caducidad == "" || $lote_check->fecha_caducidad == NULL)
+                            if($lote->fecha_caducidad == "" || $lote->fecha_caducidad == NULL)
                             {
                             }else{
                                     if($now >= $fecha_caducidad )
@@ -1693,7 +1692,7 @@ class MovimientoController extends Controller
             {
                 $receta->movimiento_id  = $movimiento_salida_receta->id;
                 $receta->folio          = $datos->receta['folio'];
-                $receta->tipo_receta_id = $datos->receta['tipo_receta'];
+                $receta->tipo_receta_id = $datos->receta['tipo_receta_id'];
                 $receta->fecha_receta   = $datos->receta['fecha_receta'];
                 $receta->doctor         = $datos->receta['doctor'];
                 $receta->paciente       = $datos->receta['paciente'];

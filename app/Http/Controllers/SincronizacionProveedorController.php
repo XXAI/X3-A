@@ -16,16 +16,24 @@ use App\Models\UnidadMedica;
 use App\Models\Insumo;
 use App\Models\Pedido;
 use App\Models\PedidoInsumo;
-use App\Models\MovimientoPedido;
 use App\Models\Usuario;
 use App\Models\Almacen;
 use App\Models\Contrato;
+use App\Models\ContratoPrecio;
 use App\Models\Proveedor;
 use App\Models\Movimiento;
 use App\Models\MovimientoInsumos;
+use App\Models\MovimientoMetadato;
+use App\Models\MovimientoDetalle;
+use App\Models\MovimientoPedido;
+use App\Models\NegacionInsumo;
 use App\Models\Receta;
 use App\Models\RecetaDetalle;
 use App\Models\Stock;
+
+use App\Models\SincronizacionProveedor;
+use App\Models\SincronizacionMovimiento;
+use App\Models\PedidoMetadatoSincronizacion;
 
 
 /** 
@@ -100,7 +108,7 @@ public function listarPedidos(Request $request)
     $parametros = Input::only('q','page','per_page','almacen','tipo','fecha_desde','fecha_hasta','clues');
     $proveedor_id = $request->get('proveedor_id');
 
-    $pedidos = Pedido::where('proveedor_id',$proveedor_id);
+    $pedidos = Pedido::with('metadatosSincronizaciones')->where('proveedor_id',$proveedor_id);
     if($parametros['clues'] != "")
     {
         $pedidos = $pedidos->where('clues',$parametros['clues']);
@@ -165,10 +173,18 @@ public function analizarJson(Request $request)
             $receta_buscar = Receta::where("folio",$folio_buscar);
             if($receta_buscar)
             { $recetas_invalidas++; }else{ $recetas_validas++; }
+
+            if(property_exists($receta, "insumos"))
+            {
+                
+            }else{
+                    array_push($errors, array(array('recetas' => array('no_existe_insumos'))));
+                 }
+
         }
 
     }else{
-            array_push($errors, array(array('recetas' => array('no_exite_recetas'))));
+            array_push($errors, array(array('recetas' => array('no_existe_recetas'))));
          }
 
     if(property_exists($json_proveedor, "colectivos"))
@@ -221,10 +237,17 @@ public function analizarJson(Request $request)
 {
     $proveedor_id = $request->get('proveedor_id');
 
-    $input_data = (object)Input::json()->all();
+    $input_data = Input::json()->all();
 
-    $pedido_id      = $input_data->pedido;
-    $json_proveedor = $input_data->json;
+    $pedido_id      = $input_data['pedido'];
+    $json_proveedor = $input_data['json'];
+
+    $json_proveedor_string = json_encode($json_proveedor);
+
+    //var_dump($json_proveedor_string); die();
+
+    $json_proveedor = (object) $input_data['json'];
+
     $almacen_id     = $json_proveedor->almacen_id;
 
     $pedido         = Pedido::find($pedido_id);
@@ -241,6 +264,26 @@ public function analizarJson(Request $request)
     $total_colectivos        = 0;
     $colectivos_validos      = 0;
     $colectivos_invalidos    = 0;
+
+    $clues_json   = $json_proveedor->clues;
+    $pedido       = Pedido::find($pedido_id);
+    $clues_pedido = $pedido->clues;
+
+    // INSERTAR REGISTRO DE SINCRONIZACION AQUI
+
+    $sincronizacion_proveedor = new SincronizacionProveedor();
+    $sincronizacion_proveedor->clues                 = $clues_json;
+    $sincronizacion_proveedor->almacen_id            = $almacen_id;
+    $sincronizacion_proveedor->proveedor_id          = $proveedor_id;
+    $sincronizacion_proveedor->pedido_id             = $pedido_id;
+    $sincronizacion_proveedor->fecha_surtimiento     = $json_proveedor->fecha;
+    $sincronizacion_proveedor->recetas_validas       = 0;
+    $sincronizacion_proveedor->colectivos_validos    = 0;
+    $sincronizacion_proveedor->recetas_duplicadas    = 0;
+    $sincronizacion_proveedor->colectivos_duplicados = 0;
+    $sincronizacion_proveedor->json                  = $json_proveedor_string;
+    $sincronizacion_proveedor->save();
+
 
     if(property_exists($json_proveedor, "recetas"))
     {
@@ -265,6 +308,14 @@ public function analizarJson(Request $request)
                     $movimiento->fecha_movimiento               = $json_proveedor->fecha;
 
                     $movimiento->save();
+
+                    //GUARDAR REGISTRO DE SINCRONIZACION Y MOVIMIENTO AQUI
+
+                    $sincronizacion_movimiento = new SincronizacionMovimiento();
+                    $sincronizacion_movimiento->sincronizacion_proveedor_id = $sincronizacion_proveedor->id;
+                    $sincronizacion_movimiento->movimiento_id               = $movimiento->id;
+                    $sincronizacion_movimiento->save();
+
             
                     $receta_insertar = new Receta();
                     $receta_insertar->movimiento_id  = $movimiento->id;
@@ -303,7 +354,7 @@ public function analizarJson(Request $request)
                                                 ->where('clave_insumo_medico',$receta_insumo->clave_insumo_medico)->first();
 
                             ///stock de donde se sacará lo indicado en la receta                    
-                        $stock = Stock::where('stock_id',$movimiento_insumo->stock_id);
+                        $stock = Stock::find($movimiento_insumo->stock_id);
                         
                         $diferencia_faltante = 0;
                         if($stock->existencia < $receta_insumo->cantidad_surtida)
@@ -312,7 +363,7 @@ public function analizarJson(Request $request)
                         }
 
                         $clave_insumo_medico = $receta_insumo->clave_insumo_medico;
-                        $insumo = Insumo::datosUnidosis()->where($clave_insumo_medico)->first();
+                        $insumo = Insumo::datosUnidosis()->find($clave_insumo_medico);
                         $cantidad_x_envase = $insumo->cantidad_x_envase;
                           
                              
@@ -321,7 +372,10 @@ public function analizarJson(Request $request)
 
                         $movimiento_insumo = new MovimientoInsumos();
                         $movimiento_insumo->movimiento_id        = $movimiento->id; 
-                        $movimiento_insumo->stock_id             = $stock->id;
+                        if($stock)
+                            {
+                                $movimiento_insumo->stock_id     = $stock->id;
+                            }
                         $movimiento_insumo->clave_insumo_medico  = $receta_insumo->clave_insumo_medico;
                         $movimiento_insumo->modo_salida          = "N";
                         $movimiento_insumo->cantidad             = $receta_insumo->cantidad_surtida;
@@ -339,17 +393,31 @@ public function analizarJson(Request $request)
                         $movimiento_detalles->modo_salida                   = "N";
                         $movimiento_detalles->cantidad_solicitada           = $receta_insumo->cantidad_solicitada;
                         $movimiento_detalles->cantidad_solicitada_unidosis  = ($receta_insumo->cantidad_solicitada * $cantidad_x_envase);
-                        $movimiento_detalles->existente                     = $stock->existencia;
-                        $movimiento_detalles->cantidad_existente_unidosis   = $stock->existencia_unidosis;
+                        
+                        //$movimiento_detalles->cantidad_existente            = $stock->existencia;
+                        //$movimiento_detalles->cantidad_existente_unidosis   = $stock->existencia_unidosis;
+                        if($stock)
+                            {
+                                $movimiento_detalles->cantidad_existente            = $stock->existencia;
+                                $movimiento_detalles->cantidad_existente_unidosis   = $stock->existencia_unidosis;
+                            }else{
+                                    $movimiento_detalles->cantidad_existente            = 0;
+                                    $movimiento_detalles->cantidad_existente_unidosis   = 0;
+                                 }
+
                         $movimiento_detalles->cantidad_surtida              = $receta_insumo->cantidad_surtida;
-                        $movimiento_detalles->cantidad_surtidad_unidosis    = ($receta_insumo->cantidad_surtida * $cantidad_x_envase);
+                        $movimiento_detalles->cantidad_surtida_unidosis    = ($receta_insumo->cantidad_surtida * $cantidad_x_envase);
                         $movimiento_detalles->cantidad_negada               = ($receta_insumo->cantidad_solicitada - $receta_insumo->cantidad_surtida);
                         $movimiento_detalles->cantidad_negada_unidosis      = ($receta_insumo->cantidad_solicitada - $receta_insumo->cantidad_surtida) * $cantidad_x_envase;
                         $movimiento_detalles->save();
                             
-                        $stock->existencia          = $stock->existencia - $receta_insumo->cantidad_surtida;
-                        $stock->existencia_unidosis = $stock->existencia_unidosis - ($cantidad_x_envase * $receta_insumo->cantidad_surtida);
-                        $stock->save();
+                        if($stock)
+                            {
+                                $stock->existencia          = $stock->existencia - $receta_insumo->cantidad_surtida;
+                                $stock->existencia_unidosis = $stock->existencia_unidosis - ($cantidad_x_envase * $receta_insumo->cantidad_surtida);
+                                $stock->save();
+                            }    
+                        
 
                         $monto_recibido_receta += $movimiento_insumo->precio_total;
                         ///*****
@@ -363,10 +431,13 @@ public function analizarJson(Request $request)
                         }
                         //***********************************************************************************************************************************************************************
                         $pedido_insumo = PedidoInsumo::where('insumo_medico_clave',$clave_insumo_medico)->where('pedido_id',$pedido_id)->first();
-                        $pedido_insumo->cantidad_recibida = $pedido_insumo->cantidad_recibida + $receta_insumo->cantidad_surtida;
-                        $pedido_insumo->monto_recibido    = $pedido_insumo->monto_recibido    + $movimiento_insumo->precio_total;
-
-                        $pedido_insumo->save();
+                        if($pedido_insumo)
+                            {
+                                $pedido_insumo->cantidad_recibida = $pedido_insumo->cantidad_recibida + $receta_insumo->cantidad_surtida;
+                                $pedido_insumo->monto_recibido    = $pedido_insumo->monto_recibido    + $movimiento_insumo->precio_total;
+                                $pedido_insumo->save();
+                            }
+                        
 
                         ///*****
 
@@ -422,33 +493,48 @@ public function analizarJson(Request $request)
 
                     $movimiento_colectivo = new Movimiento();
                     $movimiento_colectivo->almacen_id                     = $json_proveedor->almacen_id;
-                    $movimiento_colectivo->tipo_movimiento_id             = 9;
+                    $movimiento_colectivo->tipo_movimiento_id             = 10;
                     $movimiento_colectivo->status                         = "FI";
                     $movimiento_colectivo->fecha_movimiento               = $json_proveedor->fecha;
                     $movimiento_colectivo->save();
+
+                    // REGISTRAR SINCRONIZACION MOVIMIENTO 
+                    $sincronizacion_movimiento = new SincronizacionMovimiento();
+                    $sincronizacion_movimiento->sincronizacion_proveedor_id = $sincronizacion_proveedor->id;
+                    $sincronizacion_movimiento->movimiento_id               = $movimiento_colectivo->id;
+                    $sincronizacion_movimiento->save();
+
 
                     $monto_recibido_colectivo = 0;
                     $total_cantidad_recibida  = 0;
 
                     foreach ($colectivo->insumos as $key => $colectivo_insumo)
-                    {
-                        $movimiento_pedido = MovimientoPedido::where('pedido_id',$pedido_id)->first();
-                        $movimiento_insumo = (object)MovimientoInsumos::where('movimiento_id',$movimiento_pedido->movimiento_id)
-                                             ->where('clave_insumo_medico',$colectivo_insumo->clave)->first();
+                    { $colectivo_insumo = (object)$colectivo_insumo;
 
-                        //stock de donde se sacará lo indicado en la receta                    
-                        $stock = Stock::where('stock_id',$movimiento_insumo->stock_id);
+                        $movimiento_pedido   = MovimientoPedido::where('pedido_id',$pedido_id)->first();
+                        $movimiento_insumo_x = MovimientoInsumos::where('movimiento_id',$movimiento_pedido->movimiento_id)
+                                             ->where('clave_insumo_medico',$colectivo_insumo->clave)->first();
                         
+                        //stock de donde se sacará lo indicado en la receta                    
+                        $stock_x = Stock::where('id',$movimiento_insumo_x['stock_id'])->first();
+
+                        if(!$stock_x)
+                        {
+                            //var_dump(json_encode($stock_x)); die();
+                        }
                         $clave_insumo_medico = $colectivo_insumo->clave;
-                        $insumo = Insumo::datosUnidosis()->where($clave_insumo_medico)->first();
+                        $insumo = Insumo::datosUnidosis()->find($clave_insumo_medico);
                         $cantidad_x_envase = $insumo->cantidad_x_envase;
                                
                         $precios = $this->conseguirPrecio($clave_insumo_medico);
 
-                        $movimiento_insumo = new MovimientoInsumo();
+                        $movimiento_insumo = new MovimientoInsumos();
                         $movimiento_insumo->movimiento_id        = $movimiento_colectivo->id;
                         $movimiento_insumo->tipo_insumo_id       = $precios->tipo_insumo_id;
-                        $movimiento_insumo->stock_id             = $stock->id;
+                        if($stock_x)
+                            {
+                                $movimiento_insumo->stock_id     = $stock_x->id;
+                            }
                         $movimiento_insumo->clave_insumo_medico  = $colectivo_insumo->clave;
                         $movimiento_insumo->modo_salida          = "N";
                         $movimiento_insumo->cantidad             = $colectivo_insumo->cantidad_surtida;
@@ -465,17 +551,30 @@ public function analizarJson(Request $request)
                         $movimiento_detalles->modo_salida                   = "N";
                         $movimiento_detalles->cantidad_solicitada           = $colectivo_insumo->cantidad_solicitada;
                         $movimiento_detalles->cantidad_solicitada_unidosis  = ($colectivo_insumo->cantidad_solicitada * $cantidad_x_envase);
-                        $movimiento_detalles->existente                     = $stock->existencia;
-                        $movimiento_detalles->cantidad_existente_unidosis   = $stock->existencia_unidosis;
+
+                        if($stock_x)
+                            {
+                                $movimiento_detalles->cantidad_existente            = $stock_x->existencia;
+                                $movimiento_detalles->cantidad_existente_unidosis   = $stock_x->existencia_unidosis;
+                            }else{
+                                    $movimiento_detalles->cantidad_existente            = 0;
+                                    $movimiento_detalles->cantidad_existente_unidosis   = 0;
+                                 }
+                        
+
                         $movimiento_detalles->cantidad_surtida              = $colectivo_insumo->cantidad_surtida;
-                        $movimiento_detalles->cantidad_surtidad_unidosis    = ($colectivo_insumo->cantidad_surtida * $cantidad_x_envase);
+                        $movimiento_detalles->cantidad_surtida_unidosis    = ($colectivo_insumo->cantidad_surtida * $cantidad_x_envase);
                         $movimiento_detalles->cantidad_negada               = ($colectivo_insumo->cantidad_solicitada - $colectivo_insumo->cantidad_surtida);
                         $movimiento_detalles->cantidad_negada_unidosis      = ($colectivo_insumo->cantidad_solicitada - $colectivo_insumo->cantidad_surtida) * $cantidad_x_envase;
                         $movimiento_detalles->save();
 
-                        $stock->existencia          = $stock->existencia - $colectivo_insumo->cantidad_surtida;
-                        $stock->existencia_unidosis = $stock->existencia_unidosis - ($cantidad_x_envase * $colectivo_insumo->cantidad_surtida);
-                        $stock->save();
+                        if($stock_x)
+                            {
+                                $stock_x->existencia          = $stock_x->existencia - $colectivo_insumo->cantidad_surtida;
+                                $stock_x->existencia_unidosis = $stock_x->existencia_unidosis - ($cantidad_x_envase * $colectivo_insumo->cantidad_surtida);
+                                $stock_x->save();
+                            } 
+                        
 
                         $monto_recibido_colectivo += $movimiento_insumo->precio_total;
                         $total_cantidad_recibida  += $movimiento_insumo->cantidad_surtida;
@@ -488,13 +587,19 @@ public function analizarJson(Request $request)
                         }
                         //***********************************************************************************************************************************************************************
                         $pedido_insumo = PedidoInsumo::where('insumo_medico_clave',$clave_insumo_medico)->where('pedido_id',$pedido_id)->first();
-                        $pedido_insumo->cantidad_recibida = $pedido_insumo->cantidad_recibida + $colectivo_insumo->cantidad_surtida;
-                        $pedido_insumo->monto_recibido    = $pedido_insumo->monto_recibido    + $movimiento_insumo->precio_total;
 
-                        $pedido_insumo->save();
+                        if($pedido_insumo)
+                            {
+                                $pedido_insumo->cantidad_recibida = $pedido_insumo->cantidad_recibida + $colectivo_insumo->cantidad_surtida;
+                                $pedido_insumo->monto_recibido    = $pedido_insumo->monto_recibido    + $movimiento_insumo->precio_total;
+
+                                $pedido_insumo->save();
+                            }
+                        
                          
                     } /// fin foreach insumos de cada colectivo
 
+                    $parametros = 1;
                     $total_claves = PedidoInsumo::where('pedido_id',$pedido_id)
                                                 ->where(function($query) use ($parametros) {
                                                             $query->where('cantidad_recibida','<>',NULL)
@@ -513,7 +618,27 @@ public function analizarJson(Request $request)
             array_push($errors, array(array('colectivos' => array('no_exite_colectivos'))));
          }
 
+    
+    $pms = PedidoMetadatosincronizacion::where('pedido_id',$pedido_id)->first();
 
+    if($pms)
+    {
+        $pms->total_recetas                = $pms->total_recetas + $recetas_validas;
+        $pms->total_colectivos             = $pms->total_colectivos + $colectivos_validos;
+        $pms->total_recetas_repetidas      = $pms->total_recetas_repetidas + $recetas_invalidas;
+        $pms->total_colectivos_repetidos   = $pms->total_colectivos_repetidos + $colectivos_invalidos;
+        $pms->save();
+
+    }else{
+            $pms = new PedidoMetadatoSincronizacion();
+            $pms->pedido_id                    = $pedido_id;
+            $pms->total_recetas                = $recetas_validas;
+            $pms->total_recetas_repetidas      = $pms->total_recetas_repetidas + $recetas_invalidas;
+            $pms->total_colectivos_repetidos   = $pms->total_colectivos_repetidos + $colectivos_invalidos;
+            $pms->save();
+         }
+
+    
 
 
 

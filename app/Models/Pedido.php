@@ -78,4 +78,8 @@ class Pedido extends BaseModel
     {
         return $this->hasOne('App\Models\LogPedidoCancelado', "pedido_id");
     }
+
+    public function metadatosSincronizaciones(){
+        return $this->hasOne('App\Models\PedidoMetadatoSincronizacion','pedido_id','id');
+    }
 }
