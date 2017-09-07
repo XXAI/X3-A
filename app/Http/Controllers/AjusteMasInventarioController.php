@@ -411,52 +411,52 @@ class AjusteMasInventarioController extends Controller
                     {
                        if($lote->nuevo == 1)
                         {
-                        $lote_temp = Stock::where('lote',$lote->lote)
+                            $lote_temp = Stock::where('lote',$lote->lote)
                                             ->where('fecha_caducidad',$lote->fecha_caducidad)
                                             ->where('codigo_barras',$lote->codigo_barras)
                                             ->where('clave_insumo_medico',$insumo->clave)
                                             ->where('almacen_id',$almacen_id)
                                             ->orderBy('created_at','DESC')->first();
-                        if($lote_temp)
-                        {
-                            $movimiento_ajuste->lote_nuevo                   = 0;
-                            $movimiento_ajuste->stock_id                     = $lote_temp->id;
-                            $movimiento_ajuste->clave_insumo_medico          = $insumo->clave;
-                            $movimiento_ajuste->existencia_anterior          = $lote_temp->existencia;
-                            $movimiento_ajuste->existencia_unidosis_anterior = $lote_temp->existencia_unidosis;
-                            $movimiento_ajuste->nueva_existencia             = $lote->nueva_existencia;
-                            $movimiento_ajuste->nueva_existencia_unidosis    = ($lote_temp->unidosis_sueltas ) + ($lote->nueva_existencia * $cantidad_x_envase);
-                            $movimiento_ajuste->observaciones                = "";
-                            $movimiento_ajuste->save();
+                            if($lote_temp)
+                            {
+                                $movimiento_ajuste->lote_nuevo                   = 0;
+                                $movimiento_ajuste->stock_id                     = $lote_temp->id;
+                                $movimiento_ajuste->clave_insumo_medico          = $insumo->clave;
+                                $movimiento_ajuste->existencia_anterior          = $lote_temp->existencia;
+                                $movimiento_ajuste->existencia_unidosis_anterior = $lote_temp->existencia_unidosis;
+                                $movimiento_ajuste->nueva_existencia             = $lote->nueva_existencia;
+                                $movimiento_ajuste->nueva_existencia_unidosis    = ($lote_temp->unidosis_sueltas ) + ($lote->nueva_existencia * $cantidad_x_envase);
+                                $movimiento_ajuste->observaciones                = "";
+                                $movimiento_ajuste->save();
 
-                            $lote_temp->existencia          = $lote_temp->existencia + $lote->existencia;
-                            $lote_temp->existencia_unidosis = $lote_temp->existencia_unidosis + ($lote->existencia * $cantidad_x_envase);
-                            $lote_temp->save();                                   
-                        }else{
-                                    $lote_nuevo = new Stock();
-                                    
-                                    $lote_nuevo->almacen_id          = $almacen_id;
-                                    $lote_nuevo->clave_insumo_medico = $insumo->clave;
-                                    $lote_nuevo->marca_id            = NULL;
-                                    $lote_nuevo->lote                = $lote->lote;
-                                    $lote_nuevo->fecha_caducidad     = $lote->fecha_caducidad;
-                                    $lote_nuevo->codigo_barras       = $lote->codigo_barras;                     
-                                    $lote_nuevo->existencia          = $lote->existencia;
-                                    $lote_nuevo->existencia_unidosis = $lote->existencia * $cantidad_x_envase;
-                                    $lote_nuevo->unidosis_sueltas    = 0;
-                                    $lote_nuevo->envases_parciales   = 0;
-                                    $lote_nuevo->save();
+                                $lote_temp->existencia          = $lote_temp->existencia + $lote->nueva_existencia;
+                                $lote_temp->existencia_unidosis = $lote_temp->existencia_unidosis + ($lote->nueva_existencia * $cantidad_x_envase);
+                                $lote_temp->save();                                   
+                            }else{
+                                        $lote_nuevo = new Stock();
+                                        
+                                        $lote_nuevo->almacen_id          = $almacen_id;
+                                        $lote_nuevo->clave_insumo_medico = $insumo->clave;
+                                        $lote_nuevo->marca_id            = NULL;
+                                        $lote_nuevo->lote                = $lote->lote;
+                                        $lote_nuevo->fecha_caducidad     = $lote->fecha_caducidad;
+                                        $lote_nuevo->codigo_barras       = $lote->codigo_barras;                     
+                                        $lote_nuevo->existencia          = $lote->nueva_existencia;
+                                        $lote_nuevo->existencia_unidosis = $lote->nueva_existencia * $cantidad_x_envase;
+                                        $lote_nuevo->unidosis_sueltas    = 0;
+                                        $lote_nuevo->envases_parciales   = 0;
+                                        $lote_nuevo->save();
 
-                                    $movimiento_ajuste->lote_nuevo                   = 1;
-                                    $movimiento_ajuste->stock_id                     = $lote_nuevo->id;
-                                    $movimiento_ajuste->clave_insumo_medico          = $insumo->clave;
-                                    $movimiento_ajuste->existencia_anterior          = 0;
-                                    $movimiento_ajuste->existencia_unidosis_anterior = 0;
-                                    $movimiento_ajuste->nueva_existencia             = $lote->existencia;
-                                    $movimiento_ajuste->nueva_existencia_unidosis    = $lote->existencia * $cantidad_x_envase;
-                                    $movimiento_ajuste->observaciones                = "";
-                                    $movimiento_ajuste->save(); 
-                                }
+                                        $movimiento_ajuste->lote_nuevo                   = 1;
+                                        $movimiento_ajuste->stock_id                     = $lote_nuevo->id;
+                                        $movimiento_ajuste->clave_insumo_medico          = $insumo->clave;
+                                        $movimiento_ajuste->existencia_anterior          = 0;
+                                        $movimiento_ajuste->existencia_unidosis_anterior = 0;
+                                        $movimiento_ajuste->nueva_existencia             = $lote->nueva_existencia;
+                                        $movimiento_ajuste->nueva_existencia_unidosis    = $lote->nueva_existencia * $cantidad_x_envase;
+                                        $movimiento_ajuste->observaciones                = "";
+                                        $movimiento_ajuste->save(); 
+                                    }
                         }else{
                                 $lote_ajustar = Stock::find($lote->id);
 

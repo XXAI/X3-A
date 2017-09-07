@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CrearTablaHistorialSincronizacionesProveedores extends Migration
+class CrearTablaSincronizacionesProveedores extends Migration
 {
     /**
      * Run the migrations.
@@ -12,17 +12,18 @@ class CrearTablaHistorialSincronizacionesProveedores extends Migration
      */
     public function up()
     {
-        Schema::create('historial_sincronizaciones_proveedores', function (Blueprint $table) {
+        Schema::dropIfExists('historial_sincronizaciones_proveedores');
+
+        Schema::create('sincronizaciones_proveedores', function (Blueprint $table) {
             
             $table->string('id',255);
             $table->integer('incremento');
             $table->string('servidor_id',4);
 
-            $table->string('movimiento_id', 255);
             $table->string('clues', 45);
             $table->string('almacen_id',45);
-            $table->integer('proveedor_id');
-            $table->integer('pedido_id');
+            $table->integer('proveedor_id')->unsigned();
+            $table->string('pedido_id',255);
             $table->date('fecha_surtimiento');
             $table->integer('recetas_validas');
             $table->integer('colectivos_validos');
@@ -34,9 +35,11 @@ class CrearTablaHistorialSincronizacionesProveedores extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            
-
             $table->primary('id');
+
+            $table->foreign('almacen_id')->references('id')->on('almacenes');
+            $table->foreign('proveedor_id')->references('id')->on('proveedores');
+            $table->foreign('pedido_id')->references('id')->on('pedidos');
             
         });
     }
@@ -48,6 +51,6 @@ class CrearTablaHistorialSincronizacionesProveedores extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('historial_sincronizaciones_proveedores');
+        Schema::dropIfExists('sincronizaciones_proveedores');
     }
 }
