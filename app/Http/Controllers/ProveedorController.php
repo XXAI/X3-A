@@ -62,14 +62,21 @@ class ProveedorController extends Controller
 	 */
     public function index()
     {
-        $parametros = Input::only('q','page','per_page');
+        $parametros = Input::only('q','page','per_page', 'alterno');
+        
+        
+        if(isset($parametros['alterno']) && $parametros['alterno'] == 1)
+            $data = Proveedores::where("alterno",1);
+        else
+            $data = Proveedores::where("principal",1);
+
         if ($parametros['q']) 
         {
-             $data =  Proveedores::with('Contactos','ComunicacionContacto')->where(function($query) use ($parametros) {
+             $data =  $data->with('Contactos','ComunicacionContacto')->where(function($query) use ($parametros) {
                  $query->where('razon_social','LIKE',"%".$parametros['q']."%")->orWhere('rfc','LIKE',"%".$parametros['q']."%");
              });
         } else {
-             $data =  Proveedores::with('Contactos','ComunicacionContacto');
+             $data =  $data->with('Contactos','ComunicacionContacto');
         }
         if(isset($parametros['page'])){
 

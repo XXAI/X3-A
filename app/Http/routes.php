@@ -48,6 +48,7 @@ Route::group(['middleware' => 'jwt'], function () {
     //Route::resource('unidades-medicas', 'UnidadesMedicasController',    ['only' => ['index']]);
     Route::resource('almacenes',    'AlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('proveedor',    'ProveedorController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('personal-puesto',    'PersonalPuestoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
     // Harima: Se colaron en algun merge que hicieron, los tomo como cambios en el commit, probablemente marco conflicto y lo arreglaron dejando estas lineas, los comento, si no hay problemas los elimino en el proximo commit
