@@ -14,4 +14,11 @@ class PersonalClues extends BaseModel
     protected $table = 'personal_clues';
 
     protected $fillable = [ 'clues', 'usuario_asignado', 'nombre','celular', 'email'];
+
+    public function puesto(){
+        return $this->belongsToMany('App\Models\Puesto','personal_clues_puesto', "personal_id", "puesto_id")
+        			->withpivot("id");
+    }
+
+    
 }

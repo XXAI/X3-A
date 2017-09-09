@@ -21,6 +21,7 @@ use App\Models\Movimiento;
 use App\Models\MovimientoInsumos;
 use App\Models\Stock;
 use App\Models\UnidadMedicaPresupuesto;
+use App\Models\PedidoAlterno;
 use \Excel;
 use Carbon\Carbon;
 
@@ -127,6 +128,39 @@ class PedidosAlternosController extends Controller{
 
             return Response::json([ 'data' => $pedido ],200);
 
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
+
+    public function asignarProveedor(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            $inputs = Input::all();
+            $parametros = $inputs['data'];
+            $pedido_alterno = PedidoAlterno::where("pedido_id", $id)->first();
+            $pedido_alterno_save =PedidoAlterno::find($pedido_alterno->id);
+            
+            $pedido_alterno_save->firma_1_id = $parametros['asignacion_firmante_1'];
+            $pedido_alterno_save->firma_2_id = $parametros['asignacion_firmante_2'];
+            $pedido_alterno_save->fecha_asignacion_proveedor = date("Y-m-d H:i:s");
+            $pedido_alterno_save->usuario_asigno_proveedor_id = $request->get('usuario_id');
+            $pedido_alterno_save->save();
+
+            $pedido = Pedido::find($id);
+            $pedido->proveedor_id = $parametros['proveedor_id'];
+            $pedido->status = 'PS';
+            $pedido->fecha_concluido = date("Y-m-d H:i:s");
+            
+            $fecha2 = date_create(date("Y-m-d H:i:s"));
+            $fecha2->modify("+2 day");
+            $pedido->fecha_expiracion = $fecha2->format('Y-m-d H:i:s');
+            $pedido->save();
+
+            DB::commit();
+            return Response::json([ 'data' => $pedido ],200);
         } catch (\Exception $e) {
             DB::rollBack();
             return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
