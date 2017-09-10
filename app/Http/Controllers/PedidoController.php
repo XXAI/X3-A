@@ -75,6 +75,8 @@ class PedidoController extends Controller{
         $almacen = Almacen::find($request->get('almacen_id'));
 
         // Hay que obtener la clues del usuario
+
+        // Akira: en los datos de alternos hay que ver si se pone la cantidad de alternos o en base a su estatus
         $pedidos = Pedido::select(DB::raw(
             '
             count(
@@ -100,7 +102,10 @@ class PedidoController extends Controller{
             ) as expirados_cancelados,
             count(
                 case when status = "EF" then 1 else null end
-            ) as farmacia
+            ) as farmacia,
+            count(
+                case when tipo_pedido_id = "PALT" then 1 else null end
+            ) as alternos
             '
         //))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
         ))->where('clues',$almacen->clues)->first();
@@ -111,7 +116,7 @@ class PedidoController extends Controller{
     public function index(Request $request){
         $almacen = Almacen::find($request->get('almacen_id'));
         
-        $parametros = Input::only('status','q','page','per_page');
+        $parametros = Input::only('tipo','status','q','page','per_page');
 
         //$pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
         $pedidos = Pedido::getModel();
@@ -127,6 +132,10 @@ class PedidoController extends Controller{
 
         if(isset($parametros['status'])) {
             $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
+        }
+
+        if(isset($parametros['tipo'])&& $parametros['tipo'] != '') {
+            $pedidos = $pedidos->where("pedidos.tipo_pedido_id",$parametros['tipo']);
         }
 
         $pedidos = $pedidos->select('pedidos.*',DB::raw('datediff(fecha_expiracion,current_date()) as expira_en_dias'))->orderBy('updated_at','desc');        
@@ -2058,7 +2067,9 @@ class PedidoController extends Controller{
                 $pedido_original->status = 'EX-CA';
                 $pedido_original->fecha_cancelacion = Carbon::now();
                 $pedido_original->save();
-    
+                
+                // Akira: antes de hacer commit se me hace lógico que se verifique si sobró paga para mandar el presupuesto al mes siguiente
+
                 DB::commit();
                 return Response::json([ 'data' => $pedido_original ],200);
     
