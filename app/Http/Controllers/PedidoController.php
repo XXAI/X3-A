@@ -12,6 +12,7 @@ use App\Http\Requests;
 use App\Models\Pedido;
 use App\Models\PedidoInsumo;
 use App\Models\PedidoInsumoClues;
+use App\Models\PedidoAlterno;
 use App\Models\Usuario;
 use App\Models\Almacen;
 use App\Models\Presupuesto;
@@ -1779,5 +1780,294 @@ class PedidoController extends Controller{
 
             
         })->setActiveSheetIndex(0)->export('xls');
+    }
+
+    /**
+     * Transfiere recursos de una clus origen a una destino.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function generarAlterno(Request $request, $id){
+        $mensajes = [
+            'required'      => "required",
+        ];
+
+        $pedido_original = Pedido::find($id);
+        $parametros = Input::all();
+        if(!$pedido_original){
+            return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }else{
+            
+            try {
+                DB::beginTransaction();
+                
+                //$pedido = Pedido::create($parametros['datos']);
+    
+                $total_claves = count($parametros['insumos']);
+                $total_insumos_material_curacion = 0;
+                $total_monto_material_curacion= 0;
+                $monto_iva = 0;
+
+                $total_insumos_causes = 0;
+                $total_monto_causes = 0;
+
+                $total_insumos_no_causes = 0;
+                $total_monto_no_causes = 0;
+                
+                if($total_claves <= 0){
+                    throw new Exception("No se puede crear el pedido alterno si no hay insumos");
+                }
+                
+                // Akira: Podriamos generar hasta 3 pedidos alternor a partir de uno
+                $insumos_a_insertar_causes = [];
+                $insumos_a_insertar_no_causes = [];
+                $insumos_a_insertar_material_curacion = [];
+
+                foreach ($parametros['insumos'] as $key => $value) {
+                    $reglas_insumos = [
+                        'clave'           => 'required',
+                        'cantidad'        => 'required|integer|min:0'
+                    ];  
+    
+                    $v = Validator::make($value, $reglas_insumos, $mensajes);
+    
+                    if ($v->fails()) {
+                        DB::rollBack();
+                        return Response::json(['error' => 'El insumo con clave: '.$value['clave'].' tiene un valor incorrecto.'], 500);
+                    }      
+                    if($value['cantidad'] > 0){
+                        $insumo = [
+                            'insumo_medico_clave' => $value['clave'],
+                            'cantidad_solicitada' => $value['cantidad'],
+                            'monto_solicitado' => $value['cantidad']*$value['precio'], //$value['monto'],
+                            'precio_unitario' => $value['precio'],
+                            'tipo_insumo_id' => $value['tipo_insumo_id'],
+                            'pedido_id' => '' // lo asignamos después
+                        ];
+                        //$value['pedido_id'] = $pedido->id;
+        
+                       
+                        // Akira: ahora vamos a separar los insumos en 3 posibles pedidos
+                        if($value['tipo'] == 'MC'){
+                            $monto_iva += $insumo['monto_solicitado'];
+                            $total_insumos_material_curacion += $value['cantidad'];
+                            $total_monto_material_curacion += $insumo['monto_solicitado'];
+                            $insumos_a_insertar_material_curacion[] = $insumo;
+                        }
+                        if($value['tipo'] == 'ME'){
+                            if($value['es_causes'] == 1){
+                                $total_insumos_causes += $value['cantidad'];
+                                $total_monto_causes += $insumo['monto_solicitado'];
+                                $insumos_a_insertar_causes[] = $insumo;
+                            } else {
+                                $total_insumos_no_causes += $value['cantidad'];
+                                $total_monto_no_causes += $insumo['monto_solicitado'];
+                                $insumos_a_insertar_no_causes[] = $insumo;
+                            }
+                        }    
+                    }
+                   
+                    //$object_insumo = PedidoInsumo::create($insumo);
+    
+                }
+
+                // Akira: ahora crearemos e iteraremos hasta 3 pedidos diferentes si fuera el caso: CAUSES, NO CAUSES y MATERIAL CURACION
+                
+                // CAUSES
+                if(count($insumos_a_insertar_causes)>0){
+                    
+
+                    $anio = date('Y');
+                    
+                    $folio_template = $pedido_original->clues . '-' . $anio . '-PALT-';
+                    $max_folio = Pedido::where('clues',$pedido_original->clues)->where('folio','like',$folio_template.'%')->max('folio');
+                    
+                    if(!$max_folio){
+                        $prox_folio = 1;
+                    }else{
+                        $max_folio = explode('-',$max_folio);
+                        $prox_folio = intval($max_folio[3]) + 1;
+                    }
+                    $fecha = date('Y-m-d');
+                    // 72 Horas de expiración
+                    $fecha_expiracion = strtotime("+3 days", strtotime($fecha));
+                    
+                    
+                    $datos = [
+                        'clues' => $pedido_original->clues,
+                        'tipo_pedido_id' => 'PALT',
+                        'descripcion' => 'Pedido alterno CAUSES del folio: '.$pedido_original->folio,
+                        'folio' => $folio_template . str_pad($prox_folio, 3, "0", STR_PAD_LEFT),
+                        'fecha' => $fecha,
+                        'fecha_expiracion' => date("Y-m-d", $fecha_expiracion),
+                        'almacen_solicitante' => $pedido_original->almacen_solicitante,
+                        'almacen_proveedor' => $pedido_original->almacen_proveedor,
+                        'organismo_dirigido' => $pedido_original->organismo_dirigido,
+                        //'acta_id' => $pedido_original->almacen_proveedor,
+                        'status' => 'PV',
+                        'observaciones' => ''
+                    ];
+
+                    $pedido = Pedido::create($datos);
+
+                    // Llenamos la tabla pedidos_alternos
+                    $datos_alterno = [
+                        "pedido_id" => $pedido->id,
+                        "pedido_original_id" => $pedido_original->id,
+                    ];
+                    $pedido_alterno = PedidoAlterno::create($datos_alterno);
+                 
+                    // Creamos el detalle
+                    foreach ($insumos_a_insertar_causes as $item) {
+                  
+                        
+                        $item['pedido_id'] = $pedido->id;
+                        $object_insumo = PedidoInsumo::create($item);
+                    }
+
+                    $pedido->total_claves_solicitadas = count($insumos_a_insertar_causes);
+                    $pedido->total_cantidad_solicitada = $total_insumos_causes;
+                    $pedido->total_monto_solicitado = $total_monto_causes;
+                    $pedido->encargado_almacen_id = $pedido_original->encargado_almacen_id;
+                    $pedido->director_id = $pedido_original->director_id;
+                    $pedido->save();
+                }
+
+
+                // NO CAUSES
+                if(count($insumos_a_insertar_no_causes)>0){
+                    
+
+                    $anio = date('Y');
+                    
+                    $folio_template = $pedido_original->clues . '-' . $anio . '-PALT-';
+                    $max_folio = Pedido::where('clues',$pedido_original->clues)->where('folio','like',$folio_template.'%')->max('folio');
+                    
+                    if(!$max_folio){
+                        $prox_folio = 1;
+                    }else{
+                        $max_folio = explode('-',$max_folio);
+                        $prox_folio = intval($max_folio[3]) + 1;
+                    }
+                    $fecha = date('Y-m-d');
+                    // 72 Horas de expiración
+                    $fecha_expiracion = strtotime("+3 days", strtotime($fecha));
+                    
+                    
+                    $datos = [
+                        'clues' => $pedido_original->clues,
+                        'tipo_pedido_id' => 'PALT',
+                        'descripcion' => 'Pedido alterno NO CAUSES del folio: '.$pedido_original->folio,
+                        'folio' => $folio_template . str_pad($prox_folio, 3, "0", STR_PAD_LEFT),
+                        'fecha' => $fecha,
+                        'fecha_expiracion' => date("Y-m-d", $fecha_expiracion),
+                        'almacen_solicitante' => $pedido_original->almacen_solicitante,
+                        'almacen_proveedor' => $pedido_original->almacen_proveedor,
+                        'organismo_dirigido' => $pedido_original->organismo_dirigido,
+                        //'acta_id' => $pedido_original->almacen_proveedor,
+                        'status' => 'PV',
+                        'observaciones' => ''
+                    ];
+
+                    $pedido = Pedido::create($datos);
+
+                    // Llenamos la tabla pedidos_alternos
+                    $datos_alterno = [
+                        "pedido_id" => $pedido->id,
+                        "pedido_original_id" => $pedido_original->id,
+                    ];
+                    $pedido_alterno = PedidoAlterno::create($datos_alterno);
+                 
+                    // Creamos el detalle
+                    foreach ($insumos_a_insertar_no_causes as $item) {
+                  
+                        
+                        $item['pedido_id'] = $pedido->id;
+                        $object_insumo = PedidoInsumo::create($item);
+                    }
+
+                    $pedido->total_claves_solicitadas = count($insumos_a_insertar_no_causes);
+                    $pedido->total_cantidad_solicitada = $total_insumos_no_causes;
+                    $pedido->total_monto_solicitado = $total_monto_no_causes;
+                    $pedido->encargado_almacen_id = $pedido_original->encargado_almacen_id;
+                    $pedido->director_id = $pedido_original->director_id;
+                    $pedido->save();
+                }
+
+                // MATERIAL CURACION
+                if(count($insumos_a_insertar_material_curacion)>0){
+                    
+
+                    $anio = date('Y');
+                    
+                    $folio_template = $pedido_original->clues . '-' . $anio . '-PALT-';
+                    $max_folio = Pedido::where('clues',$pedido_original->clues)->where('folio','like',$folio_template.'%')->max('folio');
+                    
+                    if(!$max_folio){
+                        $prox_folio = 1;
+                    }else{
+                        $max_folio = explode('-',$max_folio);
+                        $prox_folio = intval($max_folio[3]) + 1;
+                    }
+                    $fecha = date('Y-m-d');
+                    // 72 Horas de expiración
+                    $fecha_expiracion = strtotime("+3 days", strtotime($fecha));
+                    
+                    
+                    $datos = [
+                        'clues' => $pedido_original->clues,
+                        'tipo_pedido_id' => 'PALT',
+                        'descripcion' => 'Pedido alterno MATERIAL CURACION del folio: '.$pedido_original->folio,
+                        'folio' => $folio_template . str_pad($prox_folio, 3, "0", STR_PAD_LEFT),
+                        'fecha' => $fecha,
+                        'fecha_expiracion' => date("Y-m-d", $fecha_expiracion),
+                        'almacen_solicitante' => $pedido_original->almacen_solicitante,
+                        'almacen_proveedor' => $pedido_original->almacen_proveedor,
+                        'organismo_dirigido' => $pedido_original->organismo_dirigido,
+                        //'acta_id' => $pedido_original->almacen_proveedor,
+                        'status' => 'PV',
+                        'observaciones' => ''
+                    ];
+
+                    $pedido = Pedido::create($datos);
+
+                    // Llenamos la tabla pedidos_alternos
+                    $datos_alterno = [
+                        "pedido_id" => $pedido->id,
+                        "pedido_original_id" => $pedido_original->id,
+                    ];
+                    $pedido_alterno = PedidoAlterno::create($datos_alterno);
+                 
+                    // Creamos el detalle
+                    foreach ($insumos_a_insertar_material_curacion as $item) {
+                  
+                        
+                        $item['pedido_id'] = $pedido->id;
+                        $object_insumo = PedidoInsumo::create($item);
+                    }
+
+                    $pedido->total_claves_solicitadas = count($insumos_a_insertar_material_curacion);
+                    $pedido->total_cantidad_solicitada = $total_insumos_material_curacion;
+                    $pedido->total_monto_solicitado = $total_monto_material_curacion +  ($monto_iva*16/100);
+                    $pedido->encargado_almacen_id = $pedido_original->encargado_almacen_id;
+                    $pedido->director_id = $pedido_original->director_id;
+                    $pedido->save();
+                }
+
+                $pedido_original->status = 'EX-CA';
+                $pedido_original->fecha_cancelacion = Carbon::now();
+                $pedido_original->save();
+    
+                DB::commit();
+                return Response::json([ 'data' => $pedido_original ],200);
+    
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+            } 
+            
+        }
+        return Response::json([ 'data' => $pedido_original],200);
     }
 }

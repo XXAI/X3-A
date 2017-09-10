@@ -26,8 +26,8 @@ class CrearTablaPedidosAlternos extends Migration
             $table->string('nombre_firma_2', 255)->nullable();
             $table->string('cargo_firma_2', 255)->nullable();
             
-            $table->string('usuario_valido_id', 255);
-            $table->string('usuario_asigno_proveedor_id', 255);
+            $table->string('usuario_valido_id', 255)->nullable();
+            $table->string('usuario_asigno_proveedor_id', 255)->nullable();
             
             $table->datetime('fecha_validacion')->nullable();
             $table->datetime('fecha_asignacion_proveedor')->nullable();

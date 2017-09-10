@@ -17,8 +17,8 @@ class AlterTablePedidosAlternos extends Migration
             $table->dropColumn('nombre_firma_2');
             $table->dropColumn('cargo_firma_1');
             $table->dropColumn('cargo_firma_2');
-            $table->string('firma_1_id', 255)->after('folio');
-            $table->string('firma_2_id', 255)->after('firma_1_id');
+            $table->string('firma_1_id', 255)->after('folio')->nullable();
+            $table->string('firma_2_id', 255)->after('firma_1_id')->nullable();
         });
     }
 
