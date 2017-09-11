@@ -70,7 +70,7 @@ class RecepcionPedidoController extends Controller
 			return Response::json(['error' => "Este pedido se encuentra en borrador."], 500);
 		}
 
-		if($pedido->tipo_pedido_id != 'PA'){
+		if($pedido->status != 'PS'){
 			return Response::json(['error' => "Este pedido no admite captura de recepción."], 500);
 		}
 
@@ -143,7 +143,11 @@ class RecepcionPedidoController extends Controller
 		/**/
 		DB::beginTransaction();
 
-		$pedido = Pedido::where('almacen_solicitante',$almacen->id)->with(['recepciones'=>function($recepciones){
+		/*$pedido = Pedido::where('almacen_solicitante',$almacen->id)->with(['recepciones'=>function($recepciones){
+			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
+		}])->whereIn('status',['PS','EX', 'BR'])->find($id);*/
+
+		$pedido = Pedido::where('clues',$almacen->clues)->with(['recepciones'=>function($recepciones){
 			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
 		}])->whereIn('status',['PS','EX', 'BR'])->find($id);
 
