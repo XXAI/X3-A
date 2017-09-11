@@ -146,7 +146,27 @@ class PedidosController extends Controller
 
 
     public function permitirRecepcion($id, Request $request){
-        return Response::json(['data'=>'tu madre']);
+        try {
+            $pedido = Pedido::find($id);
+
+            $permitir = Input::all();
+
+            if(isset($permitir['recepcion'])){
+                if($permitir['recepcion']){
+                    $pedido->recepcion_permitida = 1;
+                }else{
+                    $pedido->recepcion_permitida = 0;
+                }
+                $pedido->save();
+                return Response::json([ 'data' => $pedido ],200);
+            }else{
+                return Response::json(['error' => 'Error en los datos mandados'], HttpResponse::HTTP_CONFLICT);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
+        }
+        return Response::json(['data'=>'']);
     }
     /**
      * Display a listing of the resource.
