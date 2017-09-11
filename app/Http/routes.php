@@ -103,16 +103,17 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::delete('claves-basicas-clues/{id}', 'ClavesBasicasController@quitarUnidadMedica');
 
         //Configuuración de pedidos
-        Route::get('pedidos-recepcion/{id}', 'PedidosController@recepcion');        
+        Route::get('pedidos-recepcion/{id}', 'PedidosController@recepcion');
         Route::get('pedidos-borrador/{id}', 'PedidosController@regresarBorrador');
         Route::get('pedidos-borrador-cancelado/{id}', 'PedidosController@regresarBorradorCancelado');
-        Route::get('recepcion-borrador/{id}', 'RecepcionPedidoController@borrarRecepcion');        
+        Route::get('recepcion-borrador/{id}', 'RecepcionPedidoController@borrarRecepcion');
+        Route::put('pedidos-permitir-recepcion/{id}', 'PedidosController@permitirRecepcion');
 
         // Pedidos Alternos
         Route::get('pedidos-alternos', 'PedidosAlternosController@lista');     
         Route::get('pedidos-alternos/{id}', 'PedidosAlternosController@ver');      
         Route::put('pedidos-alternos/validacion/{id}', 'PedidosAlternosController@validar');
-        Route::put('pedidos-alternos/proveedor/{id}', 'PedidosAlternosController@asignarProveedor');        
+        Route::put('pedidos-alternos/proveedor/{id}', 'PedidosAlternosController@asignarProveedor');
 
     });
     // # FIN SECCION

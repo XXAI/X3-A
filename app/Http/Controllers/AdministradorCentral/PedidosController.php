@@ -144,6 +144,10 @@ class PedidosController extends Controller
     	return Response::json([ 'data' => $repositorio],200);	
     }
 
+
+    public function permitirRecepcion($id, Request $request){
+        return Response::json(['data'=>'tu madre']);
+    }
     /**
      * Display a listing of the resource.
      *
