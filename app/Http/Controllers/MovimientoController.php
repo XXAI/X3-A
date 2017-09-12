@@ -159,7 +159,9 @@ class MovimientoController extends Controller
     
             $data2->setPath($request->url());
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        } 
+        }else{
+               $indice_adds = count($data);
+             } 
 
 
         
@@ -224,9 +226,15 @@ class MovimientoController extends Controller
                 $total = count($data);
 
                 ////**************************************************************************************************************************************
-                $data2[$indice_adds] = array ("turnos_disponibles" => $array_turnos, "servicios_disponibles" => $array_servicios);
-
-            return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data2, "total" => $total), 200);
+                if(isset($parametros['page']))
+                {
+                    $data2[$indice_adds] = array ("turnos_disponibles" => $array_turnos, "servicios_disponibles" => $array_servicios);
+                return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data2, "total" => $total), 200);
+                }else{
+                        $data[$indice_adds] = array ("turnos_disponibles" => $array_turnos, "servicios_disponibles" => $array_servicios);
+                        return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data, "total" => $total), 200);
+                     }
+                
             
         }
     }
@@ -876,7 +884,7 @@ class MovimientoController extends Controller
                 {
                     $reglas = [
                                 'clave'                 => 'required',
-                                'cantidad'              => 'required|integer',
+                                'cantidad'              => 'required|integer|min:0',
                                 'cantidad_x_envase'     => 'required|integer',
                                 'lote'                  => 'required',
                                 'fecha_caducidad'       => 'required',
@@ -885,8 +893,8 @@ class MovimientoController extends Controller
                 }else{
                         $reglas = [
                                     'clave'                 => 'required',
-                                    'cantidad'              => 'required|integer',
-                                    'cantidad_solicitada'   => 'required|numeric',
+                                    'cantidad'              => 'required|integer|min:0',
+                                    'cantidad_solicitada'   => 'required|numeric|min:1',
                                     'cantidad_x_envase'     => 'required|integer',
                                   ];
                      }
@@ -969,12 +977,8 @@ class MovimientoController extends Controller
                                         $v->errors()->add('lote_'.$lote->id.'_', 'lote_caducado');
                                     }
                                  }
-                            
                             }
                   ///****************************************************************************************    
-                     
-                  
-
                 });
             }    
         }// FIN IF TIPO SALIDA
@@ -1011,12 +1015,12 @@ class MovimientoController extends Controller
 
         $reglas = [
                         'clave'                 => 'required|string',
-                        'cantidad'              => 'required|integer',
+                        'cantidad'              => 'required|integer|min:0',
                         'cantidad_x_envase'     => 'required|integer',
                         'dosis'                 => 'required|numeric',
-                        'frecuencia'            => 'required|numeric',
-                        'duracion'              => 'required|numeric',
-                        'cantidad_recetada'     => 'required|integer',
+                        'frecuencia'            => 'required|numeric|min:0',
+                        'duracion'              => 'required|numeric|min:1',
+                        'cantidad_recetada'     => 'required|integer|min:1',
                   ];
                            
         $v = \Validator::make($request, $reglas, $mensajes );

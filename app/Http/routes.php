@@ -150,9 +150,12 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('entregas-stats',        'EntregaController@stats');
         Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('inventario',    'InventarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        //Route::resource('inventario-excel',    'InventarioController@excel',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        
 
         Route::resource('ajuste-mas-inventario',    'AjusteMasInventarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('ajuste-menos-inventario',  'AjusteMenosInventarioController',  ['only' => ['index', 'show', 'store','update','destroy']]);
+        
         
         //Pedidos
         Route::resource('pedidos',                      'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -183,6 +186,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('generar-excel-pedido/{id}', 'PedidoController@generarExcel');
     Route::get('generar-excel-pedido-jurisdiccional/{id}', 'PedidoJurisdiccionalController@generarExcel');
 
+    Route::get('inventario-excel', 'InventarioController@excel');
     
     Route::get('entregas-stats',        'EntregaController@stats'); 
 

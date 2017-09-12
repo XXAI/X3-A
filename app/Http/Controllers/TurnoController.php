@@ -22,7 +22,7 @@ class TurnoController extends Controller
      */
     public function index()
     {
-        $parametros = Input::only('q','page','per_page');
+        $parametros = Input::only('q','page','per_page','bid');
         if ($parametros['q'])
         {
              $data =  Turno::where(function($query) use ($parametros) {
@@ -40,6 +40,16 @@ class TurnoController extends Controller
             $data = $data->paginate($resultadosPorPagina);
         } else {
             $data = $data->get();
+        }
+
+        if($parametros['bid']== '1')
+        {
+            if( count($data)>0)
+            {
+                return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $data), 200);
+            }else{
+                    return Response::json(array("status" => 404,"messages" => "No se encontraron resultados","data"=>[]), 200);
+                 }
         }
        
         return Response::json([ 'data' => $data],200);

@@ -47,10 +47,11 @@ class MisTurnosController extends Controller
         } 
         else{
               
-            $data->clues_turnos = DB::table("clues_turnos")
-            ->join('turnos', 'turnos.id', '=' , 'clues_turnos.turno_id')
+            $data->clues_turnos = DB::table("clues_turnos as ct")
+            ->leftJoin('turnos as t', 't.id', '=' , 'ct.turno_id')
+            ->select('t.id','t.nombre','ct.updated_at')
             ->where("clues", $clues)
-            ->where('clues_turnos.deleted_at',NULL)
+            ->where('ct.deleted_at',NULL)
             ->get();
             return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $data), 200);
         }  
