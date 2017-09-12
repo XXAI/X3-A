@@ -71,7 +71,7 @@ class RecepcionPedidoController extends Controller
 		}
 
 		if($pedido->status != 'PS'){
-			return Response::json(['error' => "Este pedido no admite captura de recepción."], 500);
+			return Response::json(['error' => "Este pedido no admite captura de recepcións."], 500);
 		}
 
         $pedido = $pedido->load("insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");

@@ -423,6 +423,11 @@ class PedidoController extends Controller{
                     $parametros['datos']['fecha_concluido'] = $fecha_concluido;
                     $parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
                 }
+                if($parametros['datos']['status'] == 'PS'){
+                    $parametros['datos']['recepcion_permitida'] = 1;
+                }else{
+                    $parametros['datos']['recepcion_permitida'] = 0;
+                }
             }/*else{
                 $parametros['datos']['fecha_concluido'] = null;
                 $parametros['datos']['fecha_expiracion'] = null;
