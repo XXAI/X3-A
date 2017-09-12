@@ -45,10 +45,11 @@ class MisServiciosController extends Controller
         } 
         else{
               
-            $data->clues_servicios = DB::table("clues_servicios")
-            ->join('servicios', 'servicios.id', '=' , 'clues_servicios.servicio_id')
+            $data->clues_servicios = DB::table("clues_servicios as cs")
+            ->leftJoin('servicios as s', 's.id', '=' , 'cs.servicio_id')
+            ->select('s.id','s.nombre','cs.updated_at')
             ->where("clues", $clues)
-            ->where('clues_servicios.deleted_at',NULL)
+            ->where('cs.deleted_at',NULL)
             ->get();
             return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $data), 200);
         }      
@@ -152,8 +153,8 @@ class MisServiciosController extends Controller
                             $item = new CluesServicio;
 
                         //llenar el modelo con los datos
-                        $item->servicio_id   = $value->id; 
-                        $item->clues         = $data->clues; 
+                        $item->servicio_id     = $value->id; 
+                        $item->clues  = $data->clues; 
 
                         $item->save();         
                     }

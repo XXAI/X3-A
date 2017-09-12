@@ -22,23 +22,33 @@ class ServicioController extends Controller
      */
     public function index()
     {
-        $parametros = Input::only('q','page','per_page');
-        if ($parametros['q']) {
-             $data =  Servicio::where(function($query) use ($parametros) {
+        $parametros = Input::only('q','page','per_page','bid');
+        if ($parametros['q'])
+        {
+             $data =  Servicio::where(function($query) use ($parametros){
                  $query->where('id','LIKE',"%".$parametros['q']."%")
                  ->orWhere('nombre','LIKE',"%".$parametros['q']."%");
              });
         } else {
-             $data =  Servicio::where("id","!=", "");
-        }
+                    $data =  Servicio::where("id","!=", "");
+               }
         
-
-        if(isset($parametros['page'])){
-
+        if(isset($parametros['page']))
+        {
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
             $data = $data->paginate($resultadosPorPagina);
         } else {
-            $data = $data->get();
+                $data = $data->get();
+               }
+        //var_dump($parametros['bid']); die();
+        if($parametros['bid']== '1')
+        {
+            if( count($data)>0)
+            {
+                return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $data), 200);
+            }else{
+                    return Response::json(array("status" => 404,"messages" => "No se encontraron resultados","data"=>[]), 200);
+                 }
         }
        
         return Response::json([ 'data' => $data],200);
