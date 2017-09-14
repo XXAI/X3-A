@@ -70,8 +70,8 @@ class RecepcionPedidoController extends Controller
 			return Response::json(['error' => "Este pedido se encuentra en borrador."], 500);
 		}
 
-		if($pedido->status != 'PS'){
-			return Response::json(['error' => "Este pedido no admite captura de recepcións."], 500);
+		if(!$pedido->recepcion_permitida){
+			return Response::json(['error' => "Este pedido no admite captura de recepciones."], 500);
 		}
 
         $pedido = $pedido->load("insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");
