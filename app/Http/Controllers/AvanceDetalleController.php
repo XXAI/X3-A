@@ -11,6 +11,7 @@ use App\Http\Requests;
 use App\Models\Avance;
 use App\Models\AvanceDetalles;
 use App\Models\AvanceUsuarioPrivilegio;
+use App\Models\AvanceVisualizacion;
 use App\Models\Usuario;
 use Carbon\Carbon;
 
@@ -21,9 +22,24 @@ class AvanceDetalleController extends Controller
 {
     public function index(Request $request)
     {
+
+        
         $parametros = Input::only('status','q','page','per_page', 'identificador', 'tipo');
         $usuario = Usuario::find($request->get('usuario_id'));
 
+        $actualizacion = AvanceVisualizacion::where('avance_id', $parametros['identificador'])
+                                              ->where('usuario_id', $request->get('usuario_id'))
+                                              ->first();
+
+        if($actualizacion)
+        {
+            $actualizacion->updated_at = date("Y-m-d H:i:s");
+            $actualizacion->save();
+        }else{
+            AvanceVisualizacion::create(['avance_id'=>$parametros['identificador'], 'usuario_id'=>$request->get('usuario_id')]);
+        }                                      
+
+        
         $avancedetalle = DB::table('avance_detalles')->where("avance_id", $parametros['identificador']);
         $avance = Avance::find($parametros['identificador']);
 
@@ -64,7 +80,11 @@ class AvanceDetalleController extends Controller
             $avancedetalle->registros = 0;
             $avancedetalle->nombre_tema = $avance->tema;
 
-            return Response::json([ 'data' => array("registros"=>$avancedetalle, 'datos_tema'=>$avance, 'historial'=>$registros)],200);
+            $administrador = false;
+            if($request->get('usuario_id') == 'salud')
+                $administrador = true;
+            
+            return Response::json([ 'data' => array("registros"=>$avancedetalle, 'datos_tema'=>$avance, 'historial'=>$registros, 'administrador'=>$administrador)],200);
 
         }else if($parametros['tipo'] == 2)
         {
@@ -86,7 +106,11 @@ class AvanceDetalleController extends Controller
             $avancedetalle = $avancedetalle->get();
         }
 
-        return Response::json([ 'data' => array("registros"=>$avancedetalle, 'datos_tema'=>$avance, 'historial'=>$registros)],200);
+        $administrador = false;
+        if($request->get('usuario_id') == 'salud')
+            $administrador = true;
+
+        return Response::json([ 'data' => array("registros"=>$avancedetalle, 'datos_tema'=>$avance, 'historial'=>$registros, 'administrador'=>$administrador)],200);
     }
 
     public function store(Request $request){

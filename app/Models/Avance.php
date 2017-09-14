@@ -14,7 +14,7 @@ class Avance extends BaseModel
     protected $guardarIDUsuario = false;
     
     protected $table = 'avances';  
-    protected $fillable = ["tema","responsable", "area", "comentario", "usuario_id"];
+    protected $fillable = ["tema","responsable", "area", "comentario", "usuario_id", 'prioridad', 'estatus'];
 
     public function avanceDetalles(){
       return $this->hasMany('App\Models\AvanceDetalles','avance_id');
