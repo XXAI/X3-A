@@ -243,6 +243,25 @@ class AvanceController extends Controller
         } 
     }
 
+    function destroy(Request $request, $id){
+        try {
+            $avance = Avance::find($id);
+                
+            if($avance){
+                   $avance->delete();
+                }else{
+                    return Response::json(['error' => 'Este avance ya no puede eliminarse'], 500);
+                }
+           
+            //$object = Pedido::where('almacen_proveedor',$request->get('almacen_id'))->where('id',$id)->delete();
+            return Response::json(['data'=>$avance],200);
+        
+        } catch (Exception $e) {
+           return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        }
+
+    }
+
     public function areas(Request $request){
         try {
             DB::beginTransaction();
