@@ -20,7 +20,7 @@ class AvanceController extends Controller
 {
     public function index(Request $request)
     {
-        $parametros = Input::only('status','q','page','per_page', 'prioridad', 'estatus', 'visto', 'area');
+        $parametros = Input::only('status','q','page','per_page', 'prioridad', 'estatus', 'visto', 'area', 'orden');
 		
         $usuario = Usuario::find($request->get('usuario_id'));
 
@@ -101,6 +101,8 @@ class AvanceController extends Controller
          
          $visualizados = array();
          $no_visualizados = array();
+
+         $prioridad = array(0=>array(),1=>array(),2=>array());
         foreach ($avance as $key => $value) {
         	$avanceDetalle = AvanceDetalles::where("avance_id", $avance[$key]->id)->orderBy('id', 'desc')->first();
             $avances_sin_visualizar = AvanceDetalles::where("avance_id", $avance[$key]->id)
@@ -122,6 +124,8 @@ class AvanceController extends Controller
         		$avance[$key]->creacion = -1;
                 $avance[$key]->comentario_detalle = '';
         	}
+
+
             
             if($avance[$key]->visualizaciones == 0)
                 $visualizados[] = $avance[$key];
@@ -129,32 +133,56 @@ class AvanceController extends Controller
                 $no_visualizados[] = $avance[$key];
 
             
+            if($avance[$key]->prioridad == 1)
+                $prioridad[0][] = $avance[$key];
+            else if($avance[$key]->prioridad == 2)
+                $prioridad[1][] = $avance[$key];
+            else if($avance[$key]->prioridad == 3)
+                $prioridad[2][] = $avance[$key];
+            
+            
         }
         
         $response = $avance->toArray();
-        if($parametros['visto'] == 1)
-            $response['data'] = $visualizados;
-        else if($parametros['visto'] == 2)
+        if($parametros['visto'] == "1")
+           $response['data'] = $visualizados;
+        else if($parametros['visto'] == "2")
             $response['data'] = $no_visualizados;
 
         $response['total'] = count($response['data']);
             
         $aux = array();
         
-        foreach ($response['data'] as $key => $value) {
-            foreach ($response['data'] as $key2 => $value2) {
-                if($response['data'][$key]->creacion < $response['data'][$key2]->creacion)
+        if($parametros['orden'] == 1)
+            $response['data'] = $this->ordenamiento($response['data']);
+        else if($parametros['orden'] == 2)
+        {
+            $prioridad[0] = $this->ordenamiento($prioridad[0]);
+            $prioridad[1] = $this->ordenamiento($prioridad[1]);
+            $prioridad[2] = $this->ordenamiento($prioridad[2]);
+
+            $response['data'] = array_merge($prioridad[2], $prioridad[1], $prioridad[0]);
+        } 
+       
+
+        return Response::json([ 'data' => $response],200);
+    }
+
+    public function ordenamiento($arreglo)
+    {
+        foreach ($arreglo as $key => $value) {
+            foreach ($arreglo as $key2 => $value2) {
+                if($arreglo[$key]->creacion < $arreglo[$key2]->creacion)
                  {
-                     $aux = $response['data'][$key];
-                     $response['data'][$key] = $response['data'][$key2];
-                     $response['data'][$key2] = $aux;   
+                     $aux = $arreglo[$key];
+                     $arreglo[$key] = $arreglo[$key2];
+                     $arreglo[$key2] = $aux;   
                  }   
             }
             
         }
-
-        return Response::json([ 'data' => $response],200);
-    }
+        return $arreglo;
+    } 
 
     public function show(Request $request, $id){
         
