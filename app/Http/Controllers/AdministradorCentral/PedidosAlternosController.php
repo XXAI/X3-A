@@ -152,6 +152,7 @@ class PedidosAlternosController extends Controller{
             $pedido = Pedido::find($id);
             $pedido->proveedor_id = $parametros['proveedor_id'];
             $pedido->status = 'PS';
+            $pedido->recepcion_permitida = 1;
             $pedido->fecha_concluido = date("Y-m-d H:i:s");
             
             $fecha2 = date_create(date("Y-m-d H:i:s"));
