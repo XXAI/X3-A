@@ -153,18 +153,17 @@ class AvanceController extends Controller
             
         $aux = array();
         
-        /*if($parametros['orden'] == 1)
+       
+        if($parametros['orden'] == 2)
         {
-            $response['data'] = $this->ordenamiento($response['data']);
-        }
-        else if($parametros['orden'] == 2)
-        {*/
             $prioridad[0] = $this->ordenamiento($prioridad[0]);
             $prioridad[1] = $this->ordenamiento($prioridad[1]);
             $prioridad[2] = $this->ordenamiento($prioridad[2]);
 
             $response['data'] = array_merge($prioridad[2], $prioridad[1], $prioridad[0]);
-        //} 
+         }else{
+            $response['data'] = $this->ordenamiento($response['data']);
+         } 
        
 
         return Response::json([ 'data' => $response],200);
