@@ -81,7 +81,7 @@ class AvanceDetalleController extends Controller
             $avancedetalle->nombre_tema = $avance->tema;
 
             $administrador = false;
-            if($request->get('usuario_id') == 'salud')
+            if($request->get('usuario_id') == 'salud' || $request->get('usuario_id') == 'nugasoft@gmail.com')
                 $administrador = true;
             
             return Response::json([ 'data' => array("registros"=>$avancedetalle, 'datos_tema'=>$avance, 'historial'=>$registros, 'administrador'=>$administrador)],200);
@@ -107,7 +107,7 @@ class AvanceDetalleController extends Controller
         }
 
         $administrador = false;
-        if($request->get('usuario_id') == 'salud')
+        if($request->get('usuario_id') == 'salud' || $request->get('usuario_id') == 'nugasoft@gmail.com')
             $administrador = true;
 
         return Response::json([ 'data' => array("registros"=>$avancedetalle, 'datos_tema'=>$avance, 'historial'=>$registros, 'administrador'=>$administrador)],200);
