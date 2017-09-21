@@ -139,8 +139,15 @@ Route::group(['middleware' => 'jwt'], function () {
 
     Route::group(['middleware' => 'almacen'], function () {
 
+        // # SECCION: Inventario 
         Route::group(['prefix' => 'inventario','namespace' => 'Inventario'], function () {
             Route::resource('inicializacion-inventario',         'InicializacionInventarioController',  ['only' => ['index', 'show', 'store','update','destroy']]);
+        });
+
+        // # SECCION: Almacen 
+        Route::group(['prefix' => 'almacen','namespace' => 'Almacen'], function () {
+            Route::get('transferencias-stats',                     'TransferenciaAlmacenController@stats');
+            Route::resource('transferencias',                      'TransferenciaAlmacenController',['only' => ['index', 'show', 'store','update','destroy']]);
         });
 
         Route::resource('almacenes',        'AlmacenController',    ['only' => ['index']]);
