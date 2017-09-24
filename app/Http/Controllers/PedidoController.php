@@ -106,8 +106,13 @@ class PedidoController extends Controller{
             ) as farmacia,
             count(
                 case when tipo_pedido_id = "PALT" then 1 else null end
-            ) as alternos
+            ) as alternos,
+            (
+                select count(id) from actas where clues = "'.$almacen->clues.'"
+            ) as actas
+
             '
+            
         //))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
         ))->where('clues',$almacen->clues)->first();
 
@@ -2123,7 +2128,7 @@ class PedidoController extends Controller{
                 // Akira: antes de hacer commit se me hace lógico que se verifique si sobró paga para mandar el presupuesto al mes siguiente
                 //DB::rollBack();
                 DB::commit();
-                return Response::json([ 'data' => $pedido_original ],200);
+                return Response::json([ 'data' => $acta ],200);
     
             } catch (\Exception $e) {
                 DB::rollBack();

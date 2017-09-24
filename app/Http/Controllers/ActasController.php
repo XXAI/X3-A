@@ -31,14 +31,15 @@ class ActasController extends Controller{
   
 	    if ($parametros['q']) {
 		    $actas =  $actas->where(function($query) use ($parametros) {
-			    $query->where('nombre','LIKE',"%".$parametros['q']."%")->orWhere('folio','LIKE',"%".$parametros['q']."%");
+				$query->where('nombre','LIKE',"%".$parametros['q']."%")->orWhere('folio','LIKE',"%".$parametros['q']."%")
+				->orWhere('fecha','LIKE',"%".$parametros['q']."%");
 			});
 		}
   
 		
 		$actas = $actas->where('clues',$almacen->clues);
   
-  
+		$actas = $actas->orderBy('incremento','desc');
 		if(isset($parametros['page'])){
 		    $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
 		    $actas = $actas->paginate($resultadosPorPagina);
@@ -56,8 +57,15 @@ class ActasController extends Controller{
 		if(!$acta){
 		    return Response::json(['error' => "No se encuentra el acta que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
 		}else{  
-		    $acta->pedidos;
+			$acta->pedidos;
+			$acta->director;
+			$acta->administrador;
+			$proveedor = $acta->proveedor;
+			$proveedor->contratoActivo;
+			$acta->unidadMedica;
+			$acta->personaEncargadaAlmacen;
+			
 		}
-		return Response::json([ 'data' => $pedido],200);
+		return Response::json([ 'data' => $acta],200);
 	 }
 }
