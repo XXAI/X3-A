@@ -104,7 +104,7 @@ class AvanceController extends Controller
 
          $prioridad = array(0=>array(),1=>array(),2=>array());
         foreach ($avance as $key => $value) {
-        	$avanceDetalle = AvanceDetalles::where("avance_id", $avance[$key]->id)->orderBy('id', 'desc')->first();
+        	$avanceDetalle = AvanceDetalles::where("avance_id", $avance[$key]->id)->orderBy('updated_at', 'desc')->first();
             $avances_sin_visualizar = AvanceDetalles::where("avance_id", $avance[$key]->id)
                                                         ->whereRaw("(avance_detalles.created_at > (select if(count(updated_at) = 0, '0000-00-00', updated_at) from avance_visualizacion where usuario_id='".$request->get('usuario_id')."' and avance_id='".$avance[$key]->id."'))");
 
@@ -113,6 +113,8 @@ class AvanceController extends Controller
         	{
         		$avance[$key]->porcentaje = $avanceDetalle->porcentaje;
                 $array_days = explode("-", substr($avanceDetalle->created_at,0,10));
+
+
                 $avance[$key]->creacion = Carbon::createFromDate($array_days[0],$array_days[1],$array_days[2])->diffInDays(Carbon::now());
                 $avance[$key]->comentario_detalle = $avanceDetalle->comentario;
                 
