@@ -104,7 +104,9 @@ class AvanceController extends Controller
 
          $prioridad = array(0=>array(),1=>array(),2=>array());
         foreach ($avance as $key => $value) {
-        	$avanceDetalle = AvanceDetalles::where("avance_id", $avance[$key]->id)->orderBy('updated_at', 'desc')->first();
+        	$avanceDetalle = AvanceDetalles::where("avance_id", $avance[$key]->id)->orderBy('incremento', 'desc')->first();
+
+            //return Response::json([ 'data' => $avanceDetalle],500);
             $avances_sin_visualizar = AvanceDetalles::where("avance_id", $avance[$key]->id)
                                                         ->whereRaw("(avance_detalles.created_at > (select if(count(updated_at) = 0, '0000-00-00', updated_at) from avance_visualizacion where usuario_id='".$request->get('usuario_id')."' and avance_id='".$avance[$key]->id."'))");
 
