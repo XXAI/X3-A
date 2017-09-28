@@ -19,26 +19,25 @@ class StockController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
+
         $parametros = Input::only('q','clave');
 
-       if (isset($parametros['q']) && $parametros['q'] != "") {
-            $stock =  Stock::with("insumo","almacen", "marca")->where(function($query) use ($parametros) {
-                 $query->where('codigo_barras','=',$parametros['q'])
-                 ->orWhere('lote','=',$parametros['q']);
-             });
+        if (isset($parametros['q']) && $parametros['q'] != "") {
+            $stock =  Stock::with("insumo","almacen")->where(function($query) use ($parametros) {
+                        $query->where('codigo_barras','=',$parametros['q'])->orWhere('lote','=',$parametros['q']);
+                    });
         } else {
-             $stock = Stock::with("insumo","almacen", "marca");
+             $stock = Stock::with("insumo","almacen");
         }
-
 
         if (isset($parametros['clave'])){
             $stock = $stock->where("clave_insumo_medico",'LIKE','%'.$parametros['clave'].'%');
         }
-        $stock = $stock->where("stock.existencia",">","0")->get();
         
-
+        $stock = $stock->where("stock.existencia",">","0")->where('stock.almacen_id',$request->get('almacen_id'))->get();
+        
         return Response::json([ 'data' => $stock],200);
     }
 
