@@ -18,19 +18,6 @@ class TransferenciaAlmacenController extends Controller{
 
     public function stats(Request $request){
         $almacen = Almacen::find($request->get('almacen_id'));
-
-        // Hay que obtener la clues del usuario
-
-        /*
-        todos:0,
-        borradores:0,
-        solicitudes:0,
-        en_transito:0,
-        por_finalizar:0,
-        finalizados:0,
-        cancelados:0
-        */
-
         // Akira: en los datos de alternos hay que ver si se pone la cantidad de alternos o en base a su estatus
         $pedidos_stats = Pedido::select(DB::raw(
             '
@@ -42,7 +29,7 @@ class TransferenciaAlmacenController extends Controller{
             ) as borradores,
             count(
                 case when status = "SD" then 1 else null end
-            ) as solicitudes,
+            ) as por_surtir,
             count(
                 case when status = "ET" then 1 else null end
             ) as en_transito,
@@ -221,5 +208,10 @@ class TransferenciaAlmacenController extends Controller{
             DB::rollBack();
             return array('status'=>HttpResponse::HTTP_CONFLICT, 'error'=>$e->getMessage());
         }
+    }
+
+    public function surtir($id, Request $request){
+        $datos = Input::all();
+        return Response::json(['message'=>'surtido','data'=>$datos],200);
     }
 }
