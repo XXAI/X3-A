@@ -112,9 +112,21 @@ class PedidoController extends Controller{
             ) as actas
 
             '
-            
         //))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
-        ))->where('clues',$almacen->clues)->first();
+        ))->where('clues',$almacen->clues); //->first();
+            
+        //Harima: Filtro para diferentes tipos de almacenes, solo los almacenes principales pueden ver pedidos a farmcias subrogadas
+        if($almacen->tipo_almacen == 'ALMPAL'){
+            $almacenes = Almacen::where('subrogado',1)->where('nivel_almacen',1)->get();
+            $almacenes = $almacenes->lists('id');
+            $almacenes[] = $almacen->id;
+            $pedidos = $pedidos->whereIn('almacen_solicitante',$almacenes);
+        }else{
+            //Harima: Los demas almacenes solo veran los pedidos que ellos hayan hecho
+            $pedidos = $pedidos->where('almacen_solicitante',$almacen->id);
+        }
+
+        $pedidos = $pedidos->first();
 
         return Response::json($pedidos,200);
     }
@@ -131,6 +143,17 @@ class PedidoController extends Controller{
             $pedidos =  $pedidos->where(function($query) use ($parametros) {
                  $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('folio','LIKE',"%".$parametros['q']."%");
              });
+        }
+
+        //Harima: Filtro para diferentes tipos de almacenes, solo los almacenes principales pueden ver pedidos a farmcias subrogadas
+        if($almacen->tipo_almacen == 'ALMPAL'){
+            $almacenes = Almacen::where('subrogado',1)->where('nivel_almacen',1)->get();
+            $almacenes = $almacenes->lists('id');
+            $almacenes[] = $almacen->id;
+            $pedidos = $pedidos->whereIn('almacen_solicitante',$almacenes);
+        }else{
+            //Harima: Los demas almacenes solo veran los pedidos que ellos hayan hecho
+            $pedidos = $pedidos->where('almacen_solicitante',$almacen->id);
         }
 
         //$pedidos = $pedidos->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues);
@@ -226,8 +249,12 @@ class PedidoController extends Controller{
             }else{ // ############################################
                 if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
                     $tipo_pedido = 'PFS';
-                }else{
+                }else if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL'){
                     $tipo_pedido = 'PA';
+                }else if($almacen_solicitante->nivel_almacen == 2){
+                    $tipo_pedido = 'PEA'; //Pedidos entre almacenes
+                }else{
+                    return Response::json(['error' => 'No fue posible generar el tipo de pedido'], 500);
                 }
             }
         }else{
@@ -370,8 +397,12 @@ class PedidoController extends Controller{
             }else{ // ############################################
                 if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
                     $tipo_pedido = 'PFS';
-                }else{
+                }else if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL'){
                     $tipo_pedido = 'PA';
+                }else if($almacen_solicitante->nivel_almacen == 2){
+                    $tipo_pedido = 'PEA'; //Pedidos entre almacenes
+                }else{
+                    return Response::json(['error' => 'No fue posible generar el tipo de pedido'], 500);
                 }
             }
         }else{

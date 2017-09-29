@@ -29,6 +29,13 @@ class CatalogoInsumoController extends Controller
         $almacen = Almacen::find($request->get('almacen_id'));
 
         if(Input::get('con_precios')){
+            if(!$almacen->proveedor_id){
+                $almacen = Almacen::where('clues',$almacen->clues)->whereNotNull('proveedor_id')->first();
+            }
+
+            if(!$almacen->proveedor_id){
+                return Response::json(['error' => 'No hay proveedores asignados a ningun almacen de esta clues'], HttpResponse::HTTP_CONFLICT);
+            }
             //Harima: obtenemos el contrato activo 
             $proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
 
