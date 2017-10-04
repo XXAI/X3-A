@@ -49,7 +49,8 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('almacenes',    'AlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('proveedor',    'ProveedorController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('personal-puesto',    'PersonalPuestoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-    
+    Route::resource('personal',    'PersonalController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
     // Harima: Se colaron en algun merge que hicieron, los tomo como cambios en el commit, probablemente marco conflicto y lo arreglaron dejando estas lineas, los comento, si no hay problemas los elimino en el proximo commit
     // Akira: Excelente jaja vaya manera de conversar
@@ -187,6 +188,7 @@ Route::group(['middleware' => 'jwt'], function () {
 	    Route::resource('mis-claves',    'MisClavesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 	
 	    Route::resource('mis-almacenes',    'MiAlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('firmantes',    'FirmantesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
         //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
         Route::resource('catalogo-insumos',  'CatalogoInsumoController',     ['only' => ['index', 'show']]);

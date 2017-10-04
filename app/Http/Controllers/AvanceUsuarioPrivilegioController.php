@@ -95,7 +95,9 @@ class AvanceUsuarioPrivilegioController extends Controller
 
             if($privilegios || $general || $usuario->su == 1)
             {
-            	$avance = AvanceUsuarioPrivilegio::create($parametros);
+                $avance_busqueda = AvanceUsuarioPrivilegio::where("usuario_id", $parametros['usuario_id'])->where("avance_id", $parametros['avance_id'])->first();
+                if(!$avance_busqueda)
+            	   $avance = AvanceUsuarioPrivilegio::create($parametros);
             }else{
             	return Response::json(['error'=>"No tiene privilegios para agregar usuarios"],500);
             }	
