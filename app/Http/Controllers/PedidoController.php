@@ -139,6 +139,8 @@ class PedidoController extends Controller{
         //$pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
         $pedidos = Pedido::getModel();
 
+        
+        
        if ($parametros['q']) {
             $pedidos =  $pedidos->where(function($query) use ($parametros) {
                  $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('folio','LIKE',"%".$parametros['q']."%");
@@ -159,6 +161,8 @@ class PedidoController extends Controller{
         //$pedidos = $pedidos->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues);
         $pedidos = $pedidos->where('clues',$almacen->clues);
 
+        
+
         if(isset($parametros['status'])) {
             $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
         }
@@ -174,12 +178,17 @@ class PedidoController extends Controller{
         //$pedidos = $pedidos->where("pedidos.tipo_pedido_id",'PJS');
 
         //$pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();
+
+        $pedidos = $pedidos->with("director", "encargadoAlmacen"); // Villa: Obtenggo los datos de los firmantes para el modulo de configuracion
+        
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
             $pedidos = $pedidos->paginate($resultadosPorPagina);
         } else {
             $pedidos = $pedidos->get();
         }
+        
+
 
         return Response::json([ 'data' => $pedidos],200);
     }

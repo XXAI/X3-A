@@ -10,7 +10,7 @@ class PersonalClues extends BaseModel
     use SoftDeletes;
     protected $generarID = true;
     protected $guardarIDServidor = true;
-    //protected $guardarIDUsuario = false;
+    protected $guardarIDUsuario = false;
     protected $table = 'personal_clues';
 
     protected $fillable = [ 'clues', 'usuario_asignado', 'nombre','celular', 'email'];
@@ -18,6 +18,10 @@ class PersonalClues extends BaseModel
     public function puesto(){
         return $this->belongsToMany('App\Models\Puesto','personal_clues_puesto', "personal_id", "puesto_id")
         			->withpivot("id");
+    }
+
+    public function unidad(){
+        return $this->belongsTo('App\Models\UnidadMedica','clues', "clues");
     }
 
     

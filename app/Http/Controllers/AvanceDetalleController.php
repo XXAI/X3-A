@@ -141,6 +141,7 @@ class AvanceDetalleController extends Controller
             DB::beginTransaction();
             $parametros['nombre'] = $extension[0];
             $parametros['extension'] = $extension[1];
+            $parametros['peso'] = $_FILES['file']['size'];
 
             $usuario = Usuario::find($request->get('usuario_id'));
 
