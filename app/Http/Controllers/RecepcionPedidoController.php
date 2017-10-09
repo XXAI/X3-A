@@ -74,15 +74,17 @@ class RecepcionPedidoController extends Controller
 			return Response::json(['error' => "Este pedido no admite captura de recepciones."], 500);
 		}
 
-        $pedido = $pedido->load("insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");
+		$pedido = $pedido->load("insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");
+		
+		if($pedido->tipo_pedido_id == 'PEA'){
+			$pedido = $pedido->load("movimientos.transferenciaSurtida.insumos","movimientos.transferenciaRecibidaBorrador.insumos","movimientos.transferenciaRecibida.insumos");
+		}
         
 
         return Response::json([ 'data' => $pedido],200);
     }
 
     public function update(Request $request, $id){
-
-
 		$mensajes = [
             'required'      => "required",
         ];
@@ -146,10 +148,7 @@ class RecepcionPedidoController extends Controller
 		/*$pedido = Pedido::where('almacen_solicitante',$almacen->id)->with(['recepciones'=>function($recepciones){
 			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
 		}])->whereIn('status',['PS','EX', 'BR'])->find($id);*/
-
-		$pedido = Pedido::where('clues',$almacen->clues)->with(['recepciones'=>function($recepciones){
-			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
-		}])->whereIn('status',['PS','EX', 'BR'])->find($id);
+		$pedido = Pedido::where('clues',$almacen->clues)->find($id);
 
 		if(!$pedido){
 			DB::rollBack();
@@ -161,10 +160,26 @@ class RecepcionPedidoController extends Controller
 			return Response::json(['error' => 'No se puede guardar la recepción porque el pedido se ha modificado a borrador, contactese con el administrador para mayor información'],500);
 		}
 
-		if(count($pedido->recepciones) > 1){
+		if($pedido->tipo_pedido_id != 'PEA'){
+			$pedido = $pedido->load(['recepciones'=>function($recepciones){
+				$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
+			}]);
+			$recepciones_pedido = $pedido->recepciones;
+		}else{
+			$pedido = $pedido->load(['movimientos'=>function($movimientos){
+				$movimientos->has('transferenciaRecibidaBorrador')->with('transferenciaRecibidaBorrador.insumos');
+			}]);
+			$recepciones_pedido = $pedido->movimientos;
+		}
+		
+		/*$pedido = Pedido::where('clues',$almacen->clues)->with(['recepciones'=>function($recepciones){
+			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
+		}])->whereIn('status',['PS','EX', 'BR'])->find($id);*/
+
+		if(count($recepciones_pedido) > 1){
 			return Response::json(['error' => 'El pedido tiene mas de una recepción abierta'], 500);
-		}elseif(count($pedido->recepciones) == 1){
-			$recepcion = $pedido->recepciones[0];
+		}elseif(count($recepciones_pedido) == 1){
+			$recepcion = $recepciones_pedido[0];
 		}else{
 
 			//$movimiento_validador = MovimientoPedido::where() 
@@ -200,9 +215,15 @@ class RecepcionPedidoController extends Controller
 			$parametros['observaciones'] = null;
 		}
 
+		if($pedido->tipo_pedido_id != 'PEA'){
+			$tipo_movimiento = 4; #Recepción de pedido
+		}else{
+			$tipo_movimiento = 9; #Recepción de transferencia
+		}
+
 		$datos_movimiento = [
 			'status' => $parametros['status'],
-			'tipo_movimiento_id' => 4, //Recepcion de pedido
+			'tipo_movimiento_id' => $tipo_movimiento, //Recepcion de pedido
 			'fecha_movimiento' => $parametros['fecha_movimiento'],
 			'almacen_id' => $almacen->id,
 			'observaciones' => ($parametros['observaciones'])?$parametros['observaciones']:null
@@ -221,9 +242,15 @@ class RecepcionPedidoController extends Controller
 	            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
 	        }
 			
-			if($recepcion->entradaAbierta){
-				
+			if($pedido->tipo_pedido_id != 'PEA'){
 				$movimiento = $recepcion->entradaAbierta;
+			}else{
+				$movimiento = $recepcion->transferenciaRecibidaBorrador;
+			}
+			
+
+			if($movimiento){
+				
 				$movimiento->update($datos_movimiento);
 
 				MovimientoInsumos::where("movimiento_id", $movimiento->id)->forceDelete();    
@@ -500,22 +527,22 @@ class RecepcionPedidoController extends Controller
 	        	
 	        	$pedido->update();
 
-	        	/*Calculo de unidad presupuesto*/
-	        	$unidad_presupuesto = $this->obtenerDatosPresupuesto($almacen->clues,$almacen->proveedor_id,substr($pedido->fecha,5,2),$almacen->id);
-
-	        	$unidad_presupuesto->causes_comprometido 				-= $causes_unidad_presupuesto;
-	        	$unidad_presupuesto->causes_devengado 					+= $causes_unidad_presupuesto;
-        		
-        		$unidad_presupuesto->no_causes_comprometido 			-= $no_causes_unidad_presupuesto;
-	        	$unidad_presupuesto->no_causes_devengado 				+= $no_causes_unidad_presupuesto;
-        
-        		$unidad_presupuesto->material_curacion_comprometido 	-= $material_curacion_unidad_presupuesto;
-	        	$unidad_presupuesto->material_curacion_devengado 		+= $material_curacion_unidad_presupuesto;
-
-	        	$unidad_presupuesto->update();
-        
-	        	/*Fin calculo de unidad presupuesto*/
-
+				if($pedido->tipo_pedido_id != 'PEA'){
+					/*Calculo de unidad presupuesto*/
+					$unidad_presupuesto = $this->obtenerDatosPresupuesto($almacen->clues,$almacen->proveedor_id,substr($pedido->fecha,5,2),$almacen->id);
+	
+					$unidad_presupuesto->causes_comprometido 				-= $causes_unidad_presupuesto;
+					$unidad_presupuesto->causes_devengado 					+= $causes_unidad_presupuesto;
+					
+					$unidad_presupuesto->no_causes_comprometido 			-= $no_causes_unidad_presupuesto;
+					$unidad_presupuesto->no_causes_devengado 				+= $no_causes_unidad_presupuesto;
+			
+					$unidad_presupuesto->material_curacion_comprometido 	-= $material_curacion_unidad_presupuesto;
+					$unidad_presupuesto->material_curacion_devengado 		+= $material_curacion_unidad_presupuesto;
+	
+					$unidad_presupuesto->update();
+					/*Fin calculo de unidad presupuesto*/
+				}
 	        }
 	        DB::commit();
 	        return Response::json([ 'data' => $movimiento ],200);

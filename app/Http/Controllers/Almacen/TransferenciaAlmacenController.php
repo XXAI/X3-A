@@ -8,11 +8,12 @@ use Illuminate\Http\Response as HttpResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests;
 
-use App\Models\Usuario, App\Models\Insumo, App\Models\Almacen, App\Models\Inventario, App\Models\InventarioDetalle, App\Models\Pedido, App\Models\PedidoInsumo;
+use App\Models\Usuario, App\Models\Insumo, App\Models\Almacen, App\Models\Inventario, App\Models\InventarioDetalle, App\Models\Pedido, App\Models\PedidoInsumo, App\Models\Stock, App\Models\Movimiento, App\Models\MovimientoInsumos, App\Models\MovimientoPedido;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
+use DateTime;
 
 class TransferenciaAlmacenController extends Controller{
 
@@ -212,6 +213,88 @@ class TransferenciaAlmacenController extends Controller{
 
     public function surtir($id, Request $request){
         $datos = Input::all();
-        return Response::json(['message'=>'surtido','data'=>$datos],200);
+
+        try{
+            $pedido = Pedido::find($id);
+            if($pedido->status != 'SD' && $pedido->status != 'ET'){
+                return Response::json(['error' => 'El pedido ya no puede surtirse.'], 500);
+            }
+            
+            $pedido->load('insumos.conDatosInsumo');
+
+            $stock_ids = [];
+            $claves = [];
+            $cantidades_stock = [];
+            foreach($datos['lista'] as $stock){
+                $stock_ids[] = $stock['stock_id'];
+                if(!isset($claves[$stock['clave']])){
+                    $claves[$stock['clave']] = ['cantidad'=>0,'tipo_insumo_id'=>0,'precio'=>0,'cantidad_x_envase'=>0];
+                }
+                $claves[$stock['clave']]['cantidad'] += $stock['cantidad'];
+                $cantidades_stock[$stock['stock_id']] = $stock['cantidad'];
+            }
+
+            $stocks = Stock::where('almacen_id',$pedido->almacen_proveedor)->whereIn('id',$stock_ids)->get();
+
+            DB::beginTransaction();
+            //Harima: Actualizamos el pedido para mostrar lo que se envio
+            foreach($pedido->insumos as $insumo){
+                if(isset($claves[$insumo->insumo_medico_clave])){
+                    $insumo->cantidad_enviada = $claves[$insumo->insumo_medico_clave]['cantidad'];
+                    $insumo->monto_enviado = $insumo->precio_unitario * $insumo->cantidad_enviada;
+
+                    $insumo->save();
+
+                    $claves[$insumo->insumo_medico_clave]['tipo_insumo_id'] = $insumo->tipo_insumo_id;
+                    $claves[$insumo->insumo_medico_clave]['precio'] = $insumo->precio_unitario;
+                    $claves[$insumo->insumo_medico_clave]['cantidad_x_envase'] = $insumo->conDatosInsumo->cantidad_x_envase;
+                }
+            }
+
+            $pedido->status = 'ET';
+            $pedido->recepcion_permitida = 1;
+            $pedido->save();
+
+            $movimiento_insumos = [];
+            //Harima: Actualizamos el stock y creamos los datos de insumos para el movimiento
+            foreach($stocks as $stock_item){
+                $stock_item->existencia -= $cantidades_stock[$stock_item->id];
+                $stock_item->existencia_unidosis -= ($claves[$stock_item->clave_insumo_medico]['cantidad_x_envase'] * $cantidades_stock[$stock_item->id]);
+
+                $stock_item->save();
+
+                $movimiento_insumo_item = new MovimientoInsumos();
+                $movimiento_insumo_item->tipo_insumo_id = $claves[$stock_item->clave_insumo_medico]['tipo_insumo_id'];
+                $movimiento_insumo_item->stock_id = $stock_item->id;
+                $movimiento_insumo_item->clave_insumo_medico = $stock_item->clave_insumo_medico;
+                $movimiento_insumo_item->modo_salida = 'N';
+                $movimiento_insumo_item->cantidad = $cantidades_stock[$stock_item->id];
+                $movimiento_insumo_item->cantidad_unidosis = ($claves[$stock_item->clave_insumo_medico]['cantidad_x_envase'] * $cantidades_stock[$stock_item->id]);
+                $movimiento_insumo_item->precio_unitario = $claves[$stock_item->clave_insumo_medico]['precio'];
+                $movimiento_insumo_item->precio_total = $movimiento_insumo_item->precio_unitario * $movimiento_insumo_item->cantidad;
+
+                $movimiento_insumos[] = $movimiento_insumo_item;
+            }
+
+            $movimiento = new Movimiento();
+            $movimiento->almacen_id = $pedido->almacen_proveedor;
+            $movimiento->tipo_movimiento_id = 3;
+            $movimiento->status = 'FI';
+            $movimiento->fecha_movimiento = date('Y-m-d');
+            
+            $movimiento->save();
+            $movimiento->insumos()->saveMany($movimiento_insumos);
+
+            $movimiento_pedido = new MovimientoPedido();
+            $movimiento_pedido->pedido_id = $id;
+
+            $movimiento->movimientoPedido()->save($movimiento_pedido);
+
+            DB::commit();
+	        return Response::json(['message'=>'surtido','data'=>$movimiento],200);
+        }catch(\Exception $e){
+            DB::rollBack();
+            return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
+        }
     }
 }
