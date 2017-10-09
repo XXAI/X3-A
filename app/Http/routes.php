@@ -70,6 +70,9 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::group(['prefix' => 'administrador-central','namespace' => 'AdministradorCentral'], function () {
         Route::get('abasto', 'AbastoController@lista');
         Route::get('abasto-excel', 'AbastoController@excel');
+
+        Route::get('reporte-financiero', 'ReporteFinancieroController@lista');
+        Route::get('reporte-financiero-excel', 'ReporteFinancieroController@excel');
         
         Route::get('presupuesto-pedidos', 'PedidosController@presupuesto');
         Route::get('pedidos', 'PedidosController@lista');
