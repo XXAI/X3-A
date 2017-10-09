@@ -414,12 +414,14 @@ public function getItemsInventario($parametros)
             {
                 $claves = DB::table("clues_claves AS cc")->leftJoin('insumos_medicos AS im', 'im.clave', '=', 'cc.clave_insumo_medico')
                               ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'cc.clave_insumo_medico')
-                              ->select('cc.clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','es_unidosis')
+                              ->select('cc.clave_insumo_medico','im.clave','im.descripcion','im.tipo','im.es_causes','im.es_unidosis')
                               ->where('clues',$clues);
 
                 if($parametros['clave_insumo'] != "")
                 {
-                    $claves = $claves->where('cc.clave_insumo_medico',$parametros['clave_insumo']);
+                   // $claves = $claves->where('cc.clave_insumo_medico',$parametros['clave_insumo']);
+                   $claves = $claves->where('im.descripcion','LIKE',"%".$parametros['clave_insumo']."%");
+                                                
                 }
                 
             }
@@ -431,7 +433,8 @@ public function getItemsInventario($parametros)
 
                 if($parametros['clave_insumo'] != "")
                 {
-                    $claves = $claves->where('im.clave',$parametros['clave_insumo']);
+                   // $claves = $claves->where('im.clave',$parametros['clave_insumo']);
+                   $claves = $claves->where('im.descripcion','LIKE',"%".$parametros['clave_insumo']."%");
                 }
 
             }
@@ -459,12 +462,14 @@ public function getItemsInventario($parametros)
                   }
 
 
-            if($parametros['q'])
+            if($parametros['clave_insumo'] != "")
             {
+                /*
                 $claves = $claves->where(function($query) use ($parametros) {
-                                                $query->where('im.descripcion','LIKE',"%".$parametros['q']."%")
-                                                ->orWhere('im.clave','LIKE',"%".$parametros['q']."%");
+                                                $query->where('im.descripcion','LIKE',"%".$parametros['clave_insumo']."%")
+                                                ->orWhere('im.clave','LIKE',"%".$parametros['clave_insumo']."%");
                                                 });
+                                                */
             }
 
             $claves = $claves->get();

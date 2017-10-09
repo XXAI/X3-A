@@ -34,6 +34,7 @@ use App\Models\CluesTurno;
 use App\Models\CluesServicio;
 use App\Models\Turno;
 use App\Models\Servicio;
+use App\Models\PersonalClues;
 
 
 
@@ -63,8 +64,8 @@ class MovimientoController extends Controller
         }  
         
         $almacen = Almacen::find($parametros['almacen']);
-        $movimientos = null;
-        $data = null;
+        $movimientos = NULL;
+        $data = NULL;
 
         $movimientos = DB::table("movimientos AS mov")
                              ->leftJoin('movimiento_metadatos AS mm', 'mm.movimiento_id', '=', 'mov.id')
@@ -72,6 +73,7 @@ class MovimientoController extends Controller
                              ->select('mov.*','mm.servicio_id','mm.turno_id','users.nombre')
                              ->where('mov.almacen_id',$parametros['almacen'])
                              ->where('mov.tipo_movimiento_id',$parametros['tipo'])
+                             ->where('mov.deleted_at',NULL)
                              ->orderBy('mov.updated_at','DESC');
 
         if( ($parametros['fecha_desde']!="") && ($parametros['fecha_hasta']!="") )
@@ -112,11 +114,13 @@ class MovimientoController extends Controller
         $data = array();
         foreach($movimientos as $mov)
         {
-            $movimiento_response = Movimiento::with('movimientoMetadato','movimientoUsuario')
+            $movimiento_response = Movimiento::with('movimientoMetadato','movimientoUsuario','movimientoReceta')
                                              ->where('id',$mov->id)->first();
 
             $cantidad_claves  = MovimientoInsumos::where('movimiento_id',$movimiento_response->id)->distinct('clave_insumo_medico')->count();
-            $cantidad_insumos = DB::table('movimiento_insumos')->where('movimiento_id', '=', $movimiento_response->id)->sum('cantidad');
+            $cantidad_insumos = DB::table('movimiento_insumos')
+                                    ->where('movimiento_id', '=', $movimiento_response->id)
+                                    ->where('movimiento_insumos.deleted_at',NULL)->sum('cantidad');
 
             if($cantidad_claves  == NULL){ $cantidad_claves  = 0 ; }
             if($cantidad_insumos == NULL){ $cantidad_insumos = 0 ; }
@@ -134,8 +138,6 @@ class MovimientoController extends Controller
 
         if(isset($parametros['page']))
         {
-            //$resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
-            //$data = $data->paginate($resultadosPorPagina);
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////            
             $currentPage = LengthAwarePaginator::resolveCurrentPage();
             $itemCollection = new Collection($data);
@@ -186,8 +188,8 @@ class MovimientoController extends Controller
                         array_push($array_servicios,$mov->movimientoMetadato['servicio']);
                     }
                 }
-                $array_turnos    = array_filter($array_turnos, function($v){return $v !== null;});
-                $array_servicios = array_filter($array_servicios, function($v){return $v !== null;});
+                $array_turnos    = array_filter($array_turnos, function($v){return $v !== NULL;});
+                $array_servicios = array_filter($array_servicios, function($v){return $v !== NULL;});
 
                 $total = count($data);
 
@@ -220,8 +222,8 @@ class MovimientoController extends Controller
                         array_push($array_servicios,$mov->movimientoMetadato['servicio']);
                     }
                 }
-                $array_turnos    = array_filter($array_turnos, function($v){return $v !== null;});
-                $array_servicios = array_filter($array_servicios, function($v){return $v !== null;});
+                $array_turnos    = array_filter($array_turnos, function($v){return $v !== NULL;});
+                $array_servicios = array_filter($array_servicios, function($v){return $v !== NULL;});
 
                 $total = count($data);
 
@@ -368,7 +370,7 @@ class MovimientoController extends Controller
                 {
                     if(count($datos->insumos) > 0 )
                     {
-                        $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
+                        $detalle = array_filter($datos->insumos, function($v){return $v !== NULL;});
                         foreach ($detalle as $key => $value)
                             {
                                 $validacion_insumos = $this->ValidarInsumosReceta($key, NULL, $value, $tipo);
@@ -441,6 +443,7 @@ class MovimientoController extends Controller
             $insumos = DB::table('movimiento_insumos')
                     ->join('stock', 'movimiento_insumos.stock_id', '=', 'stock.id')
                     ->where('movimiento_insumos.movimiento_id', '=', $id)
+                    ->where('movimiento_insumos.deleted_at',NULL)
                     ->groupby('stock.clave_insumo_medico')
                     ->select(DB::raw('SUM(movimiento_insumos.cantidad) as total_insumo'), 'stock.clave_insumo_medico','modo_salida')
                     ->get();
@@ -455,6 +458,7 @@ class MovimientoController extends Controller
 
                     $insumos2 = DB::table('movimiento_insumos')
                                 ->where('movimiento_id',$id)
+                                ->where('deleted_at',NULL)
                                 ->get();
 
                     foreach($insumos2 as $insumo2)
@@ -515,6 +519,7 @@ class MovimientoController extends Controller
                     ->join('stock', 'movimiento_insumos.stock_id', '=', 'stock.id')
                     ->where('movimiento_insumos.movimiento_id', '=', $id)
                     ->where('movimiento_insumos.modo_salida', '=', "N")
+                    ->where('movimiento_insumos.deleted_at',NULL)
                     ->groupby('stock.clave_insumo_medico')
                     ->select(DB::raw('SUM(movimiento_insumos.cantidad) as total_insumo'), 'stock.clave_insumo_medico','modo_salida')
                     ->get();
@@ -530,6 +535,7 @@ class MovimientoController extends Controller
                     $insumos2 = DB::table('movimiento_insumos')
                                 ->where('movimiento_id',$id)
                                 ->where('modo_salida',"N")
+                                 ->where('deleted_at',NULL)
                                 ->get();
                     foreach($insumos2 as $insumo2)
                     {
@@ -581,6 +587,7 @@ class MovimientoController extends Controller
                     ->join('stock', 'movimiento_insumos.stock_id', '=', 'stock.id')
                     ->where('movimiento_insumos.movimiento_id', '=', $id)
                     ->where('movimiento_insumos.modo_salida', '=', "U")
+                    ->where('movimiento_insumos.deleted_at',NULL)
                     ->groupby('stock.clave_insumo_medico')
                     ->select(DB::raw('SUM(movimiento_insumos.cantidad_unidosis) as total_insumo'), 'stock.clave_insumo_medico','modo_salida')
                     ->get();
@@ -593,6 +600,7 @@ class MovimientoController extends Controller
                     $insumos2 = DB::table('movimiento_insumos')
                                 ->where('movimiento_id',$id)
                                 ->where('modo_salida',"U")
+                                ->where('deleted_at',NULL)
                                 ->get();
                     foreach($insumos2 as $insumo2)
                     {
@@ -697,6 +705,7 @@ class MovimientoController extends Controller
                     ->join('stock', 'movimiento_insumos.stock_id', '=', 'stock.id')
                     ->where('movimiento_insumos.movimiento_id', '=', $id)
                     ->groupby('stock.clave_insumo_medico')
+                    ->where('movimiento_insumos.deleted_at',NULL)
                     ->select(DB::raw('SUM(movimiento_insumos.cantidad) as total_insumo'), 'stock.clave_insumo_medico')
                     ->get();
 
@@ -800,6 +809,8 @@ class MovimientoController extends Controller
  
 	private function ValidarMovimiento($key, $id, $request)
     { 
+        $errors_validar_movimiento = array();
+
         $mensajes = [
                         'required'      => "required",
                         'email'         => "email",
@@ -810,7 +821,7 @@ class MovimientoController extends Controller
 
         $reglas = array();
         $reglas = [
-                    'tipo_movimiento_id' => 'required|integer|in:1,2,3,4,5,6,7,8',
+                    'tipo_movimiento_id' => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,12',
                   ];
 
         if($request['movimiento_metadato'] != NULL)
@@ -831,21 +842,35 @@ class MovimientoController extends Controller
                             'movimiento_metadato.turno_id'       => 'required|integer',
                           ];
             }
-            
 
-        }else if($request['receta'] != NULL){
-                
-            $reglas = [
-                        'tipo_movimiento_id'    => 'required|integer|in:5',
-                        'receta.folio'          => 'required|string',
-                        'receta.tipo_receta'    => 'required|string',
-                        'receta.fecha_receta'   => 'required',
-                        'receta.doctor'         => 'required|string',
-                        'receta.paciente'       => 'required|string',
-                        'receta.diagnostico'    => 'required|string',
-                        'receta.imagen_receta'  => 'required|string',
-                      ];
         }
+        
+        if($request['tipo_movimiento_id'] == 5 )
+            {
+                $request_temp = (object)$request;
+                if(property_exists($request_temp,'receta'))
+                {
+                        
+                    $reglas = [
+                                'tipo_movimiento_id'    => 'required|integer|in:5',
+                                'receta.folio'          => 'required|string',
+                                'receta.tipo_receta_id'    => 'required|integer',
+                                'receta.fecha_receta'   => 'required',
+                                'receta.doctor'         => 'required|string',
+                                'receta.paciente'       => 'required|string',
+                                'receta.diagnostico'    => 'required|string'
+                            ];
+
+                            $receta = $request['receta'];
+                            $receta_buscar = Receta::where("folio",$receta['folio'])->first();
+
+                            if($receta_buscar)
+                            { 
+                                array_push($errors_validar_movimiento, array(array('receta' => array('Folio duplicado'))));
+                                return $errors_validar_movimiento;
+                            }  
+                }
+            }
 
     $v = \Validator::make($request, $reglas, $mensajes );
 
@@ -1123,18 +1148,19 @@ class MovimientoController extends Controller
 
             //verificar si existe contacto, en caso de que exista proceder a guardarlo
             if(property_exists($datos, "insumos")){
-                 $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
+                 $detalle = array_filter($datos->insumos, function($v){return $v !== NULL;});
 
 
                  foreach ($detalle as $key => $value)
                 {
-                     if($value != null)
+                     if($value != NULL)
                      {
                          if(is_array($value))
                             $value = (object) $value;
 
                         $precio_insumo = $this->conseguirPrecio($value->clave);
 
+                        //*************************************************************************************
                         //Verificar si esta en la lista de negados
                         $negacion = NegacionInsumo::where('almacen_id',$almacen_id)
                                                 ->where('clave_insumo_medico',$value->clave)
@@ -1143,7 +1169,7 @@ class MovimientoController extends Controller
                         {
                             $negacion->delete();
                         }
-
+                        //*************************************************************************************
 
                         $item_stock = new Stock;
 
@@ -1264,7 +1290,7 @@ class MovimientoController extends Controller
 
             if(property_exists($datos, "insumos"))
             {
-                $insumos = array_filter($datos->insumos, function($v){return $v !== null;});
+                $insumos = array_filter($datos->insumos, function($v){return $v !== NULL;});
 
                 $lotes_nuevos  = array();
                 $lotes_ajustar = array();
@@ -1272,7 +1298,7 @@ class MovimientoController extends Controller
         ///  PRIMER PASADA PARA IDENTIFICAR LOS LOTES NUEVOS A AJUSTAR / GENERAR ENTRADA 
                  foreach ($insumos as $key => $insumo)
                 { 
-                     if($insumo != null)
+                     if($insumo != NULL)
                      {
                          if(is_array($insumo)){ $insumo = (object) $insumo; }
 
@@ -1430,7 +1456,7 @@ class MovimientoController extends Controller
                                     } 
                             }
 
-                            $negacion_insumo = null;
+                            $negacion_insumo = NULL;
                             $almacen = Almacen::find($almacen_id);
 
                             ///*************************************************************************************************
@@ -1445,6 +1471,7 @@ class MovimientoController extends Controller
                                             ->where('movimientos.almacen_id',$almacen_id)
                                             ->where('movimiento_insumos.clave_insumo_medico',$clave_insumo_medico)
                                             ->where('movimientos.tipo_movimiento_id',1)
+                                            ->where('movimiento_insumos.deleted_at',NULL)
                                             ->orderBy('created_at','DESC')
                                             ->first();
 
@@ -1514,7 +1541,19 @@ class MovimientoController extends Controller
 
                                     $negacion_insumo->save();
                                  }
-                        }
+                        }else{
+                                //*************************************************************************************
+                                //Verificar si esta en la lista de negados. 
+                                $negacion = NegacionInsumo::where('almacen_id',$almacen_id)
+                                                        ->where('clave_insumo_medico',$clave_insumo_medico)
+                                                        ->first();
+                                if($negacion)
+                                { /// Si esta dentro de los negados, se borra porque en ese momento se esta surtiendo y dejando de negar.
+                                    $negacion->delete();
+                                }
+                                //*************************************************************************************
+
+                             }
                  
 
                     }///FIN IF INSUMO != NULL
@@ -1694,13 +1733,33 @@ class MovimientoController extends Controller
 
             if(property_exists($datos,"receta"))
             {
-                $receta->movimiento_id  = $movimiento_salida_receta->id;
-                $receta->folio          = $datos->receta['folio'];
-                $receta->tipo_receta_id = $datos->receta['tipo_receta_id'];
-                $receta->fecha_receta   = $datos->receta['fecha_receta'];
-                $receta->doctor         = $datos->receta['doctor'];
-                $receta->paciente       = $datos->receta['paciente'];
-                $receta->diagnostico    = $datos->receta['diagnostico'];
+
+                if($datos->receta['personal_clues_id'] == NULL)
+                {
+                    $almacen_temp = Almacen::find($movimiento_salida_receta->almacen_id)->first();
+                    $clues_temp   = $almacen_temp->clues;
+
+                    $personal_clues = new PersonalClues;
+                    $personal_clues->clues            = $clues_temp;
+                    $personal_clues->tipo_personal_id = 1;
+                    $personal_clues->nombre           = $datos->receta['doctor'];
+                    $personal_clues->save();
+
+                    $receta->personal_clues_id  = $personal_clues->id;
+                    $receta->doctor             = $datos->receta['doctor'];
+                }else{
+                        $receta->personal_clues_id  = $datos->receta['personal_clues_id'];
+                        $receta->doctor             = $datos->receta['doctor'];
+                     }
+
+                $receta->movimiento_id      = $movimiento_salida_receta->id;
+                $receta->folio              = $datos->receta['folio'];
+                $receta->tipo_receta_id     = $datos->receta['tipo_receta_id'];
+                $receta->fecha_receta       = $datos->receta['fecha_receta'];
+                
+                
+                $receta->paciente           = $datos->receta['paciente'];
+                $receta->diagnostico        = $datos->receta['diagnostico'];
 
                 $receta->save();
 
@@ -1726,14 +1785,14 @@ class MovimientoController extends Controller
 
             if(property_exists($datos, "insumos"))
             {
-                $insumos = array_filter($datos->insumos, function($v){return $v !== null;});
+                $insumos = array_filter($datos->insumos, function($v){return $v !== NULL;});
 
                 $lotes_nuevos  = array();
                 $lotes_ajustar = array();
           ///  PRIMER PASADA PARA IDENTIFICAR LOS LOTES NUEVOS A AJUSTAR / GENERAR ENTRADA 
                  foreach ($insumos as $key => $insumo)
                 {
-                     if($insumo != null)
+                     if($insumo != NULL)
                      {
                          if(is_array($insumo))
                             $insumo = (object) $insumo;
@@ -1763,6 +1822,14 @@ class MovimientoController extends Controller
 
                                 $receta_detalle->save();
                             //****************************************************************************************************
+
+                            if($insumo->cantidad_recetada > $insumo->cantidad_surtida)
+                            {
+                                $cantidad_negada = $$insumo->cantidad_recetada - $insumo->cantidad_surtida;
+                                $this->guardarEstadisticaNegacion($clave_insumo_medico,$almacen_id,$cantidad_negada);
+                            }
+
+                            //****************************************************************************************************
                                 foreach($insumo->lotes as $index => $lote)
                                 {
                                      if(is_array($lote))
@@ -1770,8 +1837,11 @@ class MovimientoController extends Controller
 
                                     if(property_exists($lote, "nuevo"))
                                     {
-                                         $lote_temp = Stock::where('lote',$lote->lote)->where('fecha_caducidad',$lote->fecha_caducidad)->
-                                                             where('codigo_barras',$lote->codigo_barras)->where('clave_insumo_medico',$insumo->clave)->orderBy('created_at','DESC')->first();
+                                         $lote_temp = Stock::where('lote',$lote->lote)
+                                                            ->where('fecha_caducidad',$lote->fecha_caducidad)
+                                                            ->where('codigo_barras',$lote->codigo_barras)
+                                                            ->where('clave_insumo_medico',$insumo->clave)
+                                                            ->orderBy('created_at','DESC')->first();
 
                                         if($lote_temp){ /// si ya existe un lote vacio con esos detalles : se agrega un
                                                         $lote_temp->existencia = $lote->existencia;
@@ -1848,8 +1918,13 @@ class MovimientoController extends Controller
                     /// FOREACH SEGUNDA PASADA A INSUMOS PARA ACTUALIZAR STOCK DE SALIDA
                         foreach($lotes_master as $index => $lote)
                         {
-                            $lote_stock = Stock::find($lote->id);
-                            $lote_stock->existencia = ($lote_stock->existencia - $lote->cantidad );
+                            $precio_insumo              = $this->conseguirPrecio($lote_stock->clave_insumo_medico);                                                                   
+                            $insumo_info                = Insumo::datosUnidosis()->where('clave',$lote_stock->clave_insumo_medico)->first();
+                            $cantidad_x_envase_insumo   = $insumo_info->cantidad_x_envase; 
+
+                            $lote_stock                      = Stock::find($lote->id);
+                            $lote_stock->existencia          = ($lote_stock->existencia - $lote->cantidad );
+                            $lote_stock->existencia_unidosis = ( $lote_stock->existencia_unidosis - ($lote->cantidad * $cantidad_x_envase_insumo) );
                             $lote_stock->save();
 
                             $item_detalles = new MovimientoInsumos;
@@ -1857,9 +1932,9 @@ class MovimientoController extends Controller
                             $item_detalles->movimiento_id           = $movimiento_salida_receta->id; 
                             $item_detalles->stock_id                = $lote_stock->id; 
                             $item_detalles->cantidad                = $lote->cantidad;
-                            $item_detalles->precio_unitario         = 0;
-                            $item_detalles->iva                     = 0; 
-                            $item_detalles->precio_total            = 0;
+                            $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
+                            $item_detalles->iva                     = $precio_insumo['iva']; 
+                            $item_detalles->precio_total            = ($precio_insumo['precio_unitario']+$precio_insumo['iva']) * $lote->cantidad;
 
                             $item_detalles->save();
 
@@ -1880,26 +1955,134 @@ class MovimientoController extends Controller
 ///**************************************************************************************************************************
  public function conseguirPrecio($clave_insumo_medico)
  {
+ 
     $precio_unitario = 0; 
     $iva             = 0;
+    $tipo_insumo_id  = 0;
     $response = array();
 
     $contrato_precio = ContratoPrecio::where('insumo_medico_clave',$clave_insumo_medico)->first();
                             if($contrato_precio){
+                                $tipo_insumo_id = $contrato_precio->tipo_insumo_id;
                                 $precio_unitario = $contrato_precio->precio;
                                 if($contrato_precio->tipo_insumo_id == 3){
                                     $iva = $precio_unitario - ($precio_unitario/1.16 );
                                 }
                             }
 
+    $response['tipo_insumo_id'] = $tipo_insumo_id;
     $response['precio_unitario'] = $precio_unitario;
     $response['iva']             = $iva;
 
     return $response;
  }
+
+
+
+ ////***************        GUARDAR ESTADISTICA PARA NEGACION DE INSUMO    ***************************************************
 ///**************************************************************************************************************************
-///**************************************************************************************************************************
-     
+
+public function guardarEstadisticaNegacion($clave_insumo_medico,$almacen_id,$cantidad_negada)
+    {
+
+        $negacion_resusitada = 0;
+        $precios             = (object) $this->conseguirPrecio($clave_insumo_medico);
+        $insumo              = Insumo::datosUnidosis()->where('clave',$clave_insumo_medico)->first();
+        $cantidad_x_envase   = $insumo->cantidad_x_envase;
+
+                            // Si no existe registro para resusitar, se comprueba existencia de registro activo
+                            $negacion = NegacionInsumo::where('almacen_id',$almacen_id)->where('clave_insumo_medico',$clave_insumo_medico)->first();
+                            if(!$negacion)
+                            {
+                                // Busqueda de registro de negación a resusitar para el insumo negado
+                                $negacion = DB::table('negaciones_insumos')->where('clave_insumo_medico',$clave_insumo_medico)->where('deleted_at','!=',NULL)->first();
+                                // Si existe registro muerto se resusita
+                                if($negacion)
+                                {
+                                    DB::update("update negaciones_insumos set deleted_at = null where id = '".$negacion->id."'");
+                                    $negacion_resusitada = 1;
+                                } 
+                            }
+
+                            $negacion_insumo = NULL;
+                            $almacen = Almacen::find($almacen_id);
+                            ///*************************************************************************************************
+                            // Encontrar ultima entrada al almacen del insumo negado
+                            $ultima_entrada                  = NULL;
+                            $cantidad_entrada                = 0;
+                            $cantidad_entrada_unidosis       = 0;
+
+                            $ultima_entrada_insumo = DB::table('movimientos')
+                                            ->join('movimiento_insumos', 'movimientos.id', '=', 'movimiento_insumos.movimiento_id')
+                                            ->select('movimientos.*', 'movimiento_insumos.clave_insumo_medico', 'movimiento_insumos.cantidad', 'movimiento_insumos.cantidad_unidosis')
+                                            ->where('movimientos.almacen_id',$almacen_id)
+                                            ->where('movimiento_insumos.clave_insumo_medico',$clave_insumo_medico)
+                                            ->where('movimientos.tipo_movimiento_id',1)
+                                            ->where('movimientos.deleted_at',NULL)
+                                            ->orderBy('created_at','DESC')
+                                            ->first();
+
+                            if($ultima_entrada_insumo)
+                            {
+                                $ultima_entrada                = $ultima_entrada_insumo->created_at;
+                                $cantidad_entrada              = $ultima_entrada_insumo->cantidad;
+                                $cantidad_entrada_unidosis     = $ultima_entrada_insumo->cantidad_unidosis;
+                            }
+                            ///**************************************************************************************************************************
+                            $cantidad_negada          = $cantidad_negada;
+                            $cantidad_negada_unidosis = ($cantidad_negada * $cantidad_x_envase);
+                                 
+                            // Si existe registro de negación de insumo ( activo ó resusitado )
+                            if($negacion)
+                            { 
+                                $negacion_insumo  = NegacionInsumo::find($negacion->id);
+
+                                if($negacion_resusitada == 1)
+                                {
+                                    $negacion_insumo->fecha_inicio                  = date("Y-m-d");
+                                    $negacion_insumo->fecha_fin                     = date("Y-m-d");
+                                    $negacion_insumo->cantidad_acumulada            = $cantidad_negada;
+                                    $negacion_insumo->cantidad_acumulada_unidosis   = $cantidad_negada_unidosis;
+                                    $negacion_insumo->ultima_entrada                = $ultima_entrada;
+                                    $negacion_insumo->cantidad_entrada              = $cantidad_entrada;
+                                    $negacion_insumo->cantidad_entrada_unidosis     = $cantidad_entrada_unidosis;
+
+                                }else{
+                                        $negacion_insumo->cantidad_acumulada            = $negacion_insumo->cantidad_acumulada + $cantidad_negada;
+                                        $negacion_insumo->cantidad_acumulada_unidosis   = $negacion_insumo->cantidad_acumulada_unidosis + $cantidad_negada_unidosis;
+                                        $negacion_insumo->fecha_fin                     = date("Y-m-d");
+                                        $negacion_insumo->ultima_entrada                = $ultima_entrada;
+                                        $negacion_insumo->cantidad_entrada              = $cantidad_entrada;
+                                        $negacion_insumo->cantidad_entrada_unidosis     = $cantidad_entrada_unidosis; 
+                                     }
+
+                                $negacion_insumo->save();     
+                                
+                            }else{
+                                    $negacion_insumo = new NegacionInsumo;
+
+                                    $negacion_insumo->clave_insumo_medico           = $clave_insumo_medico;
+                                    $negacion_insumo->clues                         = $almacen->clues;
+                                    $negacion_insumo->almacen_id                    = $almacen_id;
+                                    $negacion_insumo->tipo_insumo                   = $precios->tipo_insumo_id;
+                                    $negacion_insumo->fecha_inicio                  = date("Y-m-d");
+                                    $negacion_insumo->fecha_fin                     = date("Y-m-d");
+                                    $negacion_insumo->cantidad_acumulada            = $cantidad_negada;
+                                    $negacion_insumo->cantidad_acumulada_unidosis   = $cantidad_negada_unidosis;
+                                    $negacion_insumo->ultima_entrada                = $ultima_entrada;
+                                    $negacion_insumo->cantidad_entrada              = $cantidad_entrada;
+                                    $negacion_insumo->cantidad_entrada_unidosis     = $cantidad_entrada_unidosis;
+
+                                    $negacion_insumo->save();
+                                 }
+                        
+
+
+
+
+    }
+////*************************************************************************************************************************
+////*************************************************************************************************************************       
 
 
 }

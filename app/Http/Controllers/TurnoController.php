@@ -27,10 +27,11 @@ class TurnoController extends Controller
         {
              $data =  Turno::where(function($query) use ($parametros) {
                         $query->where('id','LIKE',"%".$parametros['q']."%")
-                 ->orWhere('nombre','LIKE',"%".$parametros['q']."%");
+                              ->orWhere('nombre','LIKE',"%".$parametros['q']."%")
+                              ->orderBy('nombre', 'asc');
              });
         } else {
-             $data =  Turno::where("id","!=", "");
+             $data =  Turno::where("id","!=", "")->orderBy('nombre', 'asc');
         }
         
 
