@@ -31,6 +31,18 @@ class MovimientoPedido extends BaseModel{
         return $this->belongsTo('App\Models\Movimiento','movimiento_id')->where('tipo_movimiento_id',4);
     }
 
+    public function transferenciaSurtida(){
+        return $this->belongsTo('App\Models\Movimiento','movimiento_id')->where('tipo_movimiento_id',3);
+    }
+
+    public function transferenciaRecibidaBorrador(){
+        return $this->belongsTo('App\Models\Movimiento','movimiento_id')->where('tipo_movimiento_id',9)->where('status','BR');
+    }
+
+    public function transferenciaRecibida(){
+        return $this->belongsTo('App\Models\Movimiento','movimiento_id')->where('tipo_movimiento_id',9);
+    }
+
     public function pedido(){
         return $this->belongsTo('App\Models\Pedido','pedido_id');
     }

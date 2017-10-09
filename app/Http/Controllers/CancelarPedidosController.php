@@ -67,6 +67,7 @@ class CancelarPedidosController extends Controller
             $pedido_clues = $pedido->clues;
 
             $pedido->status = 'EX-CA';
+            $pedido->recepcion_permitida = 0;
             $pedido->fecha_cancelacion = Carbon::now();
 
             //DB::rollBack();

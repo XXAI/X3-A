@@ -92,7 +92,7 @@ class AutenticacionController extends Controller
                 $unidades_medicas = [];
                
                 if( $usuario->su ){
-                    $unidades_medicas = UnidadMedica::has('almacenes')->with('almacenes')->get();
+                    $unidades_medicas = UnidadMedica::has('almacenes')->with('almacenes')->orderBy('unidades_medicas.nombre')->get();
                 } else {
                     $ums = $usuario->unidadesMedicas;
                     $almacenes = $usuario->almacenes()->lists("almacenes.id");

@@ -23,6 +23,10 @@ class PedidoInsumo extends BaseModel
         return $this->hasOne('App\Models\Insumo','clave','insumo_medico_clave')->conDescripciones()->withTrashed();        
     }
 
+    public function conDatosInsumo(){
+        return $this->hasOne('App\Models\Insumo','clave','insumo_medico_clave')->datosUnidosis()->withTrashed();        
+    }
+
     public function tipoInsumo(){
         return $this->belongsTo('App\Models\TipoInsumo','tipo_insumo_id');
     }

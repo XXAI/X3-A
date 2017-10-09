@@ -87,6 +87,9 @@ class PedidoController extends Controller{
                 case when status = "BR" then 1 else null end
             ) as borradores,
             count(
+                case when status = "SD" then 1 else null end
+            ) as solicitados,
+            count(
                 case when status = "ET" then 1 else null end
             ) as en_transito,
             count(
@@ -198,7 +201,10 @@ class PedidoController extends Controller{
                 if($pedido->status == 'BR'){
                     $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuestoApartado");
                 }else{
-                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
+                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","almacenProveedor","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
+                    if($pedido->tipo_pedido_id == 'PEA'){
+                        $pedido = $pedido->load("movimientos.transferenciaSurtida.insumos");
+                    }
                 }
             } 
             // ######### PEDIDOS JURISDICCIONALES #########
@@ -418,10 +424,9 @@ class PedidoController extends Controller{
                 $parametros['datos']['status'] = 'PS';
             }elseif($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
                 $parametros['datos']['status'] = 'EF';
+            }elseif($almacen_solicitante->nivel_almacen == 2){
+                $parametros['datos']['status'] = 'SD'; //Estatus solicitado
             }
-            /*elseif($almacen_solicitante->nivel_almacen == 2){
-                $parametros['datos']['status'] = 'ET';
-            }*/
         }else{
             $parametros['datos']['status'] = 'BR';
         }
@@ -465,10 +470,10 @@ class PedidoController extends Controller{
                 }else{
                     $parametros['datos']['recepcion_permitida'] = 0;
                 }
-            }/*else{
-                $parametros['datos']['fecha_concluido'] = null;
+            }else if($almacen_solicitante->nivel_almacen == 2){
+                $parametros['datos']['fecha_concluido'] = Carbon::now();
                 $parametros['datos']['fecha_expiracion'] = null;
-            }*/
+            }
 
             DB::beginTransaction();
 
@@ -566,7 +571,7 @@ class PedidoController extends Controller{
 
             //Harima: Ajustamos el presupuesto, colocamos los totales en comprometido
             //if($pedido->status == 'PS' || $pedido->status == 'ET'){ //OJO falta checar si cambian almacen y mes
-            if($pedido->status != 'BR'){
+            if($pedido->status != 'BR' && ($pedido->tipo_pedido_id == 'PA' || $pedido->tipo_pedido_id == 'PFS')){
 
                 if($pedido->total_monto_solicitado == $pedido->total_monto_recibido){
                     $pedido->status = 'FI';
