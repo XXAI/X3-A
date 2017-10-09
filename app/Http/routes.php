@@ -24,6 +24,7 @@ Route::get('grupo-permiso',       'AutoCompleteController@grupo_permiso');
 Route::get('clues-auto',          'AutoCompleteController@clues');
 Route::get('insumos-auto',          'AutoCompleteController@insumos');
 Route::get('insumos-entrada-auto',          'AutoCompleteController@insumos_entradas');
+Route::resource('personal-clues',    'PersonalCluesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
 
 // reportes y graficas
@@ -49,11 +50,12 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('almacenes',    'AlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('proveedor',    'ProveedorController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('personal-puesto',    'PersonalPuestoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+
     Route::resource('personal',    'PersonalController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+
 
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
     // Harima: Se colaron en algun merge que hicieron, los tomo como cambios en el commit, probablemente marco conflicto y lo arreglaron dejando estas lineas, los comento, si no hay problemas los elimino en el proximo commit
-    // Akira: Excelente jaja vaya manera de conversar
     //Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);    
     //Route::get('pedidos-stats',         'PedidoController@stats');
     //Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
@@ -61,6 +63,7 @@ Route::group(['middleware' => 'jwt'], function () {
 
     // # SECCION: Opciones avanzadas 
     Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
+
         Route::get('actualizar-plataforma-git', 'ActualizarPlataformaController@git');
         Route::get('exportar-base-datos', 'BaseDatosController@exportar');
         Route::post('importar-base-datos', 'BaseDatosController@importar');
@@ -107,7 +110,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::post('claves-basicas-clues', 'ClavesBasicasController@agregarUnidadMedica');
         Route::delete('claves-basicas-clues/{id}', 'ClavesBasicasController@quitarUnidadMedica');
 
-        //Configuuración de pedidos
+         //Configuuración de pedidos
         Route::get('pedidos-recepcion/{id}', 'PedidosController@recepcion');
         Route::get('pedidos-borrador/{id}', 'PedidosController@regresarBorrador');
         Route::get('pedidos-borrador-cancelado/{id}', 'PedidosController@regresarBorradorCancelado');
@@ -119,7 +122,6 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-alternos/{id}', 'PedidosAlternosController@ver');      
         Route::put('pedidos-alternos/validacion/{id}', 'PedidosAlternosController@validar');
         Route::put('pedidos-alternos/proveedor/{id}', 'PedidosAlternosController@asignarProveedor');
-
     });
     // # FIN SECCION
 
@@ -133,7 +135,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('listar-pedidos-proveedor', 'SincronizacionProveedorController@listarPedidos');
         Route::post('analizar-json-proveedor', 'SincronizacionProveedorController@analizarJson');
         Route::post('procesar-json-proveedor', 'SincronizacionProveedorController@procesarJson');
-        
+
         Route::resource('repository',      'RepositorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
  
     });
@@ -155,6 +157,7 @@ Route::group(['middleware' => 'jwt'], function () {
             Route::put('surtir-transferencia/{id}',                'TransferenciaAlmacenController@surtir');
         });
 
+
         Route::resource('almacenes',        'AlmacenController',    ['only' => ['index']]);
         Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
  
@@ -164,22 +167,21 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('entregas-stats',        'EntregaController@stats');
         Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('inventario',    'InventarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-        //Route::resource('inventario-excel',    'InventarioController@excel',    ['only' => ['index', 'show', 'store','update','destroy']]);
         
-
         Route::resource('ajuste-mas-inventario',    'AjusteMasInventarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('ajuste-menos-inventario',  'AjusteMenosInventarioController',  ['only' => ['index', 'show', 'store','update','destroy']]);
-        
-        
+
         //Pedidos
         Route::resource('pedidos',                      'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::get('pedidos-stats',                     'PedidoController@stats');
         Route::get('pedidos-presupuesto',               'PedidoController@obtenerDatosPresupuesto');
         Route::put('cancelar-pedido-transferir/{id}',   'CancelarPedidosController@cancelarYTransferir');
+
         
         // Actas
         Route::put('generar-pedido-alterno/{id}',       'PedidoController@generarAlterno');
         Route::resource('actas',                      'ActasController',     ['only' => ['index', 'show']]);
+
 
         //Route::resource('pedidos-jurisdiccionales',         'PedidoJurisdiccionalController',     ['only' => ['index', 'show', 'store','update','destroy']]);
         //Route::get('pedidos-jurisdiccionales-stats',        'PedidoJurisdiccionalController@stats');
@@ -205,6 +207,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('generar-excel-pedido/{id}', 'PedidoController@generarExcel');
     Route::get('generar-excel-pedido-jurisdiccional/{id}', 'PedidoJurisdiccionalController@generarExcel');
 
+    
     Route::get('inventario-excel', 'InventarioController@excel');
     
     Route::get('entregas-stats',        'EntregaController@stats'); 
@@ -228,6 +231,13 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('presentaciones-medicamentos','PresentacionMedicamentoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('turnos','TurnoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
+    Route::resource('programa','ProgramaController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('presentacion-medicamento','PresentacionMedicamentoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('material-curacion','MaterialCuracionController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('medicamentos','MedicamentoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('unidad-medica',    'UnidadMedicaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
+    Route::resource('forma-farmaceutica',    'FormaFarmaceuticaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
+    
     // catalogos  
 
     
@@ -246,6 +256,12 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('grado-lesion', 'GradoLesionController',    ['only' => ['index', 'show']]);
         
        
+    });
+
+    Route::group(['namespace' => 'AlmacenGeneral'], function () {
+        Route::resource('categoria',    'CategoriaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
+        Route::resource('articulos',    'ArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
+        Route::resource('inventarios',  'InventarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
     });
     
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);

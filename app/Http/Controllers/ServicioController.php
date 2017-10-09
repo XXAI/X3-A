@@ -27,10 +27,10 @@ class ServicioController extends Controller
         {
              $data =  Servicio::where(function($query) use ($parametros){
                  $query->where('id','LIKE',"%".$parametros['q']."%")
-                 ->orWhere('nombre','LIKE',"%".$parametros['q']."%");
+                 ->orWhere('nombre','LIKE',"%".$parametros['q']."%")->orderBy('nombre', 'asc');
              });
         } else {
-                    $data =  Servicio::where("id","!=", "");
+                    $data =  Servicio::where("id","!=", "")->orderBy('nombre', 'asc');
                }
         
         if(isset($parametros['page']))

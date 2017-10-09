@@ -56,5 +56,9 @@ class Movimiento extends BaseModel{
         return $this->hasMany('App\Models\MovimientoAjuste','movimiento_id')->with('movimientoAjusteInsumo');
     }
 
+     public function movimientoReceta(){
+        return $this->belongsTo('App\Models\Receta','id','movimiento_id');
+    }
+
    
 }

@@ -81,5 +81,5 @@ class Pedido extends BaseModel
 
     public function metadatosSincronizaciones(){
         return $this->hasOne('App\Models\PedidoMetadatoSincronizacion','pedido_id','id');
-    }
+    } 
 }

@@ -108,7 +108,7 @@ public function listarPedidos(Request $request)
     $parametros = Input::only('q','page','per_page','almacen','tipo','fecha_desde','fecha_hasta','clues');
     $proveedor_id = $request->get('proveedor_id');
 
-    $pedidos = Pedido::with('metadatosSincronizaciones')->where('proveedor_id',$proveedor_id);
+    $pedidos = Pedido::with('metadatosSincronizaciones','proveedor','unidadMedica')->where('proveedor_id',$proveedor_id);
     if($parametros['clues'] != "")
     {
         $pedidos = $pedidos->where('clues',$parametros['clues']);
@@ -123,6 +123,31 @@ public function listarPedidos(Request $request)
        
         
     return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $pedidos, "total" => count($pedidos)), 200);
+
+}
+
+///***************************************************************************************************************************
+///***************************************************************************************************************************
+
+ 
+public function listarSincronizacionesPedido(Request $request)
+{
+    $parametros = Input::only('q','page','per_page','almacen','tipo','fecha_desde','fecha_hasta','clues','pedido_id');
+    $proveedor_id = $request->get('proveedor_id');
+
+    $pedido_id = $parametros['pedido_id'];
+
+    $sincronizaciones = SincronizacionProveedor::where('pedido_id',$pedido_id);
+     
+        if(isset($parametros['page'])){
+            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+            $sincronizaciones = $sincronizaciones->paginate($resultadosPorPagina);
+        } else {
+            $sincronizaciones = $sincronizaciones->get();
+        }
+       
+        
+    return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $sincronizaciones, "total" => count($sincronizaciones)), 200);
 
 }
 
@@ -195,8 +220,9 @@ public function analizarJson(Request $request)
 
             $folio_buscar = $colectivo->folio;
 
-            $colectivo_buscar = Receta::where("folio",$folio_buscar);
-            if($colectivo_buscar)
+            $colectivo_buscar = Movimiento::leftJoin('movimiento_metadatos')
+                                ->where('movimiento_metadatos.folio_colectivo',$folio_buscar);
+            if( count($colectivo_buscar) > 0 )
             { $colectivos_invalidos++; }else{ $colectivos_validos++; }
         }
 
@@ -512,6 +538,9 @@ public function analizarJson(Request $request)
                     { $colectivo_insumo = (object)$colectivo_insumo;
 
                         $movimiento_pedido   = MovimientoPedido::where('pedido_id',$pedido_id)->first();
+
+                           // var_dump($movimiento_pedido); die();
+
                         $movimiento_insumo_x = MovimientoInsumos::where('movimiento_id',$movimiento_pedido->movimiento_id)
                                              ->where('clave_insumo_medico',$colectivo_insumo->clave)->first();
                         
@@ -627,6 +656,7 @@ public function analizarJson(Request $request)
         $pms->total_colectivos             = $pms->total_colectivos + $colectivos_validos;
         $pms->total_recetas_repetidas      = $pms->total_recetas_repetidas + $recetas_invalidas;
         $pms->total_colectivos_repetidos   = $pms->total_colectivos_repetidos + $colectivos_invalidos;
+        $pms->numero_sincronizaciones      = $pms->numero_sincronizaciones + 1;
         $pms->save();
 
     }else{
@@ -635,6 +665,7 @@ public function analizarJson(Request $request)
             $pms->total_recetas                = $recetas_validas;
             $pms->total_recetas_repetidas      = $pms->total_recetas_repetidas + $recetas_invalidas;
             $pms->total_colectivos_repetidos   = $pms->total_colectivos_repetidos + $colectivos_invalidos;
+            $pms->numero_sincronizaciones      = 1;
             $pms->save();
          }
 
