@@ -40,7 +40,7 @@ class MovimientoPedido extends BaseModel{
     }
 
     public function transferenciaRecibida(){
-        return $this->belongsTo('App\Models\Movimiento','movimiento_id')->where('tipo_movimiento_id',9);
+        return $this->belongsTo('App\Models\Movimiento','movimiento_id')->where('tipo_movimiento_id',9)->where('status','FI');
     }
 
     public function pedido(){
