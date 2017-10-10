@@ -441,12 +441,12 @@ class MovimientoController extends Controller
         if( $movimiento->tipo_movimiento_id == 1)
         {
             $insumos = DB::table('movimiento_insumos')
-                    ->join('stock', 'movimiento_insumos.stock_id', '=', 'stock.id')
-                    ->where('movimiento_insumos.movimiento_id', '=', $id)
-                    ->where('movimiento_insumos.deleted_at',NULL)
-                    ->groupby('stock.clave_insumo_medico')
-                    ->select(DB::raw('SUM(movimiento_insumos.cantidad) as total_insumo'), 'stock.clave_insumo_medico','modo_salida')
-                    ->get();
+                        ->join('stock', 'movimiento_insumos.stock_id', '=', 'stock.id')
+                        ->where('movimiento_insumos.movimiento_id', '=', $id)
+                        ->where('movimiento_insumos.deleted_at',NULL)
+                        ->groupby('stock.clave_insumo_medico')
+                        ->select(DB::raw('SUM(movimiento_insumos.cantidad) as total_insumo'), 'stock.clave_insumo_medico','modo_salida')
+                        ->get();
 
             $array_insumos = array();   
 
@@ -1918,8 +1918,9 @@ class MovimientoController extends Controller
                     /// FOREACH SEGUNDA PASADA A INSUMOS PARA ACTUALIZAR STOCK DE SALIDA
                         foreach($lotes_master as $index => $lote)
                         {
-                            $precio_insumo              = $this->conseguirPrecio($lote_stock->clave_insumo_medico);                                                                   
-                            $insumo_info                = Insumo::datosUnidosis()->where('clave',$lote_stock->clave_insumo_medico)->first();
+                            //var_dump($lote); die();
+                            $precio_insumo              = $this->conseguirPrecio($lote->clave_insumo_medico);                                                                   
+                            $insumo_info                = Insumo::datosUnidosis()->where('clave',$lote->clave_insumo_medico)->first();
                             $cantidad_x_envase_insumo   = $insumo_info->cantidad_x_envase; 
 
                             $lote_stock                      = Stock::find($lote->id);
