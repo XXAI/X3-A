@@ -48,17 +48,17 @@ class ReporteFinancieroController extends Controller
                 if($parametros['agrupado_por'] == "UM"){
             
                 $sheet->row(1, array(
-                    'Num', 'Clues','Tipo','Nombre','Modificado','Comprometido','Devengado', 'Disponible'
+                    'Num', 'Clues','Tipo','Nombre','Modificado','Comprometido','Devengado', 'Disponible','Monto Solicitado','Monto Surtido','% Monto', 'Insumos Solicitados','Insumos Surtidos','% Insumos'
                 ));
                 }
                 if($parametros['agrupado_por'] == "P"){
                     $sheet->row(1, array(
-                        'Num', 'Proveedor','Cant. Clues','Modificado','Comprometido','Devengado', 'Disponible'
+                        'Num', 'Proveedor','Cant. Clues','Modificado','Comprometido','Devengado', 'Disponible', 'Monto Solicitado','Monto Surtido','% Monto', 'Insumos Solicitados','Insumos Surtidos','% Insumos'
                     ));
                 }
                 if($parametros['agrupado_por'] == "NA"){
                     $sheet->row(1, array(
-                        'Num', 'Nivel de atención','Cant. Clues','Modificado','Comprometido','Devengado', 'Disponible'
+                        'Num', 'Nivel de atención','Cant. Clues','Modificado','Comprometido','Devengado', 'Disponible', 'Monto Solicitado','Monto Recibido','% Monto', 'Insumos Solicitados','Insumos Surtidos','% Insumos'
                     ));
                 }
                 
@@ -73,6 +73,11 @@ class ReporteFinancieroController extends Controller
                 $total_comprometido = 0;
                 $total_devengado = 0;
                 $total_disponible = 0;
+                $total_monto_solicitado = 0;
+                $total_monto_recibido = 0;
+                $total_cantidad_solicitada = 0;
+                $total_cantidad_recibida = 0;
+
                 foreach($items as $item){
                     $contador_filas++;
                     
@@ -80,6 +85,10 @@ class ReporteFinancieroController extends Controller
                     $total_comprometido += $item->comprometido;
                     $total_devengado += $item->devengado;
                     $total_disponible += $item->disponible;
+                    $total_monto_solicitado += $item->monto_solicitado;
+                    $total_monto_recibido += $item->monto_recibido;
+                    $total_cantidad_solicitada += $item->cantidad_solicitada;
+                    $total_cantidad_recibida += $item->cantidad_recibida;
 
                     if($parametros['agrupado_por'] == "UM"){
                         $sheet->appendRow(array(
@@ -90,7 +99,13 @@ class ReporteFinancieroController extends Controller
                             $item->modificado,
                             $item->comprometido,
                             $item->devengado,
-                            $item->disponible
+                            $item->disponible,
+                            $item->monto_solicitado,
+                            $item->monto_recibido,
+                            $item->porcentaje_monto,
+                            $item->cantidad_solicitada,
+                            $item->cantidad_recibida,
+                            $item->porcentaje_cantidad
                         ));                         
                     }
 
@@ -102,7 +117,13 @@ class ReporteFinancieroController extends Controller
                             $item->modificado,
                             $item->comprometido,
                             $item->devengado,
-                            $item->disponible
+                            $item->disponible,
+                            $item->monto_solicitado,
+                            $item->monto_recibido,
+                            $item->porcentaje_monto,
+                            $item->cantidad_solicitada,
+                            $item->cantidad_recibida,
+                            $item->porcentaje_cantidad
                         ));                         
                     }
                     if($parametros['agrupado_por'] == "NA"){
@@ -113,12 +134,18 @@ class ReporteFinancieroController extends Controller
                             $item->modificado,
                             $item->comprometido,
                             $item->devengado,
-                            $item->disponible
+                            $item->disponible,
+                            $item->monto_solicitado,
+                            $item->monto_recibido,
+                            $item->porcentaje_monto,
+                            $item->cantidad_solicitada,
+                            $item->cantidad_recibida,
+                            $item->porcentaje_cantidad
                         ));                         
                     }
                 }
                 if($parametros['agrupado_por'] == "UM"){
-                    $sheet->cells("A1:H1", function($cells) {
+                    $sheet->cells("A1:N1", function($cells) {
                         $cells->setAlignment('center');
                     });
 
@@ -130,7 +157,13 @@ class ReporteFinancieroController extends Controller
                         $total_modificado,
                         $total_comprometido,
                         $total_devengado,
-                        $total_disponible
+                        $total_disponible,
+                        $total_monto_solicitado,
+                        $total_monto_recibido,
+                        ($total_monto_recibido * 100 / $total_monto_solicitado),
+                        $total_cantidad_solicitada,
+                        $total_cantidad_recibida,
+                        ($total_cantidad_recibida * 100 / $total_cantidad_solicitada)
                     )); 
 
                     $sheet->setColumnFormat(array(
@@ -138,10 +171,16 @@ class ReporteFinancieroController extends Controller
                         "F2:F".($contador_filas+1) => '"$" #,##0.00_-',
                         "G2:G".($contador_filas+1) => '"$" #,##0.00_-',
                         "H2:H".($contador_filas+1) => '"$" #,##0.00_-',
+                        "I2:I".($contador_filas+1) => '"$" #,##0.00_-',
+                        "J2:J".($contador_filas+1) => '"$" #,##0.00_-',
+                        "K2:K".($contador_filas+1) => '#,##0.00_- "%"',
+                        "L2:L".($contador_filas+1) => '"$" #,##0.00_-',
+                        "M2:M".($contador_filas+1) => '"$" #,##0.00_-',
+                        "N2:N".($contador_filas+1) => '#,##0.00_- "%"'
                     ));
 
-                    $sheet->setBorder("A1:H$contador_filas", 'thin');
-                    $sheet->setBorder("D".($contador_filas+1).":H".($contador_filas+1), 'thin');
+                    $sheet->setBorder("A1:N$contador_filas", 'thin');
+                    $sheet->setBorder("D".($contador_filas+1).":N".($contador_filas+1), 'thin');
                     
                     $sheet->row(($contador_filas+1), function($row) {
                         $row->setBackground('#DDDDDD');
@@ -152,7 +191,7 @@ class ReporteFinancieroController extends Controller
                 }
                 if($parametros['agrupado_por'] != "UM"){
                                       
-                    $sheet->cells("A1:G1", function($cells) {
+                    $sheet->cells("A1:M1", function($cells) {
                         $cells->setAlignment('center');
                     });
                     $sheet->appendRow(array(
@@ -162,18 +201,30 @@ class ReporteFinancieroController extends Controller
                         $total_modificado,
                         $total_comprometido,
                         $total_devengado,
-                        $total_disponible
+                        $total_disponible,
+                        $total_monto_solicitado,
+                        $total_monto_recibido,
+                        ($total_monto_recibido * 100 / $total_monto_solicitado),
+                        $total_cantidad_solicitada,
+                        $total_cantidad_recibida,
+                        ($total_cantidad_recibida * 100 / $total_cantidad_solicitada)
                     )); 
 
                     $sheet->setColumnFormat(array(
                         "D2:D".($contador_filas+1) => '"$" #,##0.00_-',
                         "E2:E".($contador_filas+1) => '"$" #,##0.00_-',
                         "F2:F".($contador_filas+1) => '"$" #,##0.00_-',
-                        "G2:H".($contador_filas+1) => '"$" #,##0.00_-',
+                        "G2:G".($contador_filas+1) => '"$" #,##0.00_-',
+                        "H2:H".($contador_filas+1) => '"$" #,##0.00_-',
+                        "I2:I".($contador_filas+1) => '"$" #,##0.00_-',
+                        "J2:J".($contador_filas+1) => '#,##0.00_- "%" ',
+                        "K2:K".($contador_filas+1) => '"$" #,##0.00_-',
+                        "L2:L".($contador_filas+1) => '"$" #,##0.00_-',
+                        "M2:M".($contador_filas+1) => '#,##0.00_- "%" '
                     ));
 
-                    $sheet->setBorder("A1:G$contador_filas", 'thin'); 
-                    $sheet->setBorder("C".($contador_filas+1).":G".($contador_filas+1), 'thin');  
+                    $sheet->setBorder("A1:M$contador_filas", 'thin'); 
+                    $sheet->setBorder("C".($contador_filas+1).":M".($contador_filas+1), 'thin');  
                     $sheet->row(($contador_filas+1), function($row) {
                         $row->setBackground('#DDDDDD');
                         $row->setFontWeight('bold');
@@ -205,6 +256,25 @@ class ReporteFinancieroController extends Controller
             $query .= "nivel_atencion.nivel_atencion, COUNT(unidad_medica_presupuesto.clues) as cantidad_clues, ";
         }
 
+        $subquery_pedidos_fechas = "";
+
+        if( isset($parametros['mes_inicio']) && isset($parametros['anio_inicio']) &&
+        isset($parametros['mes_fin']) && isset($parametros['anio_fin'])){
+            $subquery_pedidos_fechas =" AND CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) BETWEEN STR_TO_DATE(CONCAT(:pedidos_anio_inicio,'-',LPAD(:pedidos_mes_inicio,2,'00'),'-01'),'%Y-%m-%d') AND STR_TO_DATE(CONCAT(:pedidos_anio_fin,'-',LPAD(:pedidos_mes_fin,2,'00'),'-01'),'%Y-%m-%d')";
+            $variables['pedidos_mes_inicio']  = $parametros['mes_inicio'];  
+            $variables['pedidos_anio_inicio']  = $parametros['anio_inicio']; 
+            $variables['pedidos_mes_fin']  = $parametros['mes_fin'];  
+            $variables['pedidos_anio_fin']  = $parametros['anio_fin'];  
+        }else if(isset($parametros['mes_inicio']) && isset($parametros['anio_inicio']) && (!isset($parametros['mes_fin']) || !isset($parametros['anio_fin']))){
+            $subquery_pedidos_fechas = " AND CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) >= STR_TO_DATE(CONCAT(:pedidos_anio_inicio,'-',LPAD(:pedidos_mes_inicio,2,'00'),'-01'),'%Y-%m-%d') ";
+            $variables['pedidos_mes_inicio']  = $parametros['mes_inicio'];  
+            $variables['pedidos_anio_inicio']  = $parametros['anio_inicio']; 
+        } else if((!isset($parametros['mes_inicio']) || !isset($parametros['anio_inicio'])) && isset($parametros['mes_fin']) && isset($parametros['anio_fin'])){
+            $subquery_pedidos_fechas = " AND CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) <= STR_TO_DATE(CONCAT(:pedidos_anio_fin,'-',LPAD(:pedidos_mes_fin,2,'00'),'-01'),'%Y-%m-%d') ";
+            $variables['pedidos_mes_fin']  = $parametros['mes_fin'];  
+            $variables['pedidos_anio_fin']  = $parametros['anio_fin'];  
+        }
+
         $query .= " 
 		SUM(causes_modificado) as causes_modificado,
 		SUM(no_causes_modificado) as no_causes_modificado,
@@ -224,7 +294,15 @@ class ReporteFinancieroController extends Controller
 		SUM(causes_disponible) as causes_disponible,
 		SUM(no_causes_disponible) as no_causes_disponible,
 		SUM(material_curacion_disponible) as material_curacion_disponible,
-		SUM(causes_disponible + no_causes_disponible + material_curacion_disponible) as disponible
+        SUM(causes_disponible + no_causes_disponible + material_curacion_disponible) as disponible,
+        
+        IF(pedidos.monto_recibido IS NULL, 0, pedidos.monto_recibido) as monto_recibido,
+        IF(pedidos.monto_solicitado IS NULL, 0, pedidos.monto_solicitado) as monto_solicitado,
+        IF(pedidos.porcentaje_monto  IS NULL, 0, pedidos.porcentaje_monto) as porcentaje_monto,
+
+        IF(pedidos.cantidad_recibida IS NULL, 0, pedidos.cantidad_recibida) as cantidad_recibida,
+        IF(pedidos.cantidad_solicitada IS NULL, 0, pedidos.cantidad_solicitada) as cantidad_solicitada,
+        IF(pedidos.porcentaje_cantidad  IS NULL, 0, pedidos.porcentaje_cantidad) as porcentaje_cantidad
 	
         FROM unidad_medica_presupuesto  
         
@@ -233,6 +311,27 @@ class ReporteFinancieroController extends Controller
         LEFT JOIN (
             SELECT tipo, if(tipo = 'HO' OR tipo = 'HBC', '2','1') as nivel_atencion from unidades_medicas WHERE activa = 1 group by tipo
         ) AS nivel_atencion ON nivel_atencion.tipo = unidades_medicas.tipo
+        
+        LEFT JOIN(
+            SELECT 
+            clues,
+            SUM(total_monto_solicitado) as monto_solicitado,
+            SUM(total_monto_recibido) as monto_recibido,
+            (SUM(total_monto_recibido) * 100 / SUM(total_monto_solicitado)) as porcentaje_monto,
+            
+            SUM(total_cantidad_solicitada) as cantidad_solicitada,
+            SUM(total_cantidad_recibida) as cantidad_recibida,
+            (SUM( total_cantidad_recibida) * 100 / SUM(total_cantidad_solicitada)) as porcentaje_cantidad,
+            CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) as fecha
+            FROM sial_remoto.pedidos
+            
+            WHERE 
+            status != 'BR' 
+            ".$subquery_pedidos_fechas."
+            
+            GROUP BY clues
+        ) AS pedidos ON unidades_medicas.clues =  pedidos.clues 
+
 
         WHERE unidades_medicas.activa = 1
         ";
@@ -330,7 +429,8 @@ class ReporteFinancieroController extends Controller
                 $query .= " AND ";
             }
 
-            $query .= " STR_TO_DATE(CONCAT(anio,'-',LPAD(mes,2,'00'),'-01'),'%Y-%m-%d') BETWEEN STR_TO_DATE(CONCAT(:anio_inicio,'-',LPAD(:mes_inicio,2,'00'),'-01'),'%Y-%m-%d') AND STR_TO_DATE(CONCAT(:anio_fin,'-',LPAD(:mes_fin,2,'00'),'-01'),'%Y-%m-%d')";
+            $query .= " STR_TO_DATE(CONCAT(unidad_medica_presupuesto.anio,'-',LPAD(unidad_medica_presupuesto.mes,2,'00'),'-01'),'%Y-%m-%d') BETWEEN STR_TO_DATE(CONCAT(:anio_inicio,'-',LPAD(:mes_inicio,2,'00'),'-01'),'%Y-%m-%d') AND STR_TO_DATE(CONCAT(:anio_fin,'-',LPAD(:mes_fin,2,'00'),'-01'),'%Y-%m-%d')";
+           // $query .= " AND STR_TO_DATE(CONCAT(anio,'-',LPAD(mes,2,'00'),'-01'),'%Y-%m-%d') =  pedidos.fecha ";
             $variables['mes_inicio']  = $parametros['mes_inicio'];  
             $variables['anio_inicio']  = $parametros['anio_inicio']; 
             $variables['mes_fin']  = $parametros['mes_fin'];  
@@ -343,7 +443,8 @@ class ReporteFinancieroController extends Controller
                 $query .= " AND ";
             }
 
-            $query .= " STR_TO_DATE(CONCAT(anio,'-',LPAD(mes,2,'00'),'-01'),'%Y-%m-%d') >= STR_TO_DATE(CONCAT(:anio_inicio,'-',LPAD(:mes_inicio,2,'00'),'-01'),'%Y-%m-%d') ";
+            $query .= " STR_TO_DATE(CONCAT(unidad_medica_presupuesto.anio,'-',LPAD(unidad_medica_presupuesto.mes,2,'00'),'-01'),'%Y-%m-%d') >= STR_TO_DATE(CONCAT(:anio_inicio,'-',LPAD(:mes_inicio,2,'00'),'-01'),'%Y-%m-%d') ";
+           // $query .= " AND STR_TO_DATE(CONCAT(anio,'-',LPAD(mes,2,'00'),'-01'),'%Y-%m-%d') =  pedidos.fecha ";
             $variables['mes_inicio']  = $parametros['mes_inicio'];  
             $variables['anio_inicio']  = $parametros['anio_inicio']; 
         } else if((!isset($parametros['mes_inicio']) || !isset($parametros['anio_inicio'])) && isset($parametros['mes_fin']) && isset($parametros['anio_fin'])){
@@ -354,7 +455,8 @@ class ReporteFinancieroController extends Controller
                 $query .= " AND ";
             }
 
-            $query .= " STR_TO_DATE(CONCAT(anio,'-',LPAD(mes,2,'00'),'-01'),'%Y-%m-%d') <= STR_TO_DATE(CONCAT(:anio_fin,'-',LPAD(:mes_fin,2,'00'),'-01'),'%Y-%m-%d') ";
+            $query .= " STR_TO_DATE(CONCAT(unidad_medica_presupuesto.anio,'-',LPAD(unidad_medica_presupuesto.mes,2,'00'),'-01'),'%Y-%m-%d') <= STR_TO_DATE(CONCAT(:anio_fin,'-',LPAD(:mes_fin,2,'00'),'-01'),'%Y-%m-%d') ";
+            //$query .= " AND STR_TO_DATE(CONCAT(anio,'-',LPAD(mes,2,'00'),'-01'),'%Y-%m-%d') =  pedidos.fecha ";
             $variables['mes_fin']  = $parametros['mes_fin'];  
             $variables['anio_fin']  = $parametros['anio_fin']; 
         }
