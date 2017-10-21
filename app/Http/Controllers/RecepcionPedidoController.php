@@ -204,8 +204,7 @@ class RecepcionPedidoController extends Controller
 											->where("observaciones", ($parametros['observaciones'])?$parametros['observaciones']:null) 
 											->where("almacen_id", $almacen->id);
 								
-			if($movimiento_validador->count() > 1)
-			{
+			if($movimiento_validador->count() > 1){
 				return Response::json(['error' => "Error, se ha encontrado una recepcion con los mismos datos, por favor sustituya alguno de los valores (entrega, recibe, fecha uu observacion) y vuelva a intentarlo"], 500);		
 			}									
 		}
@@ -360,24 +359,16 @@ class RecepcionPedidoController extends Controller
 		        
 					if(isset($value['codigo_barras'])){
 						$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->first(); //Verifica si existe el medicamento en el stock
-						
-					}
-					else{
-						
+					}else{
 						$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->Where(function ($query) {
 			                $query->whereNull('codigo_barras')
 			                      ->orWhere('codigo_barras', '');
 			            })->first(); //Verifica si existe el medicamento en el stock
 					}
 
-					if($parametros['status'] == 'FI')
-					{
-						if($tipo_insumo == "ME") //Verifico si es medicamento o material de curación, para agregar el IVA
-			        	{		        		
-			        						    		
+					if($parametros['status'] == 'FI'){
+						if($tipo_insumo == "ME"){ //Verifico si es medicamento o material de curación, para agregar el IVA
 							$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
-
-
 
 							if($pedido_insumo->cantidad_solicitada >= intval(($pedido_insumo->cantidad_recibida + $value['existencia'])))
 							{

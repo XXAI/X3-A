@@ -31,6 +31,10 @@ class Pedido extends BaseModel
         return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id');
     }
 
+    public function movimientosTransferenciasCompleto(){
+        return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id')->movimientoCompleto()->whereIn('tipo_movimiento_id',[3,9,1,7])->with('insumos');
+    }
+
     public function recepcionesBorrados(){
         return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id')->withTrashed()->orderBy("created_at");
     }
@@ -43,9 +47,6 @@ class Pedido extends BaseModel
       return $this->hasOne('App\Models\PersonalClues','id','encargado_almacen_id');
     }
 
-
-   
-    
     public function acta(){
         return $this->belongsTo('App\Models\Acta','acta_id','id');
     }

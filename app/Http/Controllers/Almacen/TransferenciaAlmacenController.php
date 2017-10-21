@@ -85,6 +85,21 @@ class TransferenciaAlmacenController extends Controller{
         return Response::json([ 'data' => $transferencias],200);
     }
 
+    public function show(Request $request, $id){
+        $almacen = Almacen::find($request->get('almacen_id'));
+    	//$pedido = Pedido::where('almacen_solicitante',$request->get('almacen_id'))->find($id);
+        $pedido = Pedido::where('clues',$almacen->clues)->find($id);
+        
+        if(!$pedido){
+            return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }else{
+            $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","almacenProveedor","proveedor","encargadoAlmacen","director");
+            $pedido = $pedido->load("movimientos.transferenciaSurtida.insumos","movimientos.transferenciaRecibidaBorrador.insumos","movimientos.transferenciaRecibida.insumos","movimientos.reintegro.insumos");
+            $pedido = $pedido->load("movimientosTransferenciasCompleto");
+        }
+        return Response::json([ 'data' => $pedido],200);
+    }
+
     public function store(Request $request){
         $mensajes = [
             'required'      => "required",
@@ -292,6 +307,223 @@ class TransferenciaAlmacenController extends Controller{
 
             DB::commit();
 	        return Response::json(['message'=>'surtido','data'=>$movimiento],200);
+        }catch(\Exception $e){
+            DB::rollBack();
+            return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
+        }
+    }
+
+    public function actualizarTransferencia($id, Request $request){
+        $datos = Input::all();
+        try{
+            $pedido = Pedido::where('tipo_pedido_id','PEA')->find($id);
+            
+            if($pedido->status != 'SD' && $pedido->status != 'ET'){
+                return Response::json(['error' => 'El pedido ya no puede surtirse.'], 500);
+            }
+            
+            $pedido->load('insumos.conDatosInsumo');
+
+            $stock_ids = [];
+            $claves = [];
+            $cantidades_stock = [];
+            foreach($datos['insumos'] as $stock){
+                $stock_ids[] = $stock['stock_id'];
+                if(!isset($claves[$stock['clave']])){
+                    $claves[$stock['clave']] = ['cantidad'=>0,'tipo_insumo_id'=>0,'precio'=>0,'cantidad_x_envase'=>0];
+                }
+                $claves[$stock['clave']]['cantidad'] += $stock['cantidad'];
+                $cantidades_stock[$stock['stock_id']] = $stock['cantidad'];
+            }
+
+            $stocks = Stock::where('almacen_id',$pedido->almacen_proveedor)->whereIn('id',$stock_ids)->get();
+
+            DB::beginTransaction();
+            //Harima: Actualizamos el pedido para mostrar lo que se envio
+            foreach($pedido->insumos as $insumo){
+                if(isset($claves[$insumo->insumo_medico_clave])){
+                    $claves[$insumo->insumo_medico_clave]['tipo_insumo_id'] = $insumo->tipo_insumo_id;
+                    $claves[$insumo->insumo_medico_clave]['precio'] = $insumo->precio_unitario;
+                    $claves[$insumo->insumo_medico_clave]['cantidad_x_envase'] = $insumo->conDatosInsumo->cantidad_x_envase;
+                }
+            }
+
+            //$pedido->status = 'FI-P';
+            //$pedido->recepcion_permitida = 0;
+            //$pedido->save();
+
+            $movimiento_mas_insumos = [];
+            $movimiento_menos_insumos = [];
+
+            foreach($stocks as $stock_item){
+
+                if($datos['accion'] == 'reintegrar'){
+                    $stock_item->existencia += $cantidades_stock[$stock_item->id];
+                    $stock_item->existencia_unidosis += ($claves[$stock_item->clave_insumo_medico]['cantidad_x_envase'] * $cantidades_stock[$stock_item->id]);
+                    $stock_item->save();
+                }
+                
+                if($datos['accion'] == 'reintegrar' || $datos['accion'] == 'eliminar'){
+                    $insumo_mas = new MovimientoInsumos();
+                    $insumo_mas->tipo_insumo_id = $claves[$stock_item->clave_insumo_medico]['tipo_insumo_id'];
+                    $insumo_mas->stock_id = $stock_item->id;
+                    $insumo_mas->clave_insumo_medico = $stock_item->clave_insumo_medico;
+                    //$insumo_mas->modo_salida = 'N';
+                    $insumo_mas->cantidad = $cantidades_stock[$stock_item->id];
+                    $insumo_mas->cantidad_unidosis = ($claves[$stock_item->clave_insumo_medico]['cantidad_x_envase'] * $cantidades_stock[$stock_item->id]);
+                    $insumo_mas->precio_unitario = $claves[$stock_item->clave_insumo_medico]['precio'];
+                    $insumo_mas->precio_total = $insumo_mas->precio_unitario * $insumo_mas->cantidad;
+    
+                    $movimiento_mas_insumos[] = $insumo_mas;
+                }
+                
+                if($datos['accion'] == 'eliminar'){
+                    $insumo_menos = new MovimientoInsumos();
+                    $insumo_menos->tipo_insumo_id = $claves[$stock_item->clave_insumo_medico]['tipo_insumo_id'];
+                    $insumo_menos->stock_id = $stock_item->id;
+                    $insumo_menos->clave_insumo_medico = $stock_item->clave_insumo_medico;
+                    $insumo_menos->modo_salida = 'N';
+                    $insumo_menos->cantidad = $cantidades_stock[$stock_item->id];
+                    $insumo_menos->cantidad_unidosis = ($claves[$stock_item->clave_insumo_medico]['cantidad_x_envase'] * $cantidades_stock[$stock_item->id]);
+                    $insumo_menos->precio_unitario = $claves[$stock_item->clave_insumo_medico]['precio'];
+                    $insumo_menos->precio_total = $insumo_menos->precio_unitario * $insumo_menos->cantidad;
+    
+                    $movimiento_menos_insumos[] = $insumo_menos;
+                }
+            }
+
+            if(count($movimiento_mas_insumos) > 0){
+                $movimiento_mas = new Movimiento();
+                $movimiento_mas->almacen_id = $pedido->almacen_proveedor;
+                $movimiento_mas->tipo_movimiento_id = 1;
+                $movimiento_mas->status = 'FI';
+                $movimiento_mas->observaciones = 'SE REGRESAN AL INVENTARIO INSUMOS NO ENTREGADOS EN EL PEDIDO CON FOLIO: '.$pedido->folio;
+                $movimiento_mas->fecha_movimiento = date('Y-m-d');
+                
+                $movimiento_mas->save();
+                $movimiento_mas->insumos()->saveMany($movimiento_mas_insumos);
+
+                $movimiento_pedido = new MovimientoPedido();
+                $movimiento_pedido->pedido_id = $id;
+    
+                $movimiento_mas->movimientoPedido()->save($movimiento_pedido);
+            }
+            
+            if(count($movimiento_menos_insumos) > 0){
+                $movimiento_menos = new Movimiento();
+                $movimiento_menos->almacen_id = $pedido->almacen_proveedor;
+                $movimiento_menos->tipo_movimiento_id = 7;
+                $movimiento_menos->status = 'FI';
+                $movimiento_menos->observaciones = 'SE DAN DE BAJA INSUMOS NO ENTREGADOS EN EL PEDIDO CON FOLIO: '.$pedido->folio;
+                $movimiento_menos->fecha_movimiento = date('Y-m-d');
+                
+                $movimiento_menos->save();
+                $movimiento_menos->insumos()->saveMany($movimiento_menos_insumos);
+
+                $movimiento_pedido = new MovimientoPedido();
+                $movimiento_pedido->pedido_id = $id;
+    
+                $movimiento_menos->movimientoPedido()->save($movimiento_pedido);
+            }
+            
+            DB::commit();
+	        return Response::json(['message'=>'finalizado','data'=>$pedido],200);
+        }catch(\Exception $e){
+            DB::rollBack();
+            return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
+        }
+    }
+
+    public function finalizar($id, Request $request){
+        $datos = Input::all();
+
+        try{
+            $pedido = Pedido::where('tipo_pedido_id','PEA')->find($id);
+            if($pedido->status != 'SD' && $pedido->status != 'ET'){
+                return Response::json(['error' => 'El pedido ya no puede surtirse.'], 500);
+            }
+            
+            $pedido->load('insumos.conDatosInsumo');
+
+            $stock_ids = [];
+            $claves = [];
+            $cantidades_stock = [];
+            foreach($datos['lista'] as $stock){
+                $stock_ids[] = $stock['stock_id'];
+                if(!isset($claves[$stock['clave']])){
+                    $claves[$stock['clave']] = ['cantidad'=>0,'tipo_insumo_id'=>0,'precio'=>0,'cantidad_x_envase'=>0];
+                }
+                $claves[$stock['clave']]['cantidad'] += $stock['cantidad'];
+                $cantidades_stock[$stock['stock_id']] = $stock['cantidad'];
+            }
+
+            $stocks = Stock::where('almacen_id',$pedido->almacen_proveedor)->whereIn('id',$stock_ids)->get();
+
+            DB::beginTransaction();
+            //Harima: Actualizamos el pedido para mostrar lo que se envio
+            foreach($pedido->insumos as $insumo){
+                if(isset($claves[$insumo->insumo_medico_clave])){
+                    $claves[$insumo->insumo_medico_clave]['tipo_insumo_id'] = $insumo->tipo_insumo_id;
+                    $claves[$insumo->insumo_medico_clave]['precio'] = $insumo->precio_unitario;
+                    $claves[$insumo->insumo_medico_clave]['cantidad_x_envase'] = $insumo->conDatosInsumo->cantidad_x_envase;
+                }
+            }
+
+            $pedido->status = 'FI-P';
+            $pedido->recepcion_permitida = 0;
+            $pedido->save();
+
+            $movimiento_mas_insumos = [];
+            $movimiento_menos_insumos = [];
+            //Harima: Creamos los datos para los ajustes
+            foreach($stocks as $stock_item){
+                $insumo_mas = new MovimientoInsumos();
+                $insumo_mas->tipo_insumo_id = $claves[$stock_item->clave_insumo_medico]['tipo_insumo_id'];
+                $insumo_mas->stock_id = $stock_item->id;
+                $insumo_mas->clave_insumo_medico = $stock_item->clave_insumo_medico;
+                $insumo_mas->modo_salida = 'N';
+                $insumo_mas->cantidad = $cantidades_stock[$stock_item->id];
+                $insumo_mas->cantidad_unidosis = ($claves[$stock_item->clave_insumo_medico]['cantidad_x_envase'] * $cantidades_stock[$stock_item->id]);
+                $insumo_mas->precio_unitario = $claves[$stock_item->clave_insumo_medico]['precio'];
+                $insumo_mas->precio_total = $insumo_mas->precio_unitario * $insumo_mas->cantidad;
+
+                $movimiento_mas_insumos[] = $insumo_mas;
+
+                $insumo_menos = new MovimientoInsumos();
+                $insumo_menos->tipo_insumo_id = $claves[$stock_item->clave_insumo_medico]['tipo_insumo_id'];
+                $insumo_menos->stock_id = $stock_item->id;
+                $insumo_menos->clave_insumo_medico = $stock_item->clave_insumo_medico;
+                $insumo_menos->modo_salida = 'N';
+                $insumo_menos->cantidad = $cantidades_stock[$stock_item->id];
+                $insumo_menos->cantidad_unidosis = ($claves[$stock_item->clave_insumo_medico]['cantidad_x_envase'] * $cantidades_stock[$stock_item->id]);
+                $insumo_menos->precio_unitario = $claves[$stock_item->clave_insumo_medico]['precio'];
+                $insumo_menos->precio_total = $insumo_menos->precio_unitario * $insumo_menos->cantidad;
+
+                $movimiento_menos_insumos[] = $insumo_menos;
+            }
+
+            $movimiento_mas = new Movimiento();
+            $movimiento_mas->almacen_id = $pedido->almacen_proveedor;
+            $movimiento_mas->tipo_movimiento_id = 6;
+            $movimiento_mas->status = 'FI';
+            $movimiento_mas->observaciones = 'SE REGRESAN AL INVENTARIO INSUMOS NO ENTREGADOS EN EL PEDIDO CON FOLIO: '.$pedido->folio;
+            $movimiento_mas->fecha_movimiento = date('Y-m-d');
+            
+            $movimiento_mas->save();
+            $movimiento_mas->insumos()->saveMany($movimiento_mas_insumos);
+
+            $movimiento_menos = new Movimiento();
+            $movimiento_menos->almacen_id = $pedido->almacen_proveedor;
+            $movimiento_menos->tipo_movimiento_id = 7;
+            $movimiento_menos->status = 'FI';
+            $movimiento_menos->observaciones = 'SE DAN DE BAJA INSUMOS NO ENTREGADOS EN EL PEDIDO CON FOLIO: '.$pedido->folio;
+            $movimiento_menos->fecha_movimiento = date('Y-m-d');
+            
+            $movimiento_menos->save();
+            $movimiento_menos->insumos()->saveMany($movimiento_menos_insumos);
+            
+            DB::commit();
+	        return Response::json(['message'=>'finalizado','data'=>$pedido],200);
         }catch(\Exception $e){
             DB::rollBack();
             return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
