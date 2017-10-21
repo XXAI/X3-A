@@ -155,6 +155,7 @@ Route::group(['middleware' => 'jwt'], function () {
             Route::get('transferencias-stats',                     'TransferenciaAlmacenController@stats');
             Route::resource('transferencias',                      'TransferenciaAlmacenController',['only' => ['index', 'show', 'store','update','destroy']]);
             Route::put('surtir-transferencia/{id}',                'TransferenciaAlmacenController@surtir');
+            Route::put('actualizar-transferencia/{id}',             'TransferenciaAlmacenController@actualizarTransferencia');
         });
 
 

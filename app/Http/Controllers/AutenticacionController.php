@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use JWTAuth, JWTFactory;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
-use Illuminate\Http\Request;
+use Illuminate\Http\Request, DB;
 use \Hash, \Config, Carbon\Carbon;
 use App\Models\Usuario, App\Models\Permiso, App\Models\Almacen, App\Models\UnidadMedica, App\Models\Proveedor, App\Models\LogInicioSesion;
 
@@ -20,6 +20,16 @@ class AutenticacionController extends Controller
         try {
 
             //$usuarios = Usuario::where('su',0)->get();
+            /*$nuevos_usuarios = DB::table('_usuarios_caravanas')->select('clues','nombre')->get();
+            foreach ($nuevos_usuarios as $usuario) {
+                $pass = str_replace(['á','é','í','ó','ú',' ','.','(',')','´'],['a','e','i','o','u'], mb_strtolower($usuario->nombre,'UTF-8'));
+                DB::table('_usuarios_caravanas')->where('clues',$usuario->clues)->update(['pass'=>$pass]);
+            }*/
+            /*$nuevos_usuarios = DB::table('_usuarios_caravanas')->select('clues','pass')->get();
+            foreach ($nuevos_usuarios as $usuario) {
+                $usuarios_hash = Hash::make($usuario->pass);
+                DB::table('_usuarios_caravanas')->where('clues',$usuario->clues)->update(['hash'=>$usuarios_hash]);
+            }*/
             /*
             $usuarios_hash = [
                 'hbcoxchuc' => 'hbcoxchuc',
