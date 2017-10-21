@@ -44,7 +44,7 @@ class TransferenciaAlmacenController extends Controller{
                 case when status = "CA" then 1 else null end
             ) as cancelados
             '
-        ))->where('clues',$almacen->clues)->where('almacen_proveedor',$almacen->id)->where('tipo_pedido_id','PEA')->first();
+        ))->where('almacen_proveedor',$almacen->id)->where('tipo_pedido_id','PEA')->first();
 
         $presupuesto_stats = DB::select('
             select 
@@ -52,8 +52,8 @@ class TransferenciaAlmacenController extends Controller{
                 sum(IF(IM.tipo = "ME" and IM.es_causes = 0,PI.monto_enviado,0)) as no_causes
             from
                 pedidos_insumos PI, pedidos P, insumos_medicos IM
-            where PI.deleted_at is null and P.deleted_at is null and PI.pedido_id = P.id and IM.clave = PI.insumo_medico_clave and P.tipo_pedido_id = "PEA" and P.status != "BR" and P.clues = :clues and P.almacen_proveedor = :almacen_id
-            ',['clues'=>$almacen->clues,'almacen_id'=>$almacen->id]);
+            where PI.deleted_at is null and P.deleted_at is null and PI.pedido_id = P.id and IM.clave = PI.insumo_medico_clave and P.tipo_pedido_id = "PEA" and P.status != "BR" and P.almacen_proveedor = :almacen_id
+            ',['almacen_id'=>$almacen->id]);
 
         return Response::json(['stats'=>$pedidos_stats,'presupuesto'=>$presupuesto_stats[0]],200);
     }
@@ -88,7 +88,7 @@ class TransferenciaAlmacenController extends Controller{
     public function show(Request $request, $id){
         $almacen = Almacen::find($request->get('almacen_id'));
     	//$pedido = Pedido::where('almacen_solicitante',$request->get('almacen_id'))->find($id);
-        $pedido = Pedido::where('clues',$almacen->clues)->find($id);
+        $pedido = Pedido::where('almacen_proveedor',$almacen->id)->find($id);
         
         if(!$pedido){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
