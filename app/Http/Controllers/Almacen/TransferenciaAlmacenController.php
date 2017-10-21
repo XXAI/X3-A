@@ -63,7 +63,7 @@ class TransferenciaAlmacenController extends Controller{
 
         $almacen = Almacen::find($request->get('almacen_id'));
 
-        $transferencias = Pedido::where('clues',$almacen->clues)->where('almacen_proveedor',$almacen->id)->where('tipo_pedido_id','PEA');
+        $transferencias = Pedido::where('almacen_proveedor',$almacen->id)->where('tipo_pedido_id','PEA');
         
         if ($parametros['q']) {
             $transferencias =  $transferencias->where(function($query) use ($parametros) {
