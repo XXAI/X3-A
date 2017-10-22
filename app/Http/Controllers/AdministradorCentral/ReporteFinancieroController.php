@@ -46,19 +46,58 @@ class ReporteFinancieroController extends Controller
                 $sheet->setAutoSize(true);
             
                 if($parametros['agrupado_por'] == "UM"){
-            
-                $sheet->row(1, array(
-                    'Num', 'Clues','Tipo','Nombre','Modificado','Comprometido','Devengado', 'Disponible','Monto Solicitado','Monto Surtido','% Monto', 'Insumos Solicitados','Insumos Surtidos','% Insumos'
-                ));
+                    
+                    $sheet->mergeCells('A1:H2');                    
+                    
+                    $sheet->mergeCells('I1:N1');
+                    $sheet->mergeCells('I2:K2');
+                    $sheet->mergeCells('L2:N2');
+
+                    $sheet->getCell('I1')->setValue('Causes y Material de Curación');
+                    $sheet->getCell('I2')->setValue('Monto');
+                    $sheet->getCell('L2')->setValue('Insumos');
+
+                    
+                    $sheet->mergeCells('O1:T1');
+                    $sheet->mergeCells('O2:Q2');
+                    $sheet->mergeCells('R2:T2');
+
+                    $sheet->getCell('O1')->setValue('No Causes');
+                    $sheet->getCell('O2')->setValue('Monto');
+                    $sheet->getCell('R2')->setValue('Insumos');
+                    
+                   
+                    $sheet->row(3, array(
+                        'Num', 'Clues','Tipo','Nombre','Modificado','Comprometido','Devengado', 'Disponible', 'Solicitado', 'Surtido', '%', 'Solicitado', 'Surtido','%', 'Solicitado', 'Surtido', '%', 'Solicitado', 'Surtido', '%'
+                    ));
+                } else {
+                    $sheet->mergeCells('A1:G2');                    
+                    
+                    $sheet->mergeCells('H1:M1');
+                    $sheet->mergeCells('H2:J2');
+                    $sheet->mergeCells('K2:M2');
+
+                    $sheet->getCell('H1')->setValue('Causes y Material de Curación');
+                    $sheet->getCell('H2')->setValue('Monto');
+                    $sheet->getCell('K2')->setValue('Insumos');
+
+                    
+                    $sheet->mergeCells('N1:S1');
+                    $sheet->mergeCells('N2:P2');
+                    $sheet->mergeCells('Q2:S2');
+
+                    $sheet->getCell('N1')->setValue('No Causes');
+                    $sheet->getCell('N2')->setValue('Monto');
+                    $sheet->getCell('Q2')->setValue('Insumos');
                 }
                 if($parametros['agrupado_por'] == "P"){
-                    $sheet->row(1, array(
-                        'Num', 'Proveedor','Cant. Clues','Modificado','Comprometido','Devengado', 'Disponible', 'Monto Solicitado','Monto Surtido','% Monto', 'Insumos Solicitados','Insumos Surtidos','% Insumos'
+                    $sheet->row(3, array(
+                        'Num', 'Proveedor','Cant. Clues','Modificado','Comprometido','Devengado', 'Disponible', 'Solicitado', 'Surtido', '%', 'Solicitado', 'Surtido','%', 'Solicitado', 'Surtido', '%', 'Solicitado', 'Surtido', '%'
                     ));
                 }
                 if($parametros['agrupado_por'] == "NA"){
-                    $sheet->row(1, array(
-                        'Num', 'Nivel de atención','Cant. Clues','Modificado','Comprometido','Devengado', 'Disponible', 'Monto Solicitado','Monto Recibido','% Monto', 'Insumos Solicitados','Insumos Surtidos','% Insumos'
+                    $sheet->row(3, array(
+                        'Num', 'Nivel de atención','Cant. Clues','Modificado','Comprometido','Devengado', 'Disponible', 'Solicitado', 'Surtido', '%', 'Solicitado', 'Surtido','%', 'Solicitado', 'Surtido', '%', 'Solicitado', 'Surtido', '%'
                     ));
                 }
                 
@@ -67,16 +106,30 @@ class ReporteFinancieroController extends Controller
                     $row->setFontWeight('bold');
                     $row->setFontSize(14);
                 });
+                $sheet->row(2, function($row) {
+                    $row->setBackground('#DDDDDD');
+                    $row->setFontWeight('bold');
+                    $row->setFontSize(14);
+                });
+                $sheet->row(3, function($row) {
+                    $row->setBackground('#DDDDDD');
+                    $row->setFontWeight('bold');
+                    $row->setFontSize(14);
+                });
 
-                $contador_filas = 1;
+                $contador_filas = 3;
                 $total_modificado = 0;
                 $total_comprometido = 0;
                 $total_devengado = 0;
                 $total_disponible = 0;
-                $total_monto_solicitado = 0;
-                $total_monto_recibido = 0;
-                $total_cantidad_solicitada = 0;
-                $total_cantidad_recibida = 0;
+                $total_monto_solicitado_causes_mat_cur = 0;
+                $total_monto_recibido_causes_mat_cur = 0;
+                $total_cantidad_solicitada_causes_mat_cur = 0;
+                $total_cantidad_recibida_causes_mat_cur = 0;
+                $total_monto_solicitado_no_causes = 0;
+                $total_monto_recibido_no_causes = 0;
+                $total_cantidad_solicitada_no_causes = 0;
+                $total_cantidad_recibida_no_causes = 0;
 
                 foreach($items as $item){
                     $contador_filas++;
@@ -85,14 +138,20 @@ class ReporteFinancieroController extends Controller
                     $total_comprometido += $item->comprometido;
                     $total_devengado += $item->devengado;
                     $total_disponible += $item->disponible;
-                    $total_monto_solicitado += $item->monto_solicitado;
-                    $total_monto_recibido += $item->monto_recibido;
-                    $total_cantidad_solicitada += $item->cantidad_solicitada;
-                    $total_cantidad_recibida += $item->cantidad_recibida;
+                    
+                    $total_monto_solicitado_causes_mat_cur += $item->causes_mat_cur_monto_solicitado;
+                    $total_monto_recibido_causes_mat_cur += $item->causes_mat_cur_monto_recibido;
+                    $total_cantidad_solicitada_causes_mat_cur += $item->causes_mat_cur_cantidad_solicitada;
+                    $total_cantidad_recibida_causes_mat_cur += $item->causes_mat_cur_cantidad_recibida;
+
+                    $total_monto_solicitado_no_causes += $item->no_causes_monto_solicitado;
+                    $total_monto_recibido_no_causes += $item->no_causes_monto_recibido;
+                    $total_cantidad_solicitada_no_causes += $item->no_causes_cantidad_solicitada;
+                    $total_cantidad_recibida_no_causes += $item->no_causes_cantidad_recibida;
 
                     if($parametros['agrupado_por'] == "UM"){
                         $sheet->appendRow(array(
-                            $contador_filas,
+                            $contador_filas - 3,
                             $item->clues,
                             $item->tipo,
                             $item->nombre,
@@ -100,52 +159,70 @@ class ReporteFinancieroController extends Controller
                             $item->comprometido,
                             $item->devengado,
                             $item->disponible,
-                            $item->monto_solicitado,
-                            $item->monto_recibido,
-                            $item->porcentaje_monto,
-                            $item->cantidad_solicitada,
-                            $item->cantidad_recibida,
-                            $item->porcentaje_cantidad
+                            $item->causes_mat_cur_monto_solicitado,
+                            $item->causes_mat_cur_monto_recibido,
+                            $item->causes_mat_cur_porcentaje_monto,
+                            $item->causes_mat_cur_cantidad_solicitada,
+                            $item->causes_mat_cur_cantidad_recibida,
+                            $item->causes_mat_cur_porcentaje_cantidad,
+                            $item->no_causes_monto_solicitado,
+                            $item->no_causes_monto_recibido,
+                            $item->no_causes_porcentaje_monto,
+                            $item->no_causes_cantidad_solicitada,
+                            $item->no_causes_cantidad_recibida,
+                            $item->no_causes_porcentaje_cantidad
                         ));                         
                     }
 
                     if($parametros['agrupado_por'] == "P"){
                         $sheet->appendRow(array(
-                            $contador_filas,
+                            $contador_filas - 3,
                             $item->nombre,
                             $item->cantidad_clues,
                             $item->modificado,
                             $item->comprometido,
                             $item->devengado,
                             $item->disponible,
-                            $item->monto_solicitado,
-                            $item->monto_recibido,
-                            $item->porcentaje_monto,
-                            $item->cantidad_solicitada,
-                            $item->cantidad_recibida,
-                            $item->porcentaje_cantidad
+                            $item->causes_mat_cur_monto_solicitado,
+                            $item->causes_mat_cur_monto_recibido,
+                            $item->causes_mat_cur_porcentaje_monto,
+                            $item->causes_mat_cur_cantidad_solicitada,
+                            $item->causes_mat_cur_cantidad_recibida,
+                            $item->causes_mat_cur_porcentaje_cantidad,
+                            $item->no_causes_monto_solicitado,
+                            $item->no_causes_monto_recibido,
+                            $item->no_causes_porcentaje_monto,
+                            $item->no_causes_cantidad_solicitada,
+                            $item->no_causes_cantidad_recibida,
+                            $item->no_causes_porcentaje_cantidad
                         ));                         
                     }
                     if($parametros['agrupado_por'] == "NA"){
                         $sheet->appendRow(array(
-                            $contador_filas,
+                            $contador_filas - 3,
                             $item->nivel_atencion,
                             $item->cantidad_clues,
                             $item->modificado,
                             $item->comprometido,
                             $item->devengado,
                             $item->disponible,
-                            $item->monto_solicitado,
-                            $item->monto_recibido,
-                            $item->porcentaje_monto,
-                            $item->cantidad_solicitada,
-                            $item->cantidad_recibida,
-                            $item->porcentaje_cantidad
+                            $item->causes_mat_cur_monto_solicitado,
+                            $item->causes_mat_cur_monto_recibido,
+                            $item->causes_mat_cur_porcentaje_monto,
+                            $item->causes_mat_cur_cantidad_solicitada,
+                            $item->causes_mat_cur_cantidad_recibida,
+                            $item->causes_mat_cur_porcentaje_cantidad,
+                            $item->no_causes_monto_solicitado,
+                            $item->no_causes_monto_recibido,
+                            $item->no_causes_porcentaje_monto,
+                            $item->no_causes_cantidad_solicitada,
+                            $item->no_causes_cantidad_recibida,
+                            $item->no_causes_porcentaje_cantidad
                         ));                         
                     }
                 }
                 if($parametros['agrupado_por'] == "UM"){
-                    $sheet->cells("A1:N1", function($cells) {
+                    $sheet->cells("A1:T3", function($cells) {
                         $cells->setAlignment('center');
                     });
 
@@ -158,12 +235,20 @@ class ReporteFinancieroController extends Controller
                         $total_comprometido,
                         $total_devengado,
                         $total_disponible,
-                        $total_monto_solicitado,
-                        $total_monto_recibido,
-                        ($total_monto_recibido * 100 / $total_monto_solicitado),
-                        $total_cantidad_solicitada,
-                        $total_cantidad_recibida,
-                        ($total_cantidad_recibida * 100 / $total_cantidad_solicitada)
+                        
+                        $total_monto_solicitado_causes_mat_cur,
+                        $total_monto_recibido_causes_mat_cur,
+                        ($total_monto_recibido_causes_mat_cur * 100 / $total_monto_solicitado_causes_mat_cur),
+                        $total_cantidad_solicitada_causes_mat_cur,
+                        $total_cantidad_recibida_causes_mat_cur,
+                        ($total_cantidad_recibida_causes_mat_cur * 100 / $total_cantidad_solicitada_causes_mat_cur),
+
+                        $total_monto_solicitado_no_causes,
+                        $total_monto_recibido_no_causes,
+                        ($total_monto_recibido_no_causes * 100 / $total_monto_solicitado_no_causes),
+                        $total_cantidad_solicitada_no_causes,
+                        $total_cantidad_recibida_no_causes,
+                        ($total_cantidad_recibida_no_causes * 100 / $total_cantidad_solicitada_no_causes)
                     )); 
 
                     $sheet->setColumnFormat(array(
@@ -171,16 +256,24 @@ class ReporteFinancieroController extends Controller
                         "F2:F".($contador_filas+1) => '"$" #,##0.00_-',
                         "G2:G".($contador_filas+1) => '"$" #,##0.00_-',
                         "H2:H".($contador_filas+1) => '"$" #,##0.00_-',
+                        
                         "I2:I".($contador_filas+1) => '"$" #,##0.00_-',
                         "J2:J".($contador_filas+1) => '"$" #,##0.00_-',
                         "K2:K".($contador_filas+1) => '#,##0.00_- "%"',
                         "L2:L".($contador_filas+1) => '"$" #,##0.00_-',
                         "M2:M".($contador_filas+1) => '"$" #,##0.00_-',
-                        "N2:N".($contador_filas+1) => '#,##0.00_- "%"'
+                        "N2:N".($contador_filas+1) => '#,##0.00_- "%"',
+
+                        "O2:O".($contador_filas+1) => '"$" #,##0.00_-',
+                        "P2:P".($contador_filas+1) => '"$" #,##0.00_-',
+                        "Q2:Q".($contador_filas+1) => '#,##0.00_- "%"',
+                        "R2:R".($contador_filas+1) => '"$" #,##0.00_-',
+                        "S2:S".($contador_filas+1) => '"$" #,##0.00_-',
+                        "T2:T".($contador_filas+1) => '#,##0.00_- "%"'
                     ));
 
-                    $sheet->setBorder("A1:N$contador_filas", 'thin');
-                    $sheet->setBorder("D".($contador_filas+1).":N".($contador_filas+1), 'thin');
+                    $sheet->setBorder("A1:T$contador_filas", 'thin');
+                    $sheet->setBorder("D".($contador_filas+1).":T".($contador_filas+1), 'thin');
                     
                     $sheet->row(($contador_filas+1), function($row) {
                         $row->setBackground('#DDDDDD');
@@ -191,7 +284,7 @@ class ReporteFinancieroController extends Controller
                 }
                 if($parametros['agrupado_por'] != "UM"){
                                       
-                    $sheet->cells("A1:M1", function($cells) {
+                    $sheet->cells("A1:S3", function($cells) {
                         $cells->setAlignment('center');
                     });
                     $sheet->appendRow(array(
@@ -202,12 +295,20 @@ class ReporteFinancieroController extends Controller
                         $total_comprometido,
                         $total_devengado,
                         $total_disponible,
-                        $total_monto_solicitado,
-                        $total_monto_recibido,
-                        ($total_monto_recibido * 100 / $total_monto_solicitado),
-                        $total_cantidad_solicitada,
-                        $total_cantidad_recibida,
-                        ($total_cantidad_recibida * 100 / $total_cantidad_solicitada)
+
+                        $total_monto_solicitado_causes_mat_cur,
+                        $total_monto_recibido_causes_mat_cur,
+                        ($total_monto_recibido_causes_mat_cur * 100 / $total_monto_solicitado_causes_mat_cur),
+                        $total_cantidad_solicitada_causes_mat_cur,
+                        $total_cantidad_recibida_causes_mat_cur,
+                        ($total_cantidad_recibida_causes_mat_cur * 100 / $total_cantidad_solicitada_causes_mat_cur),
+
+                        $total_monto_solicitado_no_causes,
+                        $total_monto_recibido_no_causes,
+                        ($total_monto_recibido_no_causes * 100 / $total_monto_solicitado_no_causes),
+                        $total_cantidad_solicitada_no_causes,
+                        $total_cantidad_recibida_no_causes,
+                        ($total_cantidad_recibida_no_causes * 100 / $total_cantidad_solicitada_no_causes)
                     )); 
 
                     $sheet->setColumnFormat(array(
@@ -220,11 +321,18 @@ class ReporteFinancieroController extends Controller
                         "J2:J".($contador_filas+1) => '#,##0.00_- "%" ',
                         "K2:K".($contador_filas+1) => '"$" #,##0.00_-',
                         "L2:L".($contador_filas+1) => '"$" #,##0.00_-',
-                        "M2:M".($contador_filas+1) => '#,##0.00_- "%" '
+                        "M2:M".($contador_filas+1) => '#,##0.00_- "%" ',
+                        
+                        "N2:N".($contador_filas+1) => '"$" #,##0.00_-',
+                        "O2:O".($contador_filas+1) => '"$" #,##0.00_-',
+                        "P2:P".($contador_filas+1) => '#,##0.00_- "%"',
+                        "Q2:Q".($contador_filas+1) => '"$" #,##0.00_-',
+                        "R2:R".($contador_filas+1) => '"$" #,##0.00_-',
+                        "S2:S".($contador_filas+1) => '#,##0.00_- "%"'
                     ));
 
-                    $sheet->setBorder("A1:M$contador_filas", 'thin'); 
-                    $sheet->setBorder("C".($contador_filas+1).":M".($contador_filas+1), 'thin');  
+                    $sheet->setBorder("A1:S$contador_filas", 'thin'); 
+                    $sheet->setBorder("C".($contador_filas+1).":S".($contador_filas+1), 'thin');  
                     $sheet->row(($contador_filas+1), function($row) {
                         $row->setBackground('#DDDDDD');
                         $row->setFontWeight('bold');
@@ -232,6 +340,8 @@ class ReporteFinancieroController extends Controller
                     });
                     
                 }
+
+                $sheet->freezePane('A4');
             });
          })->export('xls');
     }
@@ -249,28 +359,28 @@ class ReporteFinancieroController extends Controller
         }
 
         if($parametros['agrupado_por'] == "P"){
-            $query .= "proveedores.nombre, COUNT(unidad_medica_presupuesto.clues) as cantidad_clues, ";
+            $query .= "proveedores.nombre, COUNT(DISTINCT unidad_medica_presupuesto.clues) as cantidad_clues, ";
         }
 
         if($parametros['agrupado_por'] == "NA"){
-            $query .= "nivel_atencion.nivel_atencion, COUNT(unidad_medica_presupuesto.clues) as cantidad_clues, ";
+            $query .= "nivel_atencion.nivel_atencion, COUNT(DISTINCT unidad_medica_presupuesto.clues) as cantidad_clues, ";
         }
 
         $subquery_pedidos_fechas = "";
 
         if( isset($parametros['mes_inicio']) && isset($parametros['anio_inicio']) &&
         isset($parametros['mes_fin']) && isset($parametros['anio_fin'])){
-            $subquery_pedidos_fechas =" AND CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) BETWEEN STR_TO_DATE(CONCAT(:pedidos_anio_inicio,'-',LPAD(:pedidos_mes_inicio,2,'00'),'-01'),'%Y-%m-%d') AND STR_TO_DATE(CONCAT(:pedidos_anio_fin,'-',LPAD(:pedidos_mes_fin,2,'00'),'-01'),'%Y-%m-%d')";
+            $subquery_pedidos_fechas =" AND CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) BETWEEN STR_TO_DATE(CONCAT(:pedidos_anio_inicio,'-',LPAD(:pedidos_mes_inicio,2,'00'),'-01'),'%Y-%m-%d') AND STR_TO_DATE(CONCAT(:pedidos_anio_fin,'-',LPAD(:pedidos_mes_fin,2,'00'),'-01'),'%Y-%m-%d')";
             $variables['pedidos_mes_inicio']  = $parametros['mes_inicio'];  
             $variables['pedidos_anio_inicio']  = $parametros['anio_inicio']; 
             $variables['pedidos_mes_fin']  = $parametros['mes_fin'];  
             $variables['pedidos_anio_fin']  = $parametros['anio_fin'];  
         }else if(isset($parametros['mes_inicio']) && isset($parametros['anio_inicio']) && (!isset($parametros['mes_fin']) || !isset($parametros['anio_fin']))){
-            $subquery_pedidos_fechas = " AND CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) >= STR_TO_DATE(CONCAT(:pedidos_anio_inicio,'-',LPAD(:pedidos_mes_inicio,2,'00'),'-01'),'%Y-%m-%d') ";
+            $subquery_pedidos_fechas = " AND CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) >= STR_TO_DATE(CONCAT(:pedidos_anio_inicio,'-',LPAD(:pedidos_mes_inicio,2,'00'),'-01'),'%Y-%m-%d') ";
             $variables['pedidos_mes_inicio']  = $parametros['mes_inicio'];  
             $variables['pedidos_anio_inicio']  = $parametros['anio_inicio']; 
         } else if((!isset($parametros['mes_inicio']) || !isset($parametros['anio_inicio'])) && isset($parametros['mes_fin']) && isset($parametros['anio_fin'])){
-            $subquery_pedidos_fechas = " AND CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) <= STR_TO_DATE(CONCAT(:pedidos_anio_fin,'-',LPAD(:pedidos_mes_fin,2,'00'),'-01'),'%Y-%m-%d') ";
+            $subquery_pedidos_fechas = " AND CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) <= STR_TO_DATE(CONCAT(:pedidos_anio_fin,'-',LPAD(:pedidos_mes_fin,2,'00'),'-01'),'%Y-%m-%d') ";
             $variables['pedidos_mes_fin']  = $parametros['mes_fin'];  
             $variables['pedidos_anio_fin']  = $parametros['anio_fin'];  
         }
@@ -296,13 +406,22 @@ class ReporteFinancieroController extends Controller
 		SUM(material_curacion_disponible) as material_curacion_disponible,
         SUM(causes_disponible + no_causes_disponible + material_curacion_disponible) as disponible,
         
-        IF(pedidos.monto_recibido IS NULL, 0, pedidos.monto_recibido) as monto_recibido,
-        IF(pedidos.monto_solicitado IS NULL, 0, pedidos.monto_solicitado) as monto_solicitado,
-        IF(pedidos.porcentaje_monto  IS NULL, 0, pedidos.porcentaje_monto) as porcentaje_monto,
+        IFNULL((pedidos_causes.monto_recibido + pedidos_mat_cur.monto_recibido ),0) as causes_mat_cur_monto_recibido,
+        IFNULL((pedidos_causes.monto_solicitado + pedidos_mat_cur.monto_solicitado),0) as causes_mat_cur_monto_solicitado,
+        IFNULL(((pedidos_causes.monto_recibido + pedidos_mat_cur.monto_recibido ) * 100 / (pedidos_causes.monto_solicitado + pedidos_mat_cur.monto_solicitado)),0) as causes_mat_cur_porcentaje_monto,
+        
+        IFNULL((pedidos_causes.cantidad_recibida + pedidos_mat_cur.cantidad_recibida),0) as causes_mat_cur_cantidad_recibida,
+        IFNULL((pedidos_causes.cantidad_solicitada + pedidos_mat_cur.cantidad_solicitada),0) as causes_mat_cur_cantidad_solicitada,
+        IFNULL(((pedidos_causes.cantidad_recibida + pedidos_mat_cur.cantidad_recibida ) * 100 / (pedidos_causes.cantidad_solicitada + pedidos_mat_cur.cantidad_solicitada)),0) as causes_mat_cur_porcentaje_cantidad,
 
-        IF(pedidos.cantidad_recibida IS NULL, 0, pedidos.cantidad_recibida) as cantidad_recibida,
-        IF(pedidos.cantidad_solicitada IS NULL, 0, pedidos.cantidad_solicitada) as cantidad_solicitada,
-        IF(pedidos.porcentaje_cantidad  IS NULL, 0, pedidos.porcentaje_cantidad) as porcentaje_cantidad
+
+        IFNULL(pedidos_no_causes.monto_recibido,0)  as no_causes_monto_recibido,
+        IFNULL(pedidos_no_causes.monto_solicitado,0) as no_causes_monto_solicitado,
+        IFNULL(pedidos_no_causes.porcentaje_monto,0) as no_causes_porcentaje_monto,        
+        
+        IFNULL(pedidos_no_causes.cantidad_recibida,0) as no_causes_cantidad_recibida,
+        IFNULL(pedidos_no_causes.cantidad_solicitada,0) as no_causes_cantidad_solicitada,
+        IFNULL(pedidos_no_causes.porcentaje_cantidad,0) as no_causes_porcentaje_cantidad
 	
         FROM unidad_medica_presupuesto  
         
@@ -312,26 +431,73 @@ class ReporteFinancieroController extends Controller
             SELECT tipo, if(tipo = 'HO' OR tipo = 'HBC', '2','1') as nivel_atencion from unidades_medicas WHERE activa = 1 group by tipo
         ) AS nivel_atencion ON nivel_atencion.tipo = unidades_medicas.tipo
         
-        LEFT JOIN(
-            SELECT 
-            clues,
-            SUM(total_monto_solicitado) as monto_solicitado,
-            SUM(total_monto_recibido) as monto_recibido,
-            (SUM(total_monto_recibido) * 100 / SUM(total_monto_solicitado)) as porcentaje_monto,
+        LEFT JOIN (
+            SELECT
+            pedidos.clues,
+            SUM(IFNULL(pedidos_insumos.monto_solicitado,0)) as monto_solicitado,
+            SUM(IFNULL(pedidos_insumos.monto_recibido,0)) as monto_recibido,            
+            SUM(IFNULL(pedidos_insumos.cantidad_solicitada,0)) as cantidad_solicitada,
+            SUM(IFNULL(pedidos_insumos.cantidad_recibida,0)) as cantidad_recibida,
+            CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) as fecha
+            FROM pedidos_insumos
+            LEFT JOIN pedidos ON pedidos.id = pedidos_insumos.pedido_id
+            LEFT JOIN insumos_medicos ON pedidos_insumos.insumo_medico_clave = insumos_medicos.clave 
             
-            SUM(total_cantidad_solicitada) as cantidad_solicitada,
-            SUM(total_cantidad_recibida) as cantidad_recibida,
-            (SUM( total_cantidad_recibida) * 100 / SUM(total_cantidad_solicitada)) as porcentaje_cantidad,
-            CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) as fecha
-            FROM sial_remoto.pedidos
+            WHERE insumos_medicos.tipo = 'ME' AND insumos_medicos.es_causes = 1 
+            AND pedidos.status != 'BR'
             
-            WHERE 
-            status != 'BR' 
             ".$subquery_pedidos_fechas."
-            
-            GROUP BY clues
-        ) AS pedidos ON unidades_medicas.clues =  pedidos.clues 
 
+
+            GROUP BY pedidos.clues
+        ) AS pedidos_causes ON unidades_medicas.clues =  pedidos_causes.clues 
+
+
+        LEFT JOIN (
+            SELECT
+            pedidos.clues,
+            SUM(IFNULL(pedidos_insumos.monto_solicitado,0)) as monto_solicitado,
+            SUM(IFNULL(pedidos_insumos.monto_recibido,0)) as monto_recibido,
+            (SUM(IFNULL(pedidos_insumos.monto_recibido,0)) * 100 / SUM(IFNULL(pedidos_insumos.monto_solicitado,0))) as porcentaje_monto,
+            SUM(IFNULL(pedidos_insumos.cantidad_solicitada,0)) as cantidad_solicitada,
+            SUM(IFNULL(pedidos_insumos.cantidad_recibida,0)) as cantidad_recibida,
+            (SUM( IFNULL(pedidos_insumos.cantidad_recibida,0)) * 100 / SUM(IFNULL(pedidos_insumos.cantidad_solicitada,0))) as porcentaje_cantidad,
+            CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) as fecha
+            FROM pedidos_insumos
+            LEFT JOIN pedidos ON pedidos.id = pedidos_insumos.pedido_id
+            LEFT JOIN insumos_medicos ON pedidos_insumos.insumo_medico_clave = insumos_medicos.clave 
+            
+            WHERE insumos_medicos.tipo = 'ME' AND insumos_medicos.es_causes = 0 
+            AND pedidos.status != 'BR'
+            
+            ".$subquery_pedidos_fechas."
+
+
+            GROUP BY pedidos.clues
+        ) AS pedidos_no_causes ON unidades_medicas.clues =  pedidos_no_causes.clues 
+        
+        
+        
+        LEFT JOIN (
+            SELECT
+            pedidos.clues,
+            SUM(IFNULL(pedidos_insumos.monto_solicitado,0)) * 1.16 as monto_solicitado,
+            SUM(IFNULL(pedidos_insumos.monto_recibido,0)) * 1.16 as monto_recibido,            
+            SUM(IFNULL(pedidos_insumos.cantidad_solicitada,0)) as cantidad_solicitada,
+            SUM(IFNULL(pedidos_insumos.cantidad_recibida,0)) as cantidad_recibida,
+            CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) as fecha
+            FROM pedidos_insumos
+            LEFT JOIN pedidos ON pedidos.id = pedidos_insumos.pedido_id
+            LEFT JOIN insumos_medicos ON pedidos_insumos.insumo_medico_clave = insumos_medicos.clave 
+            
+            WHERE insumos_medicos.tipo = 'MC' 
+            AND pedidos.status != 'BR'
+            
+            ".$subquery_pedidos_fechas."
+
+
+            GROUP BY pedidos.clues
+        ) AS pedidos_mat_cur ON unidades_medicas.clues =  pedidos_mat_cur.clues 
 
         WHERE unidades_medicas.activa = 1
         ";
