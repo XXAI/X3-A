@@ -249,28 +249,28 @@ class ReporteFinancieroController extends Controller
         }
 
         if($parametros['agrupado_por'] == "P"){
-            $query .= "proveedores.nombre, COUNT(unidad_medica_presupuesto.clues) as cantidad_clues, ";
+            $query .= "proveedores.nombre, COUNT(DISTINCT unidad_medica_presupuesto.clues) as cantidad_clues, ";
         }
 
         if($parametros['agrupado_por'] == "NA"){
-            $query .= "nivel_atencion.nivel_atencion, COUNT(unidad_medica_presupuesto.clues) as cantidad_clues, ";
+            $query .= "nivel_atencion.nivel_atencion, COUNT(DISTINCT unidad_medica_presupuesto.clues) as cantidad_clues, ";
         }
 
         $subquery_pedidos_fechas = "";
 
         if( isset($parametros['mes_inicio']) && isset($parametros['anio_inicio']) &&
         isset($parametros['mes_fin']) && isset($parametros['anio_fin'])){
-            $subquery_pedidos_fechas =" AND CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) BETWEEN STR_TO_DATE(CONCAT(:pedidos_anio_inicio,'-',LPAD(:pedidos_mes_inicio,2,'00'),'-01'),'%Y-%m-%d') AND STR_TO_DATE(CONCAT(:pedidos_anio_fin,'-',LPAD(:pedidos_mes_fin,2,'00'),'-01'),'%Y-%m-%d')";
+            $subquery_pedidos_fechas =" AND CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) BETWEEN STR_TO_DATE(CONCAT(:pedidos_anio_inicio,'-',LPAD(:pedidos_mes_inicio,2,'00'),'-01'),'%Y-%m-%d') AND STR_TO_DATE(CONCAT(:pedidos_anio_fin,'-',LPAD(:pedidos_mes_fin,2,'00'),'-01'),'%Y-%m-%d')";
             $variables['pedidos_mes_inicio']  = $parametros['mes_inicio'];  
             $variables['pedidos_anio_inicio']  = $parametros['anio_inicio']; 
             $variables['pedidos_mes_fin']  = $parametros['mes_fin'];  
             $variables['pedidos_anio_fin']  = $parametros['anio_fin'];  
         }else if(isset($parametros['mes_inicio']) && isset($parametros['anio_inicio']) && (!isset($parametros['mes_fin']) || !isset($parametros['anio_fin']))){
-            $subquery_pedidos_fechas = " AND CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) >= STR_TO_DATE(CONCAT(:pedidos_anio_inicio,'-',LPAD(:pedidos_mes_inicio,2,'00'),'-01'),'%Y-%m-%d') ";
+            $subquery_pedidos_fechas = " AND CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) >= STR_TO_DATE(CONCAT(:pedidos_anio_inicio,'-',LPAD(:pedidos_mes_inicio,2,'00'),'-01'),'%Y-%m-%d') ";
             $variables['pedidos_mes_inicio']  = $parametros['mes_inicio'];  
             $variables['pedidos_anio_inicio']  = $parametros['anio_inicio']; 
         } else if((!isset($parametros['mes_inicio']) || !isset($parametros['anio_inicio'])) && isset($parametros['mes_fin']) && isset($parametros['anio_fin'])){
-            $subquery_pedidos_fechas = " AND CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) <= STR_TO_DATE(CONCAT(:pedidos_anio_fin,'-',LPAD(:pedidos_mes_fin,2,'00'),'-01'),'%Y-%m-%d') ";
+            $subquery_pedidos_fechas = " AND CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) <= STR_TO_DATE(CONCAT(:pedidos_anio_fin,'-',LPAD(:pedidos_mes_fin,2,'00'),'-01'),'%Y-%m-%d') ";
             $variables['pedidos_mes_fin']  = $parametros['mes_fin'];  
             $variables['pedidos_anio_fin']  = $parametros['anio_fin'];  
         }
@@ -296,13 +296,22 @@ class ReporteFinancieroController extends Controller
 		SUM(material_curacion_disponible) as material_curacion_disponible,
         SUM(causes_disponible + no_causes_disponible + material_curacion_disponible) as disponible,
         
-        IF(pedidos.monto_recibido IS NULL, 0, pedidos.monto_recibido) as monto_recibido,
-        IF(pedidos.monto_solicitado IS NULL, 0, pedidos.monto_solicitado) as monto_solicitado,
-        IF(pedidos.porcentaje_monto  IS NULL, 0, pedidos.porcentaje_monto) as porcentaje_monto,
+        IFNULL((pedidos_causes.monto_recibido + pedidos_mat_cur.monto_recibido ),0) as causes_mat_cur_monto_recibido,
+        IFNULL((pedidos_causes.monto_solicitado + pedidos_mat_cur.monto_solicitado),0) as causes_mat_cur_monto_solicitado,
+        IFNULL(((pedidos_causes.monto_recibido + pedidos_mat_cur.monto_recibido ) * 100 / (pedidos_causes.monto_solicitado + pedidos_mat_cur.monto_solicitado)),0) as causes_mat_cur_porcentaje_monto,
+        
+        IFNULL((pedidos_causes.cantidad_recibida + pedidos_mat_cur.cantidad_recibida),0) as causes_mat_cur_cantidad_recibida,
+        IFNULL((pedidos_causes.cantidad_solicitada + pedidos_mat_cur.cantidad_solicitada),0) as causes_mat_cur_cantidad_solicitada,
+        IFNULL(((pedidos_causes.cantidad_recibida + pedidos_mat_cur.cantidad_recibida ) * 100 / (pedidos_causes.cantidad_solicitada + pedidos_mat_cur.cantidad_solicitada)),0) as causes_mat_cur_porcentaje_cantidad,
 
-        IF(pedidos.cantidad_recibida IS NULL, 0, pedidos.cantidad_recibida) as cantidad_recibida,
-        IF(pedidos.cantidad_solicitada IS NULL, 0, pedidos.cantidad_solicitada) as cantidad_solicitada,
-        IF(pedidos.porcentaje_cantidad  IS NULL, 0, pedidos.porcentaje_cantidad) as porcentaje_cantidad
+
+        IFNULL(pedidos_no_causes.monto_recibido,0)  as no_causes_monto_recibido,
+        IFNULL(pedidos_no_causes.monto_solicitado,0) as no_causes_monto_solicitado,
+        IFNULL(pedidos_no_causes.porcentaje_monto,0) as no_causes_porcentaje_monto,        
+        
+        IFNULL(pedidos_no_causes.cantidad_recibida,0) as no_causes_cantidad_recibida,
+        IFNULL(pedidos_no_causes.cantidad_solicitada,0) as no_causes_cantidad_solicitada,
+        IFNULL(pedidos_no_causes.porcentaje_cantidad,0) as no_causes_porcentaje_cantidad
 	
         FROM unidad_medica_presupuesto  
         
@@ -312,26 +321,73 @@ class ReporteFinancieroController extends Controller
             SELECT tipo, if(tipo = 'HO' OR tipo = 'HBC', '2','1') as nivel_atencion from unidades_medicas WHERE activa = 1 group by tipo
         ) AS nivel_atencion ON nivel_atencion.tipo = unidades_medicas.tipo
         
-        LEFT JOIN(
-            SELECT 
-            clues,
-            SUM(total_monto_solicitado) as monto_solicitado,
-            SUM(total_monto_recibido) as monto_recibido,
-            (SUM(total_monto_recibido) * 100 / SUM(total_monto_solicitado)) as porcentaje_monto,
+        LEFT JOIN (
+            SELECT
+            pedidos.clues,
+            SUM(IFNULL(pedidos_insumos.monto_solicitado,0)) as monto_solicitado,
+            SUM(IFNULL(pedidos_insumos.monto_recibido,0)) as monto_recibido,            
+            SUM(IFNULL(pedidos_insumos.cantidad_solicitada,0)) as cantidad_solicitada,
+            SUM(IFNULL(pedidos_insumos.cantidad_recibida,0)) as cantidad_recibida,
+            CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) as fecha
+            FROM pedidos_insumos
+            LEFT JOIN pedidos ON pedidos.id = pedidos_insumos.pedido_id
+            LEFT JOIN insumos_medicos ON pedidos_insumos.insumo_medico_clave = insumos_medicos.clave 
             
-            SUM(total_cantidad_solicitada) as cantidad_solicitada,
-            SUM(total_cantidad_recibida) as cantidad_recibida,
-            (SUM( total_cantidad_recibida) * 100 / SUM(total_cantidad_solicitada)) as porcentaje_cantidad,
-            CAST(DATE_FORMAT(fecha ,'%Y-%m-01') as DATE) as fecha
-            FROM sial_remoto.pedidos
+            WHERE insumos_medicos.tipo = 'ME' AND insumos_medicos.es_causes = 1 
+            AND pedidos.status != 'BR'
             
-            WHERE 
-            status != 'BR' 
             ".$subquery_pedidos_fechas."
-            
-            GROUP BY clues
-        ) AS pedidos ON unidades_medicas.clues =  pedidos.clues 
 
+
+            GROUP BY pedidos.clues
+        ) AS pedidos_causes ON unidades_medicas.clues =  pedidos_causes.clues 
+
+
+        LEFT JOIN (
+            SELECT
+            pedidos.clues,
+            SUM(IFNULL(pedidos_insumos.monto_solicitado,0)) as monto_solicitado,
+            SUM(IFNULL(pedidos_insumos.monto_recibido,0)) as monto_recibido,
+            (SUM(IFNULL(pedidos_insumos.monto_recibido,0)) * 100 / SUM(IFNULL(pedidos_insumos.monto_solicitado,0))) as porcentaje_monto,
+            SUM(IFNULL(pedidos_insumos.cantidad_solicitada,0)) as cantidad_solicitada,
+            SUM(IFNULL(pedidos_insumos.cantidad_recibida,0)) as cantidad_recibida,
+            (SUM( IFNULL(pedidos_insumos.cantidad_recibida,0)) * 100 / SUM(IFNULL(pedidos_insumos.cantidad_solicitada,0))) as porcentaje_cantidad,
+            CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) as fecha
+            FROM pedidos_insumos
+            LEFT JOIN pedidos ON pedidos.id = pedidos_insumos.pedido_id
+            LEFT JOIN insumos_medicos ON pedidos_insumos.insumo_medico_clave = insumos_medicos.clave 
+            
+            WHERE insumos_medicos.tipo = 'ME' AND insumos_medicos.es_causes = 0 
+            AND pedidos.status != 'BR'
+            
+            ".$subquery_pedidos_fechas."
+
+
+            GROUP BY pedidos.clues
+        ) AS pedidos_no_causes ON unidades_medicas.clues =  pedidos_no_causes.clues 
+        
+        
+        
+        LEFT JOIN (
+            SELECT
+            pedidos.clues,
+            SUM(IFNULL(pedidos_insumos.monto_solicitado,0)) * 1.16 as monto_solicitado,
+            SUM(IFNULL(pedidos_insumos.monto_recibido,0)) * 1.16 as monto_recibido,            
+            SUM(IFNULL(pedidos_insumos.cantidad_solicitada,0)) as cantidad_solicitada,
+            SUM(IFNULL(pedidos_insumos.cantidad_recibida,0)) as cantidad_recibida,
+            CAST(DATE_FORMAT(pedidos.fecha ,'%Y-%m-01') as DATE) as fecha
+            FROM pedidos_insumos
+            LEFT JOIN pedidos ON pedidos.id = pedidos_insumos.pedido_id
+            LEFT JOIN insumos_medicos ON pedidos_insumos.insumo_medico_clave = insumos_medicos.clave 
+            
+            WHERE insumos_medicos.tipo = 'MC' 
+            AND pedidos.status != 'BR'
+            
+            ".$subquery_pedidos_fechas."
+
+
+            GROUP BY pedidos.clues
+        ) AS pedidos_mat_cur ON unidades_medicas.clues =  pedidos_mat_cur.clues 
 
         WHERE unidades_medicas.activa = 1
         ";
