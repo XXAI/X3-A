@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -282,6 +281,7 @@ public function excel(Request $request)
             Excel::create('Inventario_'.$parametros['clues'].'_'.$parametros['almacen'].'_'.date('d-m-Y H-i-s'), function($excel)use($parametros){
  
              //$excel->sheet('Reporte de almacenIventari', function($sheet) use($items)
+            ob_end_clean(); ob_start();
             $excel->sheet('Insumos Medicos', function($sheet)use($parametros)
             {
                 //$sheet->setAutoSize(true);
