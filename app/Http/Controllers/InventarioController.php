@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -279,10 +278,13 @@ public function excel(Request $request)
     {
         $parametros = Input::only('q','page','per_page','clues','clave_insumo','almacen','tipo','es_causes','buscar_en','seleccionar');
 
-            Excel::create('Inventario_'.$parametros['clues'].'_'.$parametros['almacen'].'_'.date('d-m-Y H-i-s'), function($excel)use($parametros){
- 
+
+        Excel::create('Inventario_'.$parametros['clues'].'_'.$parametros['almacen'].'_'.date('d-m-Y H-i-s'), function($excel)use($parametros){
+            
+
              //$excel->sheet('Reporte de almacenIventari', function($sheet) use($items)
-            $excel->sheet('Insumos Medicos', function($sheet)use($parametros)
+            ob_end_clean(); ob_start();
+            /*$excel->sheet('Insumos Medicos', function($sheet)use($parametros)
             {
                 //$sheet->setAutoSize(true);
                 $items = $this->getItemsInventario($parametros);
@@ -389,6 +391,122 @@ public function excel(Request $request)
                     )); 
                 } // FIN FOREACH ITEMS
  
+            });*/
+            $excel->sheet('Insumos Medicos Detalles', function($sheet)use($parametros)
+            {
+                //$sheet->setAutoSize(true);
+                $items = $this->getItemsInventarioDetalles($parametros);
+
+                $claves       = "";
+                $seleccionar  = "";
+                $tipo_insumos = "";
+                $clave        = "";
+
+                if($parametros['buscar_en'] == "TODAS_LAS_CLAVES")
+                {
+                    $claves = "TODAS LAS CLAVES";
+                }else{
+                        $claves = "MIS CLAVES";
+                     }
+
+
+                if($parametros['seleccionar'] == "TODO")
+                {
+                    $seleccionar = "TODOS INSUMOS";
+                }  
+                if($parametros['seleccionar'] == "EXISTENTE")
+                {
+                    $seleccionar = "INSUMOS EXISTENTES";
+                } 
+                if($parametros['seleccionar'] == "NO_EXISTENTE")
+                {
+                    $seleccionar = "INSUMOS AGOTADOS";
+                }  
+
+                if($parametros['tipo'] == "TODO")
+                {
+                    $tipo_insumos = "TODOS";
+                }
+                if($parametros['tipo'] == "CAUSES")
+                {
+                    $tipo_insumos = "MED. CAUSES";
+                }
+                if($parametros['tipo'] == "NO_CAUSES")
+                {
+                    $tipo_insumos = "MED. NO CAUSES";
+                } 
+                if($parametros['tipo'] == "CONTROLADO")
+                {
+                    $tipo_insumos = "MED. CONTROLADO";
+                } 
+
+                 
+                
+
+                
+               
+                $sheet->row(2, array('','INVENTARIO DE ALMACÉN '.$parametros['almacen'].' EN CLUES '.$parametros['clues'].' AL '.date('d-m-Y H:i:s'),'','','','','','','','','',''));
+                $sheet->row(2, function($row) {
+                                                    $row->setBackground('#DDDDDD');
+                                                    $row->setFontWeight('bold');
+                                                    $row->setFontSize(14);
+                                              });
+
+                $sheet->row(4, array('','BUSQUEDA EN : '.$claves.' | SELECCIONAR : '.$seleccionar.' | TIPO INSUMOS : '.$tipo_insumos.' | CLAVE : '.$parametros['clave_insumo']));
+
+                $sheet->row(4, function($row) {
+                                                    $row->setBackground('#DDDDDD');
+                                                    $row->setFontWeight('bold');
+                                                    $row->setFontSize(12);
+                                              });
+
+                $sheet->row(6, array('Clave','Descripción', 'C.P.D','C.P.S','C.P.M', 'Lote', 'Caducidad','Existencia','Existencia Unidosis', 'Precio Unitario', 'Precio Total'));
+                $sheet->row(6, function($row) {
+                                                    $row->setBackground('#DDDDDD');
+                                                    $row->setFontWeight('bold');
+                                                    $row->setFontSize(12);
+                                              });
+                $sheet->cells("A6:M6", function($cells) {
+                                                            $cells->setAlignment('center');
+                                                        });
+
+                 $sheet->setSize('A2', 25, 18);
+                 $sheet->setSize('B2', 70, 18);
+                 $sheet->setSize('F2', 20, 18);
+                 $sheet->setSize('G2', 30, 18);
+
+                 $sheet->setSize('A4', 25, 18);
+                 $sheet->setSize('B4', 70, 18);
+                 $sheet->setSize('F4', 20, 18);
+                 $sheet->setSize('G4', 30, 18);
+                 
+                 $sheet->setSize('A6', 25, 18);
+                 $sheet->setSize('B6', 70, 18);
+                 $sheet->setSize('F6', 10, 18);
+                 $sheet->setSize('G6', 15, 18);
+                 $sheet->setSize('H6', 20, 18);
+                 $sheet->setSize('I6', 20, 18);
+                 $sheet->setSize('J6', 20, 18);
+                 $sheet->setSize('K6', 20, 18);
+
+                foreach($items as $item)
+                {
+                    $sheet->appendRow(array(
+                        
+                        $item->clave_insumo_medico,
+                        $item->descripcion,
+                        "--",
+                        "--",
+                        "--",                        
+                        $item->lote,
+                        $item->fecha_caducidad,
+                        $item->existencia,
+                        $item->existencia_unidosis,
+                        $item->precio_unitario,
+                        $item->precio_total
+                    )); 
+                } // FIN FOREACH ITEMS
+ 
             });
         })->export('xls');
     }
@@ -473,7 +591,6 @@ public function getItemsInventario($parametros)
             }
 
             $claves = $claves->get();
-
             foreach($claves as $clave)
             {
                 $existencia = 0; $existencia_unidosis = 0;
@@ -496,6 +613,7 @@ public function getItemsInventario($parametros)
                 array_push($data,$clave);
             }
 
+            //return $data;
             $data_existente    = array();
             $data_no_existente = array();
 
@@ -521,6 +639,167 @@ public function getItemsInventario($parametros)
             }
 
             return $data;
+    }
+
+    public function getItemsInventarioDetalles($parametros)
+    {
+        
+
+        if(!$parametros['almacen']){
+            return Response::json(array("status" => 404,"messages" => "Debe especificar un almacen."), 200);
+        }     
+
+        $data = array();
+        $claves = NULL;
+
+        $almacen_id = $parametros['almacen'];
+
+        $almacen = Almacen::find($almacen_id);
+        $clues   = $almacen->clues;
+
+            if($parametros['buscar_en'] == "MIS_CLAVES")
+            {
+                $claves = DB::table("clues_claves AS cc")->leftJoin('insumos_medicos AS im', 'im.clave', '=', 'cc.clave_insumo_medico')
+                              ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'cc.clave_insumo_medico')
+                              ->select('cc.clave_insumo_medico','im.clave','im.descripcion','im.tipo','im.es_causes','im.es_unidosis')
+                              ->where('clues',$clues);
+
+                if($parametros['clave_insumo'] != "")
+                {
+                   // $claves = $claves->where('cc.clave_insumo_medico',$parametros['clave_insumo']);
+                   $claves = $claves->where('im.descripcion','LIKE',"%".$parametros['clave_insumo']."%");
+                                                
+                }
+                
+            }
+            if($parametros['buscar_en'] == "TODAS_LAS_CLAVES")
+            {
+                $claves = DB::table('insumos_medicos AS im')
+                              ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'im.clave')
+                              ->select('im.clave AS clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','im.es_unidosis');
+
+                if($parametros['clave_insumo'] != "")
+                {
+                   // $claves = $claves->where('im.clave',$parametros['clave_insumo']);
+                   $claves = $claves->where('im.descripcion','LIKE',"%".$parametros['clave_insumo']."%");
+                }
+
+            }
+
+
+            if($parametros['tipo'] == "TODO")
+            {
+            }else{
+                    if($parametros['tipo'] == "CAUSES")
+                        {
+                            $claves = $claves->where('im.tipo','ME')->where('es_causes',1);
+                        }
+                    if($parametros['tipo'] == "NO_CAUSES")
+                        {
+                            $claves = $claves->where('im.tipo','ME')->where('es_causes',0);
+                        }
+                    if($parametros['tipo'] == "MC")
+                        {
+                            $claves = $claves->where('im.tipo','MC');
+                        }
+                    if($parametros['tipo'] == "CONTROLADO")
+                        {
+                            $claves = $claves->where('im.tipo','ME')->where('m.es_controlado',1);
+                        }
+                  }
+
+
+            if($parametros['clave_insumo'] != "")
+            {
+                /*
+                $claves = $claves->where(function($query) use ($parametros) {
+                                                $query->where('im.descripcion','LIKE',"%".$parametros['clave_insumo']."%")
+                                                ->orWhere('im.clave','LIKE',"%".$parametros['clave_insumo']."%");
+                                                });
+                                                */
+            }
+
+            $claves = $claves->get();
+            $data_completo = array();
+            foreach($claves as $clave)
+            {
+                $existencia = 0; $existencia_unidosis = 0;
+                $updated_at = NULL;
+                $stocks = Stock::with("movimientoInsumo")->where('almacen_id',$almacen_id)->where('clave_insumo_medico',$clave->clave_insumo_medico)->get();
+
+                $contador = 0;
+                if($stocks)
+                {
+                    foreach ($stocks as $key => $stock) 
+                    {
+
+                        //echo $stock->existencia."--";
+                        $count = count($data_completo);
+                        $data_completo[$count]['clave_insumo_medico'] = $clave->clave_insumo_medico;
+                        $data_completo[$count]['descripcion'] = $clave->descripcion;
+                        $data_completo[$count]['es_causes'] = $clave->es_causes;
+                        $data_completo[$count]['es_unidosis'] = $clave->es_unidosis;
+                        $data_completo[$count]['tipo'] = $clave->tipo;
+                        $data_completo[$count]['existencia'] = $stock->existencia;
+                        $data_completo[$count]['existencia_unidosis'] = $stock->existencia_unidosis;
+                        $data_completo[$count]['lote'] = $stock->lote;
+                        $data_completo[$count]['fecha_caducidad'] = $stock->fecha_caducidad;
+                        $data_completo[$count]['precio_unitario'] = $stock->movimientoinsumo->precio_unitario;
+                        $data_completo[$count]['precio_total'] = ($stock->existencia_unidosis * $stock->movimientoinsumo->precio_unitario);
+                       
+                        //$updated_at           = $stock->updated_at;
+                        $contador ++;
+                        
+                    }
+                }
+                if($contador == 0)
+                {
+                     $count = count($data_completo);
+                    $data_completo[$count]['clave_insumo_medico'] = $clave->clave_insumo_medico;
+                    $data_completo[$count]['descripcion'] = $clave->descripcion;
+                    $data_completo[$count]['es_causes'] = $clave->es_causes;
+                    $data_completo[$count]['es_unidosis'] = $clave->es_unidosis;
+                    $data_completo[$count]['tipo'] = $clave->tipo;
+                    $data_completo[$count]['existencia'] = 0;
+                    $data_completo[$count]['existencia_unidosis'] = 0;
+                    $data_completo[$count]['lote'] = "";
+                    $data_completo[$count]['fecha_caducidad'] = "";
+                    $data_completo[$count]['precio_unitario'] = 0;
+                    $data_completo[$count]['precio_total'] = 0;
+                        
+                }
+                /*$clave->existencia          = property_exists($clave, "existencia") ? $clave->existencia : $existencia;
+                $clave->existencia_unidosis = property_exists($clave, "existencia_unidosis") ? $clave->existencia_unidosis : $existencia_unidosis;
+                $clave->updated_at          = property_exists($clave, "updated_at") ? $clave->updated_at : $updated_at;
+                array_push($data,$clave);*/
+            }
+
+            //return $data;
+            $data_existente    = array();
+            $data_no_existente = array();
+
+            foreach ($data_completo as $key => $clave) 
+            {
+                $clave = (object) ($clave);
+
+                    if($clave->existencia > 0)
+                    {
+                        array_push($data_existente,$clave);
+                    }else{
+                            array_push($data_no_existente,$clave);
+                         }
+            }
+
+            if($parametros['seleccionar'] == "EXISTENTE")
+            {
+                $data_completo = $data_existente;
+            }
+            if($parametros['seleccionar'] == "NO_EXISTENTE")
+            {
+                $data_completo = $data_no_existente;
+            }
+
+            return $data_completo;
     }
             
  ///****************************************************************************************************************************************
