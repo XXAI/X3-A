@@ -117,7 +117,7 @@ class MovimientoController extends Controller
             $movimiento_response = Movimiento::with('movimientoMetadato','movimientoUsuario','movimientoReceta')
                                              ->where('id',$mov->id)->first();
 
-            $cantidad_claves  = MovimientoInsumos::where('movimiento_id',$movimiento_response->id)->groupBy('clave_insumo_medico')->count();
+            $cantidad_claves  = MovimientoInsumos::where('movimiento_id',$movimiento_response->id)->distinct('clave_insumo_medico')->count();
             $cantidad_insumos = DB::table('movimiento_insumos')
                                     ->where('movimiento_id', '=', $movimiento_response->id)
                                     ->where('movimiento_insumos.deleted_at',NULL)->sum('cantidad');
