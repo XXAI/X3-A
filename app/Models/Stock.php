@@ -25,6 +25,10 @@ class Stock extends BaseModel{
     public function marca(){
         return $this->belongsTo('App\Models\Marca','marca_id','id'); 
     }
+
+    public function movimientoInsumo(){
+        return $this->belongsTo('App\Models\MovimientoInsumos','id','stock_id'); 
+    }
     
    /* public function roles(){
       return $this->belongsToMany('App\Models\Rol', 'permiso_rol', 'permiso_id', 'rol_id');
