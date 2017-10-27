@@ -856,7 +856,7 @@ class MovimientoController extends Controller
                                 'receta.folio'          => 'required|string',
                                 'receta.tipo_receta_id'    => 'required|integer',
                                 'receta.fecha_receta'   => 'required',
-                                'receta.personal_clues_id'         => 'required|string',
+                                'receta.doctor'         => 'required|string',
                                 'receta.paciente'       => 'required|string',
                                 'receta.diagnostico'    => 'required|string'
                             ];
@@ -1734,9 +1734,23 @@ class MovimientoController extends Controller
             if(property_exists($datos,"receta"))
             {
 
-                
-                $receta->personal_clues_id  = $datos->receta['personal_clues_id'];
-                       
+                if($datos->receta['personal_clues_id'] == NULL)
+                {
+                    $almacen_temp = Almacen::find($movimiento_salida_receta->almacen_id)->first();
+                    $clues_temp   = $almacen_temp->clues;
+
+                    $personal_clues = new PersonalClues;
+                    $personal_clues->clues            = $clues_temp;
+                    $personal_clues->tipo_personal_id = 1;
+                    $personal_clues->nombre           = $datos->receta['doctor'];
+                    $personal_clues->save();
+
+                    $receta->personal_clues_id  = $personal_clues->id;
+                    $receta->doctor             = $datos->receta['doctor'];
+                }else{
+                        $receta->personal_clues_id  = $datos->receta['personal_clues_id'];
+                        $receta->doctor             = $datos->receta['doctor'];
+                     }
 
                 $receta->movimiento_id      = $movimiento_salida_receta->id;
                 $receta->folio              = $datos->receta['folio'];

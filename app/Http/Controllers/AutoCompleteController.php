@@ -57,23 +57,6 @@ class AutoCompleteController extends Controller
         return Response::json([ 'data' => $data],200);
     }
 
-
-     public function articulos()
-    {
-        $parametros = Input::only('term', 'clues', 'almacen');
-        
-        $data =  Articulos::with("Categoria", "Padre", "Hijos", "Inventario")        
-                       
-        ->where(function($query) use ($parametros) {
-            $query->where('articulos.descripcion','LIKE',"%".$parametros['term']."%")
-            ->orWhere('articulos.nombre','LIKE',"%".$parametros['term']."%");
-        });
-        
-        $data = $data->get();
-
-        return Response::json([ 'data' => $data],200);
-    }
-
     /**
      * Display a listing of the resource.
      *
@@ -110,53 +93,6 @@ class AutoCompleteController extends Controller
         ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'im.clave')
         ->leftJoin('unidades_medida AS um', 'um.id', '=', 'm.unidad_medida_id')
         ->leftJoin('presentaciones_medicamentos AS pm', 'pm.id', '=', 'm.presentacion_id')
-        ->where('im.deleted_at',NULL)
-        ->where(function($query) use ($parametros) {
-            $query->where('im.clave','LIKE',"%".$parametros['term']."%")
-            ->orWhere('g.nombre','LIKE',"%".$parametros['term']."%")
-            ->orWhere('im.descripcion','LIKE',"%".$parametros['term']."%");
-        })->orderBy('im.descripcion', 'asc');
-        
-        
-        $data = $data1->union($data2);
-        $data = $data->groupBy("clave")->get();
-
-        return Response::json([ 'data' => $data],200);
-    }    
-
-    public function insumosLaboratorioClinico()
-    {
-        $parametros = Input::only('term', 'clues', 'almacen');
-
-        // $CLAVES = CluesClaves::where('clues',$clues)->get("clave");
-///////// agregar abajo de los where para limitar a las claves de la unidad
-        // ->whereIn('im.clave',$CLAVES)
-        
-        $data1 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo","g.nombre",DB::raw("um.nombre AS unidad_medida"), "sl.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"),"ps.nombre AS presentacion_nombre")
-        ->leftJoin('stock AS s', 's.clave_insumo_medico', '=', 'im.clave')
-        ->leftJoin('genericos AS g', 'g.id', '=', 'im.generico_id')
-        ->leftJoin('sustancias_laboratorio AS sl', 'sl.insumo_medico_clave', '=', 'im.clave')
-        ->leftJoin('unidades_medida AS um', 'um.id', '=', 'sl.unidad_medida_id')
-        ->leftJoin('presentaciones_sustancias AS ps', 'ps.id', '=', 'sl.presentacion_id')
-        ->where('almacen_id', $parametros['almacen'])
-        ->where('im.tipo', 'LC')
-        ->where('im.deleted_at',NULL)
-        ->where(function($query) use ($parametros) {
-            $query->where('im.clave','LIKE',"%".$parametros['term']."%")
-            ->orWhere('g.nombre','LIKE',"%".$parametros['term']."%")
-            ->orWhere('im.descripcion','LIKE',"%".$parametros['term']."%")
-            ->orWhere('s.codigo_barras','LIKE',"%".$parametros['term']."%");
-        })->orderBy('im.descripcion', 'asc');
-        
-
-        $parametros = Input::only('term', 'clues', 'almacen');
-        
-        $data2 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo", "g.nombre",DB::raw("um.nombre AS unidad_medida"), "sl.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"),"ps.nombre AS presentacion_nombre")
-        ->leftJoin('genericos AS g', 'g.id', '=', 'im.generico_id')
-        ->leftJoin('sustancias_laboratorio AS sl', 'sl.insumo_medico_clave', '=', 'im.clave')
-        ->leftJoin('unidades_medida AS um', 'um.id', '=', 'sl.unidad_medida_id')
-        ->leftJoin('presentaciones_sustancias AS ps', 'ps.id', '=', 'sl.presentacion_id')
-        ->where('im.tipo', 'LC')
         ->where('im.deleted_at',NULL)
         ->where(function($query) use ($parametros) {
             $query->where('im.clave','LIKE',"%".$parametros['term']."%")

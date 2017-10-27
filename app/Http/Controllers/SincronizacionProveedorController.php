@@ -105,35 +105,13 @@ class SincronizacionProveedorController extends Controller
  
 public function listarPedidos(Request $request)
 {
-    $parametros = Input::only('q','page','per_page','almacen','tipo','fecha_desde','fecha_hasta','clues','folio');
+    $parametros = Input::only('q','page','per_page','almacen','tipo','fecha_desde','fecha_hasta','clues');
     $proveedor_id = $request->get('proveedor_id');
 
     $pedidos = Pedido::with('metadatosSincronizaciones','proveedor','unidadMedica')->where('proveedor_id',$proveedor_id);
-
-    if( ($parametros['fecha_desde']!="") && ($parametros['fecha_hasta']!="") )
-        {
-            $pedidos = $pedidos->where('fecha','>=',$parametros['fecha_desde'])
-                                       ->where('fecha','<=',$parametros['fecha_hasta']);
-            
-        }else{
-                if( $parametros['fecha_desde'] != "" )
-                {
-
-                    $pedidos = $pedidos->where('fecha','>=',$parametros['fecha_desde']);
-                }
-                if( $parametros['fecha_hasta'] != "" )
-                {
-                    $pedidos = $pedidos->where('fecha','<=',$parametros['fecha_hasta']);
-                }
-
-             } 
     if($parametros['clues'] != "")
     {
-        $pedidos = $pedidos->where('clues','LIKE','%'.trim( $parametros['clues']).'%' );
-    }
-    if($parametros['folio'] != "")
-    {
-        $pedidos = $pedidos->where('folio','LIKE','%'.$parametros['folio'].'%');
+        $pedidos = $pedidos->where('clues',$parametros['clues']);
     }
      
         if(isset($parametros['page'])){
@@ -217,7 +195,7 @@ public function analizarJson(Request $request)
 
             $folio_buscar = $receta->folio;
 
-            $receta_buscar = Receta::where("folio",$folio_buscar)->first();
+            $receta_buscar = Receta::where("folio",$folio_buscar);
             if($receta_buscar)
             { $recetas_invalidas++; }else{ $recetas_validas++; }
 
@@ -242,8 +220,9 @@ public function analizarJson(Request $request)
 
             $folio_buscar = $colectivo->folio;
 
-            $colectivo_buscar = MovimientoMetadato::where('folio_colectivo',$folio_buscar)->first();
-            if($colectivo_buscar)
+            $colectivo_buscar = Movimiento::leftJoin('movimiento_metadatos')
+                                ->where('movimiento_metadatos.folio_colectivo',$folio_buscar);
+            if( count($colectivo_buscar) > 0 )
             { $colectivos_invalidos++; }else{ $colectivos_validos++; }
         }
 

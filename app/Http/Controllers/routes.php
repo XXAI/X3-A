@@ -24,7 +24,6 @@ Route::get('grupo-permiso',       'AutoCompleteController@grupo_permiso');
 Route::get('clues-auto',          'AutoCompleteController@clues');
 Route::get('insumos-auto',          'AutoCompleteController@insumos');
 Route::get('insumos-entrada-auto',          'AutoCompleteController@insumos_entradas');
-Route::resource('personal-clues',    'PersonalCluesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
 
 // reportes y graficas
@@ -49,38 +48,21 @@ Route::group(['middleware' => 'jwt'], function () {
     //Route::resource('unidades-medicas', 'UnidadesMedicasController',    ['only' => ['index']]);
     Route::resource('almacenes',    'AlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('proveedor',    'ProveedorController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('personal-puesto',    'PersonalPuestoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-
-    Route::resource('personal',    'PersonalController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-
-
+    
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
     // Harima: Se colaron en algun merge que hicieron, los tomo como cambios en el commit, probablemente marco conflicto y lo arreglaron dejando estas lineas, los comento, si no hay problemas los elimino en el proximo commit
     //Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);    
     //Route::get('pedidos-stats',         'PedidoController@stats');
     //Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
 
-
-    // # SECCION: Opciones avanzadas 
-    Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
-
-        Route::get('actualizar-plataforma-git', 'ActualizarPlataformaController@git');
-        Route::get('exportar-base-datos', 'BaseDatosController@exportar');
-        Route::post('importar-base-datos', 'BaseDatosController@importar');
-    });
-
     // # SECCION: Administrador central
     Route::group(['prefix' => 'administrador-central','namespace' => 'AdministradorCentral'], function () {
         Route::get('abasto', 'AbastoController@lista');
         Route::get('abasto-excel', 'AbastoController@excel');
-
-        Route::get('reporte-financiero', 'ReporteFinancieroController@lista');
-        Route::get('reporte-financiero-excel', 'ReporteFinancieroController@excel');
         
         Route::get('presupuesto-pedidos', 'PedidosController@presupuesto');
         Route::get('pedidos', 'PedidosController@lista');
         Route::get('pedidos-excel', 'PedidosController@excel');
-        Route::get('pedidos-archivos-proveedor/{id}', 'PedidosController@listaArchivosProveedor');
         
         // TRANSFERENCIAS DE PRESUPUESTO
         Route::get('unidades-medicas-con-presupuesto', 'TransferenciasPresupuestosController@unidadesMedicasConPresupuesto');
@@ -98,7 +80,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('entregas-pedidos-stats-mes-anio', 'EntregasMesController@statsMesAnio');
         Route::get('entregas-pedidos-stats-diarias', 'EntregasMesController@entregasPedidosStatsDiarias');
         Route::get('pedidos-clues-mes-anio', 'EntregasMesController@pedidosAnioMesClues');
-        Route::get('pedidos-recepciones-clues-mes-anio', 'EntregasMesController@pedidosRecepcionesClues');
+
 
         // CUMPLIMIENTO
         Route::get('cumplimiento-stats-globales', 'CumplimientoController@statsGlobales');
@@ -106,22 +88,12 @@ Route::group(['middleware' => 'jwt'], function () {
 
         // CLAVES BASICAS
         Route::resource('claves-basicas',    'ClavesBasicasController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::get('claves-basicas-clues/{id}', 'ClavesBasicasController@unidadesMedicas');
-        Route::post('claves-basicas-clues', 'ClavesBasicasController@agregarUnidadMedica');
-        Route::delete('claves-basicas-clues/{id}', 'ClavesBasicasController@quitarUnidadMedica');
+        Route::get('claves-basicas-clues/{id}', 'ClavesBasicasController@index');
 
-         //Configuuración de pedidos
-        Route::get('pedidos-recepcion/{id}', 'PedidosController@recepcion');
-        Route::get('pedidos-borrador/{id}', 'PedidosController@regresarBorrador');
-        Route::get('pedidos-borrador-cancelado/{id}', 'PedidosController@regresarBorradorCancelado');
-        Route::get('recepcion-borrador/{id}', 'RecepcionPedidoController@borrarRecepcion');
-        Route::put('pedidos-permitir-recepcion/{id}', 'PedidosController@permitirRecepcion');
+        //Configuuración de pedidos
+        Route::get('pedidos-recepcion/{id}', 'PedidosController@recepcion');        
+        Route::get('pedidos-borrador/{id}', 'PedidosController@regresarBorrador');        
 
-        // Pedidos Alternos
-        Route::get('pedidos-alternos', 'PedidosAlternosController@lista');     
-        Route::get('pedidos-alternos/{id}', 'PedidosAlternosController@ver');      
-        Route::put('pedidos-alternos/validacion/{id}', 'PedidosAlternosController@validar');
-        Route::put('pedidos-alternos/proveedor/{id}', 'PedidosAlternosController@asignarProveedor');
     });
     // # FIN SECCION
 
@@ -131,33 +103,13 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-administrador-proveedores', 'PedidosAdministradorProveedoresController@lista');
         Route::get('pedidos-administrador-proveedores-excel', 'PedidosAdministradorProveedoresController@excel');
         Route::get('pedidos-administrador-proveedores-pedido/{id}', 'PedidosAdministradorProveedoresController@pedido');
- 
-        Route::get('listar-pedidos-proveedor', 'SincronizacionProveedorController@listarPedidos');
-        Route::post('analizar-json-proveedor', 'SincronizacionProveedorController@analizarJson');
-        Route::post('procesar-json-proveedor', 'SincronizacionProveedorController@procesarJson');
-
-        Route::resource('repository',      'RepositorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
- 
+        Route::resource('repository',      'RepositorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
+        Route::get('repository-download/{id}',  'RepositorioController@registro_descarga'); 
+        Route::get('download-file/{id}',  'RepositorioController@descargar'); 
+        
     });
-    
-    Route::get('repository-download/{id}',  'RepositorioController@registro_descarga'); 
-    Route::get('download-file/{id}',  'RepositorioController@descargar'); 
 
     Route::group(['middleware' => 'almacen'], function () {
-
-        // # SECCION: Inventario 
-        Route::group(['prefix' => 'inventario','namespace' => 'Inventario'], function () {
-            Route::resource('inicializacion-inventario',         'InicializacionInventarioController',  ['only' => ['index', 'show', 'store','update','destroy']]);
-        });
-
-        // # SECCION: Almacen 
-        Route::group(['prefix' => 'almacen','namespace' => 'Almacen'], function () {
-            Route::get('transferencias-stats',                     'TransferenciaAlmacenController@stats');
-            Route::resource('transferencias',                      'TransferenciaAlmacenController',['only' => ['index', 'show', 'store','update','destroy']]);
-            Route::put('surtir-transferencia/{id}',                'TransferenciaAlmacenController@surtir');
-            Route::put('actualizar-transferencia/{id}',             'TransferenciaAlmacenController@actualizarTransferencia');
-        });
-
 
         Route::resource('almacenes',        'AlmacenController',    ['only' => ['index']]);
         Route::resource('entregas',         'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -169,24 +121,15 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('movimientos',    'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('inventario',    'InventarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         
-        Route::resource('ajuste-mas-inventario',    'AjusteMasInventarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::resource('ajuste-menos-inventario',  'AjusteMenosInventarioController',  ['only' => ['index', 'show', 'store','update','destroy']]);
-
         //Pedidos
         Route::resource('pedidos',                      'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::get('pedidos-stats',                     'PedidoController@stats');
         Route::get('pedidos-presupuesto',               'PedidoController@obtenerDatosPresupuesto');
         Route::put('cancelar-pedido-transferir/{id}',   'CancelarPedidosController@cancelarYTransferir');
 
-        
-        // Actas
-        Route::put('generar-pedido-alterno/{id}',       'PedidoController@generarAlterno');
-        Route::resource('actas',                      'ActasController',     ['only' => ['index', 'show']]);
-
-
-        //Route::resource('pedidos-jurisdiccionales',         'PedidoJurisdiccionalController',     ['only' => ['index', 'show', 'store','update','destroy']]);
-        //Route::get('pedidos-jurisdiccionales-stats',        'PedidoJurisdiccionalController@stats');
-        //Route::get('pedidos-jurisdiccionales-presupuesto',  'PedidoJurisdiccionalController@obtenerDatosPresupuesto');
+        Route::resource('pedidos-jurisdiccionales',         'PedidoJurisdiccionalController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::get('pedidos-jurisdiccionales-stats',        'PedidoJurisdiccionalController@stats');
+        Route::get('pedidos-jurisdiccionales-presupuesto',  'PedidoJurisdiccionalController@obtenerDatosPresupuesto');
 
         Route::resource('recepcion-pedido', 'RecepcionPedidoController',    ['only' => ['show', 'update','destroy']]);
 
@@ -195,7 +138,6 @@ Route::group(['middleware' => 'jwt'], function () {
 	    Route::resource('mis-claves',    'MisClavesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 	
 	    Route::resource('mis-almacenes',    'MiAlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::resource('firmantes',    'FirmantesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
         //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
         Route::resource('catalogo-insumos',  'CatalogoInsumoController',     ['only' => ['index', 'show']]);
@@ -208,8 +150,6 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('generar-excel-pedido/{id}', 'PedidoController@generarExcel');
     Route::get('generar-excel-pedido-jurisdiccional/{id}', 'PedidoJurisdiccionalController@generarExcel');
 
-    
-    Route::get('inventario-excel', 'InventarioController@excel');
     
     Route::get('entregas-stats',        'EntregaController@stats'); 
 
@@ -232,16 +172,9 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('presentaciones-medicamentos','PresentacionMedicamentoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('turnos','TurnoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
-    Route::resource('programa','ProgramaController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('presentacion-medicamento','PresentacionMedicamentoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('material-curacion','MaterialCuracionController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('medicamentos','MedicamentoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('unidad-medica',    'UnidadMedicaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-    Route::resource('forma-farmaceutica',    'FormaFarmaceuticaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-    
     // catalogos  
 
-    
+    // # SECCION: Administrador central
     Route::group(['prefix' => 'admision','namespace' => 'AdmisionUnidad'], function () {
         Route::resource('paciente', 'PacienteController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('paciente-egreso', 'PacienteEgresoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -258,31 +191,14 @@ Route::group(['middleware' => 'jwt'], function () {
         
        
     });
-
-    Route::group(['namespace' => 'AlmacenGeneral'], function () {
-        Route::resource('categoria',    'CategoriaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-        Route::resource('articulos',    'ArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-        Route::resource('inventarios',  'InventarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-    });
     
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
 
-    //Modulo de Avances
-    Route::resource('avance',                       'AvanceController',             ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('avance-detalle',               'AvanceDetalleController',             ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('avance-usuario-privilegio',    'AvanceUsuarioPrivilegioController',             ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::get('download-file-avance/{id}',         'AvanceDetalleController@descargar'); 
-    Route::get('view-file-avance/{id}',             'AvanceDetalleController@view'); 
-    Route::resource('avance_repository',            'AvanceDetalleController@store');
-    Route::resource('avance_area',                  'AvanceController@areas');
-
     Route::group(['prefix' => 'sync','namespace' => 'Sync'], function () {
-        Route::get('lista',      'SincronizacionController@lista');
         Route::get('manual',    'SincronizacionController@manual');        
         Route::get('auto',      'SincronizacionController@auto');
         Route::post('importar', 'SincronizacionController@importarSync');
         Route::post('confirmar', 'SincronizacionController@confirmarSync');
-        Route::resource('servidores', 'ServidoresController',['only' => ['index', 'show', 'store','update','destroy']]);
     });
     
 });
