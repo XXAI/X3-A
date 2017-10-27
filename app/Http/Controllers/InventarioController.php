@@ -283,8 +283,8 @@ public function excel(Request $request)
             
 
              //$excel->sheet('Reporte de almacenIventari', function($sheet) use($items)
-            ob_end_clean(); ob_start();
-            /*$excel->sheet('Insumos Medicos', function($sheet)use($parametros)
+            
+            $excel->sheet('Insumos Medicos', function($sheet)use($parametros)
             {
                 //$sheet->setAutoSize(true);
                 $items = $this->getItemsInventario($parametros);
@@ -515,125 +515,8 @@ public function excel(Request $request)
                     )); 
                 } // FIN FOREACH ITEMS
  
-            });*/
-            $excel->sheet('Insumos Medicos Detalles', function($sheet)use($parametros)
-            {
-                //$sheet->setAutoSize(true);
-                $items = $this->getItemsInventarioDetalles($parametros);
-
-                $claves       = "";
-                $seleccionar  = "";
-                $tipo_insumos = "";
-                $clave        = "";
-
-                if($parametros['buscar_en'] == "TODAS_LAS_CLAVES")
-                {
-                    $claves = "TODAS LAS CLAVES";
-                }else{
-                        $claves = "MIS CLAVES";
-                     }
-
-
-                if($parametros['seleccionar'] == "TODO")
-                {
-                    $seleccionar = "TODOS INSUMOS";
-                }  
-                if($parametros['seleccionar'] == "EXISTENTE")
-                {
-                    $seleccionar = "INSUMOS EXISTENTES";
-                } 
-                if($parametros['seleccionar'] == "NO_EXISTENTE")
-                {
-                    $seleccionar = "INSUMOS AGOTADOS";
-                }  
-
-                if($parametros['tipo'] == "TODO")
-                {
-                    $tipo_insumos = "TODOS";
-                }
-                if($parametros['tipo'] == "CAUSES")
-                {
-                    $tipo_insumos = "MED. CAUSES";
-                }
-                if($parametros['tipo'] == "NO_CAUSES")
-                {
-                    $tipo_insumos = "MED. NO CAUSES";
-                } 
-                if($parametros['tipo'] == "CONTROLADO")
-                {
-                    $tipo_insumos = "MED. CONTROLADO";
-                } 
-
-                 
-                
-
-                
-               
-                $sheet->row(2, array('','INVENTARIO DE ALMACÉN '.$parametros['almacen'].' EN CLUES '.$parametros['clues'].' AL '.date('d-m-Y H:i:s'),'','','','','','','','','',''));
-                $sheet->row(2, function($row) {
-                                                    $row->setBackground('#DDDDDD');
-                                                    $row->setFontWeight('bold');
-                                                    $row->setFontSize(14);
-                                              });
-
-                $sheet->row(4, array('','BUSQUEDA EN : '.$claves.' | SELECCIONAR : '.$seleccionar.' | TIPO INSUMOS : '.$tipo_insumos.' | CLAVE : '.$parametros['clave_insumo']));
-
-                $sheet->row(4, function($row) {
-                                                    $row->setBackground('#DDDDDD');
-                                                    $row->setFontWeight('bold');
-                                                    $row->setFontSize(12);
-                                              });
-
-                $sheet->row(6, array('Clave','Descripción', 'C.P.D','C.P.S','C.P.M', 'Lote', 'Caducidad','Existencia','Existencia Unidosis', 'Precio Unitario', 'Precio Total'));
-                $sheet->row(6, function($row) {
-                                                    $row->setBackground('#DDDDDD');
-                                                    $row->setFontWeight('bold');
-                                                    $row->setFontSize(12);
-                                              });
-                $sheet->cells("A6:M6", function($cells) {
-                                                            $cells->setAlignment('center');
-                                                        });
-
-                $sheet->setColumnFormat(array('J' => '0.00', 'K' => '0.00'));
-
-                 $sheet->setSize('A2', 25, 18);
-                 $sheet->setSize('B2', 70, 18);
-                 $sheet->setSize('F2', 20, 18);
-                 $sheet->setSize('G2', 30, 18);
-
-                 $sheet->setSize('A4', 25, 18);
-                 $sheet->setSize('B4', 70, 18);
-                 $sheet->setSize('F4', 20, 18);
-                 $sheet->setSize('G4', 30, 18);
-                 
-                 $sheet->setSize('A6', 25, 18);
-                 $sheet->setSize('B6', 70, 18);
-                 $sheet->setSize('F6', 10, 18);
-                 $sheet->setSize('G6', 15, 18);
-                 $sheet->setSize('H6', 20, 18);
-                 $sheet->setSize('I6', 20, 18);
-                 $sheet->setSize('J6', 20, 18);
-                 $sheet->setSize('K6', 20, 18);
-
-                foreach($items as $item)
-                {
-                    $sheet->appendRow(array(
-                        
-                        $item->clave_insumo_medico,
-                        $item->descripcion,
-                        "--",
-                        "--",
-                        "--",                        
-                        $item->lote,
-                        $item->fecha_caducidad,
-                        $item->existencia,
-                        $item->existencia_unidosis,
-                        $item->precio_unitario,
-                        $item->precio_total
-                    )); 
-                } // FIN FOREACH ITEMS
- 
             });
+          
         })->export('xls');
     }
 ////*******************************************************************************************************************************************************************
