@@ -36,9 +36,10 @@ class Insumo extends BaseModel{
     }
     
     public function scopeDatosUnidosis($query){
-        return $query->select('insumos_medicos.*',DB::raw('(CASE WHEN insumos_medicos.tipo = "ME" THEN medicamentos.cantidad_x_envase ELSE CASE WHEN insumos_medicos.tipo = "MC" THEN material_curacion.cantidad_x_envase ELSE null END END) as cantidad_x_envase')) 
+    return $query->select('insumos_medicos.*',DB::raw('(CASE WHEN insumos_medicos.tipo = "ME" THEN medicamentos.cantidad_x_envase ELSE CASE WHEN insumos_medicos.tipo = "MC" THEN material_curacion.cantidad_x_envase ELSE CASE WHEN insumos_medicos.tipo = "LC" THEN sustancias_laboratorio.cantidad_x_envase ELSE null END END END) as cantidad_x_envase')) 
                 ->leftjoin('medicamentos','medicamentos.insumo_medico_clave','=','insumos_medicos.clave')
-                ->leftjoin('material_curacion','material_curacion.insumo_medico_clave','=','insumos_medicos.clave');
+                ->leftjoin('material_curacion','material_curacion.insumo_medico_clave','=','insumos_medicos.clave')
+                ->leftjoin('sustancias_laboratorio','sustancias_laboratorio.insumo_medico_clave','=','insumos_medicos.clave');
     }
 
     //Relacion con el Modelo Medicamento, usando un scope para cargar los datos de los catalogos utilizados por medicamentos
@@ -55,6 +56,10 @@ class Insumo extends BaseModel{
             return $this->hasOne('App\Models\Medicamento','insumo_medico_clave','clave')->conInformacionImportante();
         }
         return null;
+    }
+
+    public function informacionAmpliadaSustancia(){
+        return $this->hasOne('App\Models\SustanciaLaboratorio','insumo_medico_clave','clave')->conDescripcionSustancia();
     }
 
     //Relacion con el Modelo Medicamento
