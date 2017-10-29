@@ -41,7 +41,7 @@ use \Excel;
 * Controlador `Inventario`: Controlador  para la consulta de inventarios
 *
 */
-class InventarioController extends Controller
+class InventarioInsumosController extends Controller
 {
      
     public function index(Request $request)
