@@ -278,7 +278,8 @@ public function excel(Request $request)
     {
         $parametros = Input::only('q','page','per_page','clues','clave_insumo','almacen','tipo','es_causes','buscar_en','seleccionar');
 
-
+        
+        //return $this->getItemsInventarioDetalles($parametros);
         Excel::create('Inventario_'.$parametros['clues'].'_'.$parametros['almacen'].'_'.date('d-m-Y H-i-s'), function($excel)use($parametros){
             
 
@@ -467,7 +468,7 @@ public function excel(Request $request)
                                                     $row->setFontSize(12);
                                               });
 
-                $sheet->row(6, array('Clave','Descripción', 'C.P.D','C.P.S','C.P.M', 'Lote', 'Caducidad','Existencia','Existencia Unidosis', 'P. Unitario Unidosis C/IVA', 'Precio Total'));
+                $sheet->row(6, array('Clave','Descripción', 'C.P.D','C.P.S','C.P.M', 'Lote', 'Caducidad','Existencia','Existencia Unidosis', 'P. Unitario C/IVA', 'Precio Total'));
                 $sheet->row(6, function($row) {
                                                     $row->setBackground('#DDDDDD');
                                                     $row->setFontWeight('bold');
@@ -742,8 +743,9 @@ public function getItemsInventario($parametros)
                 {
                     foreach ($stocks as $key => $stock) 
                     {
-
+                        //$data_flag = array();    
                         //echo $stock->existencia."--";
+
                         $count = count($data_completo);
                         $data_completo[$count]['clave_insumo_medico'] = $clave->clave_insumo_medico;
                         $data_completo[$count]['descripcion'] = $clave->descripcion;
@@ -754,18 +756,32 @@ public function getItemsInventario($parametros)
                         $data_completo[$count]['existencia_unidosis'] = $stock->existencia_unidosis;
                         $data_completo[$count]['lote'] = $stock->lote;
                         $data_completo[$count]['fecha_caducidad'] = $stock->fecha_caducidad;
-                        $precio_unitario_medicamento = (($stock->existencia * ($stock->movimientoinsumo->precio_unitario + $stock->movimientoinsumo->iva))/ $stock->existencia_unidosis);
-                        $data_completo[$count]['precio_unitario'] = $precio_unitario_medicamento;
-                        $data_completo[$count]['precio_total'] = ($stock->existencia_unidosis * $precio_unitario_medicamento);
+                        if($stock->existencia == "")
+                            $stock->existencia = 0;
+                        if($stock->existencia_unidosis == "")
+                            $stock->existencia_unidosis = 0;
+
+                        
+                        if(isset($stock->movimientoinsumo))
+                        {
+                            $precio_unitario_medicamento = ($stock->movimientoinsumo->precio_unitario + $stock->movimientoinsumo->iva);
+                            $data_completo[$count]['precio_unitario'] = $precio_unitario_medicamento;
+                            $data_completo[$count]['precio_total'] = ($stock->existencia * $precio_unitario_medicamento);
+                        }else{
+                            $precio_unitario_medicamento = 0;
+                            $data_completo[$count]['precio_unitario'] = $precio_unitario_medicamento;
+                            $data_completo[$count]['precio_total'] = 0;
+                        }
+
                        
-                        //$updated_at           = $stock->updated_at;
                         $contador ++;
                         
                     }
                 }
                 if($contador == 0)
                 {
-                     $count = count($data_completo);
+                    $count = count($data_completo);
+                       
                     $data_completo[$count]['clave_insumo_medico'] = $clave->clave_insumo_medico;
                     $data_completo[$count]['descripcion'] = $clave->descripcion;
                     $data_completo[$count]['es_causes'] = $clave->es_causes;
@@ -777,13 +793,14 @@ public function getItemsInventario($parametros)
                     $data_completo[$count]['fecha_caducidad'] = "";
                     $data_completo[$count]['precio_unitario'] = 0;
                     $data_completo[$count]['precio_total'] = 0;
-                        
+                    
                 }
             }
 
             //return $data;
             $data_existente    = array();
             $data_no_existente = array();
+            $data_sin_filtro = array();
 
             foreach ($data_completo as $key => $clave) 
             {
@@ -795,15 +812,18 @@ public function getItemsInventario($parametros)
                     }else{
                             array_push($data_no_existente,$clave);
                          }
+                    array_push($data_sin_filtro,$clave);
             }
 
             if($parametros['seleccionar'] == "EXISTENTE")
             {
                 $data_completo = $data_existente;
-            }
-            if($parametros['seleccionar'] == "NO_EXISTENTE")
+            }else if($parametros['seleccionar'] == "NO_EXISTENTE")
             {
                 $data_completo = $data_no_existente;
+            }else
+            {
+                $data_completo = $data_sin_filtro;
             }
 
             return $data_completo;
