@@ -53,7 +53,11 @@ class UnidadesMedicasController extends Controller
 
             if(Input::get('lista'))
             {
-                $items = UnidadMedica::all();
+                $items = UnidadMedica::select('*');
+                if(Input::get('activa')){
+                    $items = $items->where('activa','1');
+                }
+                $items = $items->get();
             }else
             {
 

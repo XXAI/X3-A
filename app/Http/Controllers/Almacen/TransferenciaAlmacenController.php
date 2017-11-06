@@ -100,71 +100,225 @@ class TransferenciaAlmacenController extends Controller{
         return Response::json([ 'data' => $pedido],200);
     }
 
+
+    // store function editada por Akira
     public function store(Request $request){
         $mensajes = [
             'required'      => "required",
         ];
-        
+
         $reglas = [
-            'descripcion' => 'required',
-            'lista_insumos' => 'required|array|min:1'
-            //'fecha_inicio_captura',
-            //'fecha_conclusion_captura',
-            //'observaciones',
-            //'status',
-            //'almacen_id',
-            //'clues',
-            //'total_claves',
-            //'total_monto_causes',
-            //'total_monto_no_causes',
-            //'total_monto_material_curacion'
+            'almacen_solicitante'   => 'required',
+            'clues_destino'         => 'required',
+            'descripcion'           => 'required',
+            'fecha'                 => 'required|date',
+            'insumos'               => 'required',
         ];
 
-        $inventario = Inventario::where('almacen_id',$request->get('almacen_id'))->first();
-
-        if($inventario){
-            return Response::json(['error' => 'Ya hay una inicialización de inventario capturada, no se puede inicializar el inventario'], HttpResponse::HTTP_CONFLICT);
-        }
-        
         $parametros = Input::all();
-
         $v = Validator::make($parametros, $reglas, $mensajes);
         
         if ($v->fails()) {
-            return Response::json(['error' => $v->errors(), 'error_formulario'=>1], HttpResponse::HTTP_CONFLICT);
+            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
         }
 
-        $almacen = Almacen::find($request->get('almacen_id'));
+        
 
-        try{
+        
+        try {
             DB::beginTransaction();
-            $datos_inventario = [
-                'descripcion' => $parametros['descripcion'],
-                'observaciones' => ($parametros['observaciones'])?$parametros['observaciones']:null,
-                'fecha_inicio_captura',
-                'status' => 'BR',
-                'almacen_id' => $almacen->id,
-                'clues' => $almacen->clues,
-                'total_claves' => 0,
-                'total_monto_causes' => 0,
-                'total_monto_no_causes' => 0,
-                'total_monto_material_curacion' => 0
-            ];
+
+            $almacen = Almacen::find($request->get('almacen_id'));
             
-            $nuevo_inventario = Inventario::create($datos_inventario);
-            DB::commit();
-
-            $response = $this->guardarDatosInventario($nuevo_inventario,$parametros['lista_insumos']);
-
-            if($response['status'] == 200){
-                return Response::json([ 'data' => $nuevo_inventario],200);
-            }else{
-                return Response::json(['error' => $response['error']], HttpResponse::HTTP_CONFLICT);
+            // ** 1ero creamos el pedido  **
+            $folio = null;
+            $status = "BR";
+            $status_movimiento = "BR";
+            if(isset($parametros['finalizar'])){
+                $anio = date('Y');
+                
+                $folio_template = $almacen->clues . '-' . $anio . '-PEA-';
+                $max_folio = Pedido::where('clues',$almacen->clues)->where('folio','like',$folio_template.'%')->max('folio');
+                
+                if(!$max_folio){
+                    $prox_folio = 1;
+                }else{
+                    $max_folio = explode('-',$max_folio);
+                    $prox_folio = intval($max_folio[3]) + 1;
+                }
+                $folio = $folio_template . str_pad($prox_folio, 3, "0", STR_PAD_LEFT);
+                $status = "PS";
+                $status_movimiento = "FI";
             }
+            
+            $datos_pedido = [
+                'tipo_pedido_id' => "PEA",
+                'clues' => $almacen->clues,
+                'clues_destino' =>$parametros['clues_destino'],
+                'folio' => $folio,
+                'fecha' => $parametros['fecha'],
+                'descripcion' => $parametros['descripcion'],
+                'observaciones' => $parametros['observaciones'],
+                'almacen_solicitante' => $parametros['almacen_solicitante'],
+                'almacen_proveedor' => $almacen->id,
+                'status' => $status
+            ];
+
+            $pedido = Pedido::create($datos_pedido);
+
+
+            $total_claves = count($parametros['insumos']);
+            $total_insumos = 0;
+            $total_monto = 0;
+            $monto_para_sacar_iva = 0;
+
+            foreach ($parametros['insumos'] as $key => $value) {
+                $reglas_insumos = [
+                    'clave'           => 'required',
+                    'cantidad'        => 'required|integer|min:0'
+                ];  
+
+                $v = Validator::make($value, $reglas_insumos, $mensajes);
+
+                if ($v->fails()) {
+                    DB::rollBack();
+                    return Response::json(['error' => 'El insumo con clave: '.$value['clave'].' tiene un valor incorrecto.'], 500);
+                }
+                if($value['cantidad'] > 0){
+                    $insumo = [
+                        'insumo_medico_clave' => $value['clave'],
+                        'cantidad_solicitada' => $value['cantidad'],
+                        'monto_solicitado' => $value['cantidad']*$value['precio'], 
+                        'precio_unitario' => $value['precio'],
+                        'tipo_insumo_id' => $value['tipo_insumo_id'],
+                        'pedido_id' => $pedido->id
+                    ];
+
+                    PedidoInsumo::create($insumo);
+
+                    $total_insumos += $value['cantidad'];
+                    $total_monto += $insumo['monto_solicitado'];
+    
+                    if($value['tipo'] == 'MC'){
+                        $monto_para_sacar_iva += $value['precio'];
+                    }
+                }
+
+                
+
+            }
+
+            if($monto_para_sacar_iva > 0){
+                $total_monto += $monto_para_sacar_iva*16/100;
+            }
+
+            $almacen_solicitante = Almacen::find($parametros['almacen_solicitante']);
+
+            $pedido->director_id = $almacen_solicitante->unidadMedica->director_id;
+            $pedido->encargado_almacen_id = $almacen_solicitante->encargado_almacen_id;
+
+
+            $pedido->total_claves_solicitadas = $total_claves;
+            $pedido->total_cantidad_solicitada = $total_insumos;
+            $pedido->total_monto_solicitado = $total_monto;
+            $pedido->save();
+            
+
+            // ** Segundo creamos el movimiento  **
+           
+            $datos_movimiento = [
+                'almacen_id' => $almacen->id,
+                'tipo_movimiento_id' => 3,
+                'fecha_movimiento' =>$parametros['fecha'],
+                'status' => $status_movimiento
+            ];
+            $movimiento = Movimiento::create($datos_movimiento);
+            
+            $datos_movimiento_pedido = [
+                'movimiento_id' => $movimiento->id,
+                'pedido_id' => $pedido->id,
+                'recibe' =>  $almacen_solicitante->encargado->nombre,
+                'entrega' => $almacen->encargado->nombre // O podríamos usar el nombre del usuario
+            ];
+            $movimiento_pedido = MovimientoPedido::create($datos_movimiento_pedido);
+            
+          
+            foreach ($parametros['movimiento_insumos'] as $key => $value) {
+                $reglas_insumos = [
+                    'stock_id'           => 'required',
+                    'tipo'           => 'required',
+                    'tipo_insumo_id' => 'required',
+                    'clave'           => 'required',
+                    'precio'        => 'required|numeric',
+                    'cantidad'        => 'required|integer|min:0'
+                ];  
+
+                $v = Validator::make($value, $reglas_insumos, $mensajes);
+
+                if ($v->fails()) {
+                    DB::rollBack();
+                    return Response::json(['error' => 'El stock con clave: '.$value['clave'].' tiene un valor incorrecto.'], 500);
+                }
+                if($value['cantidad'] > 0){
+
+                     
+                    $precio_total = $value['cantidad']*$value['precio'];
+                    $iva = 0.00;
+
+                    if($value['tipo'] == "MC"){
+
+                        $precio_total = $precio_total * 1.16;
+                        $iva = $precio_total * 0.16;
+                    } 
+                    
+                    $insumo = [
+                        'movimiento_id' => $movimiento->id,   
+                        'tipo_insumo_id' => $value['tipo_insumo_id'],
+                        'stock_id' => $value['stock_id'],
+                        'clave_insumo_medico' => $value['clave'],
+                        'cantidad' => $value['cantidad'],
+                        'precio_unitario' => $value['precio'],
+                        'iva' => $iva, 
+                        'precio_total' => $precio_total
+                    ];
+
+                    MovimientoInsumos::create($insumo);
+
+                    // Actualizamos stock si se ha finalizado
+                    if(isset($parametros['finalizar'])){
+                        $stock = Stock::find($value['stock_id']);
+
+                        $existencia_final = $stock->existencia - $value['cantidad'];
+
+                        if($existencia_final < 0){
+                            DB::rollBack();
+                            return Response::json(['error' => 'El insumo con clave: '.$value['clave'].' ya no tiene stock.'], 500);
+                        }
+                        $stock->existencia = $existencia_final;
+                        $stock->save();
+                    }
+                }
+
+            }
+            
+            
+            $pedido->insumos;
+            $movimiento->movimientoPedido;
+            $movimiento->insumos;
+
+            $respuesta = [
+                'pedido' => $pedido,
+                'movimiento' => $movimiento
+            ];
+
+            //DB::rollBack();
+            DB::commit();
+            return Response::json([ 'data' => $respuesta ],200);
         } catch (\Exception $e) {
             DB::rollBack();
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
-        } 
+        }
+
     }
 
     private function guardarDatosInventario($inventario,$lista_insumos_form){
