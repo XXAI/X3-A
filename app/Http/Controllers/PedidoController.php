@@ -129,7 +129,9 @@ class PedidoController extends Controller{
             $pedidos = $pedidos->where('almacen_solicitante',$almacen->id);
         }
 
-        $pedidos = $pedidos->first();
+        $pedidos = $pedidos->orWhere(function($query)use($almacen){
+            $query->where('almacen_solicitante',$almacen->id)->where('tipo_pedido_id','PEA')->where('status','!=','BR');
+        })->first();
 
         return Response::json($pedidos,200);
     }
@@ -142,8 +144,6 @@ class PedidoController extends Controller{
         //$pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
         $pedidos = Pedido::getModel();
 
-        
-        
        if ($parametros['q']) {
             $pedidos =  $pedidos->where(function($query) use ($parametros) {
                  $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('folio','LIKE',"%".$parametros['q']."%");
@@ -152,7 +152,7 @@ class PedidoController extends Controller{
 
         //Harima: Filtro para diferentes tipos de almacenes, solo los almacenes principales pueden ver pedidos a farmcias subrogadas
         if($almacen->tipo_almacen == 'ALMPAL'){
-            $almacenes = Almacen::where('subrogado',1)->where('nivel_almacen',1)->get();
+            $almacenes = Almacen::where('subrogado',1)->where('nivel_almacen',1)->where('clues',$almacen->clues)->get();
             $almacenes = $almacenes->lists('id');
             $almacenes[] = $almacen->id;
             $pedidos = $pedidos->whereIn('almacen_solicitante',$almacenes);
@@ -163,14 +163,12 @@ class PedidoController extends Controller{
 
         //$pedidos = $pedidos->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues);
         $pedidos = $pedidos->where('clues',$almacen->clues);
-
         
-
         if(isset($parametros['status'])) {
             $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
         }
 
-        if(isset($parametros['tipo'])&& $parametros['tipo'] != '') {
+        if(isset($parametros['tipo']) && $parametros['tipo'] != '') {
             $pedidos = $pedidos->where("pedidos.tipo_pedido_id",$parametros['tipo']);
         }
 
@@ -183,6 +181,12 @@ class PedidoController extends Controller{
         //$pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();
 
         $pedidos = $pedidos->with("director", "encargadoAlmacen"); // Villa: Obtenggo los datos de los firmantes para el modulo de configuracion
+
+        if(!isset($parametros['status']) || $parametros['status'] == 'ET'){
+            $pedidos = $pedidos->orWhere(function($query)use($almacen){
+                $query->where('almacen_solicitante',$almacen->id)->where('clues_destino',$almacen->clues)->where('tipo_pedido_id','PEA')->where('status','!=','BR');
+            });
+        }
         
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
@@ -199,34 +203,42 @@ class PedidoController extends Controller{
     public function show(Request $request, $id){
         $almacen = Almacen::find($request->get('almacen_id'));
     	//$pedido = Pedido::where('almacen_solicitante',$request->get('almacen_id'))->find($id);
-        $pedido = Pedido::where('clues',$almacen->clues)->find($id);
+        $pedido = Pedido::find($id);
         
-        if(!$pedido){
-            return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
-        }else{
+        if($pedido->almacen_proveedor != $almacen->id && $pedido->almacen_solicitante != $almacen->id  && $pedido->clues_destino != $almacen->clues && $pedido->clues != $almacen_clues){
+            return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_CONFLICT);
+        }
 
-            if($pedido->tipo_pedido_id != 'PJS'){
-                
-                if($pedido->status == 'BR'){
-                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuestoApartado");
-                }else{
-                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","almacenProveedor","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
-                    if($pedido->tipo_pedido_id == 'PEA'){
-                        $pedido = $pedido->load("movimientos.transferenciaSurtida.insumos");
-                    }
-                }
-            } 
-            // ######### PEDIDOS JURISDICCIONALES #########
-            else {
-                
-                if($pedido->status == 'BR'){
-                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuestoApartado");
-                }else{
-                    $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
+        if(!$pedido){
+            return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_CONFLICT);
+        }
+        
+        if($pedido->almacen_proveedor != $almacen->id && $pedido->almacen_solicitante != $almacen->id  && $pedido->clues_destino != $almacen->clues && $pedido->clues != $almacen_clues){
+            return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_CONFLICT);
+        }
+        
+        if($pedido->tipo_pedido_id != 'PJS'){
+            
+            if($pedido->status == 'BR'){
+                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuestoApartado");
+            }else{
+                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","almacenProveedor","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
+                if($pedido->tipo_pedido_id == 'PEA'){
+                    $pedido = $pedido->load("movimientos.transferenciaSurtida.insumos");
                 }
             }
-            // ############################################
+        } 
+        // ######### PEDIDOS JURISDICCIONALES #########
+        else {
+            
+            if($pedido->status == 'BR'){
+                $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuestoApartado");
+            }else{
+                $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
+            }
         }
+        // ############################################
+        
         return Response::json([ 'data' => $pedido],200);
     }
 

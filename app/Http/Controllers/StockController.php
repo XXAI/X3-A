@@ -25,18 +25,18 @@ class StockController extends Controller
         $parametros = Input::only('q','clave');
 
         if (isset($parametros['q']) && $parametros['q'] != "") {
-            $insumos = Insumo::select('clave')->where('descripcion','LIKE','%'.$parametros['q'].'%')->get();
+            /*$insumos = Insumo::select('clave')->where('descripcion','LIKE','%'.$parametros['q'].'%')->get();
             $clavesInsumos = [];
             foreach($insumos as $valor){
                 $clavesInsumos[] = $valor->clave;
-            }
-            $stock =  Stock::with("insumo","almacen")->where(function($query) use ($parametros) {
+            }*/
+            $stock =  Stock::select('stock.*','insumos_medicos.descripcion')->with("insumo","almacen")->leftjoin('insumos_medicos','stock.clave_insumo_medico','=','insumos_medicos.clave')->where(function($query) use ($parametros) {
                 $query->where('codigo_barras','=',$parametros['q'])
                 ->orWhere('lote','=',$parametros['q'])
-                ->orWhere('clave_insumo_medico','LIKE','%'.$parametros['q'].'%');
-                
+                ->orWhere('clave_insumo_medico','LIKE','%'.$parametros['q'].'%')
+                ->orWhere('descripcion','LIKE','%'.$parametros['q'].'%');
                 //$query->where('codigo_barras','=',$parametros['q'])->orWhere('lote','=',$parametros['q']);
-            })->orWhereIn("clave_insumo_medico",$clavesInsumos);
+            });//->whereIn("clave_insumo_medico",$clavesInsumos);
         } else {
              $stock = Stock::with("insumo","almacen");
         }
@@ -49,12 +49,8 @@ class StockController extends Controller
         
         $stock = $stock->where("stock.existencia",">","0")->where('stock.almacen_id',$request->get('almacen_id'))->get();
         
-
         $almacen = Almacen::find($request->get('almacen_id'));
         
-
-                
-
         foreach($stock as $item){
             //$item->load("insumosConDescripcion.informacion","insumosConDescripcion.generico.grupos");
             $item->insumo->informacion;
