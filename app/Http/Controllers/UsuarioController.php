@@ -65,7 +65,7 @@ class UsuarioController extends Controller
             'apellidos'     => 'required'
         ];
 
-        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','unidades_medicas','almacenes');
+        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','unidades_medicas','almacenes','medico_id');
 
         $v = Validator::make($inputs, $reglas, $mensajes);
 
@@ -74,6 +74,13 @@ class UsuarioController extends Controller
         }
         DB::beginTransaction();
         try {
+
+            if(isset($inputs['medico_id'])){
+                if( $inputs['medico_id'] == '-1'){
+                   unset($inputs['medico_id']);
+                } 
+            };
+
             $inputs['servidor_id'] = env("SERVIDOR_ID");
             $inputs['password'] = Hash::make($inputs['password']);
             $usuario = Usuario::create($inputs);
@@ -143,7 +150,7 @@ class UsuarioController extends Controller
             return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }
 
-        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','cambiarPassword','unidades_medicas','almacenes');
+        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','cambiarPassword','unidades_medicas','almacenes','medico_id');
 
         $v = Validator::make($inputs, $reglas, $mensajes);
 
@@ -154,6 +161,16 @@ class UsuarioController extends Controller
         DB::beginTransaction();
         try {
             $object->nombre =  $inputs['nombre'];
+            
+            if(isset($inputs['medico_id'])){
+                if( $inputs['medico_id'] != '-1'){
+                    $object->medico_id = $inputs['medico_id'];
+                } else {
+                    $object->medico_id = null;
+                } 
+            };
+            
+            
             $object->apellidos =  $inputs['apellidos'];
             $object->avatar =  $inputs['avatar'];
             $object->id =  $inputs['id'];

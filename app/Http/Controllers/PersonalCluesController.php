@@ -38,6 +38,7 @@ class PersonalCluesController extends Controller
 
              });
         } else {
+            
                 $data =  PersonalClues::where("id","!=", "")->where('clues',$parametros['clues']);
 
              if($parametros['tipo_personal'])

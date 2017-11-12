@@ -10,7 +10,7 @@ class Usuario extends BaseModel implements Authenticatable{
     use SoftDeletes;
     protected $generarID = false;
     protected $guardarIDUsuario = false;
-    protected $fillable = ["id","servidor_id","password","nombre","apellidos","avatar","su"];
+    protected $fillable = ["id","servidor_id","password","nombre","apellidos","medico_id","avatar","su"];
     
     public function roles(){
         return $this->belongsToMany('App\Models\Rol', 'rol_usuario', 'usuario_id', 'rol_id');
