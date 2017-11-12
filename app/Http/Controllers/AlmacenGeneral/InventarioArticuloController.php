@@ -8,21 +8,21 @@ use Illuminate\Support\Facades\Input;
 use Request;
 use Response;
 use DB; 
-use App\Models\TiposPersonal;
-use App\Models\TiposPersonalMetadatos;
+use App\Models\AlmacenGeneral\InventarioArticulo;
+use App\Models\AlmacenGeneral\InventarioArticuloMetadato;
 
 /**
-* Controlador TiposPersonal
+* Controlador InventarioArticulo
 * 
 * @package    Plataforma API
 * @subpackage Controlador
 * @author     Eliecer Ramirez Esquinca <ramirez.esquinca@gmail.com>
 * @created    2015-07-20
 *
-* Controlador `TiposPersonal`: Manejo de usuarios del sistema
+* Controlador `InventarioArticulo`: Manejo de usuarios del sistema
 *
 */
-class TipoPersonalController extends Controller {
+class InventarioArticuloController extends Controller {
 	/**
 	 * Muestra una lista de los recurso según los parametros a procesar en la petición.
 	 *
@@ -79,7 +79,7 @@ class TipoPersonalController extends Controller {
 			if(array_key_exists("buscar", $datos)){
 				$columna = $datos["columna"];
 				$valor   = $datos["valor"];
-				$data = TiposPersonal::with("TiposPersonalMetadatos")->orderBy($order, $orden);
+				$data = InventarioArticulo::with("InventarioArticuloMetadato", "Almacen", "Articulo")->orderBy($order, $orden);
 				
 				$search = trim($valor);
 				$keyword = $search;
@@ -91,13 +91,13 @@ class TipoPersonalController extends Controller {
 				$data = $data->skip($pagina-1)->take($datos["limite"])->get();
 			}
 			else{
-				$data = TiposPersonal::with("TiposPersonalMetadatos")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
-				$total =  TiposPersonal::all();
+				$data = InventarioArticulo::with("InventarioArticuloMetadato", "Almacen", "Articulo")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
+				$total =  InventarioArticulo::all();
 			}
 			
 		}
 		else{
-			$data = TiposPersonal::with("TiposPersonalMetadatos")->get();
+			$data = InventarioArticulo::with("InventarioArticuloMetadato", "Almacen", "Articulo")->get();
 			$total = $data;
 		}
 
@@ -126,7 +126,7 @@ class TipoPersonalController extends Controller {
 
         DB::beginTransaction();
         try{
-            $data = new TiposPersonal;
+            $data = new InventarioArticulo;
             $success = $this->campos($datos, $data);
 
         } catch (\Exception $e) {
@@ -164,7 +164,7 @@ class TipoPersonalController extends Controller {
         
         DB::beginTransaction();
         try{
-        	$data = TiposPersonal::find($id);
+        	$data = InventarioArticulo::find($id);
 
             if(!$data){
                 return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
@@ -188,53 +188,54 @@ class TipoPersonalController extends Controller {
 
 	public function campos($datos, $data){
 		$success = false;
+		$almacen_id = Request::header("X-Almacen-Id");
+		$servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
 
-		if(property_exists($datos, "foto")){
-			if($datos->foto != '' && !stripos($datos->foto, $data->nombre))
-        		$datos->foto = $this->convertir_imagen($datos->foto, 'categoria', $datos->nombre);
-		}
-
-        $data->nombre 		= property_exists($datos, "nombre") 		? $datos->nombre 		: $data->nombre;	
+		$data->almacen_id	= $almacen_id;	
+        $data->articulo_id	= property_exists($datos, "articulo_id") 		? $datos->articulo_id 		: $data->articulo_id;
+        $data->numero_inventario	= property_exists($datos, "numero_inventario") 		? $datos->numero_inventario 		: $data->numero_inventario;
+        $data->existencia	= property_exists($datos, "existencia") 		? $datos->existencia 		: $data->existencia;
+        $data->observaciones	= property_exists($datos, "observaciones") 		? $datos->observaciones 		: $data->observaciones;
+        $data->baja	= property_exists($datos, "baja") 		? $datos->baja 		: $data->baja;	
         
         if ($data->save()) { 
 
         	//verificar si existe contacto, en caso de que exista proceder a guardarlo
-            if(property_exists($datos, "tipos_personal_metadatos")){
+            if(property_exists($datos, "inventario_metadato")){
                 
                 //limpiar el arreglo de posibles nullos
-                $tipos_personal_metadatos = array_filter($datos->tipos_personal_metadatos, function($v){return $v !== null;});
+                $inventario_metadato = array_filter($datos->inventario_metadato, function($v){return $v !== null;});
 
                 //borrar los datos previos de articulo para no duplicar información
-                TiposPersonalMetadatos::where("tipo_personal_id", $data->id)->delete();
+                InventarioArticuloMetadato::where("servidor_id", $servidor_id)->where("inventario_id", $data->id)->delete();
 
                 //recorrer cada elemento del arreglo
-                foreach ($tipos_personal_metadatos as $key => $value) {
+                foreach ($inventario_metadato as $key => $value) {
                     //validar que el valor no sea null
                     if($value != null){
                         //comprobar si el value es un array, si es convertirlo a object mas facil para manejar.
                         if(is_array($value))
                             $value = (object) $value;
 
-                        //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
-                        DB::update("update tipos_personal_metadatos set deleted_at = null where tipo_personal_id = ".$data->id." and campo = '".$value->campo."'");
-                        
-                        //si existe el elemento actualizar
-                        $item = TiposPersonalMetadatos::where("tipo_personal_id", $data->id)->where("campo", $value->campo)->first();
-                        //si no existe crear
-                        if(!$item)
-                            $item = new TiposPersonalMetadatos;
+                        if($value->valor != ""){
+	                        //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
+	                        DB::update("update inventario_metadatos set deleted_at = null where servidor_id = '$servidor_id' and inventario_id = ".$data->id." and metadatos_id = '".$value->metadatos_id."'");
+	                        
+	                        //si existe el elemento actualizar
+	                        $item = InventarioArticuloMetadato::where("servidor_id", $servidor_id)->where("inventario_id", $data->id)->where("metadatos_id", $value->metadatos_id)->first();
+	                        //si no existe crear
+	                        if(!$item)
+	                            $item = new InventarioArticuloMetadato;
 
-                        //llenar el modelo con los datos
-
-                        
-                        $item->tipo_personal_id   		= $data->id; 
-                        $item->campo          		= $value->campo; 
-                        $item->descripcion    		= $value->descripcion; 
-                        $item->tipo    				= $value->tipo; 
-                        $item->longitud    			= $value->longitud; 
-                        $item->requerido    		= $value->requerido; 
-
-                        $item->save();         
+	                        //llenar el modelo con los datos
+	                        
+	                        $item->inventario_id   		= $data->id; 
+	                        $item->metadatos_id    		= $value->metadatos_id;
+	                        $item->campo          		= $value->campo; 
+	                        $item->valor    			= $value->valor; 
+	                        
+	                        $item->save(); 
+                        }        
                     }
                 }
             }       	
@@ -252,7 +253,7 @@ class TipoPersonalController extends Controller {
 	 * <code> Respuesta Error json(array("status": 404, "messages": "No hay resultados"),status) </code>
 	 */
 	public function show($id){
-		$data = TiposPersonal::with("TiposPersonalMetadatos")->find($id);			
+		$data = InventarioArticulo::with("InventarioArticuloMetadato", "Almacen", "Articulo")->find($id);			
 		
 		if(!$data){
 			return Response::json(array("status"=> 404,"messages" => "No hay resultados"),404);
@@ -275,7 +276,7 @@ class TipoPersonalController extends Controller {
 		$success = false;
         DB::beginTransaction();
         try {
-			$data = TiposPersonal::find($id);
+			$data = InventarioArticulo::find($id);
 			$data->delete();
 			
 			$success=true;

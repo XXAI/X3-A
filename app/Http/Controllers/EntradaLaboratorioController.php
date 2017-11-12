@@ -75,7 +75,7 @@ class EntradaLaboratorioController extends Controller
                              ->select('mov.*','mm.servicio_id','mm.turno_id','users.nombre')
                              ->where('mov.almacen_id',$parametros['almacen'])
                              ->where('mov.tipo_movimiento_id',13)
-                             ->where('mov.deleted_at',NULL)
+                             ->where('mov.deleted_at',null)
                              ->orderBy('mov.updated_at','DESC');
 
         if( ($parametros['fecha_desde']!="") && ($parametros['fecha_hasta']!="") )
@@ -245,9 +245,7 @@ class EntradaLaboratorioController extends Controller
     public function store(Request $request)
     {
         $errors = array(); 
-
         $almacen_id=$request->get('almacen_id');       
-
         
         $datos = (object) Input::json()->all();	
         $success = false;
@@ -854,7 +852,7 @@ class EntradaLaboratorioController extends Controller
 
         $reglas = array();
         $reglas = [
-                    'tipo_movimiento_id' => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,12',
+                    'tipo_movimiento_id' => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,12,13,14',
                   ];
 
         if($request['movimiento_metadato'] != NULL)
@@ -862,14 +860,14 @@ class EntradaLaboratorioController extends Controller
             if($request['tipo_movimiento_id'] == 1 )
             {
                 $reglas = [
-                            'tipo_movimiento_id'                 => 'required|integer|in:1,2,3,4,5,6,7,8',
+                            'tipo_movimiento_id'                 => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,12,13,14',
                             'movimiento_metadato.persona_recibe' => 'required|string',
                           ];
             }
             if($request['tipo_movimiento_id'] == 2 )
             {
                 $reglas = [
-                            'tipo_movimiento_id'                 => 'required|integer|in:1,2,3,4,5,6,7,8',
+                            'tipo_movimiento_id'                 => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,12,13,14',
                             'movimiento_metadato.servicio_id'    => 'required|integer',
                             'movimiento_metadato.persona_recibe' => 'required|string',
                             'movimiento_metadato.turno_id'       => 'required|integer',

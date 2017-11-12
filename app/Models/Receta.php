@@ -20,4 +20,8 @@ class Receta extends BaseModel
         return $this->hasMany('App\Models\RecetaDetalle', 'receta_id');
     }
 
+    public function personalMedico(){
+        return $this->belongsTo('App\Models\PersonalClues', 'personal_clues_id');
+    }
+
 }

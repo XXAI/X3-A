@@ -57,8 +57,8 @@ class Movimiento extends BaseModel{
     }
 
      public function movimientoReceta(){
-        return $this->belongsTo('App\Models\Receta','id','movimiento_id');
+        return $this->belongsTo('App\Models\Receta','id','movimiento_id')->with('personalMedico');
     }
-
+ 
    
 }

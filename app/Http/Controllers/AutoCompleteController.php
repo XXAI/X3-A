@@ -95,7 +95,10 @@ class AutoCompleteController extends Controller
         ->leftJoin('presentaciones_medicamentos AS pm', 'pm.id', '=', 'm.presentacion_id')
         ->where('almacen_id', $parametros['almacen'])
         ->where('im.deleted_at',NULL)
-        ->where(function($query) use ($parametros) {
+        ->where(function($query1) use ($parametros) {
+            $query1->where('im.tipo','ME')
+            ->orWhere('im.tipo','MC');
+        })->where(function($query) use ($parametros) {
             $query->where('im.clave','LIKE',"%".$parametros['term']."%")
             ->orWhere('g.nombre','LIKE',"%".$parametros['term']."%")
             ->orWhere('im.descripcion','LIKE',"%".$parametros['term']."%")
@@ -111,7 +114,10 @@ class AutoCompleteController extends Controller
         ->leftJoin('unidades_medida AS um', 'um.id', '=', 'm.unidad_medida_id')
         ->leftJoin('presentaciones_medicamentos AS pm', 'pm.id', '=', 'm.presentacion_id')
         ->where('im.deleted_at',NULL)
-        ->where(function($query) use ($parametros) {
+        ->where(function($query2) use ($parametros) {
+            $query2->where('im.tipo','ME')
+            ->orWhere('im.tipo','MC');
+        })->where(function($query) use ($parametros) {
             $query->where('im.clave','LIKE',"%".$parametros['term']."%")
             ->orWhere('g.nombre','LIKE',"%".$parametros['term']."%")
             ->orWhere('im.descripcion','LIKE',"%".$parametros['term']."%");

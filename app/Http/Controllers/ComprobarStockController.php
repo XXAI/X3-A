@@ -12,6 +12,8 @@ use App\Models\Stock;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response;
 
+use Carbon\Carbon;
+
 class ComprobarStockController extends Controller
 {
     /**
@@ -30,17 +32,48 @@ class ComprobarStockController extends Controller
         $existencia = 0;
         $existencia_unidosis = 0;
 
+        $stocks_monitor = array();
+
         foreach($stocks as $stock)
         {
             $existencia += $stock->existencia;
             $existencia_unidosis += $stock->existencia_unidosis;
+
+            $fecha_caducidad = $stock->fecha_caducidad;
+            $tipo_caducidad  = null;
+
+            $fecha_hoy    = Carbon::now()->format("Y-m-d");
+            $fecha_optima = Carbon::now()->addYears(1)->format("Y-m-d");
+            $fecha_media  = Carbon::now()->addMonths(6)->format("Y-m-d");
+            $fecha_pronta = Carbon::now()->addMonths(6)->format("Y-m-d");
+
+            if($fecha_caducidad >= $fecha_optima )
+            {
+                $tipo_caducidad = "OPTIMA";
+            } 
+            if($fecha_caducidad >= $fecha_media && $fecha_caducidad < $fecha_optima )
+            {
+                $tipo_caducidad = "MEDIA";
+            } 
+            if($fecha_caducidad >= $fecha_hoy && $fecha_caducidad < $fecha_media )
+            {
+                $tipo_caducidad = "PRONTA";
+            } 
+            if($fecha_caducidad < $fecha_hoy )
+            {
+                $tipo_caducidad = "CADUCADO";
+            } 
+
+            $stock->tipo_caducidad = $tipo_caducidad;
+            array_push($stocks_monitor, $stock);
+
         }               
 
         $objeto_response = array('almacen_id' => $parametros['almacen'],
                                         'clave' => $parametros['clave'],
                                         'existencia' => $existencia,
                                         'existencia_unidosis' => $existencia_unidosis,
-                                        'data' => $stocks,
+                                        'data' => $stocks_monitor,
                                         'status' => 200,
                                         'messages' => 'Operación realizada con exito',
                                         'total' => count($stocks));
