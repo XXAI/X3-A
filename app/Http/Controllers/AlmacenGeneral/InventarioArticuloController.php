@@ -1,6 +1,5 @@
 <?php
-
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\AlmacenGeneral;
 
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
@@ -9,21 +8,21 @@ use Illuminate\Support\Facades\Input;
 use Request;
 use Response;
 use DB; 
-use App\Models\PersonalClues;
-use App\Models\PersonalCluesMetadatos;
+use App\Models\AlmacenGeneral\InventarioArticulo;
+use App\Models\AlmacenGeneral\InventarioArticuloMetadato;
 
 /**
-* Controlador PersonalClues
+* Controlador InventarioArticulo
 * 
 * @package    Plataforma API
 * @subpackage Controlador
 * @author     Eliecer Ramirez Esquinca <ramirez.esquinca@gmail.com>
 * @created    2015-07-20
 *
-* Controlador `PersonalClues`: Manejo de usuarios del sistema
+* Controlador `InventarioArticulo`: Manejo de usuarios del sistema
 *
 */
-class PersonalCluesController extends Controller {
+class InventarioArticuloController extends Controller {
 	/**
 	 * Muestra una lista de los recurso según los parametros a procesar en la petición.
 	 *
@@ -80,7 +79,7 @@ class PersonalCluesController extends Controller {
 			if(array_key_exists("buscar", $datos)){
 				$columna = $datos["columna"];
 				$valor   = $datos["valor"];
-				$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->orderBy($order, $orden);
+				$data = InventarioArticulo::with("InventarioArticuloMetadato", "Almacen", "Articulo")->orderBy($order, $orden);
 				
 				$search = trim($valor);
 				$keyword = $search;
@@ -92,13 +91,13 @@ class PersonalCluesController extends Controller {
 				$data = $data->skip($pagina-1)->take($datos["limite"])->get();
 			}
 			else{
-				$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
-				$total =  PersonalClues::all();
+				$data = InventarioArticulo::with("InventarioArticuloMetadato", "Almacen", "Articulo")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
+				$total =  InventarioArticulo::all();
 			}
 			
 		}
 		else{
-			$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->get();
+			$data = InventarioArticulo::with("InventarioArticuloMetadato", "Almacen", "Articulo")->get();
 			$total = $data;
 		}
 
@@ -124,10 +123,10 @@ class PersonalCluesController extends Controller {
 		$this->ValidarParametros(Input::json()->all());			
 		$datos = (object) Input::json()->all();	
 		$success = false;
- 
+
         DB::beginTransaction();
         try{
-            $data = new PersonalClues;
+            $data = new InventarioArticulo;
             $success = $this->campos($datos, $data);
 
         } catch (\Exception $e) {
@@ -165,7 +164,7 @@ class PersonalCluesController extends Controller {
         
         DB::beginTransaction();
         try{
-        	$data = PersonalClues::find($id);
+        	$data = InventarioArticulo::find($id);
 
             if(!$data){
                 return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
@@ -190,29 +189,28 @@ class PersonalCluesController extends Controller {
 	public function campos($datos, $data){
 		$success = false;
 		$almacen_id = Request::header("X-Almacen-Id");
-		$clues = Request::header("X-Almacen-Id");
 		$servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
-		
 
-		$data->tipo_personal_id	= property_exists($datos, "tipo_personal_id") 	? $datos->tipo_personal_id 		: $data->tipo_personal_id;
-        $data->clues			= property_exists($datos, "clues") 				? $datos->clues 				: $data->clues;
-        $data->nombre			= property_exists($datos, "nombre") 			? $datos->nombre 				: $data->nombre;
-        $data->celular			= property_exists($datos, "celular") 			? $datos->celular 				: $data->celular;
-        $data->email			= property_exists($datos, "email") 				? $datos->email 				: $data->email;	
+		$data->almacen_id	= $almacen_id;	
+        $data->articulo_id	= property_exists($datos, "articulo_id") 		? $datos->articulo_id 		: $data->articulo_id;
+        $data->numero_inventario	= property_exists($datos, "numero_inventario") 		? $datos->numero_inventario 		: $data->numero_inventario;
+        $data->existencia	= property_exists($datos, "existencia") 		? $datos->existencia 		: $data->existencia;
+        $data->observaciones	= property_exists($datos, "observaciones") 		? $datos->observaciones 		: $data->observaciones;
+        $data->baja	= property_exists($datos, "baja") 		? $datos->baja 		: $data->baja;	
         
         if ($data->save()) { 
 
         	//verificar si existe contacto, en caso de que exista proceder a guardarlo
-            if(property_exists($datos, "personal_clues_metadatos")){
+            if(property_exists($datos, "inventario_metadato")){
                 
                 //limpiar el arreglo de posibles nullos
-                $personal_clues_metadatos = array_filter($datos->personal_clues_metadatos, function($v){return $v !== null;});
+                $inventario_metadato = array_filter($datos->inventario_metadato, function($v){return $v !== null;});
 
                 //borrar los datos previos de articulo para no duplicar información
-                PersonalCluesMetadatos::where("servidor_id", $servidor_id)->where("personal_clues_id", $data->id)->delete();
+                InventarioArticuloMetadato::where("servidor_id", $servidor_id)->where("inventario_id", $data->id)->delete();
 
                 //recorrer cada elemento del arreglo
-                foreach ($personal_clues_metadatos as $key => $value) {
+                foreach ($inventario_metadato as $key => $value) {
                     //validar que el valor no sea null
                     if($value != null){
                         //comprobar si el value es un array, si es convertirlo a object mas facil para manejar.
@@ -221,17 +219,17 @@ class PersonalCluesController extends Controller {
 
                         if($value->valor != ""){
 	                        //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
-	                        DB::update("update personal_clues_metadatos set deleted_at = null where servidor_id = '$servidor_id' and personal_clues_id = ".$data->id." and metadatos_id = '".$value->metadatos_id."'");
+	                        DB::update("update inventario_metadatos set deleted_at = null where servidor_id = '$servidor_id' and inventario_id = ".$data->id." and metadatos_id = '".$value->metadatos_id."'");
 	                        
 	                        //si existe el elemento actualizar
-	                        $item = PersonalCluesMetadatos::where("servidor_id", $servidor_id)->where("personal_clues_id", $data->id)->where("metadatos_id", $value->metadatos_id)->first();
+	                        $item = InventarioArticuloMetadato::where("servidor_id", $servidor_id)->where("inventario_id", $data->id)->where("metadatos_id", $value->metadatos_id)->first();
 	                        //si no existe crear
 	                        if(!$item)
-	                            $item = new PersonalCluesMetadatos;
+	                            $item = new InventarioArticuloMetadato;
 
 	                        //llenar el modelo con los datos
 	                        
-	                        $item->personal_clues_id   		= $data->id; 
+	                        $item->inventario_id   		= $data->id; 
 	                        $item->metadatos_id    		= $value->metadatos_id;
 	                        $item->campo          		= $value->campo; 
 	                        $item->valor    			= $value->valor; 
@@ -255,7 +253,7 @@ class PersonalCluesController extends Controller {
 	 * <code> Respuesta Error json(array("status": 404, "messages": "No hay resultados"),status) </code>
 	 */
 	public function show($id){
-		$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->find($id);			
+		$data = InventarioArticulo::with("InventarioArticuloMetadato", "Almacen", "Articulo")->find($id);			
 		
 		if(!$data){
 			return Response::json(array("status"=> 404,"messages" => "No hay resultados"),404);
@@ -278,7 +276,7 @@ class PersonalCluesController extends Controller {
 		$success = false;
         DB::beginTransaction();
         try {
-			$data = PersonalClues::find($id);
+			$data = InventarioArticulo::find($id);
 			$data->delete();
 			
 			$success=true;

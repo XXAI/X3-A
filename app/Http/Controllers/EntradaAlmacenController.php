@@ -59,8 +59,6 @@ class EntradaAlmacenController extends Controller
         $parametros = Input::only('q','page','per_page','almacen','tipo','fecha_desde','fecha_hasta','recibe','turno','servicio');
         $parametros['almacen'] = $request->get('almacen_id');
 
-        
-
         if(!$request->get('almacen_id')){
             return Response::json(array("status" => 404,"messages" => "Debe especificar un almacen."), 200);
         }  
@@ -75,8 +73,10 @@ class EntradaAlmacenController extends Controller
                              ->select('mov.*','mm.servicio_id','mm.turno_id','users.nombre')
                              ->where('mov.almacen_id',$parametros['almacen'])
                              ->where('mov.tipo_movimiento_id',1)
-                             ->where('mov.deleted_at',NULL)
+                             ->where('mov.deleted_at',null)
                              ->orderBy('mov.updated_at','DESC');
+
+        
 
         if( ($parametros['fecha_desde']!="") && ($parametros['fecha_hasta']!="") )
         {
@@ -112,8 +112,9 @@ class EntradaAlmacenController extends Controller
         }
 
         $movimientos = $movimientos->get();
-
+        //dd(json_encode($movimientos)); die();
         $data = array();
+
         foreach($movimientos as $mov)
         {
             $movimiento_response = Movimiento::with('movimientoMetadato','movimientoUsuario','movimientoReceta')
@@ -122,7 +123,7 @@ class EntradaAlmacenController extends Controller
             $cantidad_claves  = MovimientoInsumos::where('movimiento_id',$movimiento_response->id)->distinct('clave_insumo_medico')->count();
             $cantidad_insumos = DB::table('movimiento_insumos')
                                     ->where('movimiento_id', '=', $movimiento_response->id)
-                                    ->where('movimiento_insumos.deleted_at',NULL)->sum('cantidad');
+                                    ->where('movimiento_insumos.deleted_at',null)->sum('cantidad');
 
             if($cantidad_claves  == NULL){ $cantidad_claves  = 0 ; }
             if($cantidad_insumos == NULL){ $cantidad_insumos = 0 ; }
@@ -137,6 +138,7 @@ class EntradaAlmacenController extends Controller
 
 
         $indice_adds = 0;
+        $data2       = null;
 
         if(isset($parametros['page']))
         {
@@ -168,12 +170,11 @@ class EntradaAlmacenController extends Controller
              } 
 
 
-        
-        if(count($data) <= 0)
-        { 
+
+
             ///***************************************************************************************************************************************
                 $movimientos_all = Movimiento::with('movimientoMetadato','movimientoUsuario')
-                                            ->where('tipo_movimiento_id',$parametros['tipo'])
+                                            ->where('tipo_movimiento_id',1)
                                             ->where('almacen_id',$parametros['almacen'])
                                             ->orderBy('updated_at','DESC')->get();
                 $array_turnos     = array();
@@ -196,50 +197,28 @@ class EntradaAlmacenController extends Controller
                 $total = count($data);
 
             ////**************************************************************************************************************************************
+        
+        if(count($data) <= 0)
+        { 
 
             $data[0] = array ("turnos_disponibles" => $array_turnos, "servicios_disponibles" => $array_servicios);
             return Response::json(array("status" => 404,"messages" => "No hay resultados","data" => $data), 200);
 
-          //return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data2, "total" => $total), 200);
-        } 
-        else{
-                ///***************************************************************************************************************************************
-                $movimientos_all = Movimiento::with('movimientoMetadato','movimientoUsuario')
-                                            ->where('tipo_movimiento_id',$parametros['tipo'])
-                                            ->where('almacen_id',$parametros['almacen'])
-                                            ->orderBy('updated_at','DESC')->get();
-
-                $array_turnos     = array();
-                $array_servicios  = array();
-
-                foreach($movimientos_all as $mov)
-                {
-                    if(!in_array($mov->movimientoMetadato['turno'],$array_turnos))
-                    {
-                        array_push($array_turnos,$mov->movimientoMetadato['turno']);
-                    }
-                    if(!in_array($mov->movimientoMetadato['servicio'],$array_servicios))
-                    {
-                        array_push($array_servicios,$mov->movimientoMetadato['servicio']);
-                    }
-                }
-                $array_turnos    = array_filter($array_turnos, function($v){return $v !== NULL;});
-                $array_servicios = array_filter($array_servicios, function($v){return $v !== NULL;});
-
-                $total = count($data);
-
-                ////**************************************************************************************************************************************
-                if(isset($parametros['page']))
+        }else{
+            
+               if(isset($parametros['page']))
                 {
                     $data2[$indice_adds] = array ("turnos_disponibles" => $array_turnos, "servicios_disponibles" => $array_servicios);
-                return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data2, "total" => $total), 200);
+
+                    return Response::json(array("status" => 200,"messages" => "Operación realizada con exito ...", "data" => $data2, "total" => $total), 200);
+
                 }else{
                         $data[$indice_adds] = array ("turnos_disponibles" => $array_turnos, "servicios_disponibles" => $array_servicios);
                         return Response::json(array("status" => 200,"messages" => "Operación realizada con exito", "data" => $data, "total" => $total), 200);
                      }
                 
             
-        }
+             }
     }
 
    
@@ -295,6 +274,8 @@ class EntradaAlmacenController extends Controller
                     $metadatos->movimiento_id  = $movimiento_entrada_br->id;
                     //$metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
                     $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
+
+                    //dd($metadatos); die();
 
 
                     $metadatos->save();   
@@ -592,16 +573,16 @@ class EntradaAlmacenController extends Controller
 
                 $movimiento_entrada_br->save(); 
 
-                if(property_exists($datos,"movimiento_metadato"))
-                {
-                    $metadatos = MovimientoMetadato::where("movimiento_id",$id)->first();
-                    $metadatos->movimiento_id  = $movimiento_entrada_br->id;
-                    //$metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
-                    $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
+                 
+                $metadatos = MovimientoMetadato::where("movimiento_id",$movimiento_entrada_br->id)->first();
 
+                $metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
+                $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe']; 
 
-                    $metadatos->save();   
-                }
+                    //dd(json_encode($metadatos)); die(); 
+
+                $metadatos->save();   
+                 
 
                 /////****************************************************************************************************************************
                     $movimientos_insumos_grabados = array();

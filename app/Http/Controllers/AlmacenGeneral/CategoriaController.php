@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\AlmacenGeneral;
 
 use App\Http\Requests;

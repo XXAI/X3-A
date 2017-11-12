@@ -24,9 +24,13 @@ Route::get('grupo-permiso',                     'AutoCompleteController@grupo_pe
 Route::get('clues-auto',                        'AutoCompleteController@clues');
 Route::get('insumos-auto',                      'AutoCompleteController@insumos');
 Route::get('insumos-entrada-auto',              'AutoCompleteController@insumos_entradas');
-Route::resource('personal-clues',               'PersonalCluesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 Route::get('insumos-laboratorio-clinico-auto',  'AutoCompleteController@insumosLaboratorioClinico');
 Route::get('articulos-auto',                    'AutoCompleteController@articulos');
+Route::get('inventario-articulo-auto', "AutoCompleteController@articulos_inventarios");
+
+Route::resource('personal-clues',               'PersonalCluesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+Route::resource('personal-medico',              'PersonalMedicoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+
 
 // reportes y graficas
 Route::get('grafica-entregas',                  'ReportePedidoController@graficaEntregas');
@@ -168,7 +172,10 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('entrada-laboratorio',          'EntradaLaboratorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('salida-laboratorio',           'SalidaLaboratorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('inventario-insumos',           'InventarioInsumosController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-                
+        Route::resource('caducidad-insumos',            'CaducidadInsumosController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+
+        Route::resource('inventario-laboratorio',       'InventarioLaboratorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);        
+
         Route::resource('ajuste-mas-inventario',        'AjusteMasInventarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('ajuste-menos-inventario',      'AjusteMenosInventarioController',  ['only' => ['index', 'show', 'store','update','destroy']]);
 
@@ -182,7 +189,7 @@ Route::group(['middleware' => 'jwt'], function () {
         // Actas
         Route::put('generar-pedido-alterno/{id}',       'PedidoController@generarAlterno');
         Route::resource('actas',                        'ActasController',     ['only' => ['index', 'show']]);
-
+ 
 
         //Route::resource('pedidos-jurisdiccionales',         'PedidoJurisdiccionalController',     ['only' => ['index', 'show', 'store','update','destroy']]);
         //Route::get('pedidos-jurisdiccionales-stats',        'PedidoJurisdiccionalController@stats');
@@ -190,11 +197,10 @@ Route::group(['middleware' => 'jwt'], function () {
 
         Route::resource('recepcion-pedido',             'RecepcionPedidoController',    ['only' => ['show', 'update','destroy']]);
 
+        Route::resource('mis-almacenes',                'MiAlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('mis-servicios',                'MisServiciosController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 	    Route::resource('mis-turnos',                   'MisTurnosController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 	    Route::resource('mis-claves',                   'MisClavesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-	
-	    Route::resource('mis-almacenes',                'MiAlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('firmantes',                    'FirmantesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
         //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
@@ -204,12 +210,12 @@ Route::group(['middleware' => 'jwt'], function () {
     });
 
     
-
     Route::get('generar-excel-pedido/{id}',                 'PedidoController@generarExcel');
     Route::get('generar-excel-pedido-jurisdiccional/{id}',  'PedidoJurisdiccionalController@generarExcel');
 
     
     Route::get('inventario-insumos-excel',                  'InventarioInsumosController@excel');
+    Route::get('caducidad-insumos-excel',                   'CaducidadInsumosController@excel');
     
     Route::get('entregas-stats',                            'EntregaController@stats'); 
  
@@ -234,7 +240,8 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('material-curacion',                    'MaterialCuracionController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('medicamentos',                         'MedicamentoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('unidad-medica',                        'UnidadMedicaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-    Route::resource('forma-farmaceutica',                   'FormaFarmaceuticaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
+    Route::resource('forma-farmaceutica',                   'FormaFarmaceuticaController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('condicion-articulo',                   'CondicionArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
     // catalogos  
 
@@ -256,16 +263,17 @@ Route::group(['middleware' => 'jwt'], function () {
        
     });
 
+
     Route::group(['namespace' => 'AlmacenGeneral'], function () {
         
         Route::resource('categoria',                        'CategoriaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
         Route::resource('articulos',                        'ArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-        Route::resource('inventario-articulos',             'InventarioArticulosController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
+        Route::resource('inventario-articulos',             'InventarioArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
 
         Route::resource('tipo-personal',                    'TipoPersonalController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-        Route::resource('entrada',                          'EntradaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-        Route::resource('salida',                           'SalidaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
-        Route::resource('almacen-configuracion',            'AlmacenConfiguracionController',    ['only' => ['show', 'update']]);
+        Route::resource('entrada-articulo',                 'EntradaArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
+        Route::resource('salida-articulo',                  'SalidaArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
+        Route::resource('configuracion-general',            'ConfiguracionGeneralController',    ['only' => ['show', 'update']]);
          
     });
     
