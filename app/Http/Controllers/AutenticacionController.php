@@ -120,6 +120,7 @@ class AutenticacionController extends Controller
                     "nombre" => $usuario->nombre,
                     "apellidos" => $usuario->apellidos,
                     "avatar" => $usuario->avatar,
+                    "medico_id" =>$usuario->medico_id,
                     "permisos" => $lista_permisos,                    
                     "unidades_medicas" =>  $unidades_medicas,
                     "modulo_inicio" => $modulo_inicio
