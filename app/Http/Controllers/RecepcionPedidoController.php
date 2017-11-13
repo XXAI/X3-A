@@ -148,13 +148,18 @@ class RecepcionPedidoController extends Controller
 		/*$pedido = Pedido::where('almacen_solicitante',$almacen->id)->with(['recepciones'=>function($recepciones){
 			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
 		}])->whereIn('status',['PS','EX', 'BR'])->find($id);*/
-		$pedido = Pedido::where('clues',$almacen->clues)->find($id);
+		$pedido = Pedido::find($id);
 
 		if(!$pedido){
 			DB::rollBack();
 			return Response::json(['error' => 'No se encontró el pedido'],500);
 		}
 
+		if($pedido->almacen_proveedor != $almacen->id && $pedido->almacen_solicitante != $almacen->id  && $pedido->clues_destino != $almacen->clues && $pedido->clues != $almacen_clues){
+			DB::rollBack();
+            return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_CONFLICT);
+		}
+		
 		if($pedido->status ==  "BR"){
 			DB::rollBack();
 			return Response::json(['error' => 'No se puede guardar la recepción porque el pedido se ha modificado a borrador, contactese con el administrador para mayor información'],500);

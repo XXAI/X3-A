@@ -24,5 +24,12 @@ class PersonalClues extends BaseModel
         return $this->belongsTo('App\Models\UnidadMedica','clues', "clues");
     }
 
+    public function PersonalCluesMetadatos(){
+        return $this->hasMany('App\Models\PersonalCluesMetadatos','personal_clues_id', "id");
+    }
+
+    public function TiposPersonal(){
+        return $this->belongsTo('App\Models\TiposPersonal','tipo_personal_id', "id");
+    }
     
 }

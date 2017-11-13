@@ -73,10 +73,11 @@ class AlmacenController extends Controller
 
         //if(count($parametros)){
         if (isset($parametros['q'])) {
+            
             $almacenes =  Almacen::where(function($query) use ($parametros) {
                 $query->where('nombre','LIKE',"%".$parametros['q']."%")
-                    ->where('tipo','LIKE',"%".$parametros['q']."%")
-                    ->where('clues','LIKE',"%".$parametros['q']."%");
+                   ->orWhere('tipo_almacen','LIKE',"%".$parametros['q']."%")
+                    ->orWhere('clues','LIKE',"%".$parametros['q']."%");
             });
         } else {
             $almacenes = Almacen::getModel();
@@ -92,6 +93,10 @@ class AlmacenController extends Controller
             //$almacenes = $almacenes->whereNotIn('id',$almacenes_id);
         }else{
             $almacenes = $almacenes->with('usuarios','tiposMovimientos');
+        }
+        
+        if(isset($parametros['tipo'])){
+            $almacenes = $almacenes->where('tipo_almacen',$parametros['tipo']);
         }
 
         if(isset($parametros['subrogado'])){

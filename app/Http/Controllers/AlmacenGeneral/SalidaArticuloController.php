@@ -1,29 +1,32 @@
 <?php
-
 namespace App\Http\Controllers\AlmacenGeneral;
 
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 
-use Illuminate\Support\Facades\Input;
 use Request;
 use Response;
+use Illuminate\Support\Facades\Input;
 use DB; 
-use App\Models\PersonalClues;
-use App\Models\PersonalCluesMetadatos;
+
+use App\Models\AlmacenGeneral\Movimiento;
+use App\Models\AlmacenGeneral\MovimientoArticulos;
+
+use App\Models\AlmacenGeneral\InventarioArticulo;
+use App\Models\AlmacenGeneral\InventarioArticuloMetadatos;
 
 /**
-* Controlador PersonalClues
+* Controlador Movimiento
 * 
 * @package    Plataforma API
 * @subpackage Controlador
 * @author     Eliecer Ramirez Esquinca <ramirez.esquinca@gmail.com>
 * @created    2015-07-20
 *
-* Controlador `PersonalClues`: Manejo de usuarios del sistema
+* Controlador `SisMovimiento`: Manejo de usuarios del sistema
 *
 */
-class PersonalCluesController extends Controller {
+class SalidaArticuloController extends Controller {
 	/**
 	 * Muestra una lista de los recurso según los parametros a procesar en la petición.
 	 *
@@ -67,7 +70,7 @@ class PersonalCluesController extends Controller {
 				$order=str_replace("-", "", $order); 
 			}
 			else{
-				$order = "id"; $orden = "asc";
+				$order = "id"; $orden = "desc";
 			}
 			
 			if($pagina == 0){
@@ -80,32 +83,34 @@ class PersonalCluesController extends Controller {
 			if(array_key_exists("buscar", $datos)){
 				$columna = $datos["columna"];
 				$valor   = $datos["valor"];
-				$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->orderBy($order, $orden);
+				$data = Movimiento::with("Usuario", "MovimientoArticulos", "TipoMovimiento", "Almacen")
+				->where('tipo_movimiento_id',$datos["tipo_movimiento_id"])->orderBy($order, $orden);
 				
 				$search = trim($valor);
 				$keyword = $search;
 				$data = $data->whereNested(function($query) use ($keyword){	
-						$query->Where("nombre", "LIKE", '%'.$keyword.'%'); 
+						$query->Where("id", "LIKE", "%".$keyword."%")
+						->orWhere("status", "LIKE", "%".$keyword."%")
+						->orWhere("fecha_movimiento", "LIKE", "%".$keyword."%"); 
 				});
 				
 				$total = $data->get();
 				$data = $data->skip($pagina-1)->take($datos["limite"])->get();
 			}
 			else{
-				$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
-				$total =  PersonalClues::all();
-			}
-			
+				$data = Movimiento::with("Usuario", "MovimientoArticulos", "TipoMovimiento", "Almacen")->where('tipo_movimiento_id',$datos["tipo_movimiento_id"])->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
+				$total =  Movimiento::where('tipo_movimiento_id',$datos["tipo_movimiento_id"])->get();
+			}			
 		}
 		else{
-			$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->get();
+			$data = Movimiento::with("Usuario", "MovimientoArticulos", "TipoMovimiento", "Almacen")->where('tipo_movimiento_id',$datos["tipo_movimiento_id"])->get();
 			$total = $data;
 		}
 
 		if(!$data){
 			return Response::json(array("status" => 204, "messages" => "No hay resultados"),204);
 		} 
-		else {			
+		else {				
 			return Response::json(array("status" => 200, "messages" => "Operación realizada con exito", "data" => $data, "total" => count($total)), 200);			
 		}
 	}
@@ -127,7 +132,7 @@ class PersonalCluesController extends Controller {
 
         DB::beginTransaction();
         try{
-            $data = new PersonalClues;
+            $data = new Movimiento;
             $success = $this->campos($datos, $data);
 
         } catch (\Exception $e) {
@@ -136,6 +141,7 @@ class PersonalCluesController extends Controller {
         } 
         if ($success){
             DB::commit();
+            $data = $this->informacion($data->id);
             return Response::json(array("status" => 201,"messages" => "Creado","data" => $data), 201);
         } 
         else{
@@ -165,7 +171,7 @@ class PersonalCluesController extends Controller {
         
         DB::beginTransaction();
         try{
-        	$data = PersonalClues::find($id);
+        	$data = Movimiento::find($id);
 
             if(!$data){
                 return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
@@ -179,72 +185,78 @@ class PersonalCluesController extends Controller {
         } 
         if($success){
 			DB::commit();
+			$data = $this->informacion($data->id);
 			return Response::json(array("status" => 200, "messages" => "Operación realizada con exito", "data" => $data), 200);
 		} 
 		else {
 			DB::rollback();
 			return Response::json(array("status" => 304, "messages" => "No modificado"),200);
 		}
-	}
+	}	
 
 	public function campos($datos, $data){
 		$success = false;
-		$almacen_id = Request::header("X-Almacen-Id");
-		$clues = Request::header("X-Almacen-Id");
-		$servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
 		
+		$almacen_id = Request::header("X-Almacen-Id");
 
-		$data->tipo_personal_id	= property_exists($datos, "tipo_personal_id") 	? $datos->tipo_personal_id 		: $data->tipo_personal_id;
-        $data->clues			= property_exists($datos, "clues") 				? $datos->clues 				: $data->clues;
-        $data->nombre			= property_exists($datos, "nombre") 			? $datos->nombre 				: $data->nombre;
-        $data->celular			= property_exists($datos, "celular") 			? $datos->celular 				: $data->celular;
-        $data->email			= property_exists($datos, "email") 				? $datos->email 				: $data->email;	
-        
-        if ($data->save()) { 
+        $data->almacen_id 		 			= $almacen_id;
+        $data->tipo_movimiento_id	 		= property_exists($datos, "tipo_movimiento_id") 		? $datos->tipo_movimiento_id  	: $data->tipo_movimiento_id;	       
+        $data->status 			 			= property_exists($datos, "status") 					? $datos->status 					: $data->status;
+        $data->fecha_movimiento		 	 	= property_exists($datos, "fecha_movimiento") 			? $datos->fecha_movimiento 			: $data->fecha_movimiento;		
+		$data->observaciones 	 			= property_exists($datos, "observaciones") 				? $datos->observaciones 			: $data->observaciones;
+		$data->cancelado 					= property_exists($datos, "cancelado")					? $datos->cancelado					: $data->cancelado;
+		$data->observaciones_cancelacion	= property_exists($datos, "observaciones_cancelacion")	? $datos->observaciones_cancelacion	: $data->observaciones_cancelacion;
 
-        	//verificar si existe contacto, en caso de que exista proceder a guardarlo
-            if(property_exists($datos, "personal_clues_metadatos")){
-                
-                //limpiar el arreglo de posibles nullos
-                $personal_clues_metadatos = array_filter($datos->personal_clues_metadatos, function($v){return $v !== null;});
+        if ($data->save()) {		
+        	if(property_exists($datos, "movimiento_articulos")){
+        		$movimiento_articulos = array_filter($datos->movimiento_articulos, function($v){return $v !== null;});
+        		MovimientoArticulos::where("movimiento_id", $data->id)->delete();
+        		foreach ($movimiento_articulos as $key => $value) {
+        			$value = (object) $value;
+        			if($value != null){
 
-                //borrar los datos previos de articulo para no duplicar información
-                PersonalCluesMetadatos::where("servidor_id", $servidor_id)->where("personal_clues_id", $data->id)->delete();
+        				DB::update("update movimiento_articulos set deleted_at = null where movimiento_id = $data->id and articulo_id = '$value->articulo_id'");
+						$item = MovimientoArticulos::where("movimiento_id", $data->id)->where("articulo_id", $value->articulo_id)->first();
 
-                //recorrer cada elemento del arreglo
-                foreach ($personal_clues_metadatos as $key => $value) {
-                    //validar que el valor no sea null
-                    if($value != null){
-                        //comprobar si el value es un array, si es convertirlo a object mas facil para manejar.
-                        if(is_array($value))
-                            $value = (object) $value;
+						if(!$item)
+            				$item = new MovimientoArticulos;
+            			
+            			$item->movimiento_id  	= $data->id;
+            			$item->articulo_id    	= property_exists($value, "articulo_id")	? $value->articulo_id	  : $item->articulo_id;
+            			$item->inventario_id   	= property_exists($value, "inventario_id")	? $value->inventario_id	  : $item->inventario_id;
+            			$item->cantidad    		= property_exists($value, "cantidad")		? $value->cantidad		  : $item->cantidad;
+            			$item->precio_unitario 	= property_exists($value, "precio_unitario")? $value->precio_unitario : $item->precio_unitario;
+            			$item->iva    			= property_exists($value, "iva")			? $value->iva			  : $item->iva;
+            			$item->importe 			= property_exists($value, "importe")		? $value->importe		  : $item->importe;
 
-                        if($value->valor != ""){
-	                        //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
-	                        DB::update("update personal_clues_metadatos set deleted_at = null where servidor_id = '$servidor_id' and personal_clues_id = ".$data->id." and metadatos_id = '".$value->metadatos_id."'");
-	                        
-	                        //si existe el elemento actualizar
-	                        $item = PersonalCluesMetadatos::where("servidor_id", $servidor_id)->where("personal_clues_id", $data->id)->where("metadatos_id", $value->metadatos_id)->first();
-	                        //si no existe crear
-	                        if(!$item)
-	                            $item = new PersonalCluesMetadatos;
-
-	                        //llenar el modelo con los datos
-	                        
-	                        $item->personal_clues_id   		= $data->id; 
-	                        $item->metadatos_id    		= $value->metadatos_id;
-	                        $item->campo          		= $value->campo; 
-	                        $item->valor    			= $value->valor; 
-	                        
-	                        $item->save(); 
-                        }        
-                    }
-                }
-            }       	
+            			if($item->save()){				        		
+			        		DB::table('inventario_movimiento_articulos')->where('movimiento_articulos_id', $item->id)->delete();					        		
+	        				$inventario = InventarioArticulo::where("articulo_id", $item->articulo_id)
+									        				->where("numero_inventario", $value->numero_inventario)
+									        				->first();				        									        					
+        					if($inventario){				        					     
+	            				$inventario->existencia = $inventario->existencia - $value->cantidad;		            							 		
+	            				if($inventario->save()){
+	            					DB::table('inventario_movimiento_articulos')->insert(
+									    ['movimiento_articulos_id' => $item->id, 'inventario_id' => $inventario->id]
+									);
+    								$success = true;		            			
+	            				}	
+            				}			        			
+        				}	        			
+            		}
+        		}
+        	}        	
 			$success = true;
 		}  
 		return $success;     						
 	}
+
+	public function informacion($id){
+		$data = Movimiento::with("Usuario", "MovimientoArticulos", "TipoMovimiento", "Almacen")->find($id);				
+		return $data;
+	}
+
 	/**
 	 * Devuelve la información del registro especificado.
 	 *
@@ -255,12 +267,12 @@ class PersonalCluesController extends Controller {
 	 * <code> Respuesta Error json(array("status": 404, "messages": "No hay resultados"),status) </code>
 	 */
 	public function show($id){
-		$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->find($id);			
+		$data = Movimiento::with("Usuario", "MovimientoArticulos", "TipoMovimiento", "Almacen")->find($id);			
 		
 		if(!$data){
 			return Response::json(array("status"=> 404,"messages" => "No hay resultados"),404);
 		} 
-		else {				
+		else {	
 			return Response::json(array("status" => 200, "messages" => "Operación realizada con exito", "data" => $data), 200);
 		}
 	}
@@ -278,7 +290,13 @@ class PersonalCluesController extends Controller {
 		$success = false;
         DB::beginTransaction();
         try {
-			$data = PersonalClues::find($id);
+			$data = Movimiento::find($id);
+			$grupos = $data->Grupos();
+			if(count($grupos)>0){
+				foreach ($grupos as $grupo) {
+					$data->removeGroup($grupo);				
+				}
+			}
 			$data->delete();
 			
 			$success=true;
@@ -306,7 +324,7 @@ class PersonalCluesController extends Controller {
 	 */
 	private function ValidarParametros($request){
 		$rules = [
-			"nombre" => "required|min:3"
+			"total" => "required"
 		];
 		$v = \Validator::make(Request::json()->all(), $rules );
 

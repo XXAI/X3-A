@@ -705,15 +705,22 @@ class MovimientoController extends Controller
                     ->join('stock', 'movimiento_insumos.stock_id', '=', 'stock.id')
                     ->where('movimiento_insumos.movimiento_id', '=', $id)
                     ->groupby('stock.clave_insumo_medico')
-                    ->where('movimiento_insumos.deleted_at',NULL)
+                    ->where('movimiento_insumos.deleted_at',null)
                     ->select(DB::raw('SUM(movimiento_insumos.cantidad) as total_insumo'), 'stock.clave_insumo_medico')
                     ->get();
 
              //$receta = NULL;
-             $receta_movimiento = RecetaMovimiento::where('movimiento_id',$movimiento->id)->with('receta')->first();
+             //$receta_movimiento = RecetaMovimiento::where('movimiento_id',$movimiento->id)->with('receta')->first();
+             $receta = Receta::with('recetaDetalles')->where('movimiento_id',$movimiento->id)->first();
 
-             $receta            = $receta_movimiento->receta;
-             
+             $receta            = (object) $receta;
+             $personal_clues    = PersonalClues::find($receta->personal_clues_id);
+
+             if($personal_clues)
+             {
+                 $receta->doctor = $personal_clues->nombre;
+             }
+
              $receta_detalles   = $receta->recetaDetalles; 
 
              $array_insumos  = array();            
@@ -1745,15 +1752,21 @@ class MovimientoController extends Controller
                 
                 
                 $receta->paciente           = $datos->receta['paciente'];
+
+                if((bool)$datos->receta['tiene_seguro_popular'] == true)
+                {
+                    $receta->poliza_seguro_popular = $datos->receta['poliza_seguro_popular'];
+                }
+                
                 $receta->diagnostico        = $datos->receta['diagnostico'];
 
                 $receta->save();
 
-                $receta_movimiento = new RecetaMovimiento;
-                $receta_movimiento->receta_id      = $receta->id;
-                $receta_movimiento->movimiento_id  = $movimiento_salida_receta->id;
+                //$receta_movimiento = new RecetaMovimiento;
+                //$receta_movimiento->receta_id      = $receta->id;
+                //$receta_movimiento->movimiento_id  = $movimiento_salida_receta->id;
 
-                $receta_movimiento->save();
+                //$receta_movimiento->save();
 
             }
 
