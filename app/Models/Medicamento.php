@@ -10,8 +10,8 @@ class Medicamento extends BaseModel{
     
     protected $generarID = false;
     protected $guardarIDServidor = false;
-    //protected $guardarIDUsuario = false;
-    //public $incrementing = false;
+    protected $guardarIDUsuario = false;
+    public $incrementing = false;
     
     protected $table = 'medicamentos';  
     protected $primaryKey = 'insumo_medico_clave';
@@ -40,5 +40,17 @@ class Medicamento extends BaseModel{
                 ->leftjoin('insumos_medicos','insumos_medicos.clave','=','medicamentos.insumo_medico_clave')
                 ->leftjoin('informacion_importante_medicamentos','informacion_importante_medicamentos.generico_id','=','insumos_medicos.generico_id')
                 ->leftjoin('factores_riesgo_embarazo','factores_riesgo_embarazo.id','=','informacion_importante_medicamentos.factor_riesgo_embarazo_id')                ;
+    }
+     public function UnidadMedida(){
+        return $this->belongsTo('App\Models\UnidadMedida','unidad_medida_id','id');
+    }
+    public function FormaFarmaceutica(){
+        return $this->belongsTo('App\Models\FormaFarmaceutica','forma_farmaceutica_id','id');
+    }
+    public function PresentacionMedicamento(){
+        return $this->belongsTo('App\Models\PresentacionesMedicamentos','presentacion_id','id');
+    }
+    public function ViaAdministracion(){
+        return $this->belongsTo('App\Models\ViasAdministracion','via_administracion_id','id');
     }
 }

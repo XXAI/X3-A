@@ -3,7 +3,7 @@
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
 
-class TiposMovimientosSeeder extends Seeder
+class TiposMovimientosNuevosSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -12,64 +12,59 @@ class TiposMovimientosSeeder extends Seeder
      */
     public function run()
     {
+        
         DB::table('tipos_movimientos')->insert([
             [
-                'id' => 1,
+                'id' => 9,
                 'tipo' => "E",
-                'nombre' => "Entrada Manual",             
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'id' => 2,
-                'tipo' => "S",
-                'nombre' => "Salida Manual",             
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'id' => 3,
-                'tipo' => "S",
-                'nombre' => "Entrega de Pedido",             
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'id' => 4,
-                'tipo' => "E",
-                'nombre' => "Recepción de Pedido",             
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'id' => 5,
-                'tipo' => "S",
-                'nombre' => "Surtimiento de Receta",             
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'id' => 6,
-                'tipo' => "E",
-                'nombre' => "Ajuste Más",             
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'id' => 7,
-                'tipo' => "S",
-                'nombre' => "Ajuste Menos",             
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ],
-            [
-                'id' => 8,
-                'tipo' => "E",
-                'nombre' => "Entrada desde pedido a Farmacia Subrogada",             
+                'nombre' => "Recepción Pedido entre Almacenes",             
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]
-             
+            ,
+            [
+                'id' => 11,
+                'tipo' => "E",
+                'nombre' => "Entrada Almacén Gral.",             
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'id' => 12,
+                'tipo' => "S",
+                'nombre' => "Salida Almacén Gral.",             
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'id' => 13,
+                'tipo' => "E",
+                'nombre' => "Entrada a Laboratorio Clinico",             
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'id' => 14,
+                'tipo' => "S",
+                'nombre' => "Salida de Laboratorio Clinico",             
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'id' => 15,
+                'tipo' => "S",
+                'nombre' => "Surtimiento de Recetas Proveedor",             
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'id' => 16,
+                'tipo' => "S",
+                'nombre' => "Surtimiento de Colectivos Proveedor",             
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]
         ]);
+
     }
 }

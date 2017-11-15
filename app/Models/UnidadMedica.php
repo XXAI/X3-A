@@ -28,5 +28,9 @@ class UnidadMedica extends BaseModel{
 
     public function jurisdiccion(){
       return $this->hasOne('App\Models\Jurisdiccion','id','jurisdiccion_id');
+    } 
+
+    public function clues_servicios(){
+      return $this->hasMany('App\Models\CluesServicio','clues');
     }
 }

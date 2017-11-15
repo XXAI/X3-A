@@ -350,7 +350,7 @@ public function analizarJson(Request $request)
 
                     $movimiento = new Movimiento();
                     $movimiento->almacen_id                     = $json_proveedor->almacen_id;
-                    $movimiento->tipo_movimiento_id             = 9;
+                    $movimiento->tipo_movimiento_id             = 15;
                     $movimiento->status                         = "FI";
                     $movimiento->fecha_movimiento               = $json_proveedor->fecha;
 
@@ -540,7 +540,7 @@ public function analizarJson(Request $request)
 
                     $movimiento_colectivo = new Movimiento();
                     $movimiento_colectivo->almacen_id                     = $json_proveedor->almacen_id;
-                    $movimiento_colectivo->tipo_movimiento_id             = 10;
+                    $movimiento_colectivo->tipo_movimiento_id             = 16;
                     $movimiento_colectivo->status                         = "FI";
                     $movimiento_colectivo->fecha_movimiento               = $json_proveedor->fecha;
                     $movimiento_colectivo->save();
