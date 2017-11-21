@@ -37,6 +37,12 @@ Route::get('grafica-entregas',                  'ReportePedidoController@grafica
 Route::get('estatus-pedidos',                   'ReportePedidoController@estatusEntregaPedidos');
 
 
+// Akira: tuve que agregar esto aqui porque no me iba a poner a batallar para interceptar la peticion de conchita
+// con su auto complete, y no se puede refrescar el token con la libreria del cliente
+Route::group(['prefix' => 'medicos','namespace' => 'Medicos'], function () {
+    Route::resource('pacientes',         'PacientesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+});
+
 Route::group(['middleware' => 'jwt'], function () {
 
     Route::resource('usuarios',                 'UsuarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -243,6 +249,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('forma-farmaceutica',                   'FormaFarmaceuticaController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('condicion-articulo',                   'CondicionArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
+    
     // catalogos  
 
     
@@ -276,7 +283,15 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('configuracion-general',            'ConfiguracionGeneralController',    ['only' => ['show', 'update']]);
          
     });
+
+    Route::group(['prefix' => 'medicos','namespace' => 'Medicos'], function () {
+        //Route::resource('pacientes',         'PacientesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('recetas',           'RecetasController',             ['only' => ['index', 'show', 'store','update','destroy']]);
+    });
     
+    
+
+    // Akira: Esto nose que onda a que módulo pertenece
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
 
     //Modulo de Avances
