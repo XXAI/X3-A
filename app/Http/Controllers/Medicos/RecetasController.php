@@ -20,7 +20,7 @@ class RecetasController extends Controller
 {
      public function index()
     {
-		$recetas = RecetaDigital::with("RecetaDigitalDetalles","Paciente")->get();
+		$recetas = RecetaDigital::with("RecetaDigitalDetalles","Paciente")->where('medico_id',Input::get('medico_id'))->get();
 		
 
 		foreach($recetas as $receta){
