@@ -44,7 +44,7 @@ Route::group(['prefix' => 'medicos','namespace' => 'Medicos'], function () {
 });
 
 Route::group(['middleware' => 'jwt'], function () {
-
+    Route::put('editar-perfil/{id}',               'EditarPerfilController@editar');
     Route::resource('usuarios',                 'UsuarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('roles',                    'RolController',           ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('permisos',                 'PermisoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
