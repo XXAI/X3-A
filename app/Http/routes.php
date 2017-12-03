@@ -15,9 +15,17 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+
 Route::post('obtener-token',                    'AutenticacionController@autenticar');
 Route::post('refresh-token',                    'AutenticacionController@refreshToken');
 Route::get('check-token',                       'AutenticacionController@verificar');
+
+
+Route::post('reset-password/email',                 'ResetPasswordController@enviarEmail');
+Route::post('reset-password/validar-token',         'ResetPasswordController@validarToken');
+Route::put('reset-password/password-nuevo/{id}',    'ResetPasswordController@passwordNuevo');
+Route::get('reset-password/pregunta-secreta/{id}',  'ResetPasswordController@obtenerPreguntaSecreta');
+Route::post('reset-password/validar-respuesta',     'ResetPasswordController@validarRespuesta');
 
  
 Route::get('grupo-permiso',                     'AutoCompleteController@grupo_permiso');
