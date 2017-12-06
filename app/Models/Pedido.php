@@ -31,6 +31,10 @@ class Pedido extends BaseModel
         return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id');
     }
 
+    public function historialTransferenciaCompleto(){
+        return $this->hasMany('App\Models\HistorialMovimientoTransferencia','pedido_id')->movimientoConStatus()->with('movimiento.insumos')->orderBy('created_at','ASC');
+    }
+
     public function movimientosTransferenciasCompleto(){
         return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id')->movimientoCompleto()->whereIn('tipo_movimiento_id',[3,9,1,7])->with('insumos');
     }
