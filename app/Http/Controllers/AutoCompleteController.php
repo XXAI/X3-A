@@ -87,7 +87,7 @@ class AutoCompleteController extends Controller
 ///////// agregar abajo de los where para limitar a las claves de la unidad
         // ->whereIn('im.clave',$CLAVES)
         
-        $data1 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo","g.nombre",DB::raw("um.nombre AS unidad_medida"), "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"),"pm.nombre AS presentacion_nombre")
+        $data1 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo","g.nombre",DB::raw("um.nombre AS unidad_medida"), "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"),"pm.nombre AS presentacion_nombre", "s.existencia as existencia")
         ->leftJoin('stock AS s', 's.clave_insumo_medico', '=', 'im.clave')
         ->leftJoin('genericos AS g', 'g.id', '=', 'im.generico_id')
         ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'im.clave')
@@ -108,7 +108,7 @@ class AutoCompleteController extends Controller
 
         $parametros = Input::only('term', 'clues', 'almacen');
         
-        $data2 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo", "g.nombre",DB::raw("um.nombre AS unidad_medida"), "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"),"pm.nombre AS presentacion_nombre")
+        $data2 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo", "g.nombre",DB::raw("um.nombre AS unidad_medida"), "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"),"pm.nombre AS presentacion_nombre", DB::raw("'0' AS existencia"))
         ->leftJoin('genericos AS g', 'g.id', '=', 'im.generico_id')
         ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'im.clave')
         ->leftJoin('unidades_medida AS um', 'um.id', '=', 'm.unidad_medida_id')
