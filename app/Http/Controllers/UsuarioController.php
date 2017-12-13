@@ -65,8 +65,11 @@ class UsuarioController extends Controller
             'apellidos'     => 'required'
         ];
 
-        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','unidades_medicas','almacenes','medico_id');
+        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','unidades_medicas','almacenes','medico_id',"pregunta_secreta","respuesta");
 
+        if(isset($inputs['pregunta_secreta']) && trim($inputs['pregunta_secreta']) != ""){
+            $reglas['respuesta'] = "required";
+        }
         $v = Validator::make($inputs, $reglas, $mensajes);
 
         if ($v->fails()) {
@@ -141,6 +144,7 @@ class UsuarioController extends Controller
         $reglas = [
             'id'            => 'required|unique:usuarios,id,'.$id,
             'password'      => 'required_with:cambiarPassword',
+            'respuesta'      => 'required_if:pregunta_secreta',
             'nombre'        => 'required',
             'apellidos'     => 'required'
         ];
@@ -150,7 +154,13 @@ class UsuarioController extends Controller
             return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }
 
-        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','cambiarPassword','unidades_medicas','almacenes','medico_id');
+        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','cambiarPassword','unidades_medicas','almacenes','medico_id',"pregunta_secreta","respuesta");
+
+
+        if(isset($inputs['pregunta_secreta']) && trim($inputs['pregunta_secreta']) != ""){
+            $reglas['respuesta'] = "required";
+        }
+
 
         $v = Validator::make($inputs, $reglas, $mensajes);
 
@@ -170,7 +180,8 @@ class UsuarioController extends Controller
                 } 
             };
             
-            
+            $object->pregunta_secreta = $inputs['pregunta_secreta'];
+            $object->respuesta = $inputs['respuesta'];
             $object->apellidos =  $inputs['apellidos'];
             $object->avatar =  $inputs['avatar'];
             $object->id =  $inputs['id'];

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Http\Requests;
@@ -9,21 +8,21 @@ use Illuminate\Support\Facades\Input;
 use Request;
 use Response;
 use DB; 
-use App\Models\PersonalClues;
-use App\Models\PersonalCluesMetadatos;
+use App\Models\MaterialCuracion;
+use App\Models\UnidadMedida;
 
 /**
-* Controlador PersonalClues
+* Controlador MaterialCuracion
 * 
 * @package    Plataforma API
 * @subpackage Controlador
 * @author     Eliecer Ramirez Esquinca <ramirez.esquinca@gmail.com>
 * @created    2015-07-20
 *
-* Controlador `PersonalClues`: Manejo de usuarios del sistema
+* Controlador `MaterialCuracion`: Manejo de usuarios del sistema
 *
 */
-class PersonalCluesController extends Controller {
+class MaterialCuracionController extends Controller {
 	/**
 	 * Muestra una lista de los recurso según los parametros a procesar en la petición.
 	 *
@@ -56,11 +55,9 @@ class PersonalCluesController extends Controller {
 		// Si existe el paarametro pagina en la url devolver las filas según sea el caso
 		// si no existe parametros en la url devolver todos las filas de la tabla correspondiente
 		// esta opción es para devolver todos los datos cuando la tabla es de tipo catálogo
-		if(array_key_exists("pagina", $datos))
-		{
+		if(array_key_exists("pagina", $datos)){
 			$pagina = $datos["pagina"];
-			if(isset($datos["order"]))
-			{
+			if(isset($datos["order"])){
 				$order = $datos["order"];
 				if(strpos(" ".$order,"-"))
 					$orden = "desc";
@@ -69,8 +66,8 @@ class PersonalCluesController extends Controller {
 				$order=str_replace("-", "", $order); 
 			}
 			else{
-					$order = "id"; $orden = "asc";
-				}
+				$order = "id"; $orden = "asc";
+			}
 			
 			if($pagina == 0){
 				$pagina = 1;
@@ -79,11 +76,10 @@ class PersonalCluesController extends Controller {
 				$datos["limite"] = $datos["limite"] - 1;
 			// si existe buscar se realiza esta linea para devolver las filas que en el campo que coincidan con el valor que el usuario escribio
 			// si no existe buscar devolver las filas con el limite y la pagina correspondiente a la paginación
-			if(array_key_exists("q", $datos))
-			{
+			if(array_key_exists("buscar", $datos)){
 				$columna = $datos["columna"];
 				$valor   = $datos["valor"];
-				$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->orderBy($order, $orden);
+				$data = MaterialCuracion::with("UnidadMedida")->orderBy($order, $orden);
 				
 				$search = trim($valor);
 				$keyword = $search;
@@ -92,17 +88,18 @@ class PersonalCluesController extends Controller {
 				});
 				
 				$total = $data->get();
-				$data  = $data->skip($pagina-1)->take($datos["limite"])->get();
+				$data = $data->skip($pagina-1)->take($datos["limite"])->get();
 			}
 			else{
-					$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
-					$total =  PersonalClues::all();
-				}
+				$data = MaterialCuracion::with("UnidadMedida")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
+				$total =  MaterialCuracion::all();
+			}
 			
-		}else{
-				$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->get();
-				$total = $data;
-			 }
+		}
+		else{
+			$data = MaterialCuracion::with("UnidadMedida")->get();
+			$total = $data;
+		}
 
 		if(!$data){
 			return Response::json(array("status" => 204, "messages" => "No hay resultados"),204);
@@ -126,10 +123,10 @@ class PersonalCluesController extends Controller {
 		$this->ValidarParametros(Input::json()->all());			
 		$datos = (object) Input::json()->all();	
 		$success = false;
- 
+
         DB::beginTransaction();
         try{
-            $data = new PersonalClues;
+            $data = new MaterialCuracion;
             $success = $this->campos($datos, $data);
 
         } catch (\Exception $e) {
@@ -167,7 +164,7 @@ class PersonalCluesController extends Controller {
         
         DB::beginTransaction();
         try{
-        	$data = PersonalClues::find($id);
+        	$data = MaterialCuracion::find($id);
 
             if(!$data){
                 return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
@@ -191,58 +188,14 @@ class PersonalCluesController extends Controller {
 
 	public function campos($datos, $data){
 		$success = false;
-		$almacen_id = Request::header("X-Almacen-Id");
-		$clues = Request::header("X-Almacen-Id");
-		$servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
-		
 
-		$data->tipo_personal_id	= property_exists($datos, "tipo_personal_id") 	? $datos->tipo_personal_id 		: $data->tipo_personal_id;
-        $data->clues			= property_exists($datos, "clues") 				? $datos->clues 				: $data->clues;
-        $data->nombre			= property_exists($datos, "nombre") 			? $datos->nombre 				: $data->nombre;
-        $data->celular			= property_exists($datos, "celular") 			? $datos->celular 				: $data->celular;
-        $data->email			= property_exists($datos, "email") 				? $datos->email 				: $data->email;	
-        
-        if ($data->save()) { 
+        $data->insumo_medico_clave 			= property_exists($datos, "insumo_medico_clave") 		? $datos->insumo_medico_clave 			: $data->insumo_medico_clave;	
+        $data->nombre_generico_especifico	= property_exists($datos, "nombre_generico_especifico")	? $datos->nombre_generico_especifico	: $data->nombre_generico_especifico;	
+        $data->cantidad_x_envase 			= property_exists($datos, "cantidad_x_envase") 			? $datos->cantidad_x_envase 			: $data->cantidad_x_envase;	
+        $data->unidad_medida_id 			= property_exists($datos, "unidad_medida_id") 			? $datos->unidad_medida_id 				: $data->unidad_medida_id;	
+        $data->funcion 		   				= property_exists($datos, "funcion") 					? $datos->funcion 						: $data->funcion;	
 
-        	//verificar si existe contacto, en caso de que exista proceder a guardarlo
-            if(property_exists($datos, "personal_clues_metadatos")){
-                
-                //limpiar el arreglo de posibles nullos
-                $personal_clues_metadatos = array_filter($datos->personal_clues_metadatos, function($v){return $v !== null;});
-
-                //borrar los datos previos de articulo para no duplicar información
-                PersonalCluesMetadatos::where("servidor_id", $servidor_id)->where("personal_clues_id", $data->id)->delete();
-
-                //recorrer cada elemento del arreglo
-                foreach ($personal_clues_metadatos as $key => $value) {
-                    //validar que el valor no sea null
-                    if($value != null){
-                        //comprobar si el value es un array, si es convertirlo a object mas facil para manejar.
-                        if(is_array($value))
-                            $value = (object) $value;
-
-                        if($value->valor != ""){
-	                        //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
-	                        DB::update("update personal_clues_metadatos set deleted_at = null where servidor_id = '$servidor_id' and personal_clues_id = ".$data->id." and metadatos_id = '".$value->metadatos_id."'");
-	                        
-	                        //si existe el elemento actualizar
-	                        $item = PersonalCluesMetadatos::where("servidor_id", $servidor_id)->where("personal_clues_id", $data->id)->where("metadatos_id", $value->metadatos_id)->first();
-	                        //si no existe crear
-	                        if(!$item)
-	                            $item = new PersonalCluesMetadatos;
-
-	                        //llenar el modelo con los datos
-	                        
-	                        $item->personal_clues_id   		= $data->id; 
-	                        $item->metadatos_id    		= $value->metadatos_id;
-	                        $item->campo          		= $value->campo; 
-	                        $item->valor    			= $value->valor; 
-	                        
-	                        $item->save(); 
-                        }        
-                    }
-                }
-            }       	
+        if ($data->save()) {         	      
 			$success = true;
 		}  
 		return $success;     						
@@ -257,7 +210,7 @@ class PersonalCluesController extends Controller {
 	 * <code> Respuesta Error json(array("status": 404, "messages": "No hay resultados"),status) </code>
 	 */
 	public function show($id){
-		$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->find($id);			
+		$data = MaterialCuracion::with("UnidadMedida")->find($id);			
 		
 		if(!$data){
 			return Response::json(array("status"=> 404,"messages" => "No hay resultados"),404);
@@ -280,7 +233,7 @@ class PersonalCluesController extends Controller {
 		$success = false;
         DB::beginTransaction();
         try {
-			$data = PersonalClues::find($id);
+			$data = MaterialCuracion::find($id);
 			$data->delete();
 			
 			$success=true;

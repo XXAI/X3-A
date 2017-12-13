@@ -19,12 +19,14 @@ use App\Models\Almacen;
 use App\Models\PedidoInsumo;
 use App\Models\Presupuesto;
 use App\Models\UnidadMedicaPresupuesto;
+use App\Models\HistorialMovimientoTransferencia;
 
 use App\Models\Usuario;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, DB;
 use DateTime;
+use Carbon\Carbon;
 
 class RecepcionPedidoController extends Controller
 {
@@ -77,7 +79,7 @@ class RecepcionPedidoController extends Controller
 		$pedido = $pedido->load("insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");
 		
 		if($pedido->tipo_pedido_id == 'PEA'){
-			$pedido = $pedido->load("movimientos.transferenciaSurtida.insumos","movimientos.transferenciaRecibidaBorrador.insumos","movimientos.transferenciaRecibida.insumos");
+			$pedido = $pedido->load("movimientos.transferenciaSurtida.insumos","movimientos.transferenciaRecibidaBorrador.insumos","movimientos.transferenciaRecibida.insumos","historialTransferenciaCompleto");
 		}
         
 
@@ -200,9 +202,7 @@ class RecepcionPedidoController extends Controller
 		}
 
 		/* Validador de  movimientos, se verifica que no exista un movimiento con las mismas característicasa*/
-		
-
-		
+				
 		if($parametros['status'] == 'FI') //Actualizamod datos en caso de ser necesario
 		{												
 			$movimiento_validador = Movimiento::where("fecha_movimiento", $parametros['fecha_movimiento'])
@@ -257,6 +257,8 @@ class RecepcionPedidoController extends Controller
 				
 				$movimiento->update($datos_movimiento);
 
+				$historial = HistorialMovimientoTransferencia::where('movimiento_id',$movimiento->id)->where('pedido_id',$pedido->id)->first();
+
 				MovimientoInsumos::where("movimiento_id", $movimiento->id)->forceDelete();    
 
 				/*En caso de Existir una abierta actualizamos datos*/
@@ -285,6 +287,22 @@ class RecepcionPedidoController extends Controller
 			}else{
 				$movimiento = Movimiento::create($datos_movimiento);
 				$recepcion->movimiento_id = $movimiento->id;
+
+				$historial_datos = [
+					'almacen_origen'=>$pedido->almacen_proveedor,
+					'almacen_destino'=>$pedido->almacen_solicitante,
+					'clues_origen'=>$pedido->clues,
+					'clues_destino'=>($pedido->clues_destino)?$pedido->clues_destino:$pedido->clues,
+					'pedido_id'=>$pedido->id,
+					'evento'=>'RECEPCION PEA',
+					'movimiento_id'=>$movimiento->id,
+					'total_unidades'=>0,
+					'total_claves'=>0,
+					'total_monto'=>0,
+					'fecha_inicio_captura'=>Carbon::now(),
+					'fecha_finalizacion'=>null
+				];
+				$historial = HistorialMovimientoTransferencia::create($historial_datos);
 
 				
 				if($parametros['status'] == 'FI') //Actualizamod datos en caso de ser necesario
@@ -321,7 +339,14 @@ class RecepcionPedidoController extends Controller
 	        $causes_unidad_presupuesto 				= 0;
 	        $no_causes_unidad_presupuesto 			= 0;
 	        $material_curacion_unidad_presupuesto 	= 0;
-	        /*                                                                                  */
+			/*                                                                                  */
+			
+			/*Variable para ir actualizando el historial de transferencias, en caso de ser necesario*/
+			$movimiento_monto_recibido = 0;
+			$movimiento_claves_recibidas = [];
+			$movimiento_cantidad_recibida = 0;
+			$movimiento_monto_para_iva = 0;
+
 	        foreach ($stock as $key => $value) {
 	        	$reglas_stock = [
 		            'almacen_id'        	=> 'required',
@@ -356,7 +381,7 @@ class RecepcionPedidoController extends Controller
 		        
 		        if($this->validacion_fecha_caducidad($pedido->fecha ,$value['fecha_caducidad'], $caducidad)) //Validacion de Fecha de caducidad
 		        {
-		          if(!isset($value['fecha_caducidad'])){
+		          	if(!isset($value['fecha_caducidad'])){
 						$value['fecha_caducidad'] = null;
 					}elseif(!$value['fecha_caducidad']){
 						$value['fecha_caducidad'] = null;
@@ -375,8 +400,7 @@ class RecepcionPedidoController extends Controller
 						if($tipo_insumo == "ME"){ //Verifico si es medicamento o material de curación, para agregar el IVA
 							$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
 
-							if($pedido_insumo->cantidad_solicitada >= intval(($pedido_insumo->cantidad_recibida + $value['existencia'])))
-							{
+							if($pedido_insumo->cantidad_solicitada >= intval(($pedido_insumo->cantidad_recibida + $value['existencia']))){
 								$pedido_insumo->cantidad_recibida += $value['existencia'];
 								$cantidad_recibida = ( $value['existencia'] * $pedido_insumo->precio_unitario );
 
@@ -396,20 +420,15 @@ class RecepcionPedidoController extends Controller
 									$causes_unidad_presupuesto 				+= $cantidad_recibida;
 								else
 						        	$no_causes_unidad_presupuesto 			+= $cantidad_recibida;
-						    }else
-						    {
+						    }else{
 						    	DB::rollBack();
 								return Response::json(['error' => 'Existe un error, el insumo '.$value['clave_insumo_medico'].' ha sobrepasado el monto solicitando, por favor contactese con soporte de la aplicacion'], 500);
 						    }   
 								
-			        	}else
-			        	{
+			        	}else{
 			        		$pedido_insumo = PedidoInsumo::where("pedido_id", $pedido->id)->where("insumo_medico_clave", $value['clave_insumo_medico'])->first(); //modificamos el insumo de los pedidos
-
-			        		
-			        		if(($pedido_insumo->cantidad_solicitada) >= intval(($pedido_insumo->cantidad_recibida + $value['existencia'])))
-							{
 							
+			        		if(($pedido_insumo->cantidad_solicitada) >= intval(($pedido_insumo->cantidad_recibida + $value['existencia']))){
 								$pedido_insumo->cantidad_recibida += $value['existencia'];
 
 								$cantidad_recibida 						= ( $value['existencia'] * $pedido_insumo->precio_unitario ) * (1.16);
@@ -430,29 +449,25 @@ class RecepcionPedidoController extends Controller
 									$insert_stock = Stock::create($value);
 									
 								}
-							}else
-							{
+							}else{
 								DB::rollBack();
 								return Response::json(['error' => 'Existe un error,el insumo '.$value['clave_insumo_medico'].' se ha sobrepasado el monto solicitando, por favor contactese con soporte de la aplicación'], 500);
 							}
 			        	}
-					}else
-					{
+					}else{
 						if($insert_stock){
 							$insert_stock->existencia += 0;
 							$insert_stock->save();
 						}else{		
-
 							$insert_stock = Stock::create($value);
 							$insert_stock->existencia = 0;
 							$insert_stock->update();
 						}
 					}
-				}else
-				{
+				}else{
 					DB::rollBack();
 					return Response::json(['error' => 'El medicamento con clave '.$value['clave_insumo_medico']."  con número de lote ".$value['lote']." tiene fecha de caducidad menor a 6 meses o es invalido"], 500);
-				}	
+				}
 
 		       $reglas_movimiento_insumos = [
 					'movimiento_id'		=> 'required',
@@ -483,9 +498,19 @@ class RecepcionPedidoController extends Controller
 		        $value['tipo_insumo_id'] = $tipo_insumo_id;
 
 		        $movimiento_insumo = MovimientoInsumos::Create($value);	  //Aqui debo de verificar     
-		        	 	
+				
+				//sumas
+				$movimiento_cantidad_recibida += $value['cantidad'];
+				$movimiento_monto_recibido += $value['precio_total'];
+				$movimiento_claves_recibidas[$value['clave_insumo_medico']] = true;
+				if($tipo_insumo == 'MC'){
+					$movimiento_monto_para_iva += $value['precio_total'];
+				}
 	        }
-	        
+			
+			if($movimiento_monto_para_iva > 0){
+				$movimiento_monto_recibido += $movimiento_monto_para_iva*16/100;
+			}
 		     
 
 	        if($parametros['status'] == 'FI') //Verificamos si se finaliza la recepcion (parcial o completa)
@@ -523,7 +548,13 @@ class RecepcionPedidoController extends Controller
 	        	
 	        	$pedido->update();
 
-				if($pedido->tipo_pedido_id != 'PEA'){
+				if($pedido->tipo_pedido_id == 'PEA'){
+					$historial->total_unidades = $movimiento_cantidad_recibida;
+					$historial->total_claves = count($movimiento_claves_recibidas);
+					$historial->total_monto = $movimiento_monto_recibido;
+					$historial->fecha_finalizacion = Carbon::now();
+					$historial->save();
+				}else{
 					/*Calculo de unidad presupuesto*/
 					$unidad_presupuesto = $this->obtenerDatosPresupuesto($almacen->clues,$almacen->proveedor_id,substr($pedido->fecha,5,2),$almacen->id);
 	

@@ -43,12 +43,10 @@ class PersonalMedicoController extends Controller
 
         if ($parametros['term']) 
         {
-             $data =  PersonalClues::where(function($query) use ($parametros) {
-                 $query->where('clues',$parametros['clues'])
-                        ->where('tipo_personal_id', $parametros['tipo_personal_id'])
-                        ->orWhere('nombre','LIKE',"%".$parametros['term']."%");
+             $data =  PersonalClues::where('clues',$parametros['clues'])
+                                   ->where('tipo_personal_id', $parametros['tipo_personal_id'])
+                                   ->where('nombre','LIKE',"%".$parametros['term']."%");
 
-             });
         } else {
                 $data =  PersonalClues::where("id","!=", "")->where('clues',$parametros['clues'])
                                         ->where('tipo_personal_id', $parametros['tipo_personal_id']);

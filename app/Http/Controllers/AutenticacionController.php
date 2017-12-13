@@ -119,6 +119,7 @@ class AutenticacionController extends Controller
                     "id" => $usuario->id,
                     "nombre" => $usuario->nombre,
                     "apellidos" => $usuario->apellidos,
+                    "su" => $usuario->su,
                     "avatar" => $usuario->avatar,
                     "medico_id" =>$usuario->medico_id,
                     "permisos" => $lista_permisos,                    

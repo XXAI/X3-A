@@ -23,6 +23,7 @@ use App\Models\Movimiento;
 use App\Models\MovimientoInsumos;
 use App\Models\Stock;
 use App\Models\UnidadMedicaPresupuesto;
+use App\Models\HistorialMovimientoTransferencia;
 use \Excel;
 use Carbon\Carbon;
 
@@ -73,67 +74,69 @@ class PedidoController extends Controller{
     }
 
     public function stats(Request $request){
-        $almacen = Almacen::find($request->get('almacen_id'));
-
-        // Hay que obtener la clues del usuario
-
-        // Akira: en los datos de alternos hay que ver si se pone la cantidad de alternos o en base a su estatus
-        $pedidos = Pedido::select(DB::raw(
-            '
-            count(
-                1
-            ) as todos,
-            count(
-                case when status = "BR" then 1 else null end
-            ) as borradores,
-            count(
-                case when status = "SD" then 1 else null end
-            ) as solicitados,
-            count(
-                case when status = "ET" then 1 else null end
-            ) as en_transito,
-            count(
-                case when status = "PS" then 1 else null end
-            ) as por_surtir,
-            count(
-                case when status = "FI" then 1 else null end
-            ) as finalizados,
-            count(
-                case when status = "EX" then 1 else null end
-            ) as expirados,
-            count(
-                case when status = "EX-CA" then 1 else null end
-            ) as expirados_cancelados,
-            count(
-                case when status = "EF" then 1 else null end
-            ) as farmacia,
-            count(
-                case when tipo_pedido_id = "PALT" then 1 else null end
-            ) as alternos,
-            (
-                select count(id) from actas where clues = "'.$almacen->clues.'"
-            ) as actas
-
-            '
-        //))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
-        ))->where('clues',$almacen->clues); //->first();
+        try{
+            $almacen = Almacen::find($request->get('almacen_id'));
             
-        //Harima: Filtro para diferentes tipos de almacenes, solo los almacenes principales pueden ver pedidos a farmcias subrogadas
-        if($almacen->tipo_almacen == 'ALMPAL'){
-            $almacenes = Almacen::where('subrogado',1)->where('nivel_almacen',1)->get();
-            $almacenes = $almacenes->lists('id');
-            $almacenes[] = $almacen->id;
-            $pedidos = $pedidos->whereIn('almacen_solicitante',$almacenes);
-        }else{
-            //Harima: Los demas almacenes solo veran los pedidos que ellos hayan hecho
-            $pedidos = $pedidos->where('almacen_solicitante',$almacen->id);
+            // Akira: en los datos de alternos hay que ver si se pone la cantidad de alternos o en base a su estatus
+            $pedidos = Pedido::select(DB::raw(
+                '
+                count(
+                    1
+                ) as todos,
+                count(
+                    case when status = "BR" then 1 else null end
+                ) as borradores,
+                count(
+                    case when status = "SD" then 1 else null end
+                ) as solicitados,
+                count(
+                    case when status = "ET" then 1 else null end
+                ) as en_transito,
+                count(
+                    case when status = "PS" then 1 else null end
+                ) as por_surtir,
+                count(
+                    case when status = "FI" then 1 else null end
+                ) as finalizados,
+                count(
+                    case when status = "EX" then 1 else null end
+                ) as expirados,
+                count(
+                    case when status = "EX-CA" then 1 else null end
+                ) as expirados_cancelados,
+                count(
+                    case when status = "EF" then 1 else null end
+                ) as farmacia,
+                count(
+                    case when tipo_pedido_id = "PALT" then 1 else null end
+                ) as alternos,
+                (
+                    select count(id) from actas where clues = "'.$almacen->clues.'"
+                ) as actas
+    
+                '
+            //))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
+            ))->where('clues',$almacen->clues); //->first();
+                
+            //Harima: Filtro para diferentes tipos de almacenes, solo los almacenes principales pueden ver pedidos a farmcias subrogadas
+            if($almacen->tipo_almacen == 'ALMPAL'){
+                $almacenes = Almacen::where('subrogado',1)->where('nivel_almacen',1)->get();
+                $almacenes = $almacenes->lists('id');
+                $almacenes[] = $almacen->id;
+                $pedidos = $pedidos->whereIn('almacen_solicitante',$almacenes);
+            }else{
+                //Harima: Los demas almacenes solo veran los pedidos que ellos hayan hecho
+                $pedidos = $pedidos->where('almacen_solicitante',$almacen->id);
+            }
+    
+            $pedidos = $pedidos->orWhere(function($query)use($almacen){
+                $query->where('almacen_solicitante',$almacen->id)->where('tipo_pedido_id','PEA')->where('status','!=','BR');
+            })->first();
+    
+            return Response::json($pedidos,200);
+        }catch(\Exception $e) {
+            return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
         }
-
-        $pedidos = $pedidos->orWhere(function($query)use($almacen){
-            $query->where('almacen_solicitante',$almacen->id)->where('tipo_pedido_id','PEA')->where('status','!=','BR');
-        })->first();
-
-        return Response::json($pedidos,200);
     }
 
     public function index(Request $request){
@@ -195,8 +198,6 @@ class PedidoController extends Controller{
             $pedidos = $pedidos->get();
         }
         
-
-
         return Response::json([ 'data' => $pedidos],200);
     }
 
@@ -694,6 +695,25 @@ class PedidoController extends Controller{
                         $movimiento_insumo = MovimientoInsumos::create($nuevo_movimiento_insumo);
                     }
                 }
+            }else if($pedido->status == 'SD' && $pedido->tipo_pedido_id == 'PEA'){
+                //Harima: agregamos control de historial para el proceso de transferencias
+                $almacen_proveedor = Almacen::find($pedido->almacen_proveedor);
+                $historial_datos = [
+                    'almacen_origen'=>$almacen_proveedor->id,
+                    'almacen_destino'=>$almacen_solicitante->id,
+                    'clues_origen'=>$almacen_proveedor->clues,
+                    'clues_destino'=>$almacen_solicitante->clues,
+                    'pedido_id'=>$pedido->id,
+                    'evento'=>'CAPTURA PEA',
+                    'movimiento_id'=>NULL,
+                    'total_unidades'=>$pedido->total_cantidad_solicitada,
+                    'total_claves'=>$pedido->total_claves_solicitadas,
+                    'total_monto'=>$pedido->total_monto_solicitado,
+                    'fecha_inicio_captura'=>$pedido->created_at,
+                    'fecha_finalizacion'=>Carbon::now()
+                ];
+
+                $historial = HistorialMovimientoTransferencia::create($historial_datos);
             }
              
              DB::commit(); 
