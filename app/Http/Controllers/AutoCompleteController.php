@@ -87,6 +87,7 @@ class AutoCompleteController extends Controller
 ///////// agregar abajo de los where para limitar a las claves de la unidad
         // ->whereIn('im.clave',$CLAVES)
 
+
         //Akira: tuve que agregar este if porque no se que pedo con su union mafufo
         // si hubiera algun problema corrijan en el "else" porfa
         if(isset($parametros['stock'])){
@@ -170,6 +171,7 @@ class AutoCompleteController extends Controller
     
             return Response::json([ 'data' => $data],200);
         }
+
 
         
         
