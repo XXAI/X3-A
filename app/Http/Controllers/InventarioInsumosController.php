@@ -74,7 +74,9 @@ class InventarioInsumosController extends Controller
 
                 if($parametros['clave_insumo'] != "")
                 {
-                    $claves = $claves->where('cc.clave_insumo_medico',$parametros['clave_insumo']);
+                    $claves = $claves->where(function($query)use($parametros){
+                        $query->where('cc.clave_insumo_medico','LIKE',"%".$parametros['clave_insumo']."%")->orWhere('im.descripcion','LIKE',"%".$parametros['clave_insumo']."%");
+                    });
                 }
             }
             if($parametros['buscar_en'] == "TODAS_LAS_CLAVES")
@@ -84,7 +86,9 @@ class InventarioInsumosController extends Controller
                               ->select('im.clave AS clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','im.es_unidosis');
                 if($parametros['clave_insumo'] != "")
                 {
-                    $claves = $claves->where('im.clave',$parametros['clave_insumo']);
+                    $claves = $claves->where(function($query)use($parametros){
+                        $query->where('im.clave','LIKE',"%".$parametros['clave_insumo']."%")->orWhere('im.descripcion','LIKE',"%".$parametros['clave_insumo']."%");
+                    });
                 }
             }
 
@@ -92,23 +96,23 @@ class InventarioInsumosController extends Controller
             if($parametros['tipo'] == "TODO")
             {
             }else{
-                    if($parametros['tipo'] == "CAUSES")
-                        {
-                            $claves = $claves->where('im.tipo','ME')->where('es_causes',1);
-                        }
-                    if($parametros['tipo'] == "NO_CAUSES")
-                        {
-                            $claves = $claves->where('im.tipo','ME')->where('es_causes',0);
-                        }
-                    if($parametros['tipo'] == "MC")
-                        {
-                            $claves = $claves->where('im.tipo','MC');
-                        }
-                    if($parametros['tipo'] == "CONTROLADO")
-                        {
-                            $claves = $claves->where('im.tipo','ME')->where('m.es_controlado',1);
-                        }
-                  }
+                if($parametros['tipo'] == "CAUSES")
+                    {
+                        $claves = $claves->where('im.tipo','ME')->where('es_causes',1);
+                    }
+                if($parametros['tipo'] == "NO_CAUSES")
+                    {
+                        $claves = $claves->where('im.tipo','ME')->where('es_causes',0);
+                    }
+                if($parametros['tipo'] == "MC")
+                    {
+                        $claves = $claves->where('im.tipo','MC');
+                    }
+                if($parametros['tipo'] == "CONTROLADO")
+                    {
+                        $claves = $claves->where('im.tipo','ME')->where('m.es_controlado',1);
+                    }
+            }
 
 
             
