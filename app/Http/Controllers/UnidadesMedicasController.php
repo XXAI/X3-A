@@ -53,7 +53,7 @@ class UnidadesMedicasController extends Controller
 
             if(Input::get('lista'))
             {
-                $items = UnidadMedica::select('*');
+                $items = UnidadMedica::select('*')->orderBy('nombre');
                 if(Input::get('activa')){
                     $items = $items->where('activa','1');
                 }

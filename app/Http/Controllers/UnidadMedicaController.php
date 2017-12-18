@@ -33,6 +33,7 @@ class UnidadMedicaController extends Controller
              $data =  UnidadMedica::with("almacenes", "director", "clues_servicios")->where("clues","!=", "");
         }
         
+        $data = $data->orderBy('nombre','ASC');
 
         if(isset($parametros['page'])){
 

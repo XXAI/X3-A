@@ -79,7 +79,8 @@ class RecepcionPedidoController extends Controller
 		$pedido = $pedido->load("insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");
 		
 		if($pedido->tipo_pedido_id == 'PEA'){
-			$pedido = $pedido->load("movimientos.transferenciaSurtida.insumos","movimientos.transferenciaRecibidaBorrador.insumos","movimientos.transferenciaRecibida.insumos","historialTransferenciaCompleto");
+			#$pedido = $pedido->load("movimientos.transferenciaSurtida.insumos","movimientos.transferenciaRecibidaBorrador.insumos","movimientos.transferenciaRecibida.insumos");
+			$pedido = $pedido->load("historialTransferenciaCompleto");
 		}
         
 
@@ -254,11 +255,11 @@ class RecepcionPedidoController extends Controller
 			
 
 			if($movimiento){
-				
+				if($pedido->tipo_pedido_id == 'PEA'){
+					$historial = HistorialMovimientoTransferencia::where('movimiento_id',$movimiento->id)->where('pedido_id',$pedido->id)->first();
+				}
+
 				$movimiento->update($datos_movimiento);
-
-				$historial = HistorialMovimientoTransferencia::where('movimiento_id',$movimiento->id)->where('pedido_id',$pedido->id)->first();
-
 				MovimientoInsumos::where("movimiento_id", $movimiento->id)->forceDelete();    
 
 				/*En caso de Existir una abierta actualizamos datos*/
@@ -286,24 +287,26 @@ class RecepcionPedidoController extends Controller
 				/**/
 			}else{
 				$movimiento = Movimiento::create($datos_movimiento);
+
+				if($pedido->tipo_pedido_id == 'PEA'){
+					$historial_datos = [
+						'almacen_origen'=>$pedido->almacen_proveedor,
+						'almacen_destino'=>$pedido->almacen_solicitante,
+						'clues_origen'=>$pedido->clues,
+						'clues_destino'=>($pedido->clues_destino)?$pedido->clues_destino:$pedido->clues,
+						'pedido_id'=>$pedido->id,
+						'evento'=>'RECEPCION PEA',
+						'movimiento_id'=>$movimiento->id,
+						'total_unidades'=>0,
+						'total_claves'=>0,
+						'total_monto'=>0,
+						'fecha_inicio_captura'=>Carbon::now(),
+						'fecha_finalizacion'=>null
+					];
+					$historial = HistorialMovimientoTransferencia::create($historial_datos);
+				}
+
 				$recepcion->movimiento_id = $movimiento->id;
-
-				$historial_datos = [
-					'almacen_origen'=>$pedido->almacen_proveedor,
-					'almacen_destino'=>$pedido->almacen_solicitante,
-					'clues_origen'=>$pedido->clues,
-					'clues_destino'=>($pedido->clues_destino)?$pedido->clues_destino:$pedido->clues,
-					'pedido_id'=>$pedido->id,
-					'evento'=>'RECEPCION PEA',
-					'movimiento_id'=>$movimiento->id,
-					'total_unidades'=>0,
-					'total_claves'=>0,
-					'total_monto'=>0,
-					'fecha_inicio_captura'=>Carbon::now(),
-					'fecha_finalizacion'=>null
-				];
-				$historial = HistorialMovimientoTransferencia::create($historial_datos);
-
 				
 				if($parametros['status'] == 'FI') //Actualizamod datos en caso de ser necesario
 				{

@@ -225,7 +225,8 @@ class PedidoController extends Controller{
             }else{
                 $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","almacenProveedor","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
                 if($pedido->tipo_pedido_id == 'PEA'){
-                    $pedido = $pedido->load("movimientos.transferenciaSurtida.insumos");
+                    //$pedido = $pedido->load("movimientos.transferenciaSurtida.insumos");
+                    $pedido = $pedido->load("historialTransferenciaCompleto");
                 }
             }
         } 
@@ -503,6 +504,7 @@ class PedidoController extends Controller{
 
             $arreglo_insumos = Array();
             
+            //Aqui comienza:
             PedidoInsumo::where("pedido_id", $id)->forceDelete();
 
             $total_claves = count($parametros['insumos']);

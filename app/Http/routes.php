@@ -198,6 +198,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-stats',                     'PedidoController@stats');
         Route::get('pedidos-presupuesto',               'PedidoController@obtenerDatosPresupuesto');
         Route::put('cancelar-pedido-transferir/{id}',   'CancelarPedidosController@cancelarYTransferir');
+        Route::put('cancelar-transferencia/{id}',       'CancelarPedidosController@cancelarTransferencia');
 
         
         // Actas
