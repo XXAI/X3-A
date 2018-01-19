@@ -161,12 +161,39 @@ class CancelarPedidosController extends Controller
     public function cancelarTransferencia(Request $request, $id){
         $input = Input::all();
 
-        $pedido = Pedido::with("insumos.insumoDetalle")->find($id);
+        $pedido = Pedido::with("insumos.insumoDetalle")->where('tipo_pedido_id','PEA')->find($id);
+
+        if(!$pedido){
+            return Response::json([ 'data' => $pedido, 'error' => 'No se encontro el pedido.' ],500);
+        }
 
         if(!$input['motivos']){
             return Response::json([ 'data' => $pedido, 'error' => 'No se puede cancelar la transferencia, ya que no se especificó ningún motivo.' ],500);
         }
 
+        $pedido->load('historialTransferenciaCompleto');
+
+        $se_puede_cancelar = true;
+
+        foreach ($pedido->historialTransferenciaCompleto as $historial) {
+            if($historial->evento == 'RECEPCION PEA'){
+                $se_puede_cancelar = true;
+            }else if($historial->evento == 'SURTIO PEA'){
+                $se_puede_cancelar = false;
+            }
+        }
+
+        $cantidad_enviada = $pedido->insumos->sum('cantidad_enviada');
+        $cantidad_recibida = $pedido->insumos->sum('cantidad_recibida');
+
+        if($cantidad_enviada != $cantidad_recibida){
+            $se_puede_cancelar = False;
+        }
+
+        if(!$se_puede_cancelar){
+            return Response::json([ 'data' => $pedido, 'error' => 'No es posible cancelar la transferencia en estos momentos.' ],500);
+        }
+        
         //return Response::json([ 'data' => $pedido, 'error' => 'error en el servidor bla bla bla' ],500);
         try {
             DB::beginTransaction();

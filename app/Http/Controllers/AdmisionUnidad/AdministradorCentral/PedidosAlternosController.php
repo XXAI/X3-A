@@ -272,65 +272,101 @@ class PedidosAlternosController extends Controller{
 
             $arreglo_insumos = Array();
             
-            PedidoInsumo::where("pedido_id", $id)->forceDelete();
+            //PedidoInsumo::where("pedido_id", $id)->forceDelete();
 
             $total_claves = count($parametros['insumos']);
             $total_insumos = 0;
             $total_monto = ['causes' => 0, 'no_causes' => 0, 'material_curacion' => 0];
 
-            foreach ($parametros['insumos'] as $key => $value) {
-
-                $reglas_insumos = [
-                    'clave'           => 'required',
-                    'cantidad'        => 'required|integer|min:1'
-                ];  
-
-                $v = Validator::make($value, $reglas_insumos, $mensajes);
-
-                if ($v->fails()) {
-                    DB::rollBack();
-                    return Response::json(['error' => 'El insumo con clave: '.$value['clave'].' tiene un valor incorrecto.'], 500);
-                }      
-                
-                $insumo = [
-                    'insumo_medico_clave' => $value['clave'],
-                    'cantidad_solicitada' => $value['cantidad'],
-                    'monto_solicitado' => $value['cantidad']*$value['precio'], //$value['monto'],
-                    'cantidad_recibida' => ($value['cantidad_recibida'])?$value['cantidad_recibida']:null,
-                    'monto_recibido' => ($value['cantidad_recibida'])?$value['cantidad_recibida']*$value['precio']:null,
-                    'precio_unitario' => $value['precio'],
-                    'tipo_insumo_id' => $value['tipo_insumo_id'],
-                    'pedido_id' => $pedido->id
-                ];
-                //$value['pedido_id'] = $pedido->id;
-
-                $total_insumos += $value['cantidad'];
-
-                if($value['tipo'] == 'ME' && $value['es_causes']){
-                    $total_monto['causes'] += $value['monto'];
-                }elseif($value['tipo'] == 'ME' && !$value['es_causes']){
-                    $total_monto['no_causes'] += $value['monto'];
-                }else{
-                    $total_monto['material_curacion'] += $value['monto'];
-                }
-                
-                $object_insumo = PedidoInsumo::create($insumo);  
-
-                // ######### PEDIDOS JURISDICCIONALES #########
-                if($um->tipo == 'OA' && $tipo_pedido == 'PJS'){
-                    foreach($value['lista_clues'] as $key_clues => $value_clues){
-                        $insumo_clues = [
-                            'pedido_insumo_id' => $object_insumo->id,
-                            'clues' => $value_clues['clues'],
-                            'cantidad' => $value_clues['cantidad']
-                        ];
-                        PedidoInsumoClues::create($insumo_clues);
-                        
-                    }
-                }
-                // ############################################
+            /*   Harima: Para editar lista de insumos sin tener que borrar en la base de datos   */
+            $lista_insumos_db = PedidoInsumo::where('pedido_id',$id)->withTrashed()->get();
+            if(count($lista_insumos_db) > count($parametros['insumos'])){
+                $total_max_insumos = count($lista_insumos_db);
+            }else{
+                $total_max_insumos = count($parametros['insumos']);
             }
 
+            $reglas_insumos = [
+                'clave'           => 'required',
+                'cantidad'        => 'required|integer|min:1'
+            ]; 
+
+            for ($i=0; $i < $total_max_insumos ; $i++) {
+                if(isset($lista_insumos_db[$i])){ //Si existe un registro en la base de datos se edita o elimina.
+                    $insumo_db = $lista_insumos_db[$i];
+
+                    if(isset($parametros['insumos'][$i])){ //Si hay insumos desde el fomulario, editamos el insumo de la base de datos.
+                        $insumo_form = $parametros['insumos'][$i];
+
+                        $v = Validator::make($insumo_form, $reglas_insumos, $mensajes);
+                        if ($v->fails()) {
+                            DB::rollBack();
+                            return Response::json(['error' => 'El insumo con clave: '.$insumo_form['clave'].' tiene un valor incorrecto.'], 500);
+                        } 
+    
+                        $insumo_db->deleted_at = null; //Por si el elemento ya esta liminado, lo restauramos
+                        $insumo_db->insumo_medico_clave = $insumo_form['clave'];
+                        $insumo_db->cantidad_solicitada = $insumo_form['cantidad'];
+                        $insumo_db->cantidad_recibida = ($insumo_form['cantidad_recibida'])?$insumo_form['cantidad_recibida']:null;
+                        $insumo_db->precio_unitario = $insumo_form['precio'];
+                        $insumo_db->monto_solicitado = $insumo_form['cantidad']*$insumo_form['precio'];
+                        $insumo_db->monto_recibido = ($insumo_form['cantidad_recibida'])?$insumo_form['cantidad_recibida']*$insumo_form['precio']:null;
+                        $insumo_db->tipo_insumo_id = $insumo_form['tipo_insumo_id'];
+    
+                        $insumo_db->save();
+                    }else{ //de lo contrario eliminamos el insumo de la base de datos.
+                        $insumo_db->delete();
+                    }
+                }else{ //SI no existe un registro en la base de datos, se crea uno nuevo
+                    $insumo_form = $parametros['insumos'][$i];
+                    $insumo_db = new PedidoInsumo();
+
+                    $v = Validator::make($insumo_form, $reglas_insumos, $mensajes);
+                    if ($v->fails()) {
+                        DB::rollBack();
+                        return Response::json(['error' => 'El insumo con clave: '.$insumo_form['clave'].' tiene un valor incorrecto.'], 500);
+                    } 
+
+                    $insumo_db->deleted_at = null; //Por si el elemento ya esta liminado, lo restauramos
+                    $insumo_db->insumo_medico_clave = $insumo_form['clave'];
+                    $insumo_db->cantidad_solicitada = $insumo_form['cantidad'];
+                    $insumo_db->cantidad_recibida = ($insumo_form['cantidad_recibida'])?$insumo_form['cantidad_recibida']:null;
+                    $insumo_db->precio_unitario = $insumo_form['precio'];
+                    $insumo_db->monto_solicitado = $insumo_form['cantidad']*$insumo_form['precio'];
+                    $insumo_db->monto_recibido = ($insumo_form['cantidad_recibida'])?$insumo_form['cantidad_recibida']*$insumo_form['precio']:null;
+                    $insumo_db->tipo_insumo_id = $insumo_form['tipo_insumo_id'];
+                    $insumo_db->pedido_id = $pedido->id;
+
+                    $insumo_db->save();
+                }
+
+                if(isset($parametros['insumos'][$i])){
+                    $insumo_form = $parametros['insumos'][$i];
+                    $total_insumos += $insumo_form['cantidad'];
+                    
+                    if($insumo_form['tipo'] == 'ME' && $insumo_form['es_causes']){
+                        $total_monto['causes'] += $insumo_form['monto'];
+                    }elseif($insumo_form['tipo'] == 'ME' && !$insumo_form['es_causes']){
+                        $total_monto['no_causes'] += $insumo_form['monto'];
+                    }else{
+                        $total_monto['material_curacion'] += $insumo_form['monto'];
+                    }
+
+                    // ######### PEDIDOS JURISDICCIONALES #########
+                    if($um->tipo == 'OA' && $tipo_pedido == 'PJS'){
+                        /*foreach($insumo_form['lista_clues'] as $key_clues => $value_clues){
+                            $insumo_clues = [
+                                'pedido_insumo_id' => $object_insumo->id,
+                                'clues' => $value_clues['clues'],
+                                'cantidad' => $value_clues['cantidad']
+                            ];
+                            PedidoInsumoClues::create($insumo_clues);
+                        }*/
+                    }
+                    // ############################################
+                }
+            }
+            
             if($total_monto['material_curacion'] > 0){
                 $total_monto['material_curacion'] += $total_monto['material_curacion']*16/100;
             }

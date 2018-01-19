@@ -222,6 +222,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('catalogo-insumos',             'CatalogoInsumoController',     ['only' => ['index', 'show']]);
 
         Route::get('unidades-medicas-dependientes',     'UnidadesMedicasController@unidadesMedicasDependientes');
+        Route::get('stock-insumo-medico',               'StockController@stockInsumoMedico');
     });
 
     

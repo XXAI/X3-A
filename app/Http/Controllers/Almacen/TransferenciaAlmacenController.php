@@ -43,7 +43,7 @@ class TransferenciaAlmacenController extends Controller{
                 case when status = "FI" then 1 else null end
             ) as finalizados,
             count(
-                case when status = "CA" then 1 else null end
+                case when status = "EX-CA" then 1 else null end
             ) as cancelados
             '
         ))->where('almacen_proveedor',$almacen->id)->where('tipo_pedido_id','PEA')->first();
