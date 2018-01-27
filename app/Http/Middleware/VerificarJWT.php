@@ -36,7 +36,12 @@ class VerificarJWT
             return response()->json(['error' => 'token_invalido'], 500);
         }
 
-        return $next($request);
+        //return $next($request);
+        $response = $next($request);
+
+        $response->header('Api-Version','1.0');
+
+        return $response;
     }
 
 }
