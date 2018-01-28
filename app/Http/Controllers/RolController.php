@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
-use App\Models\Rol;
+use App\Models\Rol, App\Models\Servidor;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 
@@ -21,11 +21,18 @@ class RolController extends Controller
     {
         //return Response::json([ 'data' => []],200);
         //return Response::json(['error' => "NO EXSITE LA BASE"], 500);
+
+        $servidor = Servidor::find(env('SERVIDOR_ID'));
+
         $parametros = Input::only('q','page','per_page');
         if ($parametros['q']) {
              $roles =  Rol::where('nombre','LIKE',"%".$parametros['q']."%");
         } else {
              $roles =  Rol::select('*');
+        }
+
+        if($servidor->principal == 0){
+            $roles = $roles->where('es_offline',1);
         }
 
         if(isset($parametros['page'])){
@@ -58,7 +65,7 @@ class RolController extends Controller
             'permisos'        => 'required|array',
         ];
 
-        $inputs = Input::only('nombre','permisos');
+        $inputs = Input::only('nombre','permisos','es_offline');
 
         $v = Validator::make($inputs, $reglas, $mensajes);
 
@@ -89,11 +96,17 @@ class RolController extends Controller
      */
     public function show($id)
     {
+        $servidor = Servidor::find(env('SERVIDOR_ID'));
+
         $object = Rol::find($id);
 
         if(!$object){
             return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }
+        if($object->es_offline == 0 && $servidor->principal == 0){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
         $object->permisos;
 
         return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
@@ -119,7 +132,7 @@ class RolController extends Controller
             'permisos'        => 'required|array',
         ];
 
-        $inputs = Input::only('nombre','permisos');
+        $inputs = Input::only('nombre','permisos','es_offline');
 
         $rol = Rol::find($id);
 
@@ -138,8 +151,11 @@ class RolController extends Controller
         try {
 
             $rol->nombre = $inputs['nombre'];
+            $rol->es_offline = $inputs['es_offline'];
            
             $rol->permisos()->sync($inputs['permisos']);
+
+            $rol->save();
 
             DB::commit();
             return Response::json([ 'data' => $rol ],200);

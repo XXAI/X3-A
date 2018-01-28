@@ -36,10 +36,14 @@ class EditarPerfilController extends Controller
             'nombre'        => 'required',
             'apellidos'     => 'required'
         ];
-        $object = Usuario::find($id);
+        $usuario = Usuario::find($id);
 
-        if(!$object){
+        if(!$usuario){
             return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+        if($usuario->servidor_id != env('SERVIDOR_ID')){
+            return Response::json(['error' => "No puede realizar esta acción en este servidor."], HttpResponse::HTTP_UNAUTHORIZED);
         }
 
         $inputs = Input::only('id','passwordAnterior','passwordNuevo','nombre', 'apellidos','avatar','cambiarPassword');
@@ -53,24 +57,24 @@ class EditarPerfilController extends Controller
         DB::beginTransaction();
         try {
 			if(isset($inputs['cambiarPassword'])){
-				if(!Hash::check($inputs['passwordAnterior'], $object->password)){	
+				if(!Hash::check($inputs['passwordAnterior'], $usuario->password)){	
 					$error = [ 'passwordAnterior' => ["wrong"]];
 					return Response::json(['error' => $error], HttpResponse::HTTP_CONFLICT);		
 				}
 			}
 			
 
-			$object->nombre =  $inputs['nombre'];
-			$object->apellidos =  $inputs['apellidos'];
-			$object->avatar =  $inputs['avatar'];
-			$object->id =  $inputs['id'];
+			$usuario->nombre =  $inputs['nombre'];
+			$usuario->apellidos =  $inputs['apellidos'];
+			$usuario->avatar =  $inputs['avatar'];
+			$usuario->id =  $inputs['id'];
 			if ($inputs['cambiarPassword'] ){
-				$object->password = Hash::make($inputs['passwordNuevo']);
+				$usuario->password = Hash::make($inputs['passwordNuevo']);
 			}
 			
-			$object->save();
+			$usuario->save();
 			DB::commit();
-			return Response::json([ 'data' => $object ],200);
+			return Response::json([ 'data' => $usuario ],200);
 			
             
 

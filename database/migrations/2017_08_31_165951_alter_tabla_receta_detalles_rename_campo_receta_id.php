@@ -14,12 +14,13 @@ class AlterTablaRecetaDetallesRenameCampoRecetaId extends Migration
     {
         Schema::table('receta_detalles', function (Blueprint $table)
         {
-            $table->dropForeign(['recetas_id']);
+            // Comenté esto porque alguien arregló el nombre del campo recetas en el migration anterior y marca error el sistema a lo hora de ejecutar el migrate
+            /*$table->dropForeign(['recetas_id']);
             $table->dropColumn('recetas_id');
             $table->string('receta_id',255)->after('servidor_id');
 
             $table->foreign('receta_id')->references('id')->on('recetas');
-
+*/
         });
     }
 
@@ -32,11 +33,11 @@ class AlterTablaRecetaDetallesRenameCampoRecetaId extends Migration
     {
         Schema::table('receta_detalles', function (Blueprint $table)
         {
-            $table->dropColumn('receta_id');
+           /* $table->dropColumn('receta_id');
             $table->dropForeign(['receta_id']);
             $table->string('recetas_id',255)->after('servidor_id');
 
-            $table->foreign('recetas_id')->references('id')->on('recetas');
+            $table->foreign('recetas_id')->references('id')->on('recetas');*/
 
         });
     }

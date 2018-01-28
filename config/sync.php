@@ -9,7 +9,7 @@
 
 
 return [
-    'api-version' => 1.0,
+    'api_version' => '1.0',
     /*
     |--------------------------------------------------------------------------
     | Catálogos cargados en el servidor

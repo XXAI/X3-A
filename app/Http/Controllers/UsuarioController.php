@@ -39,7 +39,7 @@ class UsuarioController extends Controller
             $usuarios = $usuarios->get();
         }
        
-        return Response::json([ 'data' => $usuarios],200);
+        return Response::json([ 'data' => $usuarios, 'server_IP' => $_SERVER],200);
     }
 
     /**

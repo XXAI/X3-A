@@ -31,10 +31,17 @@ class ResetPasswordController extends Controller
 		
 		$usuario = Usuario::where('id',$input['id'])->where('reset_token',$input['reset_token'])->first();
 		
+		
 		if(!$usuario){
 			return Response::json(['error' => ["token"=>["invalid"]]], HttpResponse::HTTP_UNAUTHORIZED);
 		} else {
-			return Response::json(['data' => "Token válido"], 200);
+			// Bloqueamos acciones de los usuarios que no están en el servidor que les corresponde
+			if($usuario->servidor_id != env('SERVIDOR_ID')){
+				return Response::json(['error' => ["token"=>["invalid"]]], HttpResponse::HTTP_UNAUTHORIZED);
+			} else {
+				return Response::json(['data' => "Token válido"], 200);
+			}
+			
 		}
 	}
 
@@ -46,7 +53,12 @@ class ResetPasswordController extends Controller
 		try {
 			if(!$usuario){
 				return Response::json(['error' => ["usuario"=>["not-exist"]]], HttpResponse::HTTP_CONFLICT);
-			} else {				
+			} else {			
+				// Bloqueamos acciones de los usuarios que no están en el servidor que les corresponde
+				if($usuario->servidor_id != env('SERVIDOR_ID')){
+					return Response::json(['error' => ["pregunta"=>["not-exist"]]], HttpResponse::HTTP_CONFLICT);
+				}
+
 				if($usuario->pregunta_secreta != null || $usuario->pregunta_secreta != ""){
 					return Response::json(['data' => $usuario->pregunta_secreta], 200);
 				} else {
@@ -87,7 +99,12 @@ class ResetPasswordController extends Controller
 				return Response::json(['error' => ["id"=>["not-exist"]]], HttpResponse::HTTP_CONFLICT);
 			}
 			if($usuario->pregunta_secreta != null || $usuario->pregunta_secreta != ""){
-				
+
+				// Bloqueamos acciones de los usuarios que no están en el servidor que les corresponde
+				if($usuario->servidor_id != env('SERVIDOR_ID')){
+					return Response::json(['error' => ["respuesta"=>["wrong"]]], HttpResponse::HTTP_CONFLICT);
+				}
+
 				if($usuario->respuesta == $input['respuesta']){
 					$reset_token = Hash::make($usuario->id.".".time());
 					$usuario->reset_token = $reset_token;
@@ -132,6 +149,12 @@ class ResetPasswordController extends Controller
 			if(!$usuario){
 				return Response::json(['error' => ["token"=>["invalid"]]], HttpResponse::HTTP_UNAUTHORIZED);
 			} else {
+
+				// Bloqueamos acciones de los usuarios que no están en el servidor que les corresponde
+				if($usuario->servidor_id != env('SERVIDOR_ID')){
+					return Response::json(['error' => ["token"=>["invalid"]]], HttpResponse::HTTP_UNAUTHORIZED);
+				}
+
 				$usuario->password = Hash::make($input['password_nuevo']);
 				$usuario->reset_token = '';
 				$usuario->save();
@@ -176,6 +199,11 @@ class ResetPasswordController extends Controller
 
 			if(!$usuario || trim($input['email']) == ""){
 				return Response::json(['error' => ["email"=>["not-exist"]]], HttpResponse::HTTP_CONFLICT);
+			}
+
+			// Bloqueamos acciones de los usuarios que no están en el servidor que les corresponde
+			if($usuario->servidor_id != env('SERVIDOR_ID')){
+				return Response::json(['error' => ["email"=>["not-exist"]]], HttpResponse::HTTP_UNAUTHORIZED);
 			}
 
 			$reset_token = Hash::make($usuario->id.".".time());
