@@ -11,16 +11,17 @@ class UsuariosSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('usuarios')->insert([
-            [
-                'id' => 'root',
+        $super_usuario = DB::table('usuarios')->where('id','root_'.env("SERVIDOR_ID"))->first();
+        if(!$super_usuario){
+            DB::table('usuarios')->insert([[
+                'id' => 'root_'.env("SERVIDOR_ID"),
                 'servidor_id' =>  env("SERVIDOR_ID"),
-                'password' => Hash::make('sumami'),
+                'password' => Hash::make('ssa.s14l.0ffl1n3.'.env("SERVIDOR_ID")),
                 'nombre' => 'Super',
                 'apellidos' => 'Usuario',
                 'avatar' => 'avatar-circled-root',
                 'su' => true
-            ]
-        ]);
+            ]]);
+        }
     }
 }

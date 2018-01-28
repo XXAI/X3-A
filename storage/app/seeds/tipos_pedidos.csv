@@ -1,0 +1,5 @@
+id,nombre,created_at,updated_at,deleted_at
+PA,"Pedido de Abastecimiento","2018-01-28 09:57:51","2018-01-28 09:57:51",NULL
+PD,"Pedido por Desabasto","2018-01-28 09:57:51","2018-01-28 09:57:51",NULL
+PFS,"Pedido a Farmacia Subrogada","2018-01-28 09:57:51","2018-01-28 09:57:51",NULL
+PI,"Pedido Interno","2018-01-28 09:57:51","2018-01-28 09:57:51",NULL

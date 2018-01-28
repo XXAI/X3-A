@@ -1,0 +1,65 @@
+id,descripcion,grupo,su,created_at,updated_at,deleted_at
+2EA8UKzKrNFzxQxBBSjQ2fHggyrScu9f,"Sincronización manual",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+2nC6GUf6E737QwZSxuLORT6rZUDy5YUO,"Agregar pedidos",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+3DMVRdBv4cLGzdfAqXO7oqTvAMbEdhI7,"Sincronización con servidor central",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r,"Usuario General",Avances,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+7GkcqRllVy4Z371KMLPsX0d04dqv3vBE,"Salida de laboratotio",Laboratorio,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+8DDwGNuZOZfoFfaDOsQvBBhVzmnlU4PA,"Ver servidores",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+9dKCEyujSdLQF2CbpjXiWKeap0NlJCzw,"Mis turnos",Configuracion,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+9Z9XwxmNbrISFyF5sJkU3HyGUssSPfU5,"Editar roles",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+a1OMZVn7dveOf5aUK8V0VsvvSCxz8EMw,"Entradas estandar",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+ay8Rv5iuSih9ZoHVSFwZ8Ic4memuYm4O,"Eliminar permisos	Super",Usuario,1,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+BBg7HSOEmjjOsVl48s8wSz8AxXhmBXA1,"Cumplimiento de los proveedores","Administrador Central",0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+BnB3LhrDbKNBrbQaeB2BPXKGrLEYrEw7,"Mis claves",Configuracion,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+bsIbPL3qv6XevcAyrRm1GxJufDbzLOax,"Pedidos hechos en la plataforma","Administrador Central",0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+bwWWUufmEBRFpw9HbUJQUP8EFnagynQv,"Ver abasto de insumos por clues","Administrador Central",0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+C9I92bngLlDGuSpW9sHahdNx9f8zad3B,"Editar servidores",Administrador,1,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+CKXlt7sNZCiWBhvk33xqWEVTnv2lP022,"Egreso Pacientes",Admision,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+cpxMSLOq5aI7owPAgtJzSIgts5AS73J4,"Eliminar salidas manuales",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+dlV1H4gX0nqEgHauHC8BRIlwl6SGUoUt,"Editar usuarios",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+dsvilCCjRtFJ9QXuunzbR1CYLKJQ5MYA,"Agregar permisos	Super",Usuario,1,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+DYwQAxJbpHWw07zT09scEogUeFKFdGSu,"Ver permisos	Super",Usuario,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+eS7qbng49qtMSs88wsflDnzMBVUfVMlc,"Ingresar Pacientes",Admision,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+eu443QOIoXsulWwKFnKEv35nUGhRyhrY,"Eliminar claves básicas","Administrador Central",0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+f0CT1EvFcj4hqK1rNEpsSXhAlhdE9duM,"Usuario Normal",Avances,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+fWA5oDswZ2Ra4O8YaCy6nEY8OeCOxg9C,"Entregas por mes","Administrador Central",0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+fxzVnajvuZ6JpNLAmBLfT3UoB07XcCmo,"Eliminar servidores",Administrador,1,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+H5IV7Z6CAj8V2CRIQ2wnbXrYhvjLsSBk,Existencias,Inventario,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+hA2wLCnNDQ5Z1OtvdW8lgX5D6wkM6zBE,"Agregar roles",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+hAeTBeuyxHcAi2OerU7NsVpTA5isktJ7,"Ver entradas manuales",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+HMjOPUqMyhrFCn5YtiOnxrI7IWO9itTD,"Editar entradas manuales",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+hytR4HSKgea9JJ1HEfjpfjijQ8UAtyQn,"Editar pedidos",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+ICmOKw3HxhgRna4a78OP0QmKrIX0bNsp,"Ver roles",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+iSxK0TpoYpnzf8KIQTWOq9Web7WnSKhz,"Ver entregas",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+ityO3IAU1jhIlXnr9WPhINvdr09pQJry,"Editar claves básicas","Administrador Central",0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+jayjoQxeKJbZ2nTtlwEDDKH1VAZyXcGW,"Agregar entradas manuales",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+JHUfLL82Cp1pUI7tTKaWuCfVIaeKZk5z,"Catalogo y parametros del sistema","Tipos de personal",0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+Ki9kBghgqYsY17kqL620GWYl0bpeU6TB,"Mis servicios",Configuracion,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+l4SBZlAj2SYrdFi747wo8yuvJ0sAE0U9,"Editar permisos	Super",Usuario,1,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+mGKikN0aJaeF2XrHwwYK3XNw0f9CSZDe,"Ver usuarios",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+MrL06vIO12iNhchP14h57Puvg71eUmYb,"Ver Pedidos hecho en la plataforma","Administrador Proveedores",0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+N9tkWbLzXzdoAyBzcgLc85JPXqvRNvUh,"Agregar claves básicas","Administrador Central",0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+nLSqnSHHppYWQGGCrlbvCDp1Yyjcvyb3,"Personal Clues",Configuracion,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+NNN3YYcmuXdZYVSGCk0CJFjcx3ATnRQ5,"Sincronización local",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+PpXKhxdG8dGheNKm1rRSCT4EXZYyhRMm,"Ver modulo Admision",Admision,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+PzmTtCd1MbMWVBPwVmttQQWdNfqwzp7p,"Entradas de laboratorio",LAboratorio,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+q9ppCvhWdeCJI85YtCrKvtHLaoPipeaT,"Recibir pedido",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+qkm5NZQYN4ePs43axd0MgERhx5ia8rwh,"Eliminar roles",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+qQvNeb1UFPOfVMKQnNkvxyqjCIUgFuEG,"Salidas estandar",Inventario,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+r1RX6Yq7fc4CRRI2OJXIPxeBLW3lFP59,"Ver claves básicas","Administrador Central",0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+s8kSv2Gj9DZwRvClVRmZohp92Rtvi26i,"Realizar transferencia de recursos","Administrador Central",0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+st1d5Ij0UPcyewVXw4yWfUvCcKRJPSBf,"Editar entregas",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+Txy4Qi7mIekBNDG3T3vnJmLdMpiLQCeu,"Crear servidores",Administrador,1,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+U2f38x7uVNFMQMQFeUjrFOJelBt3tbCA,"Eliminar usuarios",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+uwYMBRsBHyq3iBtJUGrjCtGRTbK3efIc,"Eliminar entradas manuales",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+uZrbQ7smC8jpWIqAYq5cKwNHhyFDh2G7,"Eliminar entregas",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+WbBYhMFZkGsAYeN13hY1hylZkNPJbHOE,"Modulo de Avances",Avances,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+XE1pZJV6ZprLc0vP45Pkkpm2UlOJEBqV,"Ver lista Pacientes",Admision,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+xJqy3csU5WyOX7pmXL7VBs680uTVGxU3,"Agregar usuarios",Administrador,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+xNITkDTyysTNLusR5nVbgGCsNZceqnLo,"Agregar entregas",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+yfCW43bf3JCaE92d6HPxWljxo3SRlslP,"Editar salidas manuales",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+ygwsEwz3cUw4yVMCeaQ9hVMCFXUHri5q,"Catalogo y parametros del sistema",Programas,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+z9MQHY1YAIlYWsPLPF9OZYN94HKjOuDk,"Ver pedidos",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+zCO7XCCWisuNUoiwImd4MnDmp8I2CfTV,"Agregar salidas manuales",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+ZNrN0e8cQL8cIAcXHJfczGpFEC2Ap9QA,"Ver salidas manuales",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
+Zz02R1xvYQBSBx35Bs45F7komHUnvBet,"Eliminar pedidos",Farmacia,0,"2018-01-28 10:04:59","2018-01-28 10:04:59",NULL
