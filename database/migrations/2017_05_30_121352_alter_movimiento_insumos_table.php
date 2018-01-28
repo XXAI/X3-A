@@ -16,7 +16,7 @@ class AlterMovimientoInsumosTable extends Migration
         {
             if(!Schema::hasColumn('stock_id', 'clave_insumo_medico')) {
                 $table->string('stock_id', 255)->nullable()->change();
-                $table->string('clave_insumo_medico', 45)->after('stock_id');
+                $table->string('clave_insumo_medico', 255)->after('stock_id');
 
                 $table->foreign('clave_insumo_medico')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
             }

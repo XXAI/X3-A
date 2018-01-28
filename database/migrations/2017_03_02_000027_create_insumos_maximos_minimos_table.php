@@ -18,7 +18,7 @@ class CreateInsumosMaximosMinimosTable extends Migration{
 		    $table->integer('incremento');
 		    $table->string('servidor_id', 4);
 		    $table->string('almacenes_id', 255);
-		    $table->string('insumo_medico_clave', 45)->nullable();
+		    $table->string('insumo_medico_clave', 255)->nullable();
 		    $table->integer('maximo');
 		    $table->integer('minimo');
 		    $table->string('usuario_id', 255);
@@ -27,7 +27,8 @@ class CreateInsumosMaximosMinimosTable extends Migration{
 		
 		    $table->index('almacenes_id','fk_articulos_maximos_minimos_almacenes1_idx');
 		
-		    $table->foreign('almacenes_id')->references('id')->on('almacenes');
+        $table->foreign('almacenes_id')->references('id')->on('almacenes');
+        $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
 		
 		    $table->timestamps();
             $table->softDeletes();

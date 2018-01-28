@@ -36,7 +36,7 @@ class AlterTablaClavesBasicas extends Migration
             
             
             $table->foreign('claves_basicas_id')->references('id')->on('claves_basicas');
-            $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos');
+            $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
          
             $table->timestamps();
             $table->softDeletes();

@@ -19,7 +19,7 @@ class CreateContratosPreciosTable extends Migration{
             $table->integer('contrato_pedido_id')->unsigned()->nullable();
             $table->integer('proveedor_id')->unsigned();
             $table->string('lote', 45);
-            $table->string('insumo_medico_clave', 45);
+            $table->string('insumo_medico_clave', 255);
             //$table->string('marca', 100)->nullable();
             $table->decimal('precio', 15, 2);
             $table->string('usuario_id', 255);
@@ -27,6 +27,7 @@ class CreateContratosPreciosTable extends Migration{
             $table->foreign('contrato_id')->references('id')->on('contratos');
             $table->foreign('proveedor_id')->references('id')->on('proveedores');
             $table->foreign('contrato_pedido_id')->references('id')->on('contratos_pedidos');
+            $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
         
             $table->timestamps();
             $table->softDeletes();

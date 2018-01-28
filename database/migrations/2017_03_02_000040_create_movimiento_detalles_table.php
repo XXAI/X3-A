@@ -27,6 +27,7 @@ class CreateMovimientoDetallesTable extends Migration{
             
             $table->primary('id');
             $table->foreign('movimiento_id')->references('id')->on('movimientos');
+            $table->foreign('clave_insumo_medico')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
          
             $table->timestamps();
             $table->softDeletes();
@@ -39,6 +40,6 @@ class CreateMovimientoDetallesTable extends Migration{
      * @return void
      */
      public function down(){
-       Schema::dropIfExists('movimiento_insumos');
+       Schema::dropIfExists('movimiento_detalles');
      }
 }

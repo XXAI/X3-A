@@ -23,7 +23,7 @@ class CrearTablaSustanciasLaboratorio extends Migration
             $table->timestamps();
             $table->softDeletes();
  
-            $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos');
+            $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
             $table->foreign('unidad_medida_id')->references('id')->on('unidades_medida');
             $table->foreign('presentacion_id')->references('id')->on('presentaciones_sustancias');
         });

@@ -36,7 +36,7 @@ class CreateMedicamentosTable extends Migration{
 		    $table->index('unidad_medida_id','fk_medicamentos_unidades_medida1_idx');
 		    $table->index('insumo_medico_clave','fk_medicamentos_insumos_medicos1_idx');
 		*/
-		    $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos');
+		    $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
 		    $table->foreign('presentacion_id')->references('id')->on('presentaciones_medicamentos');
 		    $table->foreign('unidad_medida_id')->references('id')->on('unidades_medida');
 		    $table->foreign('via_administracion_id')->references('id')->on('vias_administracion');
