@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
-use App\Models\Permiso;
+use App\Models\Permiso, App\Models\Usuario;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response;
@@ -20,16 +20,21 @@ class PermisoController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $parametros = Input::only('q','page','per_page');
         if ($parametros['q']) {
-             $permisos =  Permiso::where('descripcion','LIKE',"%".$parametros['q']."%")->orderBy('grupo','asc');
+             $permisos =  Permiso::where('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('descripcion','LIKE',"%".$parametros['q']."%")->orderBy('grupo','asc');
         } else {
              $permisos =  Permiso::select('*')->orderBy('grupo','asc');
         }
         // No podemos mostrar los permisos de superusuario a menos que seas super usuario
-        $permisos = $permisos->where('su',false);
+
+       
+        $usuario = Usuario::find($request->get('usuario_id'));
+        if($usuario->su != 1){
+            $permisos = $permisos->where('su',false);
+        }
 
         if(isset($parametros['page'])){
 
@@ -59,7 +64,7 @@ class PermisoController extends Controller
             'grupo'         => 'required'
         ];
 
-        $inputs = Input::only('descripcion', 'grupo');
+        $inputs = Input::only('descripcion', 'grupo','su');
         $v = Validator::make($inputs, $reglas, $mensajes);
 
         if ($v->fails()) {
@@ -83,9 +88,20 @@ class PermisoController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request,$id)
     {
-        //
+        $object = Permiso::find($id);
+
+        if(!$object){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+        $usuario = Usuario::find($request->get('usuario_id'));
+        if($usuario->su != 1 && $object->su == 1){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+        return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
     }
 
 
@@ -99,6 +115,41 @@ class PermisoController extends Controller
     public function update(Request $request, $id)
     {
         //
+        $mensajes = [
+            'required'      => "required",
+        ];
+
+        $reglas = [
+            'descripcion'   => 'required',
+            'grupo'         => 'required'
+        ];
+
+        $permiso = Permiso::find($id);
+
+		if(!$permiso){
+			return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+		}
+		
+
+        $inputs = Input::only('descripcion', 'grupo','su');
+        $v = Validator::make($inputs, $reglas, $mensajes);
+
+        if ($v->fails()) {
+            return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
+        }
+
+        try {
+
+            $permiso->descripcion = $inputs['descripcion'];
+            $permiso->grupo = $inputs['descripcion'];
+            $permiso->su = $inputs['su'];
+            $permiso->save();
+
+            return Response::json([ 'data' => $permiso ],200);
+
+        } catch (\Exception $e) {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
     }
 
     /**
@@ -107,8 +158,24 @@ class PermisoController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request,$id)
     {
-        //
+        try {
+            $object = Permiso::find($id);
+
+            if(!$object){
+                return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+            }
+
+            $usuario = Usuario::find($request->get('usuario_id'));
+            if($usuario->su != 1 && $object->su == 1){
+                return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+            }
+
+            $object = Permiso::destroy($id);
+            return Response::json(['data'=>$object],200);
+        } catch (Exception $e) {
+           return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        }
     }
 }
