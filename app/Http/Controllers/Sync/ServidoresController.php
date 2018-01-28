@@ -25,7 +25,7 @@ class ServidoresController extends \App\Http\Controllers\Controller
 		//return Response::json(['error' => "NO EXSITE LA BASE"], 500);
 		$parametros = Input::only('q','page','per_page','estatus');
 		if ($parametros['q']) {
-			$servidores =  Servidor::where('nombre','LIKE',"%".$parametros['q']."%");
+			$servidores =  Servidor::where('nombre','LIKE',"%".$parametros['q']."%")->orWhere('clues','LIKE',"%".$parametros['q']."%");
 		} else {
 			if(isset($parametros['estatus'])){
 				$servidores = $servidores =  Servidor::select('*', 
@@ -73,11 +73,12 @@ class ServidoresController extends \App\Http\Controllers\Controller
         $reglas = [
 		  'id'        => 'required|unique:servidores',
 		  'nombre'        => 'required',
-		  'secret_key'        => 'required',
+          'secret_key'        => 'required',
+          'clues'        => 'required',
 		  'periodo_sincronizacion'        => 'required|integer',
         ];
 
-        $inputs = Input::only('nombre','id','secret_key','periodo_sincronizacion','tiene_internet','principal');
+        $inputs = Input::only('nombre','id','secret_key','periodo_sincronizacion','tiene_internet','principal','ip','clues');
 
         $v = Validator::make($inputs, $reglas, $mensajes);
 
@@ -134,11 +135,12 @@ class ServidoresController extends \App\Http\Controllers\Controller
 		$reglas = [
 			'id'        => 'required|unique:servidores,id,'.$id,
 			'nombre'        => 'required',
-			'secret_key'        => 'required',
+            'secret_key'        => 'required',
+            'clues'        => 'required',
 			'periodo_sincronizacion'        => 'required|integer',
 		];
 
-		$inputs = Input::only('nombre','id','secret_key','periodo_sincronizacion','tiene_internet','principal');
+		$inputs = Input::only('nombre','id','secret_key','periodo_sincronizacion','tiene_internet','principal','ip','clues');
 
 		$servidor = Servidor::find($id);
 
@@ -161,7 +163,9 @@ class ServidoresController extends \App\Http\Controllers\Controller
 			$servidor->secret_key = $inputs['secret_key'];
 			$servidor->periodo_sincronizacion = $inputs['periodo_sincronizacion'];
 			$servidor->tiene_internet = $inputs['tiene_internet'];
-			$servidor->principal = $inputs['principal'];
+            $servidor->principal = $inputs['principal'];
+            $servidor->ip = $inputs['ip'];
+            $servidor->clues = $inputs['clues'];
 			$servidor->save();
 
 			DB::commit();
