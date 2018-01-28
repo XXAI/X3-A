@@ -1,0 +1,5 @@
+id,nombre,nombre_corto,rfc,direccion,ciudad,contacto,cargo_contacto,telefono,celular,email,principal,alterno,activo,usuario_id,created_at,updated_at,deleted_at
+1,"Distribuidora Médica del Soconusco S.A. de C.V.",SOCONUSCO,NULL,"4ª. Poniente Sur No. 360","Tuxtla Gutiérrez, Chiapas","Francisco Javier Velasco Alvarez","Gerente General",61-3-34-00,"961 579 2940",javier.velasco@grupodms.com.mx,1,0,1,root,"2018-01-28 10:01:12","2018-01-28 10:01:12",NULL
+2,"FARMACIAS DE GENERICOS S.A. de C.V.",GENERICOS,NULL,NULL,NULL,"Marco Antonio Hernandez",NULL,,"961 693 3096",marcos3021@hotmail.com,1,0,1,root,"2018-01-28 10:01:12","2018-01-28 10:01:12",NULL
+3,"EXFARMA S.A. DE C.V.",EXFARMA,EXF071009BB4,"Av. Constituyentes No. 1000 PB. Col. Lomas Altas Del. Miguel Hidalgo, C.P. 11950","México, D. F.","Orbelin Moreno Benitez",NULL,55702719,"961 668 6679 y 5578440450",orbelin.moreno@exfarma.com,1,0,1,root,"2018-01-28 10:01:12","2018-01-28 10:01:12",NULL
+4,"Almacen Central",ALMACEN,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1,0,1,root,"2018-01-28 10:01:12","2018-01-28 10:01:12",NULL
