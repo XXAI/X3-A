@@ -15,6 +15,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('install', function () {
+    $clues = App\Models\UnidadMedica::all();
+    return view('install',['clues'=>$clues]);
+});
 
 Route::post('obtener-token',                    'AutenticacionController@autenticar');
 Route::post('refresh-token',                    'AutenticacionController@refreshToken');
