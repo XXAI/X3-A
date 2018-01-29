@@ -35,8 +35,7 @@ class CreatePedidosInsumosTable extends Migration{
           // $table->index('pedido_id','fk_pedidos_articulos_pedidos1_idx');
         
             $table->foreign('pedido_id')->references('id')->on('pedidos');
-            $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
-        
+            
             $table->timestamps();
             $table->softDeletes();
         });

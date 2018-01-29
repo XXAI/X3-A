@@ -33,7 +33,6 @@ class CreateStockTable extends Migration{
         
             $table->foreign('almacen_id')->references('id')->on('almacenes');
             $table->foreign('marca_id')->references('id')->on('marcas');
-            $table->foreign('clave_insumo_medico')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
         
             $table->timestamps();
             $table->softDeletes();

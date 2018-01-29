@@ -27,7 +27,6 @@ class CreateContratosPreciosTable extends Migration{
             $table->foreign('contrato_id')->references('id')->on('contratos');
             $table->foreign('proveedor_id')->references('id')->on('proveedores');
             $table->foreign('contrato_pedido_id')->references('id')->on('contratos_pedidos');
-            $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
         
             $table->timestamps();
             $table->softDeletes();

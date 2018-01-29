@@ -49,7 +49,7 @@ return [
         'servicios',
         'genericos',
         'grupos_insumos',
-        'generico_grupo_insumo', //udpated
+        //'generico_grupo_insumo', //udpated
         'presupuestos',
         'programas',
         'proveedores',
@@ -85,7 +85,7 @@ return [
         'extensiones_contratos',
         'roles',
         'permisos',
-        'permiso_rol', //udpated
+        'permiso_rol',
         'sustancias_laboratorio',
         'unidad_medica_abasto_configuracion',
         'unidad_medica_presupuesto'

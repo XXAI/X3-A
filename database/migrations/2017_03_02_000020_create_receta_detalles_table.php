@@ -28,7 +28,6 @@ class CreateRecetaDetallesTable extends Migration{
           $table->primary('id');
       
           $table->foreign('receta_id')->references('id')->on('recetas');
-          $table->foreign('clave_insumo_medico')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
       
           $table->timestamps();
           $table->softDeletes();

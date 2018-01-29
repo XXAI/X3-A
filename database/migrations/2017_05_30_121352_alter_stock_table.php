@@ -15,6 +15,7 @@ class AlterStockTable extends Migration
         Schema::table('stock', function (Blueprint $table) {
                 $table->integer('unidosis_sueltas')->after('existencia_unidosis');
                 $table->integer('envases_parciales')->after('unidosis_sueltas');
+                $table->foreign('clave_insumo_medico')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
         });
     }
 
@@ -28,6 +29,7 @@ class AlterStockTable extends Migration
         Schema::table('stock', function (Blueprint $table) {
                 $table->dropColumn('unidosis_sueltas');
                 $table->dropColumn('envases_parciales');
+                $table->dropForeign(['clave_insumo_medico']);
         });
     }
 }

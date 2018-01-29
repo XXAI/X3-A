@@ -27,7 +27,6 @@ class CreateMovimientoDetallesTable extends Migration{
             
             $table->primary('id');
             $table->foreign('movimiento_id')->references('id')->on('movimientos');
-            $table->foreign('clave_insumo_medico')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
          
             $table->timestamps();
             $table->softDeletes();
