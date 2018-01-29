@@ -24,13 +24,11 @@ class PermisoController extends Controller
     {
         $parametros = Input::only('q','page','per_page');
         if ($parametros['q']) {
-             $permisos =  Permiso::where('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('descripcion','LIKE',"%".$parametros['q']."%")->orderBy('grupo','asc');
+             $permisos =  Permiso::where('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('grupo','LIKE',"%".$parametros['q']."%")->orderBy('grupo','asc');
         } else {
              $permisos =  Permiso::select('*')->orderBy('grupo','asc');
         }
-        // No podemos mostrar los permisos de superusuario a menos que seas super usuario
-
-       
+        // No podemos mostrar los permisos de superusuario a menos que seas super usuario       
         $usuario = Usuario::find($request->get('usuario_id'));
         if($usuario->su != 1){
             $permisos = $permisos->where('su',false);
@@ -73,6 +71,9 @@ class PermisoController extends Controller
 
         try {
             $inputs['id'] = str_random(32);
+            if(!isset($inputs['su'])){
+                $inputs['su'] = false;
+            } 
             $permiso = Permiso::create($inputs);
 
             return Response::json([ 'data' => $permiso ],200);
@@ -139,7 +140,9 @@ class PermisoController extends Controller
         }
 
         try {
-
+            if(!isset($inputs['su'])){
+                $inputs['su'] = false;
+            } 
             $permiso->descripcion = $inputs['descripcion'];
             $permiso->grupo = $inputs['descripcion'];
             $permiso->su = $inputs['su'];

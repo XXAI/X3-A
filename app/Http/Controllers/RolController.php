@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
-use App\Models\Rol, App\Models\Servidor;
+use App\Models\Rol, App\Models\PermisoRol, App\Models\Servidor;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 
@@ -77,7 +77,10 @@ class RolController extends Controller
         try {
            
             $rol = Rol::create($inputs);
-            $rol->permisos()->sync($inputs['permisos']);
+            foreach($inputs['permisos'] as $permiso){
+                PermisoRol::create(['permiso_id'=> $permiso,'rol_id'=>$rol->id]);
+            }
+            //$rol->permisos()->sync($inputs['permisos']);
 
             DB::commit();
             return Response::json([ 'data' => $rol ],200);
@@ -152,8 +155,15 @@ class RolController extends Controller
 
             $rol->nombre = $inputs['nombre'];
             $rol->es_offline = $inputs['es_offline'];
-           
-            $rol->permisos()->sync($inputs['permisos']);
+            
+
+            PermisoRol::where('rol_id',$rol->id)->delete();
+            foreach($inputs['permisos'] as $permiso){
+                PermisoRol::create(['permiso_id'=> $permiso,'rol_id'=>$rol->id]);
+            }
+
+
+            //$rol->permisos()->sync($inputs['permisos']);
 
             $rol->save();
 
@@ -174,11 +184,23 @@ class RolController extends Controller
      */
     public function destroy($id)
     {
+        DB::beginTransaction();
         try {
+            $rol = Rol::find($id);
+            $permisos = $rol->permisos;
+
+            foreach($permisos as $permiso){
+                PermisoRol::where('permiso_id',$permiso->id)->where('rol_id',$rol->id)->delete();
+            }
+
             $object = Rol::destroy($id);
+            DB::commit();
             return Response::json(['data'=>$object],200);
-        } catch (Exception $e) {
-           return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
-        }
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+       
     }
 }
