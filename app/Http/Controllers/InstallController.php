@@ -81,5 +81,7 @@ class InstallController extends Controller
         $almacen->nombre = 'ALMACEN PRINCIPAL';
         $almacen->usuario_id = 'root_'.env('SERVIDOR_ID');
         $almacen->save();
+
+        return view('install_complete');
     }
 }
