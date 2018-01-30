@@ -861,10 +861,24 @@
 		<br>
 		<h1>Instalación del SIAL</h1>
 		<p>Este procedimiento solo se ejecutará una vez, proceda si está seguro.</p>
-		<h2>Paso 1:<small>Creación de la base de datos y llenado de catalogos.</small> </h2>
-		<form action="./config-server">
+        <h2>Paso 2: <small>Configuración del servidor local.</small></h2>
+		<form action="./server-offline">
 			<div class="row">
-				<input class="button-primary" type="submit" value="Instalar base de datos">
+				<label for="id">ID del Servidor:</label>
+				<input class="u-full-width" type="text" placeholder="Ej. 0002" name="id" id="id">
+				<label for="clues">Seleccione una clues</label>
+				<select name="clues" id="clues" class="u-full-width">
+					@foreach ($clues as $um)
+					<option value="{{ $um->clues }}">{{ $um->clues }} - {{ $um->nombre }}</option>
+					@endforeach
+				</select>
+				<label for="clues">Seleccione un proveedor</label>
+				<select name="proveedor" id="proveedor" class="u-full-width">
+					@foreach ($proveedores as $proveedor)
+					<option value="{{ $proveedor->id }}">{{ $proveedor->nombre }}</option>
+					@endforeach
+				</select>
+				<input class="button-primary" type="submit" value="Configurar Acceso">
 			</div>
 		</form>
 	</div>

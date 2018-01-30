@@ -16,9 +16,13 @@ Route::get('/', function () {
 });
 
 Route::get('install', function () {
-    $clues = App\Models\UnidadMedica::all();
-    return view('install',['clues'=>$clues]);
+    //$clues = App\Models\UnidadMedica::where('es_offline',1)->orderBy('nombre')->get();
+    //return view('install',['clues'=>$clues]);
+    return view('install');
 });
+
+Route::get('config-server', 'InstallController@runDatabase');
+Route::get('server-offline', 'InstallController@configServer');
 
 Route::post('obtener-token',                    'AutenticacionController@autenticar');
 Route::post('refresh-token',                    'AutenticacionController@refreshToken');
