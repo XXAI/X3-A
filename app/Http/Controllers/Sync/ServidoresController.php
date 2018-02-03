@@ -52,7 +52,7 @@ class ServidoresController extends \App\Http\Controllers\Controller
 			$servidores = $servidores->get();
 		}
 		
-		return Response::json([ 'data' => $servidores],200);
+		return Response::json([ 'data' => $servidores],200,[], JSON_NUMERIC_CHECK);
     }
 
     /**

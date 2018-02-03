@@ -36,7 +36,7 @@ return [
         'tipos_personal_metadatos',
         'tipos_recetas',
         'tipos_sustancias',
-        'tipos_unidad',
+        //'tipos_unidad', #no esta en migrations
         'unidades_medida',
         'vias_administracion',
         'medios_contacto',
@@ -49,7 +49,7 @@ return [
         'servicios',
         'genericos',
         'grupos_insumos',
-        //'generico_grupo_insumo', //udpated
+        'generico_grupo_insumo', #updated
         'presupuestos',
         'programas',
         'proveedores',
@@ -60,7 +60,7 @@ return [
         'categorias_metadatos',
         'organismos',
         'unidades_medicas',
-        'areas',
+        //'areas', #no esta en migrations
         'articulos',
         'insumos_medicos',
         'material_curacion',
@@ -78,7 +78,7 @@ return [
         'comunicacion_contactos',
         'contratos',
         'contrato_clues',
-        'contrato_proveedor',
+        'contrato_proveedor',#updated
         'contratos_pedidos',
         'contratos_precios',
         'empresas_espejos',

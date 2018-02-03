@@ -1,3 +1,0 @@
-id,incremento,servidor_id,clave,nombre,firma,usuario_id,created_at,updated_at,deleted_at
-00011,1,0001,SUBMAT1,"Subdirector de Materiales",1,0,"2018-01-28 10:01:13","2018-01-28 10:01:13",NULL
-00012,2,0001,JEFMAT1,"Jefe de depto",1,0,"2018-01-28 10:01:13","2018-01-28 10:01:13",NULL

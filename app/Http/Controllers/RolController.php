@@ -155,14 +155,43 @@ class RolController extends Controller
 
             $rol->nombre = $inputs['nombre'];
             $rol->es_offline = $inputs['es_offline'];
-            
 
-            PermisoRol::where('rol_id',$rol->id)->delete();
-            foreach($inputs['permisos'] as $permiso){
+            //PermisoRol::where('rol_id',$rol->id)->delete();
+            /*foreach($inputs['permisos'] as $permiso){
                 PermisoRol::create(['permiso_id'=> $permiso,'rol_id'=>$rol->id]);
+            }*/
+
+            $permisos_roles_db = PermisoRol::where('rol_id',$rol->id)->withTrashed()->get();
+            if(count($permisos_roles_db) > count($inputs['permisos'])){
+                $total_max_permisos = count($permisos_roles_db);
+            }else{
+                $total_max_permisos = count($inputs['permisos']);
             }
 
+            for ($i=0; $i < $total_max_permisos ; $i++) {
+                if(isset($permisos_roles_db[$i])){ //Si existe un registro en la base de datos se edita o elimina.
+                    $permiso_rol = $permisos_roles_db[$i];
 
+                    if(isset($inputs['permisos'][$i])){ //Si hay permisos desde el fomulario, editamos el permiso de la base de datos.
+                        $permiso_id = $inputs['permisos'][$i];
+    
+                        $permiso_rol->deleted_at = null; //Por si el elemento ya esta eliminado, lo restauramos
+                        $permiso_rol->permiso_id = $permiso_id;
+                        
+                        $permiso_rol->save();
+                    }else{ //de lo contrario eliminamos el permiso de la base de datos.
+                        $permiso_rol->delete();
+                    }
+                }else{ //SI no existe un registro en la base de datos, se crea uno nuevo
+                    $permiso_id = $inputs['permisos'][$i];
+                    $permiso_rol = new PermisoRol();
+
+                    $permiso_rol->permiso_id = $permiso_id;
+                    $permiso_rol->rol_id = $rol->id;
+
+                    $permiso_rol->save();
+                }
+            }
             //$rol->permisos()->sync($inputs['permisos']);
 
             $rol->save();

@@ -14,7 +14,7 @@ class AlterMovimientoInsumos2UnidosisTable extends Migration
     {
         Schema::table('movimiento_insumos', function (Blueprint $table)
         {
-            if(Schema::hasColumn('modo_salida', 'cantidad_unidosis')) {
+            if(!Schema::hasColumn('modo_salida', 'cantidad_unidosis')) {
                 $table->string('modo_salida', 1)->after('clave_insumo_medico');
                 $table->string('cantidad_unidosis', 11)->after('cantidad');
             }
@@ -31,8 +31,8 @@ class AlterMovimientoInsumos2UnidosisTable extends Migration
     {
         Schema::table('movimiento_insumos', function (Blueprint $table)
         {
-                  $table->dropColumn('modo_salida');
-                  $table->dropColumn('cantidad_unidosis');  
+            $table->dropColumn('modo_salida');
+            $table->dropColumn('cantidad_unidosis');  
         });
     }
 }

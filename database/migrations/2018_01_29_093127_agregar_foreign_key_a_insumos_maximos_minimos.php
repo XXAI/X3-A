@@ -13,6 +13,7 @@ class AgregarForeignKeyAInsumosMaximosMinimos extends Migration
     public function up()
     {
         Schema::table('insumos_maximos_minimos', function (Blueprint $table) {
+            $table->dropForeign('insumos_maximos_minimos_insumo_medico_clave_foreign');
             $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
         });
     }
