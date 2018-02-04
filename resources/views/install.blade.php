@@ -854,6 +854,38 @@
 		/* Larger than Desktop HD */
 		@media (min-width: 1200px) {}
 
+
+
+
+		.loader {
+			border: 16px solid #f3f3f3; /* Light grey */
+			border-top: 16px solid #3498db; /* Blue */
+			border-radius: 50%;
+			width: 60px;
+			height: 60px;
+			animation: spin 2s linear infinite;
+			top:20%;
+			left: 50%;
+			margin-left: -30px;
+			position:absolute;
+			
+		}
+		.bg-loader{
+			display:none;
+			background:#FFF;
+			background:rgba(255,255,255,0.9);
+			top:0px;
+			position:absolute;
+			width:100%;
+			height: 100%;
+			text-align:center;
+		}
+
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
+
 	</style>
 </head>
 <body>
@@ -862,11 +894,23 @@
 		<h1>Instalación del SIAL</h1>
 		<p>Este procedimiento solo se ejecutará una vez, proceda si está seguro.</p>
 		<h2>Paso 1:<small>Creación de la base de datos y llenado de catalogos.</small> </h2>
-		<form action="./config-server">
+		<form action="./config-server" onsubmit="cargando()">
 			<div class="row">
-				<input class="button-primary" type="submit" value="Instalar base de datos">
+				<input class="button-primary" type="submit"  value="Instalar base de datos">
 			</div>
 		</form>
+		<div class="bg-loader" id="cargando">
+			<br><br><br><br><br><br><br><br>
+			<div class="loader"></div>
+			<h1>Cargando</h1>
+			<h2>Espere un momento...</h2>
+		</div>
 	</div>
+	<script>
+		function cargando(){
+			document.getElementById("cargando").style.display = "block";			
+		}
+	</script>
+
 </body>
 </html>

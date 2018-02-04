@@ -18,12 +18,16 @@ class InstallController extends Controller
         $database  = Config::get('database.connections.mysql.database');
         $username  = Config::get('database.connections.mysql.username');
         $password  = Config::get('database.connections.mysql.password');
-        echo shell_exec('mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "DROP DATABASE ' . $database . '"');
-        echo shell_exec('mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "CREATE DATABASE ' . $database . '"');
-
+       
+        echo shell_exec(env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "DROP IF EXISTS DATABASE ' . $database . '"');
+      
+        echo shell_exec(env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "CREATE DATABASE ' . $database . '"');
+        //echo env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "CREATE DATABASE ' . $database . '"';
+        
         \Artisan::call('migrate');
+        
         \Artisan::call('db:seed',['--class'=>'DatosCatalogosSeeder']);
-
+      
         //$clues = UnidadMedica::where('es_offline',1)->orderBy('nombre')->get();
         $clues = UnidadMedica::where('es_offline',0)->orderBy('nombre')->get();
         $proveedores = Proveedor::all();
@@ -46,6 +50,17 @@ class InstallController extends Controller
         if (file_exists($path)) {
             file_put_contents($path, str_replace('SERVIDOR_ID='.env('SERVIDOR_ID'), 'SERVIDOR_ID='.$parametros['id'], file_get_contents($path)));
             file_put_contents($path, str_replace('SECRET_KEY='.env('SECRET_KEY'), 'SECRET_KEY='.$secret, file_get_contents($path)));
+            file_put_contents($path, str_replace('CLUES=null', 'CLUES='.$parametros['clues'], file_get_contents($path)));
+
+            // Si no existe la linea en el .env (que debería), lo agregamos
+            if(strpos(file_get_contents($path),'SERVIDOR_INSTALADO') === false){
+                file_put_contents($path, "\n\nSERVIDOR_INSTALADO=true", FILE_APPEND);
+            } else {
+                file_put_contents($path, str_replace('SERVIDOR_INSTALADO=false', 'SERVIDOR_INSTALADO=true', file_get_contents($path)));
+            }
+            
+
+            
         }
 
         $servidor = Servidor::find(env('SERVIDOR_ID'));

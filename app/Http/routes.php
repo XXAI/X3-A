@@ -15,14 +15,15 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('install', function () {
-    //$clues = App\Models\UnidadMedica::where('es_offline',1)->orderBy('nombre')->get();
-    //return view('install',['clues'=>$clues]);
-    return view('install');
+Route::group(['middleware' => 'servidor.instalado'], function () {
+    Route::get('install', function () {
+        return view('install');
+    });
+    Route::get('config-server', 'InstallController@runDatabase');
+    Route::get('server-offline', 'InstallController@configServer');
 });
 
-Route::get('config-server', 'InstallController@runDatabase');
-Route::get('server-offline', 'InstallController@configServer');
+
 
 Route::post('obtener-token',                    'AutenticacionController@autenticar');
 Route::post('refresh-token',                    'AutenticacionController@refreshToken');
