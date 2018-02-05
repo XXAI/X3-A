@@ -56,15 +56,15 @@ z9MQHY1YAIlYWsPLPF9OZYN94HKjOuDk,"Ver pedidos",Farmacia,0,"2018-02-01 11:48:55",
 zCO7XCCWisuNUoiwImd4MnDmp8I2CfTV,"Agregar salidas manuales",Farmacia,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
 ZNrN0e8cQL8cIAcXHJfczGpFEC2Ap9QA,"Ver salidas manuales",Farmacia,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
 Zz02R1xvYQBSBx35Bs45F7komHUnvBet,"Eliminar pedidos",Farmacia,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
-'pVJrPewkPFwidvmECcgg8BqVXn7FtH7E', 'Cancelar pedidos', 'Farmacia', '0', '2018-01-28 15:58:26', '2018-01-28 15:58:26', NULL
-'tFcVVgwywaPvfj4ZdOoCZfBpcTtZAST0', 'Actualizar sistema', 'Administrador', '0', '2018-01-28 18:42:40', '2018-01-28 18:42:40', NULL
-'WcIjPIhPWGJbLyb4OiYe91sRKP7NGTAK', 'Respaldos y restauración de base de datos', 'Administrador', '0', '2018-01-28 18:38:33', '2018-01-28 18:38:33', NULL
-'fxzVnajvuZ6JpNLAmBLfT3UoB07XcCmo', 'Eliminar servidores', 'Administrador', '1', '2018-01-14 18:21:54', '2018-01-14 18:21:54', NULL
-'C9I92bngLlDGuSpW9sHahdNx9f8zad3B', 'Editar servidores', 'Administrador', '1', '2018-01-14 18:21:16', '2018-01-14 18:21:16', NULL
-'Txy4Qi7mIekBNDG3T3vnJmLdMpiLQCeu', 'Crear servidores', 'Administrador', '1', '2018-01-14 18:20:32', '2018-01-14 18:20:32', NULL
-'8DDwGNuZOZfoFfaDOsQvBBhVzmnlU4PA', 'Ver servidores', 'Administrador', '0', '2018-01-14 18:18:27', '2018-01-14 18:18:27', NULL
-'3DMVRdBv4cLGzdfAqXO7oqTvAMbEdhI7', 'Sincronización con servidor central', 'Administrador', '0', '2018-01-14 18:16:02', '2018-01-14 18:16:02', NULL
-'NNN3YYcmuXdZYVSGCk0CJFjcx3ATnRQ5', 'Sincronización local', 'Administrador', '0', '2018-01-14 17:59:39', '2018-01-14 17:59:39', NULL
+pVJrPewkPFwidvmECcgg8BqVXn7FtH7E, "Cancelar pedidos", Farmacia, 0, "2018-01-28 15:58:26", "2018-01-28 15:58:26", NULL
+tFcVVgwywaPvfj4ZdOoCZfBpcTtZAST0, "Actualizar sistema", Administrador, 0, "2018-01-28 18:42:40", "2018-01-28 18:42:40", NULL
+WcIjPIhPWGJbLyb4OiYe91sRKP7NGTAK, "Respaldos y restauración de base de datos", Administrador, 0, "2018-01-28 18:38:33", "2018-01-28 18:38:33", NULL
+fxzVnajvuZ6JpNLAmBLfT3UoB07XcCmo, "Eliminar servidores", Administrador, 1, "2018-01-14 18:21:54", "2018-01-14 18:21:54", NULL
+C9I92bngLlDGuSpW9sHahdNx9f8zad3B, "Editar servidores", Administrador, 1, "2018-01-14 18:21:16", "2018-01-14 18:21:16", NULL
+Txy4Qi7mIekBNDG3T3vnJmLdMpiLQCeu, "Crear servidores", Administrador, 1, "2018-01-14 18:20:32", "2018-01-14 18:20:32", NULL
+8DDwGNuZOZfoFfaDOsQvBBhVzmnlU4PA, "Ver servidores", Administrador, 0, "2018-01-14 18:18:27", "2018-01-14 18:18:27", NULL
+3DMVRdBv4cLGzdfAqXO7oqTvAMbEdhI7, "Sincronización con servidor central", Administrador, 0, "2018-01-14 18:16:02", "2018-01-14 18:16:02", NULL
+NNN3YYcmuXdZYVSGCk0CJFjcx3ATnRQ5, "Sincronización local", Administrador, 0, "2018-01-14 17:59:39", "2018-01-14 17:59:39", NULL
 
 
 
