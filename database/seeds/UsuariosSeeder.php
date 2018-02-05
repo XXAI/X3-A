@@ -20,7 +20,9 @@ class UsuariosSeeder extends Seeder
                 'nombre' => 'Super',
                 'apellidos' => 'Usuario',
                 'avatar' => 'avatar-circled-root',
-                'su' => true
+                'su' => true,
+                'created_at' => new DateTime,
+                'updated_at' => new DateTime,
             ]]);
         }
     }
