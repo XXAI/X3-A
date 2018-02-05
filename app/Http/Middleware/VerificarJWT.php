@@ -35,7 +35,7 @@ class VerificarJWT
             // en un servidor al cual no corresponde se le deniegue la petición.
             // Digamos que la información de un servidor offline sincronizada en el principal quiera ser editada
             // si un usuario entra e inicia sesión. Así que solo le permitimos lectura.
-            if($usuario->servidor != env('SERVIDOR_ID') && $request->getMethod() != "GET"){
+            if($usuario->servidor_id != env('SERVIDOR_ID') && $request->getMethod() != "GET"){
                 return response()->json(['error' => 'usuario_servidor_invitado_solo_lectura'], 403); 
             }
 
