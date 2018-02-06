@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use Illuminate\Http\Response as HttpResponse;
 
 class DatosCatalogosSeeder extends Seeder
 {
