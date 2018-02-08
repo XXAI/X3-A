@@ -49,11 +49,8 @@ class PersonalMedicoController extends Controller
 
         } else {
                 $data =  PersonalClues::where("id","!=", "")->where('clues',$parametros['clues'])
-                                        ->where('tipo_personal_id', $parametros['tipo_personal_id']);
-
-              
+                                        ->where('tipo_personal_id', $parametros['tipo_personal_id']);              
         }
-        
 
         if(isset($parametros['page'])){
 
