@@ -21,6 +21,11 @@ class MovimientoMetadato extends BaseModel{
         return $this->belongsTo('App\Models\Servicio','servicio_id');
     }
 
+    public function proveedor(){
+        return $this->belongsTo('App\Models\Proveedor','proveedor_id');
+    }
+    
+
   
  
 

@@ -43,7 +43,57 @@ use \Excel;
 */
 class InventarioLaboratorioController extends Controller
 {
-     
+    
+    /**
+	 * @api {index} /entrada-almacen/ Listar las existencias de los insumos en un almacén de laboratorio.
+	 * @apiVersion 1.0.0
+	 * @apiName ListarExistenciasLaboratorio
+	 * @apiGroup Existencia Insumos Laboratorio
+	 *
+	 * @apiParam {String} X-Almacen-Id En headers es el id del almacén del cual se requieren las entradas.
+     * @apiParam {Number} page Mediante url es la pagina solicitada.
+	 * @apiParam {Number} per_page Mediante url es la cantidad de elementos a listar en caso de desear paginado.
+     * @apiParam {Number} buscar_en Mediante url permite los valores MIS_CLAVES Ó TODAS_LAS_CLAVES.
+     * @apiParam {Number} seleccionar Mediante url permite los valores TODO, EXISTENTE y NO_EXISTENTE.
+     * @apiParam {Number} clave_insumo Mediante url permite un valor alfanumerico para buscar una clave en especifico.
+     *
+	 * @apiSuccess {Number} status  Codigo http de respuesta a la petición realizada.
+	 * @apiSuccess {String} messages Mensaje personalizado según el codigo de respuesta.
+	 *
+	 * @apiSuccessExample Success-Response:
+	 *     HTTP/1.1 200 OK
+	 *     {
+     *           "status": 200,
+     *           "messages": "Operación realizada con exito",
+     *           "data": {
+     *               "total": 620,
+     *               "per_page": "20",
+     *               "current_page": 1,
+     *               "last_page": 31,
+     *               "next_page_url": "http://sialapiv2.yoursoft.com.mx/public/index.php/inventario-laboratorio?page=2",
+     *               "prev_page_url": null,
+     *               "from": 1,
+     *               "to": 20,
+     *               "data": [
+     *                       {"clave_insumo_medico": "LAB0001","descripcion": "GLUCOSA SERICA Y PARA LIQUIDOS ORGANICOS","tipo": "LC","es_causes": "0","es_unidosis": "0","existencia": 0,"existencia_unidosis": 0,"updated_at": null},
+     *                       {"clave_insumo_medico": "LAB0002","descripcion": "UREA SERICA Y URINARIA","tipo": "LC","es_causes": "0","es_unidosis": "0","existencia": 0,"existencia_unidosis": 0,"updated_at": null}
+     *                       ]
+     *           },
+     *           "total": 20
+     *       }
+	 *
+     * @apiError 403 El usuario no tiene permisos para realizar la consulta.
+	 * @apiError 404 No se encontraron reultados de movimientos con los criterios de busqueda.
+     * @apiError 409 Ocurrió un problema logico al consultar los datos.
+     * @apiError 500 Ocurrió un problema con el servidor.
+	 *
+	 * @apiErrorExample Error-Response:
+	 *     HTTP/1.1 404 Not Found
+	 *     {
+     *       "status": 404,
+	 *       "messages": "No hay resultados"
+	 *     }
+	 */ 
     public function index(Request $request)
     {
          $parametros = Input::only('q','page','per_page','clues','clave_insumo','almacen','tipo','es_causes','buscar_en','seleccionar');

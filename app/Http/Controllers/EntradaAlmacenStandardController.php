@@ -37,6 +37,7 @@ use App\Models\CluesServicio;
 use App\Models\Turno;
 use App\Models\Servicio;
 use App\Models\PersonalClues;
+use App\Models\Programa;
 
 
 
@@ -52,94 +53,10 @@ use App\Models\PersonalClues;
 *
 */
 
-class EntradaAlmacenController extends Controller
+class EntradaAlmacenStandardController extends Controller
 {
      
 
-
-    /**
-	 * @api {index} /entrada-almacen/ Listar las entradas realizadas en un almacén.
-	 * @apiVersion 1.0.0
-	 * @apiName ListarEntradas
-	 * @apiGroup Entrada Almacen de Medicamentos
-	 *
-	 * @apiParam {String} X-Almacen-Id En headers es el id del almacén del cual se requieren las entradas.
-	 * @apiParam {Number} per_page Mediante url es la cantidad de elementos a listar en caso de desear paginado.
-     *
-	 * @apiSuccess {Number} status  Codigo http de respuesta a la petición realizada.
-	 * @apiSuccess {String} messages Mensaje personalizado según el codigo de respuesta.
-	 *
-	 * @apiSuccessExample Success-Response:
-	 *     HTTP/1.1 200 OK
-	 *     {
-	 *       "status": 200,
-	 *       "messages": "Operación realizada con exito",
-     *       "data" : [
-     *                  {
-     *                       "id": "00012312",
-     *                       "servidor_id": "0001",
-     *                       "incremento": "2312",
-     *                       "almacen_id": "0001165",
-     *                       "tipo_movimiento_id": "1",
-     *                       "status": "BR",
-     *                       "fecha_movimiento": "2017-12-21",
-     *                       "programa_id": "3",
-     *                       "observaciones": "",
-     *                       "cancelado": "0",
-     *                       "observaciones_cancelacion": "",
-     *                       "usuario_id": "root",
-     *                       "created_at": "2017-12-21 12:21:02",
-     *                       "updated_at": "2017-12-21 12:21:02",
-     *                       "deleted_at": null,
-     *                       "numero_claves": 0,
-     *                       "numero_insumos": 0,
-     *                       "movimiento_metadato": {
-     *                           "id": "0001378",
-     *                           "incremento": "378",
-     *                           "servidor_id": "0001",
-     *                           "movimiento_id": "00012312",
-     *                           "folio_colectivo": null,
-     *                           "servicio_id": null,
-     *                           "turno_id": null,
-     *                           "persona_recibe": "",
-     *                           "usuario_id": "root",
-     *                           "created_at": "2017-12-21 12:21:02",
-     *                           "updated_at": "2017-12-21 12:21:02",
-     *                           "deleted_at": null,
-     *                           "turno": null,
-     *                           "servicio": null
-     *                       },
-     *                       "movimiento_usuario": {
-     *                           "id": "root",
-     *                           "servidor_id": "0001",
-     *                           "password": "$2y$10$g/HhW189eZmGo1RjvoclZ.uLNp7CMoe7WscGXmmSsn.iHOrPksyHe",
-     *                           "nombre": "Super",
-     *                           "apellidos": "Usuario",
-     *                           "avatar": "avatar-circled-root",
-     *                           "modulo_inicio": null,
-     *                           "proveedor_id": null,
-     *                           "su": "1",
-     *                           "created_at": null,
-     *                           "updated_at": null,
-     *                           "deleted_at": null
-     *                       },
-     *                       "movimiento_receta": null
-     *                       }
-     *                ]
-	 *     }
-	 *
-     * @apiError 403 El usuario no tiene permisos para realizar la consulta.
-	 * @apiError 404 No se encontraron reultados de movimientos con los criterios de busqueda.
-     * @apiError 409 Ocurrió un problema logico al consultar los datos.
-     * @apiError 500 Ocurrió un problema con el servidor.
-	 *
-	 * @apiErrorExample Error-Response:
-	 *     HTTP/1.1 404 Not Found
-	 *     {
-     *       "status": 404,
-	 *       "messages": "No hay resultados"
-	 *     }
-	 */ 
     public function index(Request $request)
     {
         $parametros = Input::only('q','page','per_page','almacen','tipo','fecha_desde','fecha_hasta','recibe','turno','servicio');
@@ -158,7 +75,7 @@ class EntradaAlmacenController extends Controller
                              ->leftJoin('usuarios AS users', 'users.id', '=', 'mov.usuario_id')
                              ->select('mov.*','mm.servicio_id','mm.turno_id','users.nombre')
                              ->where('mov.almacen_id',$parametros['almacen'])
-                             ->where('mov.tipo_movimiento_id',1)
+                             ->where('mov.tipo_movimiento_id',17)
                              ->where('mov.deleted_at',null)
                              ->orderBy('mov.updated_at','DESC');
 
@@ -201,6 +118,8 @@ class EntradaAlmacenController extends Controller
         //dd(json_encode($movimientos)); die();
         $data = array();
 
+        
+         
         foreach($movimientos as $mov)
         {
             $movimiento_response = Movimiento::with('movimientoMetadato','movimientoUsuario','movimientoReceta')
@@ -261,10 +180,12 @@ class EntradaAlmacenController extends Controller
 
 
             ///***************************************************************************************************************************************
+                
                 $movimientos_all = Movimiento::with('movimientoMetadato','movimientoUsuario')
-                                            ->where('tipo_movimiento_id',1)
+                                            ->where('tipo_movimiento_id',17)
                                             ->where('almacen_id',$parametros['almacen'])
                                             ->orderBy('updated_at','DESC')->get();
+
                 $array_turnos     = array();
                 $array_servicios  = array();
 
@@ -288,6 +209,8 @@ class EntradaAlmacenController extends Controller
         
         if(count($data) <= 0)
         { 
+
+            
 
             $data[0] = array ("turnos_disponibles" => $array_turnos, "servicios_disponibles" => $array_servicios);
             return Response::json(array("status" => 404,"messages" => "No hay resultados","data" => $data), 200);
@@ -314,125 +237,15 @@ class EntradaAlmacenController extends Controller
 
 
 
-/**
-	 * @api {store} /entrada-almacen/ Insertar una entrada nueva.
-	 * @apiVersion 1.0.0
-	 * @apiName NuevaEntrada
-	 * @apiGroup Entrada Almacen de Medicamentos
-	 *
-	 * @apiParam {String} X-Almacen-Id En headers es el id del almacén del cual se requieren las entradas.
-     *
-	 *
-     *
-     * @apiExample {js} Envio de Petición store:
-     *
-	 *     {
-     *           "id": "",
-     *           "actualizar": false,
-     *           "tipo_movimiento_id": 1,
-     *           "status": "FI",
-     *           "fecha_movimiento": "2017-12-26T06:00:00.000Z",
-     *           "observaciones": "TODO MUY OK OK",
-     *           "programa_id": "3",
-     *           "cancelado": "",
-     *           "observaciones_cancelacion": "",
-     *           "movimiento_metadato": {
-     *               "persona_recibe": "PEDRITO DEMO",
-     *               "servicio_id": null,
-     *               "turno_id": null
-     *           },
-     *           "insumos": [
-     *               {
-     *               "clave": "010.000.4255.00",
-     *               "nombre": "Genericos",
-     *               "descripcion": "CIPROFLOXACINO Cápsula ó tableta 250 mg 8 cápsulas ó tabletas",
-     *               "es_causes": "1",
-     *               "es_unidosis": "1",
-     *               "lote": "202020",
-     *               "id": null,
-     *               "codigo_barras": "",
-     *               "fecha_caducidad": "2020-05-05",
-     *               "cantidad": 700,
-     *               "cantidad_x_envase": 8,
-     *               "cantidad_surtida": 1,
-     *               "movimiento_insumo_id": null,
-     *               "stock_id": null
-     *               },
-     *               {
-     *               "clave": "010.000.2144.00",
-     *               "nombre": "Genericos",
-     *               "descripcion": "LORATADINA Tableta o gragea 10 mg 20 tabletas o grageas",
-     *               "es_causes": "1",
-     *               "es_unidosis": "1",
-     *               "lote": "101010",
-     *               "id": null,
-     *               "codigo_barras": "",
-     *               "fecha_caducidad": "2020-10-10",
-     *               "cantidad": 500,
-     *               "cantidad_x_envase": 20,
-     *               "cantidad_surtida": 1,
-     *               "movimiento_insumo_id": null,
-     *               "stock_id": null
-     *               }
-     *           ]
-     *           }
-     *
-     *
-     * @apiSuccess {Number} status  Codigo http de respuesta a la petición realizada.
-	 * @apiSuccess {String} messages Mensaje personalizado según el codigo de respuesta.
-	 *
-	 * @apiSuccessExample Success-Response:
-	 *     HTTP/1.1 201 OK
-	 *     {
-     *           "status": 201,
-     *           "messages": "Creado",
-     *           "refrescar": true,
-     *           "data": {
-     *               "almacen_id": "0001165",
-     *               "tipo_movimiento_id": 1,
-     *               "status": "FI",
-     *               "fecha_movimiento": "2017-12-26T06:00:00.000Z",
-     *               "programa_id": "3",
-     *               "observaciones": "TODO MUY OK OK",
-     *               "cancelado": "",
-     *               "observaciones_cancelacion": "",
-     *               "servidor_id": "0001",
-     *               "incremento": 2314,
-     *               "id": "00012314",
-     *               "usuario_id": "root",
-     *               "updated_at": "2017-12-26 13:29:23",
-     *               "created_at": "2017-12-26 13:29:23"
-     *           }
-     *       }
-     *
-	 *
-     * @apiError 409 Ocurrió un problema logico al realizar el guardado.
-     * @apiError 500 Ocurrió un problema con el servidor.
-	 *
-	 * @apiErrorExample Error-Response:
-	 *     HTTP/1.1 404 Not Found
-	 *     {
-     *       "status": 500,
-	 *       "messages": "Internal server error"
-	 *     }
-	 */
-
     public function store(Request $request)
     {
         $errors = array(); 
 
-        $almacen_id=$request->get('almacen_id');       
+        $almacen_id   = $request->get('almacen_id');       
 
-        
-        $datos = (object) Input::json()->all();	
-        $success = false;
-
-        $id_tipo_movimiento = $datos->tipo_movimiento_id;
-        $tipo_movimiento = TiposMovimientos::Find($datos->tipo_movimiento_id);
-
-        $tipo = NULL;
-        if($tipo_movimiento)
-            $tipo = $tipo_movimiento->tipo;
+        $datos        = (object) Input::json()->all();	
+        $programa_id  = $datos->programa_id;
+        $success      = false;
 
 ///*************************************************************************************************************************************
 
@@ -443,33 +256,36 @@ class EntradaAlmacenController extends Controller
                 DB::beginTransaction();
                 try{
 
+                
                     $movimiento_entrada_br = new Movimiento;
                 
-            
                     $servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
 
-                //agregar al modelo los datos
-                $movimiento_entrada_br->almacen_id                   =  $almacen_id;
-                $movimiento_entrada_br->tipo_movimiento_id           =  $datos->tipo_movimiento_id;
-                $movimiento_entrada_br->status                       =  $datos->estatus; 
-                $movimiento_entrada_br->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")               ? $datos->fecha_movimiento          : '';
-                $movimiento_entrada_br->programa_id                  =  $datos->programa_id;
-                $movimiento_entrada_br->observaciones                =  property_exists($datos, "observaciones")                  ? $datos->observaciones             : '';
-                $movimiento_entrada_br->cancelado                    =  property_exists($datos, "cancelado")                      ? $datos->cancelado                 : '';
-                $movimiento_entrada_br->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion")      ? $datos->observaciones_cancelacion : '';
+                    //agregar al modelo los datos
+                    $movimiento_entrada_br->almacen_id                   =  $almacen_id;
+                    $movimiento_entrada_br->tipo_movimiento_id           =  17;
+                    $movimiento_entrada_br->status                       =  $datos->estatus; 
+                    $movimiento_entrada_br->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")               ? $datos->fecha_movimiento          : '';
+                    $movimiento_entrada_br->programa_id                  =  $datos->programa_id;
+                    $movimiento_entrada_br->observaciones                =  property_exists($datos, "observaciones")                  ? $datos->observaciones             : '';
+                    $movimiento_entrada_br->cancelado                    =  property_exists($datos, "cancelado")                      ? $datos->cancelado                 : '';
+                    $movimiento_entrada_br->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion")      ? $datos->observaciones_cancelacion : '';
 
-                $movimiento_entrada_br->save(); 
+                    $movimiento_entrada_br->save(); 
 
                 if(property_exists($datos,"movimiento_metadato"))
                 {
                     $metadatos = new MovimientoMetadato;
                     $metadatos->movimiento_id  = $movimiento_entrada_br->id;
-                    //$metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
-                    $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
+
+                    $metadatos->donacion        = $datos->movimiento_metadato['donacion'];
+                    $metadatos->donante         = $datos->movimiento_metadato['donante'];
+                    $metadatos->numero_pedido   = $datos->movimiento_metadato['numero_pedido'];
+                    $metadatos->folio_factura   = $datos->movimiento_metadato['folio_factura'];
+                    $metadatos->proveedor_id    = $datos->movimiento_metadato['proveedor_id'];
+                    $metadatos->persona_entrega = $datos->movimiento_metadato['persona_entrega'];
 
                     //dd($metadatos); die();
-
-
                     $metadatos->save();   
                 }
 
@@ -492,11 +308,12 @@ class EntradaAlmacenController extends Controller
                                             //insertar avance stock y mov_insumos
                                             $insumo_info         = Insumo::datosUnidosis()->where('clave',$insumo->clave)->first();
                                             $cantidad_x_envase   = $insumo_info->cantidad_x_envase;
-                                            $precio_insumo       = $this->conseguirPrecio($insumo->clave);
+                                            //$precio_insumo       = $this->conseguirPrecio($insumo->clave);
 
                                             $stock_borrador = new StockBorrador;
                                             $stock_borrador->almacen_id             = $almacen_id;
                                             $stock_borrador->clave_insumo_medico    = $insumo->clave;
+                                            $stock_borrador->programa_id            = $programa_id;
                                             $stock_borrador->marca_id               = NULL;
                                             $stock_borrador->lote                   = $insumo->lote;
                                             $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
@@ -507,16 +324,20 @@ class EntradaAlmacenController extends Controller
                                             $stock_borrador->envases_parciales      = 0;
                                             $stock_borrador->save();
 
+                                            $iva = 0;
+                                            if($insumo_info->tipo == "MC")
+                                            {   $iva = $insumo->precio_unitario * 0.16; }
+
                                             $movimiento_insumo_br = new MovimientoInsumosBorrador;
                                             $movimiento_insumo_br->movimiento_id           = $movimiento_entrada_br->id; 
-                                            $movimiento_insumo_br->stock_id       = $stock_borrador->id;
+                                            $movimiento_insumo_br->stock_id                = $stock_borrador->id;
                                             $movimiento_insumo_br->clave_insumo_medico     = $insumo->clave;
                                             $movimiento_insumo_br->modo_salida             = "N";
                                             $movimiento_insumo_br->cantidad                = $insumo->cantidad;
                                             $movimiento_insumo_br->cantidad_unidosis       = $insumo->cantidad * $insumo->cantidad_x_envase;
-                                            $movimiento_insumo_br->precio_unitario         = $precio_insumo['precio_unitario'];
-                                            $movimiento_insumo_br->iva                     = $precio_insumo['iva']; 
-                                            $movimiento_insumo_br->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $insumo->cantidad;
+                                            $movimiento_insumo_br->precio_unitario         = $insumo->precio_unitario;
+                                            $movimiento_insumo_br->iva                     = $iva; 
+                                            $movimiento_insumo_br->precio_total            = ( $insumo->precio_unitario + $iva ) * $insumo->cantidad;
                                             $movimiento_insumo_br->save();
 
                                             array_push($movimientos_insumos_grabados,$movimiento_insumo_br);
@@ -534,6 +355,9 @@ class EntradaAlmacenController extends Controller
                 } 
                 if ($success){
                                 DB::commit();
+                                
+                                $movimiento_entrada_br->estatus = $movimiento_entrada_br->status;
+
                                 return Response::json(array("status" => 201,"messages" => "Borrador creado","data" => $movimiento_entrada_br), 201);
                              }else{
                                     DB::rollback();
@@ -605,137 +429,16 @@ class EntradaAlmacenController extends Controller
 
 
 
-/**
-	 * @api {show} /movimientos/id Ver una Entrada.
-	 * @apiVersion 1.0.0
-	 * @apiName VerEntrada
-	 * @apiGroup Entrada Almacen de Medicamentos
-	 *
-	 * @apiParam {Number} id El id de la entrada a solicitar.
-     *
-	 * @apiSuccess {Number} status  Codigo http de respuesta a la petición realizada.
-	 * @apiSuccess {String} messages Mensaje personalizado según el codigo de respuesta.
-	 *
-	 * @apiSuccessExample Success-Response:
-	 *     HTTP/1.1 200 OK
-	 *     {
-	 *       "status": 200,
-	 *       "messages": "Operación realizada con exito",
-     *       "data" : {
-     *                  {
-     *                       "status": 200,
-     *                      "messages": "Operación realizada con exito",
-     *                       "data": {
-     *                          "id": "00012305",
-     *                           "servidor_id": "0001",
-     *                           "incremento": "2305",
-     *                           "almacen_id": "0001165",
-     *                           "tipo_movimiento_id": "2",
-     *                           "status": "FI",
-     *                           "fecha_movimiento": "2017-12-05",
-     *                           "programa_id": null,
-     *                           "observaciones": "",
-     *                           "cancelado": "0",
-     *                           "observaciones_cancelacion": "",
-     *                           "usuario_id": "root",
-     *                           "created_at": "2017-12-05 12:17:08",
-     *                           "updated_at": "2017-12-05 12:17:08",
-     *                           "deleted_at": null,
-     *                           "insumos": [
-     *                           {
-     *                               "clave": "010.000.5940.01",
-     *                               "tipo": "ME",
-     *                               "generico_id": "1689",
-     *                               "es_causes": "0",
-     *                               "es_unidosis": "1",
-     *                               "tiene_fecha_caducidad": "1",
-     *                               "descontinuado": "0",
-     *                               "descripcion": "IBUPROFENO TABLETA O CÁPSULA 200 MG ENVASE CON 12 TABLETAS",
-     *                               "created_at": null,
-     *                               "updated_at": null,
-     *                               "deleted_at": null,
-     *                               "generico_nombre": "Genericos",
-     *                               "es_cuadro_basico": "0",
-     *                               "nombre": "Genericos",
-     *                               "modo_salida": "N",
-     *                               "cantidad": "2.00",
-     *                               "cantidad_solicitada": "2.00",
-     *                               "detalles": {
-     *                               "clave": "010.000.5940.01",
-     *                               "tipo": "ME",
-     *                               "generico_id": "1689",
-     *                               "es_causes": "0",
-     *                               "es_unidosis": "1",
-     *                               "tiene_fecha_caducidad": "1",
-     *                               "descontinuado": "0",
-     *                               "descripcion": "IBUPROFENO TABLETA O CÁPSULA 200 MG ENVASE CON 12 TABLETAS",
-     *                               "created_at": null,
-     *                               "updated_at": null,
-     *                               "deleted_at": null,
-     *                               "generico_nombre": "Genericos",
-     *                               "es_cuadro_basico": "0",
-     *                               "informacion_ampliada": {...}
-     *                               },
-     *                               "lotes": [
-     *                               {
-     *                                   "id": "00023",
-     *                                   "clave_insumo_medico": "010.000.5940.01",
-     *                                   "marca_id": null,
-     *                                   "lote": "LOTE101030",
-     *                                   "codigo_barras": "",
-     *                                   "fecha_caducidad": "2018-08-10",
-     *                                   "modo_salida": "N",
-     *                                   "cantidad": "2.00"
-     *                               }
-     *                               ]
-     *                           }
-     *                           ],
-     *                          "insumos_negados": [],
-     *                           "almacen": {...},
-     *                           "movimiento_metadato": {
-     *                           "id": "0001374",
-     *                           "incremento": "374",
-     *                           "servidor_id": "0001",
-     *                           "movimiento_id": "00012305",
-     *                           "folio_colectivo": null,
-     *                           "servicio_id": "122",
-     *                           "turno_id": "2",
-     *                           "persona_recibe": "Maria Victoria Castellanos",
-     *                           "usuario_id": "root",
-     *                           "created_at": "2017-12-05 12:17:08",
-     *                           "updated_at": "2017-12-05 12:17:08",
-     *                           "deleted_at": null,
-     *                           "turno": {...},
-     *                           "servicio": {...}
-     *                           }
-     *                       }
-     *                       } 
-     *                }
-	 *     }
-	 *
-     * @apiError 403 El usuario no tiene permisos para realizar la consulta.
-	 * @apiError 404 No se encontraron reultados de movimientos con los criterios de busqueda.
-     * @apiError 409 Ocurrió un problema logico al consultar los datos.
-     * @apiError 500 Ocurrió un problema con el servidor.
-	 *
-	 * @apiErrorExample Error-Response:
-	 *     HTTP/1.1 404 Not Found
-	 *     {
-     *       "status": 404,
-	 *       "messages": "No hay resultados"
-	 *     }
-	 */
-
     public function show($id)
     {
         $movimiento =  Movimiento::with('almacen','movimientoMetadato')->find($id);
 
         if(!$movimiento){
-			return Response::json(array("status" => 404,"messages" => "No se encuentra el movimiento solicitado"), 200);
+			        return Response::json(array("status" => 404,"messages" => "No se encuentra el movimiento solicitado"), 200);
 		} 
-        $movimiento = (object) $movimiento;
 
-        $estatus = $movimiento->status;
+        $movimiento = (object) $movimiento;
+        $status = $movimiento->status;
 ///**************************************************************************************************************************************
 ///**************************************************************************************************************************************
             $insumos = DB::table('movimiento_insumos')
@@ -746,15 +449,15 @@ class EntradaAlmacenController extends Controller
                         ->select(DB::raw('SUM(movimiento_insumos.cantidad) as total_insumo'), 'stock.clave_insumo_medico','modo_salida')
                         ->get();
 
-            if($estatus == "BR")
+            if($status == "BR")
                 {
                     $insumos = DB::table('movimiento_insumos_borrador')
-                        ->join('stock_borrador', 'movimiento_insumos_borrador.stock_id', '=', 'stock_borrador.id')
-                        ->where('movimiento_insumos_borrador.movimiento_id', '=', $id)
-                        ->where('movimiento_insumos_borrador.deleted_at',null)
-                        ->groupby('stock_borrador.clave_insumo_medico')
-                        ->select(DB::raw('SUM(movimiento_insumos_borrador.cantidad) as total_insumo'), 'stock_borrador.clave_insumo_medico','modo_salida')
-                        ->get();
+                                ->join('stock_borrador', 'movimiento_insumos_borrador.stock_id', '=', 'stock_borrador.id')
+                                ->where('movimiento_insumos_borrador.movimiento_id', '=', $id)
+                                ->where('movimiento_insumos_borrador.deleted_at',null)
+                                ->groupby('stock_borrador.clave_insumo_medico')
+                                ->select(DB::raw('SUM(movimiento_insumos_borrador.cantidad) as total_insumo'), 'stock_borrador.clave_insumo_medico','modo_salida')
+                                ->get();
                 }
 
 
@@ -773,7 +476,7 @@ class EntradaAlmacenController extends Controller
                                 ->where('deleted_at',null)
                                 ->get();
 
-                    if($estatus == "BR")
+                    if($status == "BR")
                         {
                             $insumos2 = DB::table('movimiento_insumos_borrador')
                                 ->where('movimiento_id',$id)
@@ -781,14 +484,26 @@ class EntradaAlmacenController extends Controller
                                 ->get();
                         }
 
+                    ////*****************************************************************************************
+                         
+                        $insumo_x  = Insumo::datosUnidosis()->where('clave',$insumo->clave_insumo_medico)->first();
+                        $cantidad_x_envase   = $insumo_x->cantidad_x_envase;
+
+                        $iva_porcentaje = 0;
+                        if($insumo_x->tipo == "ME")
+                        { $iva_porcentaje = 0; }else{ $iva_porcentaje = 0.16; }
+                    ////*****************************************************************************************
+
+                    $subtotal = 0;
+
                     foreach($insumos2 as $insumo2)
                     {
                         $lote = DB::table('stock')->find($insumo2->stock_id);
-                        if($estatus == "BR")
+                        if($status == "BR")
                             {
                                 $lote = DB::table('stock_borrador')->find($insumo2->stock_id);
                             }
-                        
+
                         if($insumo->clave_insumo_medico == $lote->clave_insumo_medico)
                         {
                             $objeto_lote = new \stdClass();
@@ -805,6 +520,21 @@ class EntradaAlmacenController extends Controller
                             $objeto_lote->modo_salida         = $insumo2->modo_salida;
                             $objeto_lote->cantidad            = $insumo2->cantidad;
 
+                                    $objeto_lote->importe             = $insumo2->precio_total - ($insumo2->iva * $insumo2->cantidad) ;
+                                    $objeto_lote->precio_unitario     = $insumo2->precio_unitario;
+                                    $objeto_lote->iva                 = $insumo2->iva;
+
+                            ///************************************************************************************************
+                                $iva_temp = $insumo2->precio_unitario * $iva_porcentaje;
+
+                                $objeto_lote->importe          = $insumo2->precio_unitario  * $insumo2->cantidad ;
+                                $objeto_lote->iva              = $iva_temp;
+                                $objeto_lote->iva_importe      = $insumo2->cantidad * $iva_temp ;
+                                $objeto_lote->importe_con_iva  = ($insumo2->precio_unitario + $iva_temp) * $insumo2->cantidad;
+
+                                $subtotal += ( ($insumo2->precio_unitario + $iva_temp) * $insumo2->cantidad );
+                            ///************************************************************************************************
+
                             array_push($array_lotes,$objeto_lote);
                         }
                     }
@@ -818,8 +548,8 @@ class EntradaAlmacenController extends Controller
                                           ->first();
                     
 
-                    $objeto_insumo              = $insumo_detalles_temp;
-                    $objeto_insumo->nombre      = $insumo_detalles_temp->generico_nombre;
+                    $objeto_insumo                      = $insumo_detalles_temp;
+                    $objeto_insumo->nombre              = $insumo_detalles_temp->generico_nombre;
 
                     $objeto_insumo->modo_salida         = $insumo->modo_salida;
 
@@ -830,13 +560,17 @@ class EntradaAlmacenController extends Controller
 
                     $objeto_insumo->detalles            = property_exists($objeto_insumo, "detalles") ? $objeto_insumo->detalles : $insumo_detalles;
                     $objeto_insumo->lotes               = $array_lotes;
+                    $objeto_insumo->subtotal            = $subtotal;
 
               array_push($array_insumos,$objeto_insumo);
             }
         ///*****************************************************************************************
+
+                $programa = Programa::find($movimiento->programa_id);
          
-                $movimiento->insumos = $array_insumos;
-                $movimiento->estatus = $movimiento->status;
+                $movimiento->insumos  = $array_insumos;
+                $movimiento->estatus  = $movimiento->status;
+                $movimiento->programa = $programa;
        
 
 ////**************************************************************************************************************************************
@@ -858,7 +592,9 @@ class EntradaAlmacenController extends Controller
 
         $almacen_id=$request->get('almacen_id');       
 
-        $datos = (object) Input::json()->all();	
+        $datos       = (object) Input::json()->all();
+        $programa_id = $datos->programa_id;	
+
         $success = false;
         $id_tipo_movimiento = $datos->tipo_movimiento_id;
         $tipo_movimiento = TiposMovimientos::find($datos->tipo_movimiento_id);
@@ -892,14 +628,18 @@ class EntradaAlmacenController extends Controller
                  
                 $metadatos = MovimientoMetadato::where("movimiento_id",$movimiento_entrada_br->id)->first();
 
-                $metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
-                $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe']; 
+                //$metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
+                /// $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe']; 
 
+                $metadatos->donacion        = $datos->movimiento_metadato['donacion'];
+                $metadatos->donante         = $datos->movimiento_metadato['donante'];
+                $metadatos->numero_pedido   = $datos->movimiento_metadato['numero_pedido'];
+                $metadatos->folio_factura   = $datos->movimiento_metadato['folio_factura'];
+                $metadatos->proveedor_id    = $datos->movimiento_metadato['proveedor_id'];
+                $metadatos->persona_entrega = $datos->movimiento_metadato['persona_entrega'];
                     //dd(json_encode($metadatos)); die(); 
-
                 $metadatos->save();   
                  
-
                 /////****************************************************************************************************************************
                     $movimientos_insumos_grabados = array();
 
@@ -917,12 +657,8 @@ class EntradaAlmacenController extends Controller
                                             //insertar avance stock y mov_insumos
                                             $insumo_info         = Insumo::datosUnidosis()->where('clave',$insumo->clave)->first();
                                             $cantidad_x_envase   = $insumo_info->cantidad_x_envase;
-                                            $precio_insumo       = $this->conseguirPrecio($insumo->clave);
-
+                                            //$precio_insumo       = $this->conseguirPrecio($insumo->clave);
                                             ///****************************************************************************************************
-                                            ///****************************************************************************************************
-                                            ///****************************************************************************************************
-
                                             // si trae id de stock
                                             if($insumo->stock_id != NULL)
                                             {
@@ -930,6 +666,7 @@ class EntradaAlmacenController extends Controller
 
                                                 $stock_borrador->almacen_id             = $almacen_id;
                                                 $stock_borrador->clave_insumo_medico    = $insumo->clave;
+                                                $stock_borrador->programa_id            = $programa_id;
                                                 $stock_borrador->marca_id               = NULL;
                                                 $stock_borrador->lote                   = $insumo->lote;
                                                 $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
@@ -942,15 +679,19 @@ class EntradaAlmacenController extends Controller
 
                                                 $movimiento_insumo_br = MovimientoInsumosBorrador::find($insumo->movimiento_insumo_id);
 
+                                                $iva = 0;
+                                                if($insumo_info->tipo == "MC")
+                                                {   $iva = $insumo->precio_unitario * 0.16; }
+
                                                 $movimiento_insumo_br->movimiento_id           = $movimiento_entrada_br->id; 
                                                 $movimiento_insumo_br->stock_id                = $stock_borrador->id;
                                                 $movimiento_insumo_br->clave_insumo_medico     = $insumo->clave;
                                                 $movimiento_insumo_br->modo_salida             = "N";
                                                 $movimiento_insumo_br->cantidad                = $insumo->cantidad;
                                                 $movimiento_insumo_br->cantidad_unidosis       = $insumo->cantidad * $insumo->cantidad_x_envase;
-                                                $movimiento_insumo_br->precio_unitario         = $precio_insumo['precio_unitario'];
-                                                $movimiento_insumo_br->iva                     = $precio_insumo['iva']; 
-                                                $movimiento_insumo_br->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $insumo->cantidad;
+                                                $movimiento_insumo_br->precio_unitario         = $insumo->precio_unitario;
+                                                $movimiento_insumo_br->iva                     = $iva; 
+                                                $movimiento_insumo_br->precio_total            = ( $insumo->precio_unitario + $iva ) * $insumo->cantidad;
                                                 $movimiento_insumo_br->save();
 
                                                 array_push($movimientos_insumos_grabados,$movimiento_insumo_br);
@@ -962,6 +703,7 @@ class EntradaAlmacenController extends Controller
                                                         $stock_borrador = new StockBorrador;
                                                         $stock_borrador->almacen_id             = $almacen_id;
                                                         $stock_borrador->clave_insumo_medico    = $insumo->clave;
+                                                        $stock_borrador->programa_id            = $programa_id;
                                                         $stock_borrador->marca_id               = NULL;
                                                         $stock_borrador->lote                   = $insumo->lote;
                                                         $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
@@ -972,6 +714,10 @@ class EntradaAlmacenController extends Controller
                                                         $stock_borrador->envases_parciales      = 0;
                                                         $stock_borrador->save();
 
+                                                        $iva = 0;
+                                                        if($insumo_info->tipo == "MC")
+                                                        {   $iva = $insumo->precio_unitario * 0.16; }
+
                                                         $movimiento_insumo_br = new MovimientoInsumosBorrador;
                                                         $movimiento_insumo_br->movimiento_id           = $movimiento_entrada_br->id; 
                                                         $movimiento_insumo_br->stock_id                = $stock_borrador->id;
@@ -979,9 +725,9 @@ class EntradaAlmacenController extends Controller
                                                         $movimiento_insumo_br->modo_salida             = "N";
                                                         $movimiento_insumo_br->cantidad                = $insumo->cantidad;
                                                         $movimiento_insumo_br->cantidad_unidosis       = $insumo->cantidad * $insumo->cantidad_x_envase;
-                                                        $movimiento_insumo_br->precio_unitario         = $precio_insumo['precio_unitario'];
-                                                        $movimiento_insumo_br->iva                     = $precio_insumo['iva']; 
-                                                        $movimiento_insumo_br->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $insumo->cantidad;
+                                                        $movimiento_insumo_br->precio_unitario         = $insumo->precio_unitario;
+                                                        $movimiento_insumo_br->iva                     = $iva; 
+                                                        $movimiento_insumo_br->precio_total            = ( $insumo->precio_unitario + $iva ) * $insumo->cantidad;
                                                         $movimiento_insumo_br->save();
 
                                                     array_push($movimientos_insumos_grabados,$movimiento_insumo_br);
@@ -1041,6 +787,7 @@ class EntradaAlmacenController extends Controller
                 if ($success){
                                 DB::commit();
                                 $movimiento_entrada_br->actualizar = true;
+                                $movimiento_entrada_br->estatus    = $movimiento_entrada_br->status;
                                 return Response::json(array("status" => 201,"messages" => "Borrador creado","data" => $movimiento_entrada_br), 201);
                              }else{
                                     DB::rollback();
@@ -1111,6 +858,8 @@ class EntradaAlmacenController extends Controller
                         }
                     }
 
+                    $movimiento_entrada->estatus    = $movimiento_entrada->status;
+
                     DB::commit();
                     return Response::json(array("status" => 201,"messages" => "Creado","data" => $movimiento_entrada), 201);
                 }else{
@@ -1153,57 +902,33 @@ class EntradaAlmacenController extends Controller
                     ];
 
         $reglas = array();
+
+        $movimiento_metadato = $request['movimiento_metadato'];  
+         
+
         $reglas = [
-                    'tipo_movimiento_id' => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,12',
+                    'tipo_movimiento_id'                  => 'required|integer',
+                    'movimiento_metadato.persona_entrega' => 'required|string',
+                    'movimiento_metadato.proveedor_id'    => 'required|string',
+                    'movimiento_metadato.folio_factura'   => 'required|string',
+                    'movimiento_metadato.numero_pedido'   => 'required|string',
                   ];
 
-        if($request['movimiento_metadato'] != NULL)
+        if($movimiento_metadato['donacion'] == 1)
         {
-            if($request['tipo_movimiento_id'] == 1 )
-            {
-                $reglas = [
-                            'tipo_movimiento_id'                 => 'required|integer|in:1,2,3,4,5,6,7,8',
-                            'movimiento_metadato.persona_recibe' => 'required|string',
-                          ];
-            }
-            if($request['tipo_movimiento_id'] == 2 )
-            {
-                $reglas = [
-                            'tipo_movimiento_id'                 => 'required|integer|in:1,2,3,4,5,6,7,8',
-                            'movimiento_metadato.servicio_id'    => 'required|integer',
-                            'movimiento_metadato.persona_recibe' => 'required|string',
-                            'movimiento_metadato.turno_id'       => 'required|integer',
-                          ];
-            }
-
+            $reglas = [
+                        'tipo_movimiento_id'                  => 'required|integer',
+                        'movimiento_metadato.donacion'        => 'required|integer',
+                        'movimiento_metadato.donante'         => 'required|string',
+                      ];
         }
+             
         
-        if($request['tipo_movimiento_id'] == 5 )
-            {
-                $request_temp = (object)$request;
-                if(property_exists($request_temp,'receta'))
-                {
-                        
-                    $reglas = [
-                                'tipo_movimiento_id'    => 'required|integer|in:5',
-                                'receta.folio'          => 'required|string',
-                                'receta.tipo_receta_id'    => 'required|integer',
-                                'receta.fecha_receta'   => 'required',
-                                'receta.doctor'         => 'required|string',
-                                'receta.paciente'       => 'required|string',
-                                'receta.diagnostico'    => 'required|string'
-                            ];
-
-                            $receta = $request['receta'];
-                            $receta_buscar = Receta::where("folio",$receta['folio'])->first();
-
-                            if($receta_buscar)
-                            { 
-                                array_push($errors_validar_movimiento, array(array('receta' => array('Folio duplicado'))));
-                                return $errors_validar_movimiento;
-                            }  
-                }
-            }
+             
+             
+        
+        
+       
 
     $v = \Validator::make($request, $reglas, $mensajes );
 
@@ -1295,10 +1020,16 @@ class EntradaAlmacenController extends Controller
             if(property_exists($datos,"movimiento_metadato"))
             {
                 $metadatos = new MovimientoMetadato;
-                $metadatos->movimiento_id  = $movimiento_entrada->id;
-                $metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
-                $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
+                $metadatos->movimiento_id    = $movimiento_entrada->id;
+                //$metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
+                //$metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
 
+                $metadatos->donacion        = $datos->movimiento_metadato['donacion'];
+                $metadatos->donante         = $datos->movimiento_metadato['donante'];
+                $metadatos->numero_pedido   = $datos->movimiento_metadato['numero_pedido'];
+                $metadatos->folio_factura   = $datos->movimiento_metadato['folio_factura'];
+                $metadatos->proveedor_id    = $datos->movimiento_metadato['proveedor_id'];
+                $metadatos->persona_entrega = $datos->movimiento_metadato['persona_entrega'];
 
                 $metadatos->save();   
             }
@@ -1315,7 +1046,12 @@ class EntradaAlmacenController extends Controller
                          if(is_array($value))
                             $value = (object) $value;
 
-                        $precio_insumo = $this->conseguirPrecio($value->clave);
+                        //$precio_insumo = $this->conseguirPrecio($value->clave);
+
+                        $insumo_info         = Insumo::datosUnidosis()->where('clave',$value->clave)->first();
+                        $iva = 0;
+                        if($insumo_info->tipo == "MC")
+                        {   $iva = $insumo->precio_unitario * 0.16; }
 
                         //*************************************************************************************
                         //Verificar si esta en la lista de negados
@@ -1332,6 +1068,7 @@ class EntradaAlmacenController extends Controller
 
                         $item_stock->almacen_id             = $almacen_id;
                         $item_stock->clave_insumo_medico    = $value->clave;
+                        $item_stock->programa_id            = $datos->programa_id;
                         $item_stock->marca_id               = NULL;
                         $item_stock->lote                   = $value->lote;
                         $item_stock->fecha_caducidad        = $value->fecha_caducidad;
@@ -1361,9 +1098,9 @@ class EntradaAlmacenController extends Controller
                                     $item_detalles->cantidad                = $value->cantidad;
                                     $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
 
-                                    $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                                    $item_detalles->iva                     = $precio_insumo['iva']; 
-                                    $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
+                                    $item_detalles->precio_unitario         = $value->precio_unitario;
+                                    $item_detalles->iva                     = $iva; 
+                                    $item_detalles->precio_total            = ( $value->precio_unitario + $iva ) * $value->cantidad;
 
                                     $item_detalles->save(); 
                             }else{   
@@ -1378,14 +1115,15 @@ class EntradaAlmacenController extends Controller
                                         $item_detalles->movimiento_id           = $movimiento_entrada->id; 
                                         $item_detalles->stock_id                = $item_stock->id;
                                         $item_detalles->clave_insumo_medico     = $value->clave;
+                                        $item_detalles->programa_id             = $datos->programa_id;
 
                                         $item_detalles->modo_salida             = "N";
                                         $item_detalles->cantidad                = $item_stock->existencia;
                                         $item_detalles->cantidad_unidosis       = $item_stock->existencia_unidosis;
 
-                                        $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                                        $item_detalles->iva                     = $precio_insumo['iva']; 
-                                        $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $item_stock->existencia;
+                                        $item_detalles->precio_unitario         = $value->precio_unitario;
+                                        $item_detalles->iva                     = $iva; 
+                                        $item_detalles->precio_total            = ( $value->precio_unitario + $iva ) * $item_stock->existencia;
 
                                         $item_detalles->save();
 
@@ -1433,8 +1171,16 @@ class EntradaAlmacenController extends Controller
             { 
                 $metadatos = MovimientoMetadato::where('movimiento_id',$movimiento_entrada->id)->first();
                 $metadatos->movimiento_id  = $movimiento_entrada->id;
-                $metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
-                $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
+
+                $metadatos->donacion        = $datos->movimiento_metadato['donacion'];
+                $metadatos->donante         = $datos->movimiento_metadato['donante'];
+                $metadatos->numero_pedido   = $datos->movimiento_metadato['numero_pedido'];
+                $metadatos->folio_factura   = $datos->movimiento_metadato['folio_factura'];
+                $metadatos->proveedor_id    = $datos->movimiento_metadato['proveedor_id'];
+                $metadatos->persona_entrega = $datos->movimiento_metadato['persona_entrega'];
+
+                //$metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
+                //$metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
 
 
                 $metadatos->save();   
@@ -1453,6 +1199,13 @@ class EntradaAlmacenController extends Controller
                             $value = (object) $value;
 
                         $precio_insumo = $this->conseguirPrecio($value->clave);
+
+                        $insumo_info         = Insumo::datosUnidosis()->where('clave',$value->clave)->first();
+                        $iva = 0;
+                        if($insumo_info->tipo == "MC")
+                        {   $iva = $value->precio_unitario * 0.16; }
+                        
+                        
 
                         //*************************************************************************************
                         //Verificar si esta en la lista de negados
@@ -1474,6 +1227,7 @@ class EntradaAlmacenController extends Controller
                             $item_stock_ok = new Stock;
                             $item_stock_ok->almacen_id             = $almacen_id;
                             $item_stock_ok->clave_insumo_medico    = $value->clave;
+                            $item_stock_ok->programa_id            = $datos->programa_id;
                             $item_stock_ok->marca_id               = NULL;
                             $item_stock_ok->lote                   = $value->lote;
                             $item_stock_ok->fecha_caducidad        = $value->fecha_caducidad;
@@ -1491,9 +1245,9 @@ class EntradaAlmacenController extends Controller
                             $item_detalles->modo_salida             = "N";
                             $item_detalles->cantidad                = $value->cantidad;
                             $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
-                            $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                            $item_detalles->iva                     = $precio_insumo['iva']; 
-                            $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
+                            $item_detalles->precio_unitario         = $value->precio_unitario;
+                            $item_detalles->iva                     = $iva; 
+                            $item_detalles->precio_total            = ( $value->precio_unitario + $iva ) * $value->cantidad;
 
                             $item_detalles->save(); 
 
@@ -1515,12 +1269,13 @@ class EntradaAlmacenController extends Controller
                                         $item_detalles->movimiento_id           = $movimiento_entrada->id; 
                                         $item_detalles->stock_id                = $item_stock_check->id;
                                         $item_detalles->clave_insumo_medico     = $value->clave;
+                                       // $item_detalles->programa_id             = $datos->programa_id;
                                         $item_detalles->modo_salida             = "N";
                                         $item_detalles->cantidad                = $value->cantidad;
                                         $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
-                                        $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                                        $item_detalles->iva                     = $precio_insumo['iva']; 
-                                        $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
+                                        $item_detalles->precio_unitario         = $value->precio_unitario;
+                                        $item_detalles->iva                     = $iva; 
+                                        $item_detalles->precio_total            = ( $value->precio_unitario + $iva ) * $value->cantidad;
                                         $item_detalles->save(); 
                                         
                                     }else{
@@ -1528,6 +1283,7 @@ class EntradaAlmacenController extends Controller
 
                                             $item_stock->almacen_id             = $almacen_id;
                                             $item_stock->clave_insumo_medico    = $value->clave;
+                                            $item_stock->programa_id            = $datos->programa_id;
                                             $item_stock->marca_id               = NULL;
                                             $item_stock->lote                   = $value->lote;
                                             $item_stock->fecha_caducidad        = $value->fecha_caducidad;
@@ -1544,9 +1300,9 @@ class EntradaAlmacenController extends Controller
                                             $item_detalles->modo_salida             = "N";
                                             $item_detalles->cantidad                = $value->cantidad;
                                             $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
-                                            $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                                            $item_detalles->iva                     = $precio_insumo['iva']; 
-                                            $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
+                                            $item_detalles->precio_unitario         = $value->precio_unitario;
+                                            $item_detalles->iva                     = $iva; 
+                                            $item_detalles->precio_total            = ( $value->precio_unitario + $iva ) * $value->cantidad;
 
                                             $item_detalles->save(); 
 

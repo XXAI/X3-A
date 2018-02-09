@@ -23,12 +23,31 @@ class ComprobarStockController extends Controller
      */
     public function index(Request $request)
     {
-        $parametros = Input::only('almacen','clave');
+        $parametros = Input::only('almacen','clave','programa_id');
 
         $parametros['almacen'] = $parametros['almacen'] ? $parametros['almacen']:$request->get('almacen_id');
 
-        $stocks = array();                        
-        $stocks = Stock::where('clave_insumo_medico',$parametros['clave'])->where('existencia','>',0)->where('almacen_id',$parametros['almacen'])->orderBy('fecha_caducidad','ASC')->get();
+        $stocks = array();
+        $programa_id = $parametros['programa_id'];
+
+        if($parametros['programa_id']!= "")
+        {
+            $stocks = Stock::with('programa','movimientoInsumo')->where('clave_insumo_medico',$parametros['clave'])
+                        ->where('existencia','>',0)
+                        ->where('programa_id',$programa_id)
+                        ->where('almacen_id',$parametros['almacen'])
+                        ->orderBy('fecha_caducidad','ASC')
+                        ->get();
+        }else{
+                $stocks = Stock::where('clave_insumo_medico',$parametros['clave'])
+                        ->where('existencia','>',0)
+                        ->where('almacen_id',$parametros['almacen'])
+                        ->orderBy('fecha_caducidad','ASC')
+                        ->get();
+             }  
+
+        
+
         $existencia = 0;
         $existencia_unidosis = 0;
 

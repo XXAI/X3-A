@@ -143,7 +143,8 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('repository-download/{id}',                  'RepositorioController@registro_descarga'); 
     Route::get('download-file/{id}',                        'RepositorioController@descargar'); 
 
-    Route::group(['middleware' => 'almacen'], function () {
+    Route::group(['middleware' => 'almacen'], function () 
+    {
 
         // # SECCION: Inventario 
         Route::group(['prefix' => 'inventario','namespace' => 'Inventario'], function () {
@@ -159,6 +160,7 @@ Route::group(['middleware' => 'jwt'], function () {
         });
 
 
+        Route::resource('inicializar-inventario-me',    'InicializarInventarioMedicamentosController',  ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('almacenes',                    'AlmacenController',    ['only' => ['index']]);
         Route::resource('entregas',                     'EntregaController',  ['only' => ['index', 'show', 'store','update','destroy']]);
  
@@ -169,6 +171,8 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('movimientos',                  'MovimientoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
         Route::resource('entrada-almacen',              'EntradaAlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('entrada-almacen-standard',     'EntradaAlmacenStandardController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('salida-almacen-standard',      'SalidaAlmacenStandardController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('entrada-laboratorio',          'EntradaLaboratorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('salida-laboratorio',           'SalidaLaboratorioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('inventario-insumos',           'InventarioInsumosController',    ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -179,6 +183,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('ajuste-mas-inventario',        'AjusteMasInventarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('ajuste-menos-inventario',      'AjusteMenosInventarioController',  ['only' => ['index', 'show', 'store','update','destroy']]);
 
+ 
         //Pedidos
         Route::resource('pedidos',                      'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::get('pedidos-stats',                     'PedidoController@stats');

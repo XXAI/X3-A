@@ -49,106 +49,11 @@ use App\Models\PersonalClues;
 * Controlador `Movimientos`: Controlador  para el manejo de entradas y salidas
 *
 */
-class MovimientoController extends Controller
+class SalidaAlmacenStandardController extends Controller
 {
      
 
-    /**
-	 * @api {index} /movimientos/ Listar los movimientos realizados para un almacén.
-	 * @apiVersion 1.0.0
-	 * @apiName ListarMovimientos
-	 * @apiGroup Movimientos
-	 *
-	 * @apiParam {Number} tipo Tipo movimiento solicitado ( 2->Salidas de medicamentos, 5-> Salidas por recetas).
-	 * @apiParam {Number} per_page La cantidad de elementos a listar en caso de desear paginado.
-     *
-	 * @apiSuccess {Number} status  Codigo http de respuesta a la petición realizada.
-	 * @apiSuccess {String} messages Mensaje personalizado según el codigo de respuesta.
-	 *
-	 * @apiSuccessExample Success-Response:
-	 *     HTTP/1.1 200 OK
-	 *     {
-	 *       "status": 200,
-	 *       "messages": "Operación realizada con exito",
-     *       "data" : [
-     *                  {
-     *                       "id": "00012305",
-     *                       "servidor_id": "0001",
-     *                       "incremento": "2305",
-     *                       "almacen_id": "0001165",
-     *                       "tipo_movimiento_id": "2",
-     *                       "status": "FI",
-     *                       "fecha_movimiento": "2017-12-05",
-     *                       "programa_id": null,
-     *                       "observaciones": "",
-     *                       "cancelado": "0",
-     *                       "observaciones_cancelacion": "",
-     *                       "usuario_id": "root",
-     *                       "created_at": "2017-12-05 12:17:08",
-     *                       "updated_at": "2017-12-05 12:17:08",
-     *                       "deleted_at": null,
-     *                       "numero_claves": 1,
-     *                       "numero_insumos": "2.00",
-     *                       "movimiento_metadato": {
-     *                       "id": "0001374",
-     *                       "incremento": "374",
-     *                       "servidor_id": "0001",
-     *                       "movimiento_id": "00012305",
-     *                       "folio_colectivo": null,
-     *                       "servicio_id": "122",
-     *                       "turno_id": "2",
-     *                       "persona_recibe": "Maria Victoria Castellanos",
-     *                       "usuario_id": "root",
-     *                       "created_at": "2017-12-05 12:17:08",
-     *                       "updated_at": "2017-12-05 12:17:08",
-     *                       "deleted_at": null,
-     *                       "turno": {
-     *                           "id": "2",
-     *                           "nombre": "Turno vespertino",
-     *                           "descripcion": "Turno vespertino:lunes a viernes 13:00-20:30 y 14:00-21:30",
-     *                           "created_at": null,
-     *                           "updated_at": null,
-     *                           "deleted_at": null
-     *                       },
-     *                       "servicio": {
-     *                           "id": "122",
-     *                          "nombre": "ANATOMIA PATOLOGICA",
-     *                           "created_at": null,
-     *                           "updated_at": null,
-     *                           "deleted_at": null
-     *                       }
-     *                       },
-     *                       "movimiento_usuario": {
-     *                       "id": "root",
-     *                       "servidor_id": "0001",
-     *                       "password": "$2y$10$g/HhW189eZmGo1RjvoclZ.uLNp7CMoe7WscGXmmSsn.iHOrPksyHe",
-     *                       "nombre": "Super",
-     *                       "apellidos": "Usuario",
-     *                       "avatar": "avatar-circled-root",
-     *                       "modulo_inicio": null,
-     *                       "proveedor_id": null,
-     *                       "su": "1",
-     *                       "created_at": null,
-     *                       "updated_at": null,
-     *                       "deleted_at": null
-     *                       },
-     *                       "movimiento_receta": null
-     *                   }
-     *                ]
-	 *     }
-	 *
-     * @apiError 403 El usuario no tiene permisos para realizar la consulta.
-	 * @apiError 404 No se encontraron reultados de movimientos con los criterios de busqueda.
-     * @apiError 409 Ocurrió un problema logico al consultar los datos.
-     * @apiError 500 Ocurrió un problema con el servidor.
-	 *
-	 * @apiErrorExample Error-Response:
-	 *     HTTP/1.1 404 Not Found
-	 *     {
-     *       "status": 404,
-	 *       "messages": "No hay resultados"
-	 *     }
-	 */
+    
     public function index(Request $request)
     {
         $parametros = Input::only('q','page','per_page','almacen','tipo','fecha_desde','fecha_hasta','recibe','turno','servicio');
@@ -169,7 +74,7 @@ class MovimientoController extends Controller
                              ->leftJoin('usuarios AS users', 'users.id', '=', 'mov.usuario_id')
                              ->select('mov.*','mm.servicio_id','mm.turno_id','users.nombre')
                              ->where('mov.almacen_id',$parametros['almacen'])
-                             ->where('mov.tipo_movimiento_id',$parametros['tipo'])
+                             ->where('mov.tipo_movimiento_id',18)
                              ->where('mov.deleted_at',NULL)
                              ->orderBy('mov.updated_at','DESC');
 
@@ -224,6 +129,8 @@ class MovimientoController extends Controller
 
             $movimiento_response->numero_claves  = $cantidad_claves;
             $movimiento_response->numero_insumos = $cantidad_insumos;
+
+            $movimiento_response->estatus = $movimiento_response->status;
 
             
 
@@ -342,86 +249,7 @@ class MovimientoController extends Controller
 
 
 
-   /**
-	 * @api {store} /movimientos Insertar nuevo movimiento (salida standard ó salida por surtimiento de receta medica).
-	 * @apiVersion 1.0.0
-	 * @apiName NuevoMovimiento
-	 * @apiGroup Movimientos
-	 *
-	 * @apiParam {Number} tipo Tipo movimiento solicitado ( 2->Salidas de medicamentos, 5-> Salidas por recetas).
-     *
-	 *
-     *
-     * @apiExample {js} Envio de Petición store:
-	 *     {
-     *       "id": "",
-     *       "tipo_movimiento_id": "2",
-     *       "status": "FI",
-     *       "fecha_movimiento": "2017-12-26T06:00:00.000Z",
-     *       "observaciones": "TODO OK",
-     *       "cancelado": "",
-     *       "observaciones_cancelacion": "",
-     *       "movimiento_metadato": {
-     *           "turno_id": "2",
-     *           "servicio_id": "119",
-     *           "persona_recibe": "JUANITA "
-     *       },
-     *       "insumos": [
-     *           {
-     *           "clave": "010.000.5940.01",
-     *           "nombre": "Genericos",
-     *           "descripcion": "IBUPROFENO TABLETA O CÁPSULA 200 MG ENVASE CON 12 TABLETAS",
-     *           "es_causes": "0",
-     *           "es_unidosis": "1",
-     *           "cantidad": 1,
-     *           "presentacion_nombre": "CAJA",
-     *           "unidad_medida": "Tableta",
-     *           "cantidad_x_envase": 12,
-     *           "cantidad_surtida": 2,
-     *           "modo_salida": "N",
-     *           "cantidad_solicitada": "2",
-     *           "cantidad_solicitada_unidosis": "2",
-     *           "lotes": [
-     *               {
-     *               "id": "00023",
-     *               "nuevo": 0,
-     *               "codigo_barras": "",
-     *               "lote": "LOTE101030",
-     *               "fecha_caducidad": "2018-08-10",
-     *               "existencia": "900",
-     *               "cantidad": 2,
-     *               "existencia_unidosis": "10800",
-     *               "modo_salida": "N"
-     *               }
-     *           ]
-     *           }
-     *       ],
-     *       "insumos_negados": []
-     *       }
-     *
-     *
-     * @apiSuccess {Number} status  Codigo http de respuesta a la petición realizada.
-	 * @apiSuccess {String} messages Mensaje personalizado según el codigo de respuesta.
-	 *
-	 * @apiSuccessExample Success-Response:
-	 *     HTTP/1.1 201 OK
-	 *     {
-	 *       "status": 201,
-	 *       "messages": "Operación realizada con exito",
-     *       "data" : [...]
-	 *     }
-     *
-	 *
-     * @apiError 409 Ocurrió un problema logico al realizar el guardado.
-     * @apiError 500 Ocurrió un problema con el servidor.
-	 *
-	 * @apiErrorExample Error-Response:
-	 *     HTTP/1.1 404 Not Found
-	 *     {
-     *       "status": 404,
-	 *       "messages": "No hay resultados"
-	 *     }
-	 */
+  
     public function store(Request $request)
     {
         $errors = array(); 
@@ -436,18 +264,11 @@ class MovimientoController extends Controller
         $datos = (object) Input::json()->all();	
         $success = false;
 
-        $id_tipo_movimiento = $datos->tipo_movimiento_id;
-        $tipo_movimiento = TiposMovimientos::Find($datos->tipo_movimiento_id);
-
-        $tipo = NULL;
-        if($tipo_movimiento)
-            $tipo = $tipo_movimiento->tipo;
-
+  
+   
 ///*************************************************************************************************************************************
-       
-        if($id_tipo_movimiento == 1)
-        {
-
+///*************************************************************************************************************************************
+    
                 if(property_exists($datos, "insumos"))
                 {
                     if(count($datos->insumos) > 0 )
@@ -455,7 +276,7 @@ class MovimientoController extends Controller
                         $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
                         foreach ($detalle as $key => $value)
                             {
-                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo);
+                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, "S");
                                 if($validacion_insumos != "")
                                     {
                                         array_push($errors, $validacion_insumos);
@@ -464,54 +285,6 @@ class MovimientoController extends Controller
                     }else{
                             array_push($errors, array(array('insumos' => array('no_items_insumos'))));
                          }
-                    
-                }else{
-                        array_push($errors, array(array('insumos' => array('no_existe_insumos'))));
-                     }
-
-                if( count($errors) > 0 )
-                {
-                    return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
-                } 
-
-                DB::beginTransaction();
-                try{
-                        $movimiento_entrada = new Movimiento;
-                        $success = $this->validarTransaccionEntrada($datos, $movimiento_entrada,$almacen_id);
-                } catch (\Exception $e) {
-                    DB::rollback();
-                    return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
-                } 
-                if ($success){
-                    DB::commit();
-                    return Response::json(array("status" => 201,"messages" => "Creado","data" => $movimiento_entrada), 201);
-                } 
-                else{
-                    DB::rollback();
-                    return Response::json(array("status" => 409,"messages" => "Conflicto"), 409);
-                }
-        }//FIN IF TIPO MOVIMIENTO = 1  -> ENTRADA MANUAL
-
-///*************************************************************************************************************************************
-    
-        if($id_tipo_movimiento == 2)
-        {
-                if(property_exists($datos, "insumos"))
-                {
-                    if(count($datos->insumos) > 0 )
-                    {
-                        $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
-                        foreach ($detalle as $key => $value)
-                            {
-                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo);
-                                if($validacion_insumos != "")
-                                    {
-                                        array_push($errors, $validacion_insumos);
-                                    }
-                            }
-                    }else{
-                            array_push($errors, array(array('insumos' => array('no_items_insumos'))));
-                    }
                 }else{
                         array_push($errors, array(array('insumos' => array('no_exist_insumos'))));
                 }
@@ -539,59 +312,8 @@ class MovimientoController extends Controller
                     return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
                 }
                 
-        }///FIN IF TIPO MOVIMIENTO = 2 -->  SALIDA MANUAL
-
+       
 ///*************************************************************************************************************************************
-////        SALIDA POR RECETA CON METADATOS 
-            if($id_tipo_movimiento == 5)
-            {
-
-                    if(property_exists($datos, "insumos"))
-                {
-                    if(count($datos->insumos) > 0 )
-                    {
-                        $detalle = array_filter($datos->insumos, function($v){return $v !== NULL;});
-                        foreach ($detalle as $key => $value)
-                            {
-                                $validacion_insumos = $this->ValidarInsumosReceta($key, NULL, $value, $tipo);
-                                if($validacion_insumos != "")
-                                    {
-                                        array_push($errors, $validacion_insumos);
-                                    }
-                            }
-                    }else{
-                            array_push($errors, array(array('insumos' => array('no_items_insumos'))));
-                    }
-                }else{
-                        array_push($errors, array(array('insumos' => array('no_exist_insumos'))));
-                }
-
-                if( count($errors) > 0 )
-                {
-                    return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
-                } 
-
-                DB::beginTransaction();
-                try{
-                        $movimiento_salida_receta = new Movimiento;
-                        $success = $this->validarTransaccionSalidaReceta($datos, $movimiento_salida_receta,$almacen_id);
-                } catch (\Exception $e) {
-                    DB::rollback();
-                    return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
-                } 
-                if ($success){
-                    DB::commit();
-                    $ms = Movimiento::with('movimientoMetadato')->find($movimiento_salida_receta->id);
-                    return Response::json(array("status" => 201,"messages" => "Creado","data" => $ms), 201);
-                } 
-                else{
-                    DB::rollback();
-                    return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
-                }
-
-
-            }/// FIN IF TIPO MOVIMIENTO = 5   -->  SALIDA POR RECETA MEDICA
-
 ///*************************************************************************************************************************************
 
     }
@@ -604,126 +326,7 @@ class MovimientoController extends Controller
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
 
-    /**
-	 * @api {show} /movimientos/id Ver un movimiento.
-	 * @apiVersion 1.0.0
-	 * @apiName ConseguirMovimientos
-	 * @apiGroup Movimientos
-	 *
-	 * @apiParam {Number} id El id del movimiento a solicitar.
-     *
-	 * @apiSuccess {Number} status  Codigo http de respuesta a la petición realizada.
-	 * @apiSuccess {String} messages Mensaje personalizado según el codigo de respuesta.
-	 *
-	 * @apiSuccessExample Success-Response:
-	 *     HTTP/1.1 200 OK
-	 *     {
-	 *       "status": 200,
-	 *       "messages": "Operación realizada con exito",
-     *       "data" : {
-     *                  {
-     *                       "status": 200,
-     *                      "messages": "Operación realizada con exito",
-     *                       "data": {
-     *                          "id": "00012305",
-     *                           "servidor_id": "0001",
-     *                           "incremento": "2305",
-     *                           "almacen_id": "0001165",
-     *                           "tipo_movimiento_id": "2",
-     *                           "status": "FI",
-     *                           "fecha_movimiento": "2017-12-05",
-     *                           "programa_id": null,
-     *                           "observaciones": "",
-     *                           "cancelado": "0",
-     *                           "observaciones_cancelacion": "",
-     *                           "usuario_id": "root",
-     *                           "created_at": "2017-12-05 12:17:08",
-     *                           "updated_at": "2017-12-05 12:17:08",
-     *                           "deleted_at": null,
-     *                           "insumos": [
-     *                           {
-     *                               "clave": "010.000.5940.01",
-     *                               "tipo": "ME",
-     *                               "generico_id": "1689",
-     *                               "es_causes": "0",
-     *                               "es_unidosis": "1",
-     *                               "tiene_fecha_caducidad": "1",
-     *                               "descontinuado": "0",
-     *                               "descripcion": "IBUPROFENO TABLETA O CÁPSULA 200 MG ENVASE CON 12 TABLETAS",
-     *                               "created_at": null,
-     *                               "updated_at": null,
-     *                               "deleted_at": null,
-     *                               "generico_nombre": "Genericos",
-     *                               "es_cuadro_basico": "0",
-     *                               "nombre": "Genericos",
-     *                               "modo_salida": "N",
-     *                               "cantidad": "2.00",
-     *                               "cantidad_solicitada": "2.00",
-     *                               "detalles": {
-     *                               "clave": "010.000.5940.01",
-     *                               "tipo": "ME",
-     *                               "generico_id": "1689",
-     *                               "es_causes": "0",
-     *                               "es_unidosis": "1",
-     *                               "tiene_fecha_caducidad": "1",
-     *                               "descontinuado": "0",
-     *                               "descripcion": "IBUPROFENO TABLETA O CÁPSULA 200 MG ENVASE CON 12 TABLETAS",
-     *                               "created_at": null,
-     *                               "updated_at": null,
-     *                               "deleted_at": null,
-     *                               "generico_nombre": "Genericos",
-     *                               "es_cuadro_basico": "0",
-     *                               "informacion_ampliada": {...}
-     *                               },
-     *                               "lotes": [
-     *                               {
-     *                                   "id": "00023",
-     *                                   "clave_insumo_medico": "010.000.5940.01",
-     *                                   "marca_id": null,
-     *                                   "lote": "LOTE101030",
-     *                                   "codigo_barras": "",
-     *                                   "fecha_caducidad": "2018-08-10",
-     *                                   "modo_salida": "N",
-     *                                   "cantidad": "2.00"
-     *                               }
-     *                               ]
-     *                           }
-     *                           ],
-     *                          "insumos_negados": [],
-     *                           "almacen": {...},
-     *                           "movimiento_metadato": {
-     *                           "id": "0001374",
-     *                           "incremento": "374",
-     *                           "servidor_id": "0001",
-     *                           "movimiento_id": "00012305",
-     *                           "folio_colectivo": null,
-     *                           "servicio_id": "122",
-     *                           "turno_id": "2",
-     *                           "persona_recibe": "Maria Victoria Castellanos",
-     *                           "usuario_id": "root",
-     *                           "created_at": "2017-12-05 12:17:08",
-     *                           "updated_at": "2017-12-05 12:17:08",
-     *                           "deleted_at": null,
-     *                           "turno": {...},
-     *                           "servicio": {...}
-     *                           }
-     *                       }
-     *                       } 
-     *                }
-	 *     }
-	 *
-     * @apiError 403 El usuario no tiene permisos para realizar la consulta.
-	 * @apiError 404 No se encontraron reultados de movimientos con los criterios de busqueda.
-     * @apiError 409 Ocurrió un problema logico al consultar los datos.
-     * @apiError 500 Ocurrió un problema con el servidor.
-	 *
-	 * @apiErrorExample Error-Response:
-	 *     HTTP/1.1 404 Not Found
-	 *     {
-     *       "status": 404,
-	 *       "messages": "No hay resultados"
-	 *     }
-	 */
+   
 
 
     public function show($id)
@@ -736,87 +339,9 @@ class MovimientoController extends Controller
 		} 
         $movimiento = (object) $movimiento;
 
-
-///**************************************************************************************************************************************
-///**************************************************************************************************************************************
-   
-        if( $movimiento->tipo_movimiento_id == 1)
-        {
-            $insumos = DB::table('movimiento_insumos')
-                        ->join('stock', 'movimiento_insumos.stock_id', '=', 'stock.id')
-                        ->where('movimiento_insumos.movimiento_id', '=', $id)
-                        ->where('movimiento_insumos.deleted_at',NULL)
-                        ->groupby('stock.clave_insumo_medico')
-                        ->select(DB::raw('SUM(movimiento_insumos.cantidad) as total_insumo'), 'stock.clave_insumo_medico','modo_salida')
-                        ->get();
-
-            $array_insumos = array();   
-
-        ///*****************************************************************************************
-            foreach($insumos as $insumo)
-            {
-                    $objeto_insumo = new \stdClass();
-                    $array_lotes = array();
-
-                    $insumos2 = DB::table('movimiento_insumos')
-                                ->where('movimiento_id',$id)
-                                ->where('deleted_at',NULL)
-                                ->get();
-
-                    foreach($insumos2 as $insumo2)
-                    {
-                        $lote = DB::table('stock')->find($insumo2->stock_id);
-                        
-                        if($insumo->clave_insumo_medico == $lote->clave_insumo_medico)
-                        {
-                            $objeto_lote = new \stdClass();
-                            $objeto_lote->id                  = $lote->id;
-                            $objeto_lote->clave_insumo_medico = $lote->clave_insumo_medico;
-                            $objeto_lote->marca_id            = $lote->marca_id;
-                            $objeto_lote->lote                = $lote->lote;
-                            $objeto_lote->codigo_barras       = $lote->codigo_barras;
-                            $objeto_lote->fecha_caducidad     = $lote->fecha_caducidad;
-
-                            $objeto_lote->modo_salida         = $insumo2->modo_salida;
-                            $objeto_lote->cantidad            = $insumo2->cantidad;
-
-                            array_push($array_lotes,$objeto_lote);
-                        }
-                    }
-
-                    $insumo_detalles = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
-
-                    $insumo_detalles_temp = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
-
-                    $movimiento_detalle = MovimientoDetalle::where('movimiento_id',$movimiento->id)
-                                          ->where('clave_insumo_medico',$insumo->clave_insumo_medico)
-                                          ->first();
-                    
-
-                    $objeto_insumo              = $insumo_detalles_temp;
-                    $objeto_insumo->nombre      = $insumo_detalles_temp->generico_nombre;
-
-                    $objeto_insumo->modo_salida         = $insumo->modo_salida;
-
-                    $objeto_insumo->clave               = $insumo->clave_insumo_medico;
-                    $objeto_insumo->cantidad            = $insumo->total_insumo;
-
-                    $objeto_insumo->cantidad_solicitada = $movimiento_detalle ? $movimiento_detalle->cantidad_solicitada : 0;
-
-                    $objeto_insumo->detalles            = property_exists($objeto_insumo, "detalles") ? $objeto_insumo->detalles : $insumo_detalles;
-                    $objeto_insumo->lotes               = $array_lotes;
-
-              array_push($array_insumos,$objeto_insumo);
-            }
-        ///*****************************************************************************************
-         
-                $movimiento->insumos = $array_insumos;
-        }
-
 ////**************************************************************************************************************************************
 ////**************************************************************************************************************************************
-        if( $movimiento->tipo_movimiento_id == 2)
-        {
+        
             $insumos = DB::table('movimiento_insumos')
                     ->join('stock', 'movimiento_insumos.stock_id', '=', 'stock.id')
                     ->where('movimiento_insumos.movimiento_id', '=', $id)
@@ -855,6 +380,10 @@ class MovimientoController extends Controller
 
                             $objeto_lote->modo_salida         = $insumo2->modo_salida;
                             $objeto_lote->cantidad            = $insumo2->cantidad;
+
+                            $objeto_lote->importe             = $insumo2->precio_total - ($insumo2->iva * $insumo2->cantidad) ;
+                            $objeto_lote->precio_unitario     = $insumo2->precio_unitario;
+                            $objeto_lote->iva                 = $insumo2->iva;
 
                             array_push($array_lotes,$objeto_lote);
                         }
@@ -991,103 +520,14 @@ class MovimientoController extends Controller
         ///******************************************************************************************************************************
         ///*******************************************************************************************************************************
                 $movimiento->insumos = $array_insumos;
+                $movimiento->estatus = $movimiento->status;
 
                 $movimiento->insumos_negados = $array_insumos_negados;
 
 
-        }
-
-////**************************************************************************************************************************************
-////**************************************************************************************************************************************
- 
-       
-        if($movimiento->tipo_movimiento_id == 5)
-        {
-              $insumos = DB::table('movimiento_insumos')
-                    ->join('stock', 'movimiento_insumos.stock_id', '=', 'stock.id')
-                    ->where('movimiento_insumos.movimiento_id', '=', $id)
-                    ->groupby('stock.clave_insumo_medico')
-                    ->where('movimiento_insumos.deleted_at',null)
-                    ->select(DB::raw('SUM(movimiento_insumos.cantidad) as total_insumo'), 'stock.clave_insumo_medico')
-                    ->get();
-
-             //$receta = NULL;
-             //$receta_movimiento = RecetaMovimiento::where('movimiento_id',$movimiento->id)->with('receta')->first();
-             $receta = Receta::with('recetaDetalles')->where('movimiento_id',$movimiento->id)->first();
-
-             $receta            = (object) $receta;
-             $personal_clues    = PersonalClues::find($receta->personal_clues_id);
-
-             if($personal_clues)
-             {
-                 $receta->doctor = $personal_clues->nombre;
-             }
-
-             $receta_detalles   = $receta->recetaDetalles; 
-
-             $array_insumos  = array();            
-
-                foreach($insumos as $insumo)
-                {
-                    $objeto_insumo = new \stdClass();
-                    $array_lotes = array();
-
-                    $insumos2 = DB::table('movimiento_insumos')->where('movimiento_id',$id)->get();
-                    foreach($insumos2 as $insumo2)
-                    {
-                        $lote = DB::table('stock')->find($insumo2->stock_id);
-
-                        if($insumo->clave_insumo_medico == $lote->clave_insumo_medico)
-                        {
-                            $objeto_lote = new \stdClass();
-                            
-                            $objeto_lote->id                  = $lote->id;
-                            $objeto_lote->clave_insumo_medico = $lote->clave_insumo_medico;
-                            $objeto_lote->marca_id            = $lote->marca_id;
-                            $objeto_lote->lote                = $lote->lote;
-                            $objeto_lote->codigo_barras       = $lote->codigo_barras;
-                            $objeto_lote->fecha_caducidad     = $lote->fecha_caducidad;
-
-                            $objeto_lote->cantidad            = $insumo2->cantidad;
-
-                            array_push($array_lotes,$objeto_lote);
-                        }
-                    }
-
-                     $insumo_detalles       = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
-                     //$nombre_temp           = $insumo_detalles_temp->informacionAmpliada->nombre;
-
-                    $detalle = NULL;
-                    foreach ($receta_detalles as $key => $item_detalle)
-                    {
-                        if($item_detalle->clave_insumo_medico == $insumo->clave_insumo_medico)
-                        {
-                            $detalle = $item_detalle;
-                        }
-                    }
-
-                    $objeto_insumo                    = $insumo_detalles;
-                    $objeto_insumo->nombre            = $insumo_detalles->generico_nombre;
-
-                    $objeto_insumo->clave             = $insumo->clave_insumo_medico;
-                    $objeto_insumo->cantidad          = $insumo->total_insumo;
-                    $objeto_insumo->cantidad_surtida  = $insumo->total_insumo;
-
-                    $objeto_insumo->dosis               = $detalle->dosis;
-                    $objeto_insumo->frecuencia          = $detalle->frecuencia;
-                    $objeto_insumo->duracion            = $detalle->duracion;
-                    $objeto_insumo->cantidad_recetada   = $detalle->cantidad;
-
-                    //$objeto_insumo->detalles = property_exists($objeto_insumo, "detalles") ? $objeto_insumo->detalles : $insumo_detalles;
-
-                    $objeto_insumo->lotes    = $array_lotes;
-
-                    array_push($array_insumos,$objeto_insumo);
-                }
         
-                $movimiento->receta  = $receta;
-                $movimiento->insumos = $array_insumos;
-        }
+
+////**************************************************************************************************************************************
 ///****************************************************************************************************************************************
 
         
@@ -1130,56 +570,18 @@ class MovimientoController extends Controller
 
         $reglas = array();
         $reglas = [
-                    'tipo_movimiento_id' => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,12',
+                    'tipo_movimiento_id' => 'required|integer|in:18',
                   ];
 
-        if($request['movimiento_metadato'] != NULL)
-        {
-            if($request['tipo_movimiento_id'] == 1 )
-            {
-                $reglas = [
-                            'tipo_movimiento_id'                 => 'required|integer|in:1,2,3,4,5,6,7,8',
-                            'movimiento_metadato.persona_recibe' => 'required|string',
-                          ];
-            }
-            if($request['tipo_movimiento_id'] == 2 )
-            {
-                $reglas = [
-                            'tipo_movimiento_id'                 => 'required|integer|in:1,2,3,4,5,6,7,8',
-                            'movimiento_metadato.servicio_id'    => 'required|integer',
-                            'movimiento_metadato.persona_recibe' => 'required|string',
-                            'movimiento_metadato.turno_id'       => 'required|integer',
-                          ];
-            }
 
-        }
+                
+        $reglas = [
+                    'tipo_movimiento_id'                 => 'required|integer|in:1,2,3,4,5,6,7,8',
+                    'movimiento_metadato.servicio_id'    => 'required|integer',
+                    'movimiento_metadato.persona_recibe' => 'required|string',
+                    'movimiento_metadato.turno_id'       => 'required|integer',
+                  ];
         
-        if($request['tipo_movimiento_id'] == 5 )
-            {
-                $request_temp = (object)$request;
-                if(property_exists($request_temp,'receta'))
-                {
-                        
-                    $reglas = [
-                                'tipo_movimiento_id'    => 'required|integer|in:5',
-                                'receta.folio'          => 'required|string',
-                                'receta.tipo_receta_id'    => 'required|integer',
-                                'receta.fecha_receta'   => 'required',
-                                'receta.personal_clues_id'         => 'required|string',
-                                'receta.paciente'       => 'required|string',
-                                'receta.diagnostico'    => 'required|string'
-                            ];
-
-                            $receta = $request['receta'];
-                            $receta_buscar = Receta::where("folio",$receta['folio'])->first();
-
-                            if($receta_buscar)
-                            { 
-                                array_push($errors_validar_movimiento, array(array('receta' => array('Folio duplicado'))));
-                                return $errors_validar_movimiento;
-                            }  
-                }
-            }
 
     $v = \Validator::make($request, $reglas, $mensajes );
 
@@ -1420,141 +822,6 @@ class MovimientoController extends Controller
 
 
 
-///***************************************************************************************************************************
-///                  M O V I M I E N T O         E  N  T  R  A  D  A
-///***************************************************************************************************************************
-
-
-    private function validarTransaccionEntrada($datos, $movimiento_entrada,$almacen_id){
-		$success = false;
-        //comprobar que el servidor id no me lo envian por parametro, si no poner el servidor por default de la configuracion local, si no seleccionar el servidor del parametro
-        $servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
-
-        //agregar al modelo los datos
-        $movimiento_entrada->almacen_id                   =  $almacen_id;
-        $movimiento_entrada->tipo_movimiento_id           =  $datos->tipo_movimiento_id;
-        $movimiento_entrada->status                       =  $datos->status; 
-        $movimiento_entrada->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")          ? $datos->fecha_movimiento          : '';
-        $movimiento_entrada->observaciones                =  property_exists($datos, "observaciones")             ? $datos->observaciones             : '';
-        $movimiento_entrada->cancelado                    =  property_exists($datos, "cancelado")                 ? $datos->cancelado                 : '';
-        $movimiento_entrada->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion") ? $datos->observaciones_cancelacion : '';
-
-        // si se guarda el maestro tratar de guardar el detalle  
-        if( $movimiento_entrada->save() )
-        {
-            $success = true;
-
-            if(property_exists($datos,"movimiento_metadato"))
-            {
-                $metadatos = new MovimientoMetadato;
-                $metadatos->movimiento_id  = $movimiento_entrada->id;
-                $metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
-                $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
-
-
-                $metadatos->save();   
-            }
-
-            //verificar si existe contacto, en caso de que exista proceder a guardarlo
-            if(property_exists($datos, "insumos")){
-                 $detalle = array_filter($datos->insumos, function($v){return $v !== NULL;});
-
-
-                 foreach ($detalle as $key => $value)
-                {
-                     if($value != NULL)
-                     {
-                         if(is_array($value))
-                            $value = (object) $value;
-
-                        $precio_insumo = $this->conseguirPrecio($value->clave);
-
-                        //*************************************************************************************
-                        //Verificar si esta en la lista de negados
-                        $negacion = NegacionInsumo::where('almacen_id',$almacen_id)
-                                                ->where('clave_insumo_medico',$value->clave)
-                                                ->first();
-                        if($negacion)
-                        {
-                            $negacion->delete();
-                        }
-                        //*************************************************************************************
-
-                        $item_stock = new Stock;
-
-                        $item_stock->almacen_id             = $almacen_id;
-                        $item_stock->clave_insumo_medico    = $value->clave;
-                        $item_stock->marca_id               = NULL;
-                        $item_stock->lote                   = $value->lote;
-                        $item_stock->fecha_caducidad        = $value->fecha_caducidad;
-                        $item_stock->codigo_barras          = $value->codigo_barras;
-                        $item_stock->existencia             = $value->cantidad;
-                        $item_stock->existencia_unidosis    = ( $value->cantidad_x_envase * $value->cantidad );
-
-                        $item_stock_check = Stock::where('clave_insumo_medico',$value->clave)
-                                                 ->where('lote',$value->lote)
-                                                 ->where('fecha_caducidad',$value->fecha_caducidad)
-                                                 ->where('codigo_barras',$value->codigo_barras)
-                                                 ->where('almacen_id',$almacen_id)->first();
-                        if($item_stock_check)
-                        {
-                            $item_stock_check->existencia           = $item_stock_check->existencia + $value->cantidad;
-                            $item_stock_check->existencia_unidosis  = $item_stock_check->existencia_unidosis + ( $value->cantidad_x_envase * $value->cantidad );
-                            
-                            if( $item_stock_check->save() )
-                            {
-                                    $item_detalles = new MovimientoInsumos;
-
-                                    $item_detalles->movimiento_id           = $movimiento_entrada->id; 
-                                    $item_detalles->stock_id                = $item_stock_check->id;
-                                    $item_detalles->clave_insumo_medico     = $value->clave;
-
-                                    $item_detalles->modo_salida             = "N";
-                                    $item_detalles->cantidad                = $value->cantidad;
-                                    $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
-
-                                    $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                                    $item_detalles->iva                     = $precio_insumo['iva']; 
-                                    $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
-
-                                    $item_detalles->save(); 
-                            }else{   
-                                    return Response::json(['error' => $validacion_insumos], HttpResponse::HTTP_CONFLICT);
-                                }
-
-                        }else{
-                                    if($item_stock->save())
-                                    {
-                                        $item_detalles = new MovimientoInsumos;
-
-                                        $item_detalles->movimiento_id           = $movimiento_entrada->id; 
-                                        $item_detalles->stock_id                = $item_stock->id;
-                                        $item_detalles->clave_insumo_medico     = $value->clave;
-
-                                        $item_detalles->modo_salida             = "N";
-                                        $item_detalles->cantidad                = $item_stock->existencia;
-                                        $item_detalles->cantidad_unidosis       = $item_stock->existencia_unidosis;
-
-                                        $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                                        $item_detalles->iva                     = $precio_insumo['iva']; 
-                                        $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $item_stock->existencia;
-
-                                        $item_detalles->save();
-
-                                    }else{
-                                            return Response::json(['error' => $validacion_insumos], HttpResponse::HTTP_CONFLICT);
-                                         }
-                             }
-
-                            
-                    }
-                }
-            }               
-        }
-        
-        return $success;
-    }
-
     
 ///**************************************************************************************************************************
 ///                  M O V I M I E N T O         S  A  L  I  D  A
@@ -1570,8 +837,8 @@ class MovimientoController extends Controller
 
         //agregar al modelo los datos
         $movimiento_salida->almacen_id                   =  $almacen_id;
-        $movimiento_salida->tipo_movimiento_id           =  $datos->tipo_movimiento_id;
-        $movimiento_salida->status                       =  $datos->status; 
+        $movimiento_salida->tipo_movimiento_id           =  18;
+        $movimiento_salida->status                       =  $datos->estatus; 
         $movimiento_salida->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")          ? $datos->fecha_movimiento          : '';
         $movimiento_salida->observaciones                =  property_exists($datos, "observaciones")             ? $datos->observaciones             : '';
         $movimiento_salida->cancelado                    =  property_exists($datos, "cancelado")                 ? $datos->cancelado                 : '';

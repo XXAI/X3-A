@@ -37,7 +37,7 @@ class Movimiento extends BaseModel{
     }
 
     public function movimientoMetadato(){
-        return $this->belongsTo('App\Models\MovimientoMetadato','id','movimiento_id')->with('turno','servicio');
+        return $this->belongsTo('App\Models\MovimientoMetadato','id','movimiento_id')->with('turno','servicio','proveedor');
     }
 
     public function movimientoUsuario(){

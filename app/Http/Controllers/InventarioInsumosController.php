@@ -44,6 +44,58 @@ use \Excel;
 class InventarioInsumosController extends Controller
 {
      
+     /**
+	 * @api {index} /entrada-almacen/ Listar las existencias de los insumos en un almacén.
+	 * @apiVersion 1.0.0
+	 * @apiName ListarExistencias
+	 * @apiGroup Existencia Insumos Medicos
+	 *
+	 * @apiParam {String} X-Almacen-Id En headers es el id del almacén del cual se requieren las entradas.
+     * @apiParam {Number} page Mediante url es la pagina solicitada.
+	 * @apiParam {Number} per_page Mediante url es la cantidad de elementos a listar en caso de desear paginado.
+     * @apiParam {Number} buscar_en Mediante url permite los valores MIS_CLAVES Ó TODAS_LAS_CLAVES.
+     * @apiParam {Number} seleccionar Mediante url permite los valores TODO, EXISTENTE y NO_EXISTENTE.
+     * @apiParam {Number} tipo Mediante url es es el tipo de insumo a buscar (TODO, CAUSES, NO_CAUSES, MC y CONTROLADO).
+     * @apiParam {Number} clave_insumo Mediante url permite un valor alfanumerico para buscar una clave en especifico.
+     *
+	 * @apiSuccess {Number} status  Codigo http de respuesta a la petición realizada.
+	 * @apiSuccess {String} messages Mensaje personalizado según el codigo de respuesta.
+	 *
+	 * @apiSuccessExample Success-Response:
+	 *     HTTP/1.1 200 OK
+	 *     {
+     *           "status": 200,
+     *           "messages": "Operación realizada con exito",
+     *           "data": {
+     *               "total": 2049,
+     *               "per_page": "20",
+     *               "current_page": 1,
+     *               "last_page": 103,
+     *               "next_page_url": "http://sialapiv2.yoursoft.com.mx/public/index.php/inventario-insumos?page=2",
+     *               "prev_page_url": null,
+     *               "from": 1,
+     *               "to": 20,
+     *               "data": [
+     *                { "clave_insumo_medico": "010.000.0071.00","descripcion": "BENZATINA BENCILPENICILINA DE 600 000 UI, SUSPENSIÓN INYECTABLE, ENVASE CON UN FRASCO ÁMPULA Y 5 ML DE DILUYENTE.","tipo": "ME","es_causes": "0","es_unidosis": "0","existencia": 0,"existencia_unidosis": 0,"updated_at": null},
+     *               { "clave_insumo_medico": "010.000.0105.00","descripcion": "PARACETAMOL Supositorio 300 mg 3 supositorios","tipo": "ME","es_causes": "1","es_unidosis": "1","existencia": 50,"existencia_unidosis": 150,"updated_at": null},
+     *               { "clave_insumo_medico": "010.000.0106.00","descripcion": "PARACETAMOL Solución oral 100 mg/ml Envase con gotero 15 ml","tipo": "ME","es_causes": "1","es_unidosis": "0","existencia": 0,"existencia_unidosis": 0,"updated_at": null}
+     *               ]
+     *           },
+     *           "total": 20
+     *       }
+	 *
+     * @apiError 403 El usuario no tiene permisos para realizar la consulta.
+	 * @apiError 404 No se encontraron reultados de movimientos con los criterios de busqueda.
+     * @apiError 409 Ocurrió un problema logico al consultar los datos.
+     * @apiError 500 Ocurrió un problema con el servidor.
+	 *
+	 * @apiErrorExample Error-Response:
+	 *     HTTP/1.1 404 Not Found
+	 *     {
+     *       "status": 404,
+	 *       "messages": "No hay resultados"
+	 *     }
+	 */ 
     public function index(Request $request)
     {
         //buscar_en:  MC , TC,       seleccionar :  NO_EXISTENTE, EXISTENTE
@@ -119,7 +171,16 @@ class InventarioInsumosController extends Controller
             {
                 $existencia = 0; $existencia_unidosis = 0;
                 $updated_at = NULL;
-                $stocks = Stock::where('almacen_id',$almacen_id)->where('clave_insumo_medico',$clave->clave_insumo_medico)->get();
+                $stocks = Stock::with('movimientoInsumo')->where('almacen_id',$almacen_id)->where('clave_insumo_medico',$clave->clave_insumo_medico)->get();
+                ////*****************************************************************************************
+                        $insumo_x  = Insumo::datosUnidosis()->where('clave',$clave->clave_insumo_medico)->first();
+                        $cantidad_x_envase   = $insumo_x['cantidad_x_envase'];
+
+                        $iva_porcentaje = 0;
+                        if($insumo_x['tipo'] == "ME")
+                        { $iva_porcentaje = 0; }else{ $iva_porcentaje = 0.16; }
+                    ////*****************************************************************************************
+                $importe_temp    = 0;
 
                 if($stocks)
                 {
@@ -127,12 +188,18 @@ class InventarioInsumosController extends Controller
                     {
                         $existencia          += $stock->existencia;
                         $existencia_unidosis += $stock->existencia_unidosis;
-                        //$updated_at           = $stock->updated_at;
+
+                        $precio_unitario_con_iva = $stock->movimientoInsumo['precio_unitario'] + $stock->movimientoInsumo['iva'];
+                        $existencia_real         = ( $stock->existencia_unidosis / $cantidad_x_envase );
+                        $importe_temp            += ( $precio_unitario_con_iva * $existencia_real );
                     }
                 }
                 
                 $clave->existencia          = property_exists($clave, "existencia") ? $clave->existencia : $existencia;
                 $clave->existencia_unidosis = property_exists($clave, "existencia_unidosis") ? $clave->existencia_unidosis : $existencia_unidosis;
+
+                $clave->importe_con_iva     = $importe_temp;
+
                 $clave->updated_at          = property_exists($clave, "updated_at") ? $clave->updated_at : $updated_at;
                 array_push($data,$clave);
             }
@@ -184,9 +251,7 @@ class InventarioInsumosController extends Controller
             //$data2= new LengthAwarePaginator($currentPageItems , count($itemCollection), $perPage);
             $data2->setPath($request->url());
 
-
- //////*********************************************************************************************************
- //////*********************************************************************************************************
+    //////*********************************************************************************************************
          if(isset($parametros['page']))
          {
 
@@ -353,7 +418,7 @@ public function excel(Request $request)
                                                     $row->setFontSize(12);
                                               });
 
-                $sheet->row(6, array('Clave','Descripción', 'C.P.D','C.P.S','C.P.M','Existencia','Existencia Unidosis'));
+                $sheet->row(6, array('Clave','Descripción', 'C.P.D','C.P.S','C.P.M','Existencia','Existencia Unidosis','Valor'));
                 $sheet->row(6, function($row) {
                                                     $row->setBackground('#DDDDDD');
                                                     $row->setFontWeight('bold');
@@ -380,6 +445,7 @@ public function excel(Request $request)
                  $sheet->setSize('B6', 70, 18);
                  $sheet->setSize('F6', 20, 18);
                  $sheet->setSize('G6', 30, 18);
+                 $sheet->setSize('H6', 30, 18);
 
                 foreach($items as $item)
                 {
@@ -393,7 +459,8 @@ public function excel(Request $request)
                         "--",
                         "--",
                         $item->existencia,
-                        $item->existencia_unidosis
+                        $item->existencia_unidosis,
+                        $item->importe_con_iva
                     )); 
 
 
@@ -606,6 +673,15 @@ public function getItemsInventario($parametros)
                 $existencia = 0; $existencia_unidosis = 0;
                 $updated_at = NULL;
                 $stocks = Stock::where('almacen_id',$almacen_id)->where('clave_insumo_medico',$clave->clave_insumo_medico)->get();
+                ////*****************************************************************************************
+                        $insumo_x  = Insumo::datosUnidosis()->where('clave',$clave->clave_insumo_medico)->first();
+                        $cantidad_x_envase   = $insumo_x['cantidad_x_envase'];
+
+                        $iva_porcentaje = 0;
+                        if($insumo_x['tipo'] == "ME")
+                        { $iva_porcentaje = 0; }else{ $iva_porcentaje = 0.16; }
+                ////*****************************************************************************************
+                 $importe_temp    = 0;
 
                 if($stocks)
                 {
@@ -613,12 +689,16 @@ public function getItemsInventario($parametros)
                     {
                         $existencia          += $stock->existencia;
                         $existencia_unidosis += $stock->existencia_unidosis;
-                        //$updated_at           = $stock->updated_at;
+
+                        $precio_unitario_con_iva = $stock->movimientoInsumo['precio_unitario'] + $stock->movimientoInsumo['iva'];
+                        $existencia_real         = ( $stock->existencia_unidosis / $cantidad_x_envase );
+                        $importe_temp            += ( $precio_unitario_con_iva * $existencia_real );
                     }
                 }
                 
                 $clave->existencia          = property_exists($clave, "existencia") ? $clave->existencia : $existencia;
                 $clave->existencia_unidosis = property_exists($clave, "existencia_unidosis") ? $clave->existencia_unidosis : $existencia_unidosis;
+                $clave->importe_con_iva     = $importe_temp;
                 $clave->updated_at          = property_exists($clave, "updated_at") ? $clave->updated_at : $updated_at;
                 array_push($data,$clave);
             }

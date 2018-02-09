@@ -52,6 +52,15 @@ class PersonalCluesController extends Controller {
 	 */
 	public function index(){
 		$datos = Request::all();
+
+		$parametros = Input::only('term','tipo_personal','clues','page','per_page');
+
+
+		if(!$parametros['clues']){
+            return Response::json(array("status" => 404,"messages" => "Debe especificar una clues."), 200);
+        } 
+
+		$clues = $parametros['clues'];
 		
 		// Si existe el paarametro pagina en la url devolver las filas según sea el caso
 		// si no existe parametros en la url devolver todos las filas de la tabla correspondiente
@@ -83,7 +92,8 @@ class PersonalCluesController extends Controller {
 			{
 				$columna = $datos["columna"];
 				$valor   = $datos["valor"];
-				$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->orderBy($order, $orden);
+				$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")
+									 ->where('clues',$parametros['clues'])->orderBy($order, $orden);
 				
 				$search = trim($valor);
 				$keyword = $search;
@@ -95,12 +105,12 @@ class PersonalCluesController extends Controller {
 				$data  = $data->skip($pagina-1)->take($datos["limite"])->get();
 			}
 			else{
-					$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
+					$data = PersonalClues::where('clues',$parametros['clues'])->with("PersonalCluesMetadatos", "TiposPersonal")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
 					$total =  PersonalClues::all();
 				}
 			
 		}else{
-				$data = PersonalClues::with("PersonalCluesMetadatos", "TiposPersonal")->get();
+				$data = PersonalClues::where('clues',$parametros['clues'])->with("PersonalCluesMetadatos", "TiposPersonal")->get();
 				$total = $data;
 			 }
 

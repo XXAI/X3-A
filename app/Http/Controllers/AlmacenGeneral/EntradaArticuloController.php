@@ -204,7 +204,8 @@ class EntradaArticuloController extends Controller {
         $data->status 			 			= property_exists($datos, "status") 					? $datos->status 					: $data->status;
         $data->fecha_movimiento		 	 	= property_exists($datos, "fecha_movimiento") 			? $datos->fecha_movimiento 			: $data->fecha_movimiento;		
 		$data->observaciones 	 			= property_exists($datos, "observaciones") 				? $datos->observaciones 			: $data->observaciones;
-		$data->cancelado 					= property_exists($datos, "cancelado")					? $datos->cancelado					: $data->cancelado;
+		//$data->cancelado 					= property_exists($datos, "cancelado")					? $datos->cancelado					: $data->cancelado;
+		$data->cancelado 					= 1;
 		$data->observaciones_cancelacion	= property_exists($datos, "observaciones_cancelacion")	? $datos->observaciones_cancelacion	: $data->observaciones_cancelacion;
 
         if ($data->save()) {		
@@ -248,7 +249,8 @@ class EntradaArticuloController extends Controller {
 			            				$inventario->existencia 			 = 1;
 			            				$inventario->numero_inventario		 = property_exists($invv, "numero_inventario")	? $invv->numero_inventario != '' ?  $invv->numero_inventario : $almacen_id.'-'.time() : $almacen_id.'-'.time();
 			            				$inventario->observaciones 			 = property_exists($invv, "observaciones")		? $invv->observaciones 		: $item->observaciones;
-			            				$inventario->baja 			 		 = property_exists($invv, "baja")				? $invv->baja		  		: $item->baja;
+			            				//$inventario->baja 			 		 = property_exists($invv, "baja")				? $invv->baja		  		: $item->baja;
+										$inventario->baja 			 		 = 0;
 
 			            				if($inventario->save()){			            											        																		         
 						            		DB::table('inventario_movimiento_articulos')->insert(
@@ -264,9 +266,11 @@ class EntradaArticuloController extends Controller {
 								        		$inve_meta = array_filter($invv->inventario_metadato, function($v){return $v !== null;});
 								        		InventarioArticuloMetadatos::where("inventario_id", $inventario->id)->delete();
 								        		
-								        		foreach ($inve_meta as $invmk => $invmv) {
+								        		foreach ($inve_meta as $invmk => $invmv) 
+												{
 								        			$invmv = (object) $invmv;
-								        			if($invmv != null){	
+								        			if($invmv != null)
+													{	
 								        				DB::update("update inventario_metadatos set deleted_at = null where inventario_id = $inventario->id and campo = '$invmv->campo'");
 								        				$inventario_m = InventarioArticuloMetadatos::where("inventario_id", $inventario->id)->where("campo", $invmv->campo)->first();				        									        					
 							        					if(!$inventario_m)
