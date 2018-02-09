@@ -24,7 +24,7 @@ class CreateMaterialCuracionTable extends Migration{
             $table->unique('insumo_medico_clave','insumo_medico_clave_UNIQUE');
         
             //$table->index('insumo_medico_clave','fk_material_curacion_insumos_medicos1_idx');
-            $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos');
+            $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
         
             $table->timestamps();
             $table->softDeletes();

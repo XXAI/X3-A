@@ -119,6 +119,7 @@ class AutenticacionController extends Controller
                     "id" => $usuario->id,
                     "nombre" => $usuario->nombre,
                     "apellidos" => $usuario->apellidos,
+                    "su" => $usuario->su,
                     "avatar" => $usuario->avatar,
                     "medico_id" =>$usuario->medico_id,
                     "permisos" => $lista_permisos,                    
@@ -132,7 +133,8 @@ class AutenticacionController extends Controller
 
                 $server_info = [
                     "server_datetime_snap" => getdate(),
-                    "token_refresh_ttl" => Config::get("jwt.refresh_ttl")
+                    "token_refresh_ttl" => Config::get("jwt.refresh_ttl"),
+                    "api_version" => Config::get("sync.api_version")
                 ];
 
                 $log_usuario->login_status = 'OK';

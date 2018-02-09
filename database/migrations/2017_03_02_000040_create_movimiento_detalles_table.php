@@ -39,6 +39,6 @@ class CreateMovimientoDetallesTable extends Migration{
      * @return void
      */
      public function down(){
-       Schema::dropIfExists('movimiento_insumos');
+       Schema::dropIfExists('movimiento_detalles');
      }
 }

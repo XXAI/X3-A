@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
-use App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto,  App\Models\TransferenciaPresupuesto, App\Models\Pedido, App\Models\LogPedidoCancelado;
+use App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto,  App\Models\TransferenciaPresupuesto, App\Models\Pedido, App\Models\LogPedidoCancelado, App\Models\LogTransferenciaCancelada;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -158,4 +158,73 @@ class CancelarPedidosController extends Controller
         }
     }
 
+    public function cancelarTransferencia(Request $request, $id){
+        $input = Input::all();
+
+        $pedido = Pedido::with("insumos.insumoDetalle")->where('tipo_pedido_id','PEA')->find($id);
+
+        if(!$pedido){
+            return Response::json([ 'data' => $pedido, 'error' => 'No se encontro el pedido.' ],500);
+        }
+
+        if(!$input['motivos']){
+            return Response::json([ 'data' => $pedido, 'error' => 'No se puede cancelar la transferencia, ya que no se especificó ningún motivo.' ],500);
+        }
+
+        $pedido->load('historialTransferenciaCompleto');
+
+        $se_puede_cancelar = true;
+
+        foreach ($pedido->historialTransferenciaCompleto as $historial) {
+            if($historial->evento == 'RECEPCION PEA'){
+                $se_puede_cancelar = true;
+            }else if($historial->evento == 'SURTIO PEA'){
+                $se_puede_cancelar = false;
+            }
+        }
+
+        $cantidad_enviada = $pedido->insumos->sum('cantidad_enviada');
+        $cantidad_recibida = $pedido->insumos->sum('cantidad_recibida');
+
+        if($cantidad_enviada != $cantidad_recibida){
+            $se_puede_cancelar = False;
+        }
+
+        if(!$se_puede_cancelar){
+            return Response::json([ 'data' => $pedido, 'error' => 'No es posible cancelar la transferencia en estos momentos.' ],500);
+        }
+        
+        //return Response::json([ 'data' => $pedido, 'error' => 'error en el servidor bla bla bla' ],500);
+        try {
+            DB::beginTransaction();
+            
+            //DB::rollBack();
+            //return Response::json([ 'data' => ['total_causes_disponible'=>$total_causes_disponible, 'total_no_causes_disponible'=>$total_no_causes_disponible, 'total_material_curacion_disponible'=>$total_material_curacion_disponible], 'error' => 'error en el servidor bla bla bla' ],500);
+
+            $pedido->status = 'EX-CA';
+            $pedido->recepcion_permitida = 0;
+            $pedido->fecha_cancelacion = Carbon::now();
+
+            if($pedido->save()){
+                $datos_log_transferencia_cancelada = [
+                    'pedido_id'=> $pedido->id,
+                    'motivos' => $input['motivos'],
+                    'ip'=> $request->ip(),
+                    'navegador'=> $request->header('User-Agent'),
+                    'updated_at'=> Carbon::now()
+                ];
+
+                $log = LogTransferenciaCancelada::create($datos_log_transferencia_cancelada);
+
+                DB::commit();
+                return Response::json([ 'data' => $pedido ],200);
+            }else{
+                throw new Exception("No se pudieron guardar los cambios en el pedido.");
+            }
+
+        }catch (\Exception $e) {
+            DB::rollBack();
+            return Response::json(['error' => $e->getMessage()], 500);
+        }
+    }
 }

@@ -22,7 +22,7 @@ class CreateInsumoMedicoServicioTable extends Migration{
           //$table->index('servicio_id','fk_insumos_medicos_has_servicios_servicios1_idx');
           //$table->index('insumo_medico_clave','fk_insumos_medicos_has_servicios_insumos_medicos1_idx');
       
-          $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos');
+          $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
           $table->foreign('servicio_id')->references('id')->on('servicios');
       
           $table->timestamps();

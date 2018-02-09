@@ -15,6 +15,7 @@ class AgregarTipoInsumoAContratosPrecios extends Migration
         Schema::table('contratos_precios', function (Blueprint $table) {
             $table->integer('tipo_insumo_id')->unsigned()->nullable()->after('contrato_id');
             $table->foreign('tipo_insumo_id')->references('id')->on('tipos_insumos');
+            $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
         });
     }
 
@@ -28,6 +29,7 @@ class AgregarTipoInsumoAContratosPrecios extends Migration
         Schema::table('contratos_precios', function (Blueprint $table) {
             $table->dropForeing(['tipo_insumo_id']);
             $table->dropColumn('tipo_insumo_id');
+            $table->dropForeign(['insumo_medico_clave']);
         });
     }
 }

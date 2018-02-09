@@ -68,6 +68,15 @@ class StockController extends Controller
         return Response::json([ 'data' => $stock],200);
     }
 
+    public function stockInsumoMedico(Request $request){
+        if(Input::get('clave')){
+            $stock = Stock::where('almacen_id',$request->get('almacen_id'))->where('clave_insumo_medico',Input::get('clave'))->where('existencia','>',0)->orderBy('fecha_caducidad')->get();
+            return Response::json([ 'data' => $stock],200);
+        }else{
+            return Response::json(['error' => "No se especifico la clave del insumo."], HttpResponse::HTTP_CONFLICT);
+        }
+    }
+
     /**
      * Store a newly created resource in storage.
      *

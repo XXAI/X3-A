@@ -44,6 +44,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $routeMiddleware = [
+        'servidor.instalado' => \App\Http\Middleware\VerificarServidorInstalado::class,
         'proveedor' => \App\Http\Middleware\VerificarProveedor::class,
         'almacen' => \App\Http\Middleware\VerificarAlmacen::class,
         'jwt' => \App\Http\Middleware\VerificarJWT::class,

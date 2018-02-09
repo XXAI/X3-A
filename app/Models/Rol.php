@@ -14,7 +14,7 @@ class Rol extends BaseModel{
     public $incrementing = true;
     
     protected $table = 'roles';  
-    protected $fillable = ["nombre"];
+    protected $fillable = ["nombre","es_offline"];
     
     
     public function permisos(){

@@ -20,7 +20,7 @@ class CrearTablaMovimientoAjustes extends Migration
 
             $table->string('movimiento_id', 255);
             $table->string('stock_id', 255)->nullable();
-            $table->string('clave_insumo_medico',45);
+            $table->string('clave_insumo_medico',255);
             $table->decimal('existencia_anterior', 16, 2);
             $table->decimal('existencia_unidosis_anterior', 16, 2);
             $table->decimal('nueva_existencia', 16, 2);
@@ -34,7 +34,7 @@ class CrearTablaMovimientoAjustes extends Migration
             $table->primary('id');
             $table->foreign('movimiento_id')->references('id')->on('movimientos');
             $table->foreign('stock_id')->references('id')->on('stock');
-            $table->foreign('clave_insumo_medico')->references('clave')->on('insumos_medicos');
+            $table->foreign('clave_insumo_medico')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
             
         });
     }

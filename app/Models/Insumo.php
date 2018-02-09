@@ -41,7 +41,7 @@ class Insumo extends BaseModel{
                 ->leftjoin('material_curacion','material_curacion.insumo_medico_clave','=','insumos_medicos.clave')
                 ->leftjoin('sustancias_laboratorio','sustancias_laboratorio.insumo_medico_clave','=','insumos_medicos.clave');
     }
-
+    
     //Relacion con el Modelo Medicamento, usando un scope para cargar los datos de los catalogos utilizados por medicamentos
     public function informacion(){
         if ($this->tipo = "ME"){

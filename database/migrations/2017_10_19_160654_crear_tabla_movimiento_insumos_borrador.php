@@ -21,7 +21,7 @@ class CrearTablaMovimientoInsumosBorrador extends Migration
             $table->string('movimiento_id', 255);
             $table->integer('tipo_insumo_id')->unsigned()->nullable();
             $table->string('stock_id', 255)->nullable();
-            $table->string('clave_insumo_medico', 45)->nullable();
+            $table->string('clave_insumo_medico', 255)->nullable();
             $table->string('modo_salida', 1);           
             $table->decimal('cantidad', 15, 2);
             $table->decimal('cantidad_unidosis', 15, 2);
@@ -34,6 +34,7 @@ class CrearTablaMovimientoInsumosBorrador extends Migration
         
             $table->foreign('movimiento_id')->references('id')->on('movimientos');
             $table->foreign('stock_id')->references('id')->on('stock_borrador');
+            $table->foreign('clave_insumo_medico')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
         
             $table->timestamps();
             $table->softDeletes();

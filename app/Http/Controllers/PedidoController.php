@@ -23,6 +23,7 @@ use App\Models\Movimiento;
 use App\Models\MovimientoInsumos;
 use App\Models\Stock;
 use App\Models\UnidadMedicaPresupuesto;
+use App\Models\HistorialMovimientoTransferencia;
 use \Excel;
 use Carbon\Carbon;
 
@@ -73,67 +74,69 @@ class PedidoController extends Controller{
     }
 
     public function stats(Request $request){
-        $almacen = Almacen::find($request->get('almacen_id'));
-
-        // Hay que obtener la clues del usuario
-
-        // Akira: en los datos de alternos hay que ver si se pone la cantidad de alternos o en base a su estatus
-        $pedidos = Pedido::select(DB::raw(
-            '
-            count(
-                1
-            ) as todos,
-            count(
-                case when status = "BR" then 1 else null end
-            ) as borradores,
-            count(
-                case when status = "SD" then 1 else null end
-            ) as solicitados,
-            count(
-                case when status = "ET" then 1 else null end
-            ) as en_transito,
-            count(
-                case when status = "PS" then 1 else null end
-            ) as por_surtir,
-            count(
-                case when status = "FI" then 1 else null end
-            ) as finalizados,
-            count(
-                case when status = "EX" then 1 else null end
-            ) as expirados,
-            count(
-                case when status = "EX-CA" then 1 else null end
-            ) as expirados_cancelados,
-            count(
-                case when status = "EF" then 1 else null end
-            ) as farmacia,
-            count(
-                case when tipo_pedido_id = "PALT" then 1 else null end
-            ) as alternos,
-            (
-                select count(id) from actas where clues = "'.$almacen->clues.'"
-            ) as actas
-
-            '
-        //))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
-        ))->where('clues',$almacen->clues); //->first();
+        try{
+            $almacen = Almacen::find($request->get('almacen_id'));
             
-        //Harima: Filtro para diferentes tipos de almacenes, solo los almacenes principales pueden ver pedidos a farmcias subrogadas
-        if($almacen->tipo_almacen == 'ALMPAL'){
-            $almacenes = Almacen::where('subrogado',1)->where('nivel_almacen',1)->get();
-            $almacenes = $almacenes->lists('id');
-            $almacenes[] = $almacen->id;
-            $pedidos = $pedidos->whereIn('almacen_solicitante',$almacenes);
-        }else{
-            //Harima: Los demas almacenes solo veran los pedidos que ellos hayan hecho
-            $pedidos = $pedidos->where('almacen_solicitante',$almacen->id);
+            // Akira: en los datos de alternos hay que ver si se pone la cantidad de alternos o en base a su estatus
+            $pedidos = Pedido::select(DB::raw(
+                '
+                count(
+                    1
+                ) as todos,
+                count(
+                    case when status = "BR" then 1 else null end
+                ) as borradores,
+                count(
+                    case when status = "SD" then 1 else null end
+                ) as solicitados,
+                count(
+                    case when status = "ET" then 1 else null end
+                ) as en_transito,
+                count(
+                    case when status = "PS" then 1 else null end
+                ) as por_surtir,
+                count(
+                    case when status = "FI" then 1 else null end
+                ) as finalizados,
+                count(
+                    case when status = "EX" then 1 else null end
+                ) as expirados,
+                count(
+                    case when status = "EX-CA" then 1 else null end
+                ) as expirados_cancelados,
+                count(
+                    case when status = "EF" then 1 else null end
+                ) as farmacia,
+                count(
+                    case when tipo_pedido_id = "PALT" then 1 else null end
+                ) as alternos,
+                (
+                    select count(id) from actas where clues = "'.$almacen->clues.'"
+                ) as actas
+    
+                '
+            //))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
+            ))->where('clues',$almacen->clues); //->first();
+                
+            //Harima: Filtro para diferentes tipos de almacenes, solo los almacenes principales pueden ver pedidos a farmcias subrogadas
+            if($almacen->tipo_almacen == 'ALMPAL'){
+                $almacenes = Almacen::where('subrogado',1)->where('nivel_almacen',1)->get();
+                $almacenes = $almacenes->lists('id');
+                $almacenes[] = $almacen->id;
+                $pedidos = $pedidos->whereIn('almacen_solicitante',$almacenes);
+            }else{
+                //Harima: Los demas almacenes solo veran los pedidos que ellos hayan hecho
+                $pedidos = $pedidos->where('almacen_solicitante',$almacen->id);
+            }
+    
+            $pedidos = $pedidos->orWhere(function($query)use($almacen){
+                $query->where('almacen_solicitante',$almacen->id)->where('tipo_pedido_id','PEA')->where('status','!=','BR');
+            })->first();
+    
+            return Response::json($pedidos,200);
+        }catch(\Exception $e) {
+            return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
         }
-
-        $pedidos = $pedidos->orWhere(function($query)use($almacen){
-            $query->where('almacen_solicitante',$almacen->id)->where('tipo_pedido_id','PEA')->where('status','!=','BR');
-        })->first();
-
-        return Response::json($pedidos,200);
     }
 
     public function index(Request $request){
@@ -195,8 +198,6 @@ class PedidoController extends Controller{
             $pedidos = $pedidos->get();
         }
         
-
-
         return Response::json([ 'data' => $pedidos],200);
     }
 
@@ -224,7 +225,8 @@ class PedidoController extends Controller{
             }else{
                 $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","almacenProveedor","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
                 if($pedido->tipo_pedido_id == 'PEA'){
-                    $pedido = $pedido->load("movimientos.transferenciaSurtida.insumos");
+                    //$pedido = $pedido->load("movimientos.transferenciaSurtida.insumos");
+                    $pedido = $pedido->load("historialTransferenciaCompleto");
                 }
             }
         } 
@@ -502,69 +504,87 @@ class PedidoController extends Controller{
 
             $arreglo_insumos = Array();
             
-            PedidoInsumo::where("pedido_id", $id)->forceDelete();
-
+            //Aqui comienza:
             $total_claves = count($parametros['insumos']);
             $total_insumos = 0;
             $total_monto = ['causes' => 0, 'no_causes' => 0, 'material_curacion' => 0];
 
-            foreach ($parametros['insumos'] as $key => $value) {
+            /*   Harima: Para editar lista de insumos sin tener que borrar en la base de datos   */
+            $lista_insumos_db = PedidoInsumo::where('pedido_id',$id)->withTrashed()->get();
+            if(count($lista_insumos_db) > count($parametros['insumos'])){
+                $total_max_insumos = count($lista_insumos_db);
+            }else{
+                $total_max_insumos = count($parametros['insumos']);
+            }
 
-                $reglas_insumos = [
-                    'clave'           => 'required',
-                    'cantidad'        => 'required|integer|min:1'
-                ];  
+            for ($i=0; $i < $total_max_insumos ; $i++) {
+                if(isset($lista_insumos_db[$i])){ //Si existe un registro en la base de datos se edita o elimina.
+                    $insumo_db = $lista_insumos_db[$i];
 
-                $v = Validator::make($value, $reglas_insumos, $mensajes);
-
-                if ($v->fails()) {
-                    DB::rollBack();
-                    return Response::json(['error' => 'El insumo con clave: '.$value['clave'].' tiene un valor incorrecto.'], 500);
-                }      
-                
-                $insumo = [
-                    'insumo_medico_clave' => $value['clave'],
-                    'cantidad_solicitada' => $value['cantidad'],
-                    'monto_solicitado' => $value['cantidad']*$value['precio'], //$value['monto'],
-                    'cantidad_recibida' => ($value['cantidad_recibida'])?$value['cantidad_recibida']:null,
-                    'monto_recibido' => ($value['cantidad_recibida'])?$value['cantidad_recibida']*$value['precio']:null,
-                    'precio_unitario' => $value['precio'],
-                    'tipo_insumo_id' => $value['tipo_insumo_id'],
-                    'pedido_id' => $pedido->id
-                ];
-                //$value['pedido_id'] = $pedido->id;
-
-                $total_insumos += $value['cantidad'];
-
-                if($value['tipo'] == 'ME' && $value['es_causes']){
-                    $total_monto['causes'] += $value['monto'];
-                }elseif($value['tipo'] == 'ME' && !$value['es_causes']){
-                    $total_monto['no_causes'] += $value['monto'];
-                }else{
-                    $total_monto['material_curacion'] += $value['monto'];
-                }
-                
-                $object_insumo = PedidoInsumo::create($insumo);  
-
-                // ######### PEDIDOS JURISDICCIONALES #########
-                if($um->tipo == 'OA' && $tipo_pedido == 'PJS'){
-                    foreach($value['lista_clues'] as $key_clues => $value_clues){
-                        $insumo_clues = [
-                            'pedido_insumo_id' => $object_insumo->id,
-                            'clues' => $value_clues['clues'],
-                            'cantidad' => $value_clues['cantidad']
-                        ];
-                        PedidoInsumoClues::create($insumo_clues);
-                        
+                    if(isset($parametros['insumos'][$i])){ //Si hay insumos desde el fomulario, editamos el insumo de la base de datos.
+                        $insumo_form = $parametros['insumos'][$i];
+    
+                        $insumo_db->deleted_at = null; //Por si el elemento ya esta liminado, lo restauramos
+                        $insumo_db->insumo_medico_clave = $insumo_form['clave'];
+                        $insumo_db->cantidad_solicitada = $insumo_form['cantidad'];
+                        $insumo_db->cantidad_recibida = ($insumo_form['cantidad_recibida'])?$insumo_form['cantidad_recibida']:null;
+                        $insumo_db->precio_unitario = $insumo_form['precio'];
+                        $insumo_db->monto_solicitado = $insumo_form['cantidad']*$insumo_form['precio'];
+                        $insumo_db->monto_recibido = ($insumo_form['cantidad_recibida'])?$insumo_form['cantidad_recibida']*$insumo_form['precio']:null;
+                        $insumo_db->tipo_insumo_id = $insumo_form['tipo_insumo_id'];
+    
+                        $insumo_db->save();
+                    }else{ //de lo contrario eliminamos el insumo de la base de datos.
+                        $insumo_db->delete();
                     }
+                }else{ //SI no existe un registro en la base de datos, se crea uno nuevo
+                    $insumo_form = $parametros['insumos'][$i];
+                    $insumo_db = new PedidoInsumo();
+
+                    $insumo_db->deleted_at = null; //Por si el elemento ya esta liminado, lo restauramos
+                    $insumo_db->insumo_medico_clave = $insumo_form['clave'];
+                    $insumo_db->cantidad_solicitada = $insumo_form['cantidad'];
+                    $insumo_db->cantidad_recibida = ($insumo_form['cantidad_recibida'])?$insumo_form['cantidad_recibida']:null;
+                    $insumo_db->precio_unitario = $insumo_form['precio'];
+                    $insumo_db->monto_solicitado = $insumo_form['cantidad']*$insumo_form['precio'];
+                    $insumo_db->monto_recibido = ($insumo_form['cantidad_recibida'])?$insumo_form['cantidad_recibida']*$insumo_form['precio']:null;
+                    $insumo_db->tipo_insumo_id = $insumo_form['tipo_insumo_id'];
+                    $insumo_db->pedido_id = $pedido->id;
+
+                    $insumo_db->save();
                 }
-                // ############################################
+
+                if(isset($parametros['insumos'][$i])){
+                    $insumo_form = $parametros['insumos'][$i];
+                    $total_insumos += $insumo_form['cantidad'];
+                    
+                    if($insumo_form['tipo'] == 'ME' && $insumo_form['es_causes']){
+                        $total_monto['causes'] += $insumo_form['monto'];
+                    }elseif($insumo_form['tipo'] == 'ME' && !$insumo_form['es_causes']){
+                        $total_monto['no_causes'] += $insumo_form['monto'];
+                    }else{
+                        $total_monto['material_curacion'] += $insumo_form['monto'];
+                    }
+
+                    // ######### PEDIDOS JURISDICCIONALES #########
+                    if($um->tipo == 'OA' && $tipo_pedido == 'PJS'){
+                        /*foreach($insumo_form['lista_clues'] as $key_clues => $value_clues){
+                            $insumo_clues = [
+                                'pedido_insumo_id' => $object_insumo->id,
+                                'clues' => $value_clues['clues'],
+                                'cantidad' => $value_clues['cantidad']
+                            ];
+                            PedidoInsumoClues::create($insumo_clues);
+                        }*/
+                    }
+                    // ############################################
+                }
             }
 
             if($total_monto['material_curacion'] > 0){
                 $total_monto['material_curacion'] += $total_monto['material_curacion']*16/100;
             }
-
+            
             if(!$pedido->folio && $pedido->status != 'BR'){
                 $anio = date('Y');
 
@@ -694,6 +714,25 @@ class PedidoController extends Controller{
                         $movimiento_insumo = MovimientoInsumos::create($nuevo_movimiento_insumo);
                     }
                 }
+            }else if($pedido->status == 'SD' && $pedido->tipo_pedido_id == 'PEA'){
+                //Harima: agregamos control de historial para el proceso de transferencias
+                $almacen_proveedor = Almacen::find($pedido->almacen_proveedor);
+                $historial_datos = [
+                    'almacen_origen'=>$almacen_proveedor->id,
+                    'almacen_destino'=>$almacen_solicitante->id,
+                    'clues_origen'=>$almacen_proveedor->clues,
+                    'clues_destino'=>$almacen_solicitante->clues,
+                    'pedido_id'=>$pedido->id,
+                    'evento'=>'CAPTURA PEA',
+                    'movimiento_id'=>NULL,
+                    'total_unidades'=>$pedido->total_cantidad_solicitada,
+                    'total_claves'=>$pedido->total_claves_solicitadas,
+                    'total_monto'=>$pedido->total_monto_solicitado,
+                    'fecha_inicio_captura'=>$pedido->created_at,
+                    'fecha_finalizacion'=>Carbon::now()
+                ];
+
+                $historial = HistorialMovimientoTransferencia::create($historial_datos);
             }
              
              DB::commit(); 
@@ -712,7 +751,7 @@ class PedidoController extends Controller{
             $almacen = Almacen::find($request->get('almacen_id'));
             $pedido = Pedido::where('clues',$almacen->clues)->where('id',$id)->first();
             if($pedido){
-                if($pedido->status == 'BR'){
+                if($pedido->status == 'BR' && $pedido->total_cantidad_recibida <= 0){
                     $pedido->insumos()->delete();
                     $pedido->delete();
                 }else{

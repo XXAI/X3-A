@@ -89,10 +89,6 @@ class EntregaController extends Controller
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }
         $movimientosInsumos = $object->movimientoInsumos;
-
-       
-       
-        
         $movimientoPedido = $object->movimientoPedido;
         
         $pedido = $movimientoPedido->pedido;

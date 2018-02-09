@@ -426,10 +426,13 @@ class MovimientoController extends Controller
     {
         $errors = array(); 
 
-        $almacen_id=$request->get('almacen_id');       
+        $almacen_id=$request->get('almacen_id');    
+
+
 
         $validacion = $this->ValidarMovimiento("", NULL, Input::json()->all(),$almacen_id);
-		if(is_array($validacion))
+
+        if(is_array($validacion))
         {
 			return Response::json(['error' => $validacion], HttpResponse::HTTP_CONFLICT);
 		}
@@ -1120,6 +1123,8 @@ class MovimientoController extends Controller
     { 
         $errors_validar_movimiento = array();
 
+
+
         $mensajes = [
                         'required'      => "required",
                         'email'         => "email",
@@ -1132,6 +1137,7 @@ class MovimientoController extends Controller
         $reglas = [
                     'tipo_movimiento_id' => 'required|integer|in:1,2,3,4,5,6,7,8,9,10,11,12',
                   ];
+
 
         if($request['movimiento_metadato'] != NULL)
         {
@@ -1153,10 +1159,11 @@ class MovimientoController extends Controller
             }
 
         }
-        
+         
         if($request['tipo_movimiento_id'] == 5 )
             {
                 $request_temp = (object)$request;
+
                 if(property_exists($request_temp,'receta'))
                 {
                         
@@ -1165,7 +1172,7 @@ class MovimientoController extends Controller
                                 'receta.folio'          => 'required|string',
                                 'receta.tipo_receta_id'    => 'required|integer',
                                 'receta.fecha_receta'   => 'required',
-                                'receta.personal_clues_id'         => 'required|string',
+                                //'receta.personal_clues_id'  => 'required|string',
                                 'receta.paciente'       => 'required|string',
                                 'receta.diagnostico'    => 'required|string'
                             ];
@@ -1180,6 +1187,8 @@ class MovimientoController extends Controller
                             }  
                 }
             }
+
+         
 
     $v = \Validator::make($request, $reglas, $mensajes );
 
@@ -2043,9 +2052,25 @@ class MovimientoController extends Controller
             if(property_exists($datos,"receta"))
             {
 
-                
-                $receta->personal_clues_id  = $datos->receta['personal_clues_id'];
-                       
+                //Aqui se hace todo
+                if(is_numeric($datos->receta['personal_clues_id']))
+                {
+
+                    $receta->personal_clues_id  = $datos->receta['personal_clues_id'];
+                }else
+                {
+                    $almacen = Almacen::find($almacen_id);
+                    $agregar_personal = new PersonalClues;
+                    $agregar_personal->clues = "CSSSA007605";
+                    $agregar_personal->tipo_personal_id = 1;
+                    $agregar_personal->nombre = $datos->receta['doctor'];
+                    $agregar_personal->surte_controlados = 0;
+                    $agregar_personal->licencia_controlados = "";
+                    $agregar_personal->save();
+                    $receta->personal_clues_id  = $agregar_personal->id;
+                }
+                //$receta->personal_clues_id  = $datos->receta['personal_clues_id'];
+                //Se agrega el personal en caso no exista       
 
                 $receta->movimiento_id      = $movimiento_salida_receta->id;
                 $receta->folio              = $datos->receta['folio'];

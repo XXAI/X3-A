@@ -18,6 +18,7 @@ class AlterMovimientoDetallesTable extends Migration
             $table->integer('cantidad_existente_unidosis')->after('cantidad_existente');
             $table->integer('cantidad_surtida_unidosis')->after('cantidad_surtida');
             $table->integer('cantidad_negada_unidosis')->after('cantidad_negada');
+            $table->foreign('clave_insumo_medico')->references('clave')->on('insumos_medicos')->onUpdate('cascade');
         });
     }
 
@@ -34,6 +35,7 @@ class AlterMovimientoDetallesTable extends Migration
                 $table->dropColumn('cantidad_existente_unidosis');
                 $table->dropColumn('cantidad_surtida_unidosis');
                 $table->dropColumn('cantidad_negada_unidosis');
+                $table->dropForeign(['clave_insumo_medico']);
         });
     }
 }

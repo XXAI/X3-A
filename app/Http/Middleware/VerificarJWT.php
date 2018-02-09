@@ -25,9 +25,20 @@ class VerificarJWT
             $obj =  JWTAuth::parseToken()->getPayload();
             $usuario = Usuario::find($obj->get('id'));
             
+            
+
             if(!$usuario){
                 return response()->json(['error' => 'formato_token_invalido'], 401);                
             }
+
+            // Esta linea es para que si un usuario quiere editar/agregar/eliminar información
+            // en un servidor al cual no corresponde se le deniegue la petición.
+            // Digamos que la información de un servidor offline sincronizada en el principal quiera ser editada
+            // si un usuario entra e inicia sesión. Así que solo le permitimos lectura.
+            if($usuario->servidor_id != env('SERVIDOR_ID') && $request->getMethod() != "GET"){
+                return response()->json(['error' => 'usuario_servidor_invitado_solo_lectura'], 403); 
+            }
+
             // Pasamos el usuario id como verificado
             $request->attributes->add(['usuario_id' => $usuario->id]);
         } catch (TokenExpiredException $e) {
@@ -36,7 +47,12 @@ class VerificarJWT
             return response()->json(['error' => 'token_invalido'], 500);
         }
 
-        return $next($request);
+        //return $next($request);
+        $response = $next($request);
+        
+        $response->header('Api-Version','1.0');
+
+        return $response;
     }
 
 }

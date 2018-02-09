@@ -9,11 +9,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests;
 
 use App\Models\Usuario, App\Models\Insumo, App\Models\Almacen, App\Models\Inventario, App\Models\InventarioDetalle, App\Models\Pedido, App\Models\PedidoInsumo, App\Models\Stock, App\Models\Movimiento, App\Models\MovimientoInsumos, App\Models\MovimientoPedido;
+use App\Models\HistorialMovimientoTransferencia;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
 use DateTime;
+use Carbon\Carbon;
 
 class TransferenciaAlmacenController extends Controller{
 
@@ -41,7 +43,7 @@ class TransferenciaAlmacenController extends Controller{
                 case when status = "FI" then 1 else null end
             ) as finalizados,
             count(
-                case when status = "CA" then 1 else null end
+                case when status = "EX-CA" then 1 else null end
             ) as cancelados
             '
         ))->where('almacen_proveedor',$almacen->id)->where('tipo_pedido_id','PEA')->first();
@@ -94,8 +96,9 @@ class TransferenciaAlmacenController extends Controller{
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }else{
             $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","almacenProveedor","proveedor","encargadoAlmacen","director");
-            $pedido = $pedido->load("movimientos.transferenciaSurtida.insumos","movimientos.transferenciaRecibidaBorrador.insumos","movimientos.transferenciaRecibida.insumos","movimientos.reintegro.insumos");
-            $pedido = $pedido->load("movimientosTransferenciasCompleto");
+            //$pedido = $pedido->load("movimientos.transferenciaSurtida.insumos","movimientos.transferenciaRecibidaBorrador.insumos","movimientos.transferenciaRecibida.insumos","movimientos.reintegro.insumos");
+            //$pedido = $pedido->load("movimientosTransferenciasCompleto");
+            $pedido = $pedido->load("historialTransferenciaCompleto");
         }
         return Response::json([ 'data' => $pedido],200);
     }
@@ -286,19 +289,45 @@ class TransferenciaAlmacenController extends Controller{
                     if(isset($parametros['finalizar'])){
                         $stock = Stock::find($value['stock_id']);
 
+                        $cantidad_x_envase = $stock->existencia_unidosis / $stock->existencia;
+
                         $existencia_final = $stock->existencia - $value['cantidad'];
+                        $existencia_final_unidosis = $stock->existencia_unidosis - ($value['cantidad'] * $cantidad_x_envase);
 
                         if($existencia_final < 0){
                             DB::rollBack();
                             return Response::json(['error' => 'El insumo con clave: '.$value['clave'].' ya no tiene stock.'], 500);
                         }
+
                         $stock->existencia = $existencia_final;
-                        $stock->save();
+                        $stock->existencia_unidosis = $existencia_final_unidosis;
+
+                        $stock->save();         
                     }
                 }
 
             }
             
+            $historial_datos = [
+                'almacen_origen'=>$pedido->almacen_proveedor,
+                'almacen_destino'=>$pedido->almacen_solicitante,
+                'clues_origen'=>$pedido->clues,
+                'clues_destino'=>($pedido->clues_destino)?$pedido->clues_destino:$pedido->clues,
+                'pedido_id'=>$pedido->id,
+                'evento'=>'SURTIO PEA',
+                'movimiento_id'=>$movimiento->id,
+                'total_unidades'=>$pedido->total_cantidad_solicitada,
+                'total_claves'=>$pedido->total_claves_solicitadas,
+                'total_monto'=>$pedido->total_monto_solicitado,
+                'fecha_inicio_captura'=>$movimiento->created_at,
+                'fecha_finalizacion'=>null
+            ];
+
+            if(isset($parametros['finalizar'])){
+                $historial_datos['fecha_finalizacion'] = Carbon::now();
+            }
+
+            $historial = HistorialMovimientoTransferencia::create($historial_datos);
             
             $pedido->insumos;
             $movimiento->movimientoPedido;
@@ -620,20 +649,39 @@ class TransferenciaAlmacenController extends Controller{
                     if(isset($parametros['movimiento_insumos'][$i])){
                         $insumo_form = $parametros['movimiento_insumos'][$i];
                         $stock = Stock::find($insumo_form['stock_id']);
-    
+
+                        $cantidad_x_envase = $stock->existencia_unidosis / $stock->existencia;
+
                         $existencia_final = $stock->existencia - $insumo_form['cantidad'];
+                        $existencia_final_unidosis = $stock->existencia_unidosis - ($insumo_form['cantidad'] * $cantidad_x_envase);
     
                         if($existencia_final < 0){
                             DB::rollBack();
                             return Response::json(['error' => 'El insumo con clave: '.$insumo_form['clave'].' ya no tiene stock.'], 500);
                         }
                         $stock->existencia = $existencia_final;
+                        $stock->existencia_unidosis = $existencia_final_unidosis;
                         $stock->save();
                     }
                 }
             }
+
+            $historial = HistorialMovimientoTransferencia::where('pedido_id',$pedido->id)->where('evento','SURTIO PEA')->where('movimiento_id',$movimiento->id)->first();
+
+            $historial_datos['almacen_origen'] = $pedido->almacen_proveedor;
+            $historial_datos['almacen_destino'] = $pedido->almacen_solicitante;
+            $historial_datos['clues_origen'] = $pedido->clues;
+            $historial_datos['clues_destino'] = ($pedido->clues_destino)?$pedido->clues_destino:$pedido->clues;
+            $historial_datos['total_unidades'] = $pedido->total_cantidad_solicitada;
+            $historial_datos['total_claves'] = $pedido->total_claves_solicitadas;
+            $historial_datos['total_monto'] = $pedido->total_monto_solicitado;
             
-            
+            if(isset($parametros['finalizar'])){
+                $historial_datos['fecha_finalizacion'] = Carbon::now();
+            }
+
+            $historial->update($historial_datos);
+
             $pedido->insumos;
             $movimiento->movimientoPedido;
             $movimiento->insumos;
@@ -738,18 +786,35 @@ class TransferenciaAlmacenController extends Controller{
             $stocks = Stock::where('almacen_id',$pedido->almacen_proveedor)->whereIn('id',$stock_ids)->get();
 
             DB::beginTransaction();
-            //Harima: Actualizamos el pedido para mostrar lo que se envio
+            $total_cantidad_enviada = 0;
+            $total_monto_enviado = 0;
+            $monto_para_iva = 0;
+            //Harima: Actualizamos el pedido para actualizar lo que se envio
             foreach($pedido->insumos as $insumo){
                 if(isset($claves[$insumo->insumo_medico_clave])){
-                    $insumo->cantidad_enviada = $claves[$insumo->insumo_medico_clave]['cantidad'];
+                    if(!$insumo->cantidad_enviada){
+                        $insumo->cantidad_enviada = 0;
+                    }
+                    $insumo->cantidad_enviada += $claves[$insumo->insumo_medico_clave]['cantidad'];
                     $insumo->monto_enviado = $insumo->precio_unitario * $insumo->cantidad_enviada;
 
                     $insumo->save();
+
+                    $total_cantidad_enviada += $claves[$insumo->insumo_medico_clave]['cantidad'];
+                    $total_monto_enviado += $claves[$insumo->insumo_medico_clave]['cantidad'] * $insumo->precio_unitario;
+
+                    if($insumo->conDatosInsumo->tipo == 'MC'){
+                        $monto_para_iva += $claves[$insumo->insumo_medico_clave]['cantidad'] * $insumo->precio_unitario;
+                    }
 
                     $claves[$insumo->insumo_medico_clave]['tipo_insumo_id'] = $insumo->tipo_insumo_id;
                     $claves[$insumo->insumo_medico_clave]['precio'] = $insumo->precio_unitario;
                     $claves[$insumo->insumo_medico_clave]['cantidad_x_envase'] = $insumo->conDatosInsumo->cantidad_x_envase;
                 }
+            }
+
+            if($monto_para_iva > 0){
+                $total_monto_enviado += $monto_para_iva*16/100;
             }
 
             $pedido->status = 'ET';
@@ -786,10 +851,28 @@ class TransferenciaAlmacenController extends Controller{
             $movimiento->save();
             $movimiento->insumos()->saveMany($movimiento_insumos);
 
+            /* No lo necesito si tengo el historial
             $movimiento_pedido = new MovimientoPedido();
             $movimiento_pedido->pedido_id = $id;
-
             $movimiento->movimientoPedido()->save($movimiento_pedido);
+            */
+
+            $historial_datos = [
+                'almacen_origen'=>$pedido->almacen_proveedor,
+                'almacen_destino'=>$pedido->almacen_solicitante,
+                'clues_origen'=>$pedido->clues,
+                'clues_destino'=>($pedido->clues_destino)?$pedido->clues_destino:$pedido->clues,
+                'pedido_id'=>$pedido->id,
+                'evento'=>'SURTIO PEA',
+                'movimiento_id'=>$movimiento->id,
+                'total_unidades'=>$total_cantidad_enviada,
+                'total_claves'=>count($claves),
+                'total_monto'=>$total_monto_enviado,
+                'fecha_inicio_captura'=>$movimiento->created_at,
+                'fecha_finalizacion'=>Carbon::now()
+            ];
+
+            $historial = HistorialMovimientoTransferencia::create($historial_datos);
 
             DB::commit();
 	        return Response::json(['message'=>'surtido','data'=>$movimiento],200);
@@ -813,6 +896,11 @@ class TransferenciaAlmacenController extends Controller{
             $stock_ids = [];
             $claves = [];
             $cantidades_stock = [];
+
+            $total_cantidad = 0;
+            $total_monto = 0;
+            $monto_para_iva = 0;
+
             foreach($datos['insumos'] as $stock){
                 $stock_ids[] = $stock['stock_id'];
                 if(!isset($claves[$stock['clave']])){
@@ -820,10 +908,11 @@ class TransferenciaAlmacenController extends Controller{
                 }
                 $claves[$stock['clave']]['cantidad'] += $stock['cantidad'];
                 $cantidades_stock[$stock['stock_id']] = $stock['cantidad'];
+                $total_cantidad += $stock['cantidad'];
             }
 
             $stocks = Stock::where('almacen_id',$pedido->almacen_proveedor)->whereIn('id',$stock_ids)->get();
-
+            
             DB::beginTransaction();
             //Harima: Actualizamos el pedido para mostrar lo que se envio
             foreach($pedido->insumos as $insumo){
@@ -831,7 +920,20 @@ class TransferenciaAlmacenController extends Controller{
                     $claves[$insumo->insumo_medico_clave]['tipo_insumo_id'] = $insumo->tipo_insumo_id;
                     $claves[$insumo->insumo_medico_clave]['precio'] = $insumo->precio_unitario;
                     $claves[$insumo->insumo_medico_clave]['cantidad_x_envase'] = $insumo->conDatosInsumo->cantidad_x_envase;
+
+                    $insumo->cantidad_enviada -= $claves[$insumo->insumo_medico_clave]['cantidad']; //Lo restamos de cantidad eviada, para que podamos enviar mas en caso de ser necesario
+                    $insumo->monto_enviado -= $claves[$insumo->insumo_medico_clave]['cantidad'] * $insumo->precio_unitario;
+                    $insumo->save();
+
+                    $total_monto += $claves[$insumo->insumo_medico_clave]['cantidad'] * $insumo->precio_unitario;
+                    if($insumo->conDatosInsumo->tipo == 'MC'){
+                        $monto_para_iva += $claves[$insumo->insumo_medico_clave]['cantidad'] * $insumo->precio_unitario;
+                    }
                 }
+            }
+
+            if($monto_para_iva > 0){
+                $total_monto += $monto_para_iva*16/100;
             }
 
             //$pedido->status = 'FI-P';
@@ -849,7 +951,7 @@ class TransferenciaAlmacenController extends Controller{
                     $stock_item->save();
                 }
                 
-                if($datos['accion'] == 'reintegrar' || $datos['accion'] == 'eliminar'){
+                if($datos['accion'] == 'reintegrar'){ // || $datos['accion'] == 'eliminar'
                     $insumo_mas = new MovimientoInsumos();
                     $insumo_mas->tipo_insumo_id = $claves[$stock_item->clave_insumo_medico]['tipo_insumo_id'];
                     $insumo_mas->stock_id = $stock_item->id;
@@ -889,10 +991,14 @@ class TransferenciaAlmacenController extends Controller{
                 $movimiento_mas->save();
                 $movimiento_mas->insumos()->saveMany($movimiento_mas_insumos);
 
+                $movimiento_id = $movimiento_mas->id;
+                $evento = 'REINTEGRACION INVENTARIO';
+
+                /*
                 $movimiento_pedido = new MovimientoPedido();
                 $movimiento_pedido->pedido_id = $id;
-    
                 $movimiento_mas->movimientoPedido()->save($movimiento_pedido);
+                */
             }
             
             if(count($movimiento_menos_insumos) > 0){
@@ -900,17 +1006,38 @@ class TransferenciaAlmacenController extends Controller{
                 $movimiento_menos->almacen_id = $pedido->almacen_proveedor;
                 $movimiento_menos->tipo_movimiento_id = 7;
                 $movimiento_menos->status = 'FI';
-                $movimiento_menos->observaciones = 'SE DAN DE BAJA INSUMOS NO ENTREGADOS EN EL PEDIDO CON FOLIO: '.$pedido->folio;
+                $movimiento_menos->observaciones = 'SE MARCAN COMO MERMA INSUMOS NO ENTREGADOS EN EL PEDIDO CON FOLIO: '.$pedido->folio;
                 $movimiento_menos->fecha_movimiento = date('Y-m-d');
                 
                 $movimiento_menos->save();
                 $movimiento_menos->insumos()->saveMany($movimiento_menos_insumos);
 
+                $movimiento_id = $movimiento_menos->id;
+                $evento = 'ELIMINACION INVENTARIO';
+
+                /*
                 $movimiento_pedido = new MovimientoPedido();
                 $movimiento_pedido->pedido_id = $id;
-    
                 $movimiento_menos->movimientoPedido()->save($movimiento_pedido);
+                */
             }
+
+            $historial_datos = [
+                'almacen_origen'=>$pedido->almacen_proveedor,
+                'almacen_destino'=>$pedido->almacen_solicitante,
+                'clues_origen'=>$pedido->clues,
+                'clues_destino'=>($pedido->clues_destino)?$pedido->clues_destino:$pedido->clues,
+                'pedido_id'=>$pedido->id,
+                'evento'=>$evento,
+                'movimiento_id'=>$movimiento_id,
+                'total_unidades'=>$total_cantidad,
+                'total_claves'=>count($claves),
+                'total_monto'=>$total_monto,
+                'fecha_inicio_captura'=>Carbon::now(),
+                'fecha_finalizacion'=>Carbon::now()
+            ];
+
+            $historial = HistorialMovimientoTransferencia::create($historial_datos);
             
             DB::commit();
 	        return Response::json(['message'=>'finalizado','data'=>$pedido],200);

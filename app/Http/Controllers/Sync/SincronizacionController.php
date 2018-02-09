@@ -10,6 +10,7 @@ use \DB, \Storage, \ZipArchive, \Hash, \Response, \Config;
 use Illuminate\Support\Facades\Input;
 use App\Models\Sincronizacion, App\Models\Servidor; 
 use App\Librerias\Sync\ArchivoSync;
+use Carbon\Carbon;
 
 class SincronizacionController extends \App\Http\Controllers\Controller
 {
@@ -56,7 +57,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         // Creamos o reseteamos archivo de respaldo
         Storage::put('sync/header.sync',"ID=".env('SERVIDOR_ID'));
         Storage::append('sync/header.sync',"SECRET_KEY=".env('SECRET_KEY'));
-        Storage::append('sync/header.sync',"VERSION=".env('VERSION'));
+        Storage::append('sync/header.sync',"VERSION=".Config::get("sync.api_version"));
         Storage::append('sync/header.sync',"FECHA_SYNC=".$fecha_generacion);
 
         Storage::put('sync/sumami.sync', "");        
@@ -147,7 +148,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             $zippath = $storage_path."/app/";
             $zipname = "sync.".env('SERVIDOR_ID').".zip";
            
-            exec("zip -P ".env('SECRET_KEY')." -j -r ".$zippath.$zipname." \"".$zippath."/sync/\"");
+            exec("zip -P ".env('SECRET_KEY')." -j -r ".$zippath.$zipname." \"".$zippath."sync/\"");
             
             $zip_status = $zip->open($zippath.$zipname);
 
@@ -320,10 +321,11 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     } else {
                                         $servidor->catalogos_actualizados = true;
                                     }
+                                    $servidor->ultima_sincronizacion = $header_vars['FECHA_SYNC'];
                                     $servidor->save();
 
                                     // Comparamos la version del servidor principal y si es diferente le indicamos que tiene que actualizar
-                                    if($servidor->version != env('VERSION')) {
+                                    if($servidor->version != Config::get("sync.api_version")) {
                                         $actualizar_software = "true";
                                     } else {
                                         $actualizar_software = "false";
@@ -344,7 +346,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     Storage::put($confirmacion_file,"ID=".$servidor->id);
                                     Storage::append($confirmacion_file,"FECHA_SYNC=".$header_vars['FECHA_SYNC']);                                   
                                     Storage::append($confirmacion_file,"ACTUALIZAR_SOFTWARE=".$actualizar_software);
-                                    Storage::append($confirmacion_file,"VERSION_ACTUAL_SOFTWARE=".env('VERSION'));
+                                    Storage::append($confirmacion_file,"VERSION_ACTUAL_SOFTWARE=".Config::get("sync.api_version"));
                                     Storage::append($confirmacion_file,"ACTUALIZAR_CATALOGOS=".$actualizar_catalogos);
                                     $storage_path = storage_path();
                                     
@@ -491,6 +493,12 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     $sincronizacion->fecha_generacion = $confirmacion_vars['FECHA_SYNC'];
                                     $sincronizacion->save();
 
+                                    $servidor = Servidor::find(env('SERVIDOR_ID'));
+                                    if($servidor){
+                                        $servidor->ultima_sincronizacion = $confirmacion_vars['FECHA_SYNC'];
+                                        $servidor->save();
+                                    }
+                                    
                                     Storage::delete("confirmacion/confirmacion.sync");
                                     Storage::delete("confirmacion/catalogos.sync");
 
@@ -697,8 +705,9 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                          
             }
             $servidor_remoto = Servidor::on('mysql_sync')->find(env('SERVIDOR_ID'));
-            $servidor_remoto->version = env('VERSION');
+            $servidor_remoto->version = Config::get("sync.api_version");
             $servidor_remoto->catalogos_actualizados = true;
+            $servidor_remoto->ultima_sincronizacion = Carbon::now();
             $servidor_remoto->save();
 
             $sincronizacion_remoto = new Sincronizacion;

@@ -68,7 +68,8 @@ class AvanceController extends Controller
 		{
 
 			$avance = DB::table('avances')
-                            ->whereRaw("avances.id in (select avance_id from avance_usuario_privilegio where usuario_id='".$request->get('usuario_id')."')" );
+                            ->whereRaw("avances.id in (select avance_id from avance_usuario_privilegio where usuario_id='".$request->get('usuario_id')."')" )
+                            ->whereNull("deleted_at");
 		}else
 		{
 			return Response::json(['error' => "Error, no tiene permisos "], 500); 

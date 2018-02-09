@@ -19,7 +19,7 @@ class CreateContratosPreciosTable extends Migration{
             $table->integer('contrato_pedido_id')->unsigned()->nullable();
             $table->integer('proveedor_id')->unsigned();
             $table->string('lote', 45);
-            $table->string('insumo_medico_clave', 45);
+            $table->string('insumo_medico_clave', 255);
             //$table->string('marca', 100)->nullable();
             $table->decimal('precio', 15, 2);
             $table->string('usuario_id', 255);

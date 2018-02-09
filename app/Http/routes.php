@@ -15,9 +15,26 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::group(['middleware' => 'servidor.instalado'], function () {
+    Route::get('install', function () {
+        return view('install');
+    });
+    Route::get('config-server', 'InstallController@runDatabase');
+    Route::get('server-offline', 'InstallController@configServer');
+});
+
+
+
 Route::post('obtener-token',                    'AutenticacionController@autenticar');
 Route::post('refresh-token',                    'AutenticacionController@refreshToken');
 Route::get('check-token',                       'AutenticacionController@verificar');
+
+
+Route::post('reset-password/email',                 'ResetPasswordController@enviarEmail');
+Route::post('reset-password/validar-token',         'ResetPasswordController@validarToken');
+Route::put('reset-password/password-nuevo/{id}',    'ResetPasswordController@passwordNuevo');
+Route::get('reset-password/pregunta-secreta/{id}',  'ResetPasswordController@obtenerPreguntaSecreta');
+Route::post('reset-password/validar-respuesta',     'ResetPasswordController@validarRespuesta');
 
  
 Route::get('grupo-permiso',                     'AutoCompleteController@grupo_permiso');
@@ -37,8 +54,14 @@ Route::get('grafica-entregas',                  'ReportePedidoController@grafica
 Route::get('estatus-pedidos',                   'ReportePedidoController@estatusEntregaPedidos');
 
 
-Route::group(['middleware' => 'jwt'], function () {
+// Akira: tuve que agregar esto aqui porque no me iba a poner a batallar para interceptar la peticion de conchita
+// con su auto complete, y no se puede refrescar el token con la libreria del cliente
+Route::group(['prefix' => 'medicos','namespace' => 'Medicos'], function () {
+    Route::resource('pacientes',         'PacientesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+});
 
+Route::group(['middleware' => 'jwt'], function () {
+    Route::put('editar-perfil/{id}',               'EditarPerfilController@editar');
     Route::resource('usuarios',                 'UsuarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('roles',                    'RolController',           ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('permisos',                 'PermisoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -189,6 +212,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-stats',                     'PedidoController@stats');
         Route::get('pedidos-presupuesto',               'PedidoController@obtenerDatosPresupuesto');
         Route::put('cancelar-pedido-transferir/{id}',   'CancelarPedidosController@cancelarYTransferir');
+        Route::put('cancelar-transferencia/{id}',       'CancelarPedidosController@cancelarTransferencia');
 
         
         // Actas
@@ -212,6 +236,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('catalogo-insumos',             'CatalogoInsumoController',     ['only' => ['index', 'show']]);
 
         Route::get('unidades-medicas-dependientes',     'UnidadesMedicasController@unidadesMedicasDependientes');
+        Route::get('stock-insumo-medico',               'StockController@stockInsumoMedico');
     });
 
     
@@ -248,6 +273,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('forma-farmaceutica',                   'FormaFarmaceuticaController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('condicion-articulo',                   'CondicionArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
+    
     // catalogos  
 
     
@@ -281,7 +307,15 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::resource('configuracion-general',            'ConfiguracionGeneralController',    ['only' => ['show', 'update']]);
          
     });
+
+    Route::group(['prefix' => 'medicos','namespace' => 'Medicos'], function () {
+        //Route::resource('pacientes',         'PacientesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('recetas',           'RecetasController',             ['only' => ['index', 'show', 'store','update','destroy']]);
+    });
     
+    
+
+    // Akira: Esto nose que onda a que módulo pertenece
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
 
     //Modulo de Avances

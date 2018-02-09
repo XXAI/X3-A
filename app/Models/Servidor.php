@@ -11,6 +11,6 @@ class Servidor extends BaseModel{
     protected $guardarIDServidor = false;
     protected $guardarIDUsuario = false;    
     protected $table = 'servidores';  
-    protected $fillable = ["id","nombre","secret_key","principal"];  
+    protected $fillable = ["id","nombre","secret_key","principal","clues","ip"];  
     
 }

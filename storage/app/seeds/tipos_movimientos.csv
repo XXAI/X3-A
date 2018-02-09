@@ -1,0 +1,9 @@
+id,tipo,nombre,created_at,updated_at,deleted_at
+1,E,"Entrada Manual","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+2,S,"Salida Manual","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+3,S,"Entrega de Pedido","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+4,E,"Recepción de Pedido","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+5,S,"Surtimiento de Receta","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+6,E,"Ajuste Más","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+7,S,"Ajuste Menos","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+8,E,"Entrada desde pedido a Farmacia Subrogada","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL

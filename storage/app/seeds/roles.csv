@@ -1,0 +1,12 @@
+id,nombre,modulo_inicio,es_offline,created_at,updated_at,deleted_at
+1,ADMIN,NULL,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+2,ALMACEN,almacen/pedidos/nuevo,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+3,"Administrador central",administrador-central/pedidos,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+4,"Transferencia de Recursos",NULL,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+5,PROVEEDOR,administrador-proveedores/pedidos,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+6,"Claves Basicas",NULL,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+7,"Cumplimiento Proveedores",NULL,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+8,"CONFIGURACION CLUES",NULL,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+9,"Avances Usuario",NULL,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+10,"Avances Administrador",NULL,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+11,MovimientosAlmacen,NULL,0,"2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
