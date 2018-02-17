@@ -3,7 +3,7 @@
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
 
-class TiposMovimientosNuevosSeeder extends Seeder
+class TiposMovimientosAlmacenStandardSeeder extends Seeder
 {
     /**
      * Run the database seeds.

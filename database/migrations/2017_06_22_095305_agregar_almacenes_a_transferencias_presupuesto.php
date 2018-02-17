@@ -25,7 +25,7 @@ class AgregarAlmacenesATransferenciasPresupuesto extends Migration
      */
     public function down()
     {
-         Schema::table('unidades_medicas', function (Blueprint $table){               
+         Schema::table('transferencias_presupuesto', function (Blueprint $table){               
              $table->dropColumn('almacen_origen');
              $table->dropColumn('almacen_destino');
         });

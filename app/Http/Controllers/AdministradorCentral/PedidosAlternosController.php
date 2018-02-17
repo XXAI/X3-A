@@ -428,16 +428,21 @@ class PedidosAlternosController extends Controller{
                 }
                 
                 $presupuesto_unidad->causes_comprometido = $presupuesto_unidad->causes_comprometido + round($total_monto['causes'],2);
-                $presupuesto_unidad->causes_disponible = $presupuesto_unidad->causes_disponible - round($total_monto['causes'],2);
+                //$presupuesto_unidad->causes_disponible = $presupuesto_unidad->causes_disponible - round($total_monto['causes'],2);
+
+                $presupuesto_unidad->material_curacion_comprometido = $presupuesto_unidad->material_curacion_comprometido + round($total_monto['material_curacion'],2);
+                //$presupuesto_unidad->material_curacion_disponible = $presupuesto_unidad->material_curacion_disponible - round($total_monto['material_curacion'],2);
 
                 $presupuesto_unidad->no_causes_comprometido = $presupuesto_unidad->no_causes_comprometido + round($total_monto['no_causes'],2);
                 $presupuesto_unidad->no_causes_disponible = $presupuesto_unidad->no_causes_disponible - round($total_monto['no_causes'],2);
-
-                $presupuesto_unidad->material_curacion_comprometido = $presupuesto_unidad->material_curacion_comprometido + round($total_monto['material_curacion'],2);
-                $presupuesto_unidad->material_curacion_disponible = $presupuesto_unidad->material_curacion_disponible - round($total_monto['material_curacion'],2);
+                
+                //Agregando insumos(causes+material_curacion)
+                $presupuesto_unidad->insumos_comprometido = $presupuesto_unidad->insumos_comprometido + round($total_monto['causes']+$total_monto['material_curacion'],2);
+                $presupuesto_unidad->insumos_disponible = $presupuesto_unidad->insumos_disponible - round($total_monto['causes']+$total_monto['material_curacion'],2);
                 
                 //if($presupuesto_unidad->causes_disponible < 0 || $presupuesto_unidad->no_causes_disponible < 0 || $presupuesto_unidad->material_curacion_disponible < 0){
-                if(($presupuesto_unidad->causes_disponible + $presupuesto_unidad->material_curacion_disponible) < 0 || $presupuesto_unidad->no_causes_disponible < 0){
+                //if(($presupuesto_unidad->causes_disponible + $presupuesto_unidad->material_curacion_disponible) < 0 || $presupuesto_unidad->no_causes_disponible < 0){
+                if($presupuesto_unidad->insumos_disponibles < 0 || $presupuesto_unidad->no_causes_disponible < 0){
                     DB::rollBack();
                     return Response::json(['error' => 'El presupuesto es insuficiente para este pedido, los cambios no se guardaron.', 'data'=>[$presupuesto_unidad,$total_monto]], 500);
                 }else{

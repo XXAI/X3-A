@@ -41,6 +41,7 @@ class PedidoController extends Controller{
             $presupuesto = Presupuesto::where('activo',1)->first();
 
             $presupuesto_unidad_medica = UnidadMedicaPresupuesto::select('clues',
+                                            DB::raw('sum(insumos_autorizado) as insumos_autorizado'),DB::raw('sum(insumos_modificado) as insumos_modificado'),DB::raw('sum(insumos_comprometido) as insumos_comprometido'),DB::raw('sum(insumos_devengado) as insumos_devengado'),DB::raw('sum(insumos_disponible) as insumos_disponible'),
                                             DB::raw('sum(causes_autorizado) as causes_autorizado'),DB::raw('sum(causes_modificado) as causes_modificado'),DB::raw('sum(causes_comprometido) as causes_comprometido'),DB::raw('sum(causes_devengado) as causes_devengado'),DB::raw('sum(causes_disponible) as causes_disponible'),
                                             DB::raw('sum(no_causes_autorizado) as no_causes_autorizado'),DB::raw('sum(no_causes_modificado) as no_causes_modificado'),DB::raw('sum(no_causes_comprometido) as no_causes_comprometido'),DB::raw('sum(no_causes_devengado) as no_causes_devengado'),DB::raw('sum(no_causes_disponible) as no_causes_disponible'),
                                             DB::raw('sum(material_curacion_autorizado) as material_curacion_autorizado'),DB::raw('sum(material_curacion_modificado) as material_curacion_modificado'),DB::raw('sum(material_curacion_comprometido) as material_curacion_comprometido'),DB::raw('sum(material_curacion_devengado) as material_curacion_devengado'),DB::raw('sum(material_curacion_disponible) as material_curacion_disponible'))
@@ -644,14 +645,17 @@ class PedidoController extends Controller{
                 }
                 
                 $presupuesto_unidad->causes_comprometido = $presupuesto_unidad->causes_comprometido + round($total_monto['causes'],2);
-                $presupuesto_unidad->causes_disponible = $presupuesto_unidad->causes_disponible - round($total_monto['causes'],2);
+                //$presupuesto_unidad->causes_disponible = $presupuesto_unidad->causes_disponible - round($total_monto['causes'],2);
+
+                $presupuesto_unidad->material_curacion_comprometido = $presupuesto_unidad->material_curacion_comprometido + round($total_monto['material_curacion'],2);
+                //$presupuesto_unidad->material_curacion_disponible = $presupuesto_unidad->material_curacion_disponible - round($total_monto['material_curacion'],2);
+
+                $presupuesto_unidad->insumos_comprometido = $presupuesto_unidad->insumos_comprometido + round($total_monto['causes'] + $total_monto['material_curacion'],2);
+                $presupuesto_unidad->insumos_disponible = $presupuesto_unidad->insumos_disponible - round($total_monto['causes'] + $total_monto['material_curacion'],2);
 
                 $presupuesto_unidad->no_causes_comprometido = $presupuesto_unidad->no_causes_comprometido + round($total_monto['no_causes'],2);
                 $presupuesto_unidad->no_causes_disponible = $presupuesto_unidad->no_causes_disponible - round($total_monto['no_causes'],2);
 
-                $presupuesto_unidad->material_curacion_comprometido = $presupuesto_unidad->material_curacion_comprometido + round($total_monto['material_curacion'],2);
-                $presupuesto_unidad->material_curacion_disponible = $presupuesto_unidad->material_curacion_disponible - round($total_monto['material_curacion'],2);
-                
                 //if($presupuesto_unidad->causes_disponible < 0 || $presupuesto_unidad->no_causes_disponible < 0 || $presupuesto_unidad->material_curacion_disponible < 0){
                 if(($presupuesto_unidad->causes_disponible + $presupuesto_unidad->material_curacion_disponible) < 0 || $presupuesto_unidad->no_causes_disponible < 0){
                     DB::rollBack();
