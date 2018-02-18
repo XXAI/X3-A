@@ -83,7 +83,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                     $columnas = DB::getSchemaBuilder()->getColumnListing($key);
 
                     foreach($rows_chunks as $row_chunk){
-                        //Storage::append('sync/sumami.sync', "REPLACE INTO ".$key." VALUES ");
+                        
                         $query .= "REPLACE INTO ".$key." VALUES ";
 
                         $index_replace = 0;
@@ -145,16 +145,13 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                
                 if($rows){
                     $query = "";
-                    //$rows_chunks = array_chunk($rows, 50);
+                    
                     $columnas = DB::getSchemaBuilder()->getColumnListing($tabla);
 
                     foreach($rows as $row){
                         
                         $query .= "INSERT INTO ".$tabla."  VALUES (";
                         $update = "";
-                        //$query .= "UPDATE ".$table." SET ";
-
-                       
                         
                         $index_items = 0;
                         $index_items_update = 0;
@@ -202,16 +199,11 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                             
                         }
                         $query .= ") ON DUPLICATE KEY UPDATE ".$update."; \n";
-                        
-                                              
-                           
                     }
                   
                     Storage::append('sync/sumami.sync', $query);
                 }
             } 
-                
-            
            
             // Generamos archivo de catalogos para que cuando se sincronize en el servidor principal se sepa si están actualizados o no
           
@@ -276,7 +268,8 @@ class SincronizacionController extends \App\Http\Controllers\Controller
     {
        
         ini_set('memory_limit', '-1');
-        DB::beginTransaction();
+        $conexion_local = DB::connection('mysql');
+        $conexion_local->beginTransaction();
         try {
              
             Storage::makeDirectory("importar");
@@ -303,10 +296,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                         $zippath = $storage_path."/app/importar/";
                         $zipname = "sync.".$servidor_id.".zip";
 
-
                         $zip_status = $zip->open($zippath.$zipname) ;
-            
-                         
 
                         if ($zip_status === true) {
 
@@ -341,7 +331,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     Storage::put("importar/".$servidor->id."/confirmacion/catalogos.sync","");
                                     foreach ($catalogos_vars as $key => $cat_ultima_actualizacion) {
                                        
-                                        $principal_ultima_actualizacion = DB::table($key)->max("updated_at"); 
+                                        $principal_ultima_actualizacion = $conexion_local->table($key)->max("updated_at"); 
                                        
                                         if ($principal_ultima_actualizacion) {
                                            
@@ -349,12 +339,12 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                                 
                                                 $actualizar_catalogos = "true";
                                                
-                                                $rows = DB::table($key)->whereBetween('updated_at',[$cat_ultima_actualizacion,$principal_ultima_actualizacion])->get();                                               
+                                                $rows = $conexion_local->table($key)->whereBetween('updated_at',[$cat_ultima_actualizacion,$principal_ultima_actualizacion])->get();                                               
                                                  
                                                 if($rows){
                                                     $query = "";
                                                     $rows_chunks = array_chunk($rows, 50);    
-                                                    $columnas = DB::getSchemaBuilder()->getColumnListing($key);
+                                                    $columnas = $conexion_local->getSchemaBuilder()->getColumnListing($key);
 
                                                     foreach($rows_chunks as $row_chunk){
                                                         //Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", "REPLACE INTO ".$key." VALUES ");
@@ -393,15 +383,12 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                                         
                                                     }
 
-                                                    Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", $query);
-
-                                                    
+                                                    Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", $query);                                                    
                                                 } 
 
                                             }
                                         }
                                     }
-
                                    
                                     // Registramos la version del servidor y si los catálogos estan actualizados
                                     $servidor->version = $header_vars['VERSION'];
@@ -423,31 +410,26 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                    
                                     // Se ejecuta la sincronización
                                     $contents = Storage::get("importar/".$servidor->id."/sumami.sync");
-                                    DB::statement('SET FOREIGN_KEY_CHECKS=0');
-                                    DB::connection()->getpdo()->exec($contents);
-                                    DB::statement('SET FOREIGN_KEY_CHECKS=1');
-                                    
-
+                                    $conexion_local->statement('SET FOREIGN_KEY_CHECKS=0');
+                                    $conexion_local->getpdo()->exec($contents);
+                                    $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
                                 
                                     // Agregamos las tablas pivote al archivo de confirmación para su descarga en offline
                                     Storage::put("importar/".$servidor->id."/confirmacion/pivotes.sync","");
-                                    foreach(Config::get("sync.pivotes") as $tabla => $parametrosTabla){
-                                    
+                                    foreach(Config::get("sync.pivotes") as $tabla => $parametrosTabla){                                    
                                         
                                         // Pero antes  ejecutamos las funciones de cálculo de las tablas pivotes
                                         // para actualizar campos de ser necesario en el servidor princiapl
                                         
                                         $calculoSubidaFunction = $parametrosTabla['calculo_subida'];
                                         if($calculoSubidaFunction != ''){
-                                            if(!call_user_func($calculoSubidaFunction)){
+                                            if(!call_user_func($calculoSubidaFunction,$conexion_local)){
                                                 throw new \Exception("No se pudo hacer uno de los calculos de subida");
                                             }
                                         }
-                                        //call_user_func($calculoSubidaFunction, "parametro1","paremtro2");
-                                        
 
                                         // Buscamos las tablas pivotes para que los offline actualicen
-                                        $rows = DB::table($tabla);
+                                        $rows =$conexion_local->table($tabla);
 
                                         if($parametrosTabla['condicion_bajada'] != ''){
                                             $rows = $rows->whereRaw($parametrosTabla['condicion_bajada']);
@@ -457,7 +439,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                         if($rows){
                                             $query = "";
                                             
-                                            $columnas = DB::getSchemaBuilder()->getColumnListing($tabla);
+                                            $columnas = $conexion_local->getSchemaBuilder()->getColumnListing($tabla);
 
                                             foreach($rows as $row){
                         
@@ -555,7 +537,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                         Storage::delete($zipname);
                                         Storage::deleteDirectory("importar/".$servidor->id);
 
-                                        DB::commit();
+                                        $conexion_local->commit();
                                         exit();
                                     } else {            
                                         Storage::deleteDirectory("importar/".$servidor->id);    
@@ -591,7 +573,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         } catch (\Illuminate\Database\QueryException $e){
             //echo " Sync Importación Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Importación Excepción: ".$e->getMessage());
-            DB::rollback();
+            $conexion_local->rollback();
             return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
         catch(\Exception $e ){
@@ -607,7 +589,8 @@ class SincronizacionController extends \App\Http\Controllers\Controller
     public function confirmarSync(Request $request)
     {
         ini_set('memory_limit', '-1');
-        DB::beginTransaction();
+        $conexion_local = DB::connection('mysql');
+        $conexion_local->beginTransaction();
         try {
              
             Storage::makeDirectory("confirmacion");
@@ -668,17 +651,17 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     
                                     $contents = Storage::get("confirmacion/catalogos.sync");
                                     if($contents != ""){
-                                        DB::statement('SET FOREIGN_KEY_CHECKS=0');
-                                        DB::connection()->getpdo()->exec($contents);
-                                        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+                                        $conexion_local->statement('SET FOREIGN_KEY_CHECKS=0');
+                                        $conexion_local->getpdo()->exec($contents);
+                                        $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
                                     }
 
                                     // Tablas pivote
                                     $contents = Storage::get("confirmacion/pivotes.sync");
                                     if($contents != ""){
-                                        DB::statement('SET FOREIGN_KEY_CHECKS=0');
-                                        DB::connection()->getpdo()->exec($contents);
-                                        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+                                        $conexion_local->statement('SET FOREIGN_KEY_CHECKS=0');
+                                        $conexion_local->getpdo()->exec($contents);
+                                        $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
                                     }
 
                                     foreach(Config::get("sync.pivotes") as $tabla => $parametrosTabla){
@@ -688,7 +671,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                         // para actualizar campos de ser necesario en el servidor local
                                         $calculoBajadaFunction = $parametrosTabla['calculo_bajada'];
                                         if($calculoBajadaFunction  != ''){
-                                            if(!call_user_func($calculoBajadaFunction)){
+                                            if(!call_user_func($calculoBajadaFunction,$conexion_local)){
                                                 throw new \Exception("No se pudo hacer uno de los calculos de bajada");
                                             }
                                         }
@@ -710,7 +693,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     Storage::delete("confirmacion/confirmacion.sync");
                                     Storage::delete("confirmacion/catalogos.sync");
 
-                                    DB::commit();
+                                    $conexion_local->commit();
                                     
                                     return Response::json([ 'data' => "Sincronización con servidor remoto confirmada." ],200);
 
@@ -744,7 +727,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         } catch (\Illuminate\Database\QueryException $e){
             echo " Sync Confirmación Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Confirmación Excepción: ".$e->getMessage());
-            DB::rollback();            
+            $conexion_local->rollback();            
             return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
         catch(\Exception $e ){
@@ -766,12 +749,15 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         
         try {
             $conexion_remota = DB::connection('mysql_sync');
-            DB::beginTransaction();
+            $conexion_local = DB::connection('mysql');
+            //DB::beginTransaction();
 
+            $conexion_local->beginTransaction();
             $conexion_remota->beginTransaction();
 
             //DB::statement('SET GLOBAL max_allowed_packet=134217728');//128MB
-            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            //DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            $conexion_local->statement('SET FOREIGN_KEY_CHECKS=0');
 
             //$conexion_remota->statement('SET GLOBAL max_allowed_packet=134217728');//128MB
             $conexion_remota->statement('SET FOREIGN_KEY_CHECKS=0');
@@ -789,9 +775,9 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             foreach(Config::get("sync.tablas")as $key){
                 
                 if ($ultima_sincronizacion) {
-                    $rows = DB::table($key)->where("servidor_id",env("SERVIDOR_ID"))->whereBetween('updated_at',[$ultima_sincronizacion->fecha_generacion,$fecha_generacion])->get();
+                    $rows = $conexion_local->table($key)->where("servidor_id",env("SERVIDOR_ID"))->whereBetween('updated_at',[$ultima_sincronizacion->fecha_generacion,$fecha_generacion])->get();
                 } else {             
-                    $rows = DB::table($key)->where("servidor_id",env("SERVIDOR_ID"))->get();
+                    $rows = $conexion_local->table($key)->where("servidor_id",env("SERVIDOR_ID"))->get();
                 }                
 
                 if($rows){                    
@@ -799,7 +785,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                     // Separamos los registros porque cuando son demasiados marca un error de ejecución
                     $rows_chunks = array_chunk($rows, 50);
 
-                    $columnas = DB::getSchemaBuilder()->getColumnListing($key);
+                    $columnas = $conexion_local->getSchemaBuilder()->getColumnListing($key);
 
                     foreach($rows_chunks as $row_chunk){
 
@@ -848,7 +834,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             $log .= "\n### Catálogos [remoto -> local]: -------------------- ### \n";
             foreach (Config::get("sync.catalogos") as $key) {
                    
-                $ultima_actualizacion_local = DB::table($key)->max("updated_at");                 
+                $ultima_actualizacion_local = $conexion_local->table($key)->max("updated_at");                 
                 $ultima_actualizacion_remoto = $conexion_remota->table($key)->max("updated_at");
 
                 if ($ultima_actualizacion_local) {
@@ -866,7 +852,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
 
                     // Separamos los registros porque cuando son demasiados marca un error de ejecución
                     $rows_chunks = array_chunk($rows, 50);
-                    $columnas = DB::getSchemaBuilder()->getColumnListing($key);
+                    $columnas = $conexion_local->getSchemaBuilder()->getColumnListing($key);
 
                     foreach($rows_chunks as $row_chunk){
                         $statement = "REPLACE INTO ".$key." VALUES ";   
@@ -902,16 +888,270 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                         }
                         $statement .= ";";
                     
-                        DB::statement($statement);
+                        $conexion_local->statement($statement);
                     }
                     $log .= "Tabla: ".$key."\t=> ".count($rows)." registros sincronizados \n";
                 } else {
                     $log .= "Tabla: ".$key."\t=> 0 registros sincronizados \n";
-                } 
-
-                
-                         
+                }        
             }
+
+            // Tablas pivote
+
+            $log .= "\n### Pivotes: -------------------- ### \n";
+            foreach(Config::get("sync.pivotes") as $tabla => $parametrosTabla){
+                
+                // Inicia offline a remoto
+                if ($ultima_sincronizacion) {                    
+                    $rows = $conexion_local->table($tabla)->whereBetween('updated_at',[$ultima_sincronizacion->fecha_generacion,$fecha_generacion]);
+                } else {             
+                    $rows = $conexion_local->table($tabla);
+                }
+
+                if($parametrosTabla['condicion_subida'] != ''){
+                    $rows = $rows->whereRaw($parametrosTabla['condicion_subida']);
+                }
+                $rows = $rows->get();
+               
+                if($rows){
+                                      
+                    $columnas = $conexion_local->getSchemaBuilder()->getColumnListing($tabla);
+
+                    foreach($rows as $row){
+                        
+                        $query = "INSERT INTO ".$tabla."  VALUES (";
+                        $update = "";                       
+                        
+                        $index_items = 0;
+                        $index_items_update = 0;
+                        
+                        foreach($columnas as $nombre){
+                            $up_flag = in_array($nombre,$parametrosTabla['campos_subida']);
+                            
+                            if ($index_items!=0){
+                                $query .= ",";
+                            }
+
+                            if ($index_items_update!=0 && $up_flag){
+                                $update .= ",";
+                            }
+                            if($up_flag){
+                                $update .= $nombre.'=';
+                            }
+                            $tipo  = gettype($row->$nombre);
+                            
+                            switch($tipo){
+                                case "string": 
+                                    $text = '"'.addslashes($row->$nombre).'"'; 
+                                    $query .= $text;
+                                    if($up_flag){
+                                        $update .= $text;
+                                    } 
+                                    break;
+                                case "NULL": 
+                                    $query .= "NULL"; 
+                                    if($up_flag){
+                                        $update .= "NULL"; 
+                                    }
+                                    break;
+                                default: 
+                                    $text = addslashes($row->$nombre);
+                                    $query .= $text;
+                                    if($up_flag){
+                                        $update .= $text;
+                                    }
+                            }                                
+                            $index_items += 1;
+                            if($up_flag){
+                                $index_items_update += 1;
+                            }                            
+                        }
+                        $query .= ") ON DUPLICATE KEY UPDATE ".$update." ; ";
+                        $conexion_remota->statement($query);    
+                    }
+                    
+
+                    $calculoSubidaFunction = $parametrosTabla['calculo_subida'];
+                    if($calculoSubidaFunction != ''){
+                        
+                        
+                        if(!call_user_func($calculoSubidaFunction,  $conexion_remota)){
+                            throw new \Exception("No se pudo hacer uno de los calculos de subida");
+                        }
+                    }   
+                    
+                    $log .= "Tabla pivote [subida] : ".$key."\t=> ".count($rows)." registros sincronizados \n";
+                } else{
+                    $log .= "Tabla pivote [subida] : ".$key."\t=> 0 registros sincronizados \n";
+                }
+                // Fin offline a remoto
+
+                // Inicia remoto a offline
+
+                // Buscamos las tablas pivotes para que los offline actualicen
+                $rows = $conexion_remota->table($tabla);
+
+                if($parametrosTabla['condicion_bajada'] != ''){
+                    $rows = $rows->whereRaw($parametrosTabla['condicion_bajada']);
+                }
+                $rows = $rows->get();
+            
+
+                ////##### Este método funciona más optimo pero lo descubri de ultimo momento lo dejo comentado por si hay que usarlo
+                /*
+                if($rows){                    
+
+                    // Separamos los registros porque cuando son demasiados marca un error de ejecución
+                    $rows_chunks = array_chunk($rows, 50);
+
+                    $columnas = DB::getSchemaBuilder()->getColumnListing($tabla);
+
+                    $on_duplicate_key_update_fields = "";
+                    $index_duplicate = 0;
+                    foreach($parametrosTabla['campos_bajada'] as $campo){
+                        if($index_duplicate >0){
+                            $on_duplicate_key_update_fields .= ", ";
+                        }
+                        $on_duplicate_key_update_fields.= $campo." =  VALUES(".$campo.")";
+                        $index_duplicate++;
+                    }
+                    
+
+                    foreach($rows_chunks as $row_chunk){
+
+                        $statement = "INSERT INTO ".$tabla." VALUES ";                    
+                       
+                        $index_replace = 0;
+
+
+                        foreach($row_chunk as $row){
+                            if ($index_replace!=0){
+                                $item = ", (";
+                            } else {
+                                $item = "(";
+                            }
+                            
+                            $index_items = 0;
+                            foreach($columnas as $nombre){
+                                if ($index_items!=0){
+                                    $item .= ",";
+                                }
+
+                                $tipo  = gettype($row->$nombre);
+                                
+                                switch($tipo){
+                                    case "string": $item .= "\"".addslashes($row->$nombre)."\""; break;
+                                    case "NULL": $item .= "NULL"; break;
+                                    default: $item .= addslashes($row->$nombre);
+                                }
+                                
+                                $index_items += 1;
+                            }
+                            $item .= ") ";
+                            $index_replace += 1;
+                            
+                            $statement.= $item;                      
+                        }
+                        $statement .= "   ON DUPLICATE KEY UPDATE ".$on_duplicate_key_update_fields.";";
+                        $conexion_remota->statement($statement);
+                    }
+
+                    $calculoBajadaFunction = $parametrosTabla['calculo_bajada'];
+                    if($calculoBajadaFunction != ''){
+                        
+                        if(!call_user_func($calculoBajadaFunction)){
+                            throw new \Exception("No se pudo hacer uno de los calculos de bajada");
+                        }
+                    }    
+                    $log .= "Tabla pivote [bajada] : ".$key."\t=> ".count($rows)." registros sincronizados \n";
+                } else{
+                    $log .= "Tabla pivote [bajada] : ".$key."\t=> 0 registros sincronizados \n";
+                }*/
+
+
+
+                ///#######################
+
+
+
+
+
+                if($rows){
+
+                    $columnas = $conexion_local->getSchemaBuilder()->getColumnListing($tabla);
+
+                    foreach($rows as $row){
+
+                        $query = "INSERT INTO ".$tabla."  VALUES (";
+                        $update = "";
+                        
+                        $index_items = 0;
+                        $index_items_update = 0;
+                        
+                        foreach($columnas as $nombre){
+                            // Solo los campos de bajada
+                            $up_flag = in_array($nombre,$parametrosTabla['campos_bajada']);
+                            
+                            if ($index_items!=0){
+                                $query .= ",";
+                            }
+
+                            if ($index_items_update!=0 && $up_flag){
+                                $update .= ",";
+                            }
+                            if($up_flag){
+                                $update .= $nombre.'=';
+                            }
+                            $tipo  = gettype($row->$nombre);
+                            
+                            switch($tipo){
+                                case "string": 
+                                    $text = "\"".addslashes($row->$nombre)."\""; 
+                                    $query .= $text;
+                                    if($up_flag){
+                                        $update .= $text;
+                                    } 
+                                    break;
+                                case "NULL": 
+                                    $query .= "NULL"; 
+                                    if($up_flag){
+                                        $update .= "NULL"; 
+                                    }
+                                    break;
+                                default: 
+                                    $text = addslashes($row->$nombre);
+                                    $query .= $text;
+                                    if($up_flag){
+                                        $update .= $text;
+                                    }
+                            }                                
+                            $index_items += 1;
+                            if($up_flag){
+                                $index_items_update += 1;
+                            }
+                            
+                        }
+                        $query .= ") ON DUPLICATE KEY UPDATE ".$update."; ";
+                        $conexion_local->statement($query);    
+                    }
+                   
+
+                    $calculoBajadaFunction = $parametrosTabla['calculo_bajada'];
+                    if($calculoBajadaFunction != ''){
+                        
+                        if(!call_user_func($calculoBajadaFunction, $conexion_local)){
+                            throw new \Exception("No se pudo hacer uno de los calculos de bajada");
+                        }
+                    }                                      
+                    $log .= "Tabla pivote [bajada] : ".$key."\t=> ".count($rows)." registros sincronizados \n";
+                } else{
+                    $log .= "Tabla pivote [bajada] : ".$key."\t=> 0 registros sincronizados \n";
+                }
+
+                // Fin remoto a offline
+            } 
+
+
             $servidor_remoto = Servidor::on('mysql_sync')->find(env('SERVIDOR_ID'));
             $servidor_remoto->version = Config::get("sync.api_version");
             $servidor_remoto->catalogos_actualizados = true;
@@ -930,10 +1170,10 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             $sincronizacion->save();
 
 
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
             $conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
 
-            DB::commit();
+            $conexion_local->commit();
             $conexion_remota->commit();
 
             $log .= "\n[#] Fin de Sincronización [#] \n";
@@ -946,25 +1186,25 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             Storage::append('log.sync', $fecha_generacion." Sync Auto Excepción: ".$e->getMessage());
             //DB::statement('SET FOREIGN_KEY_CHECKS=1');
             //$conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
-            DB::rollback();
+            $conexion_local->rollback();
             $conexion_remota->rollback();
             return \Response::json([ 'data' => $log],500);
         }
         catch (\ErrorException $e) {
             $log .= " Sync Auto Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Auto Excepción: ".$e->getMessage());
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
             $conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
-            DB::rollback();
+            $conexion_local->rollback();
             $conexion_remota->rollback();
             return \Response::json([ 'data' => $log],500);
         } 
         catch (\Exception $e) {            
             $log .= " Sync Auto Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Auto Excepción: ".$e->getMessage());
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
             $conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
-            DB::rollback();
+            $conexion_local->rollback();
             $conexion_remota->rollback();
             return \Response::json([ 'data' => $log],500);
         }

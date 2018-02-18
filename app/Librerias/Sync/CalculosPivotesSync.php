@@ -8,18 +8,21 @@ class CalculosPivotesSync {
      *
      * @return Void
      */
-    public static function calcularPresupuestoDisponible($remoto = false){
+    public static function calcularPresupuestoDisponible( $conexion){
 		
+		if($conexion == null){
+			return false;
+		}
 		// Probamos que se pueda hacer conexiones remotas o locales primerp
-		try {
-            $conexion_remota = DB::connection('mysql_sync');
-            DB::beginTransaction();
-            $conexion_remota->beginTransaction();
+		try{
+            //$conexion_remota = DB::connection('mysql_sync');
+           // DB::beginTransaction();
+            //$conexion_remota->beginTransaction();
 
-           
+			$conexion->beginTransaction();
         } 
         catch (\Exception $e) {     
-			Storage::append('log.sync', $fecha_generacion." CalculosPivotesSync Excepción: ".$e->getMessage());           
+			
 			return false; // Retornamos false para que se cancele lo que se tenga que cancelar en el proceso de sincronizacion
 		}
 
@@ -34,17 +37,25 @@ class CalculosPivotesSync {
 							insumos_disponible = (insumos_modificado - insumos_comprometido - insumos_devengado)
 						";
 
+			$conexion->statement($statement);					
+			$conexion->commit();	
+			/*
 			if($remoto){
-				$conexion_remota::statement($statement);	
+				
+				$conexion_remota->statement($statement);	
+				
 				$conexion_remota->commit();			
+				echo "Me ejecuto despues";
 			} else {
 				DB::statement($statement);
+				
 				DB::commit();
-			}
+				echo "Me ejecuto primero";
+			}*/
 			return true; // Retornamos true para indicar en el proceso de sincronización que se pudo hacer el update correctamente
 
 		}catch (\Illuminate\Database\QueryException $e){
-            Storage::append('log.sync', $fecha_generacion." CalculosPivotesSync Excepción: ".$e->getMessage());           
+			echo $e->getMessage();
             if($remoto){
 				$conexion_remota->rollback();
 			} else {
@@ -53,8 +64,8 @@ class CalculosPivotesSync {
 			return false; // Retornamos false para que se cancele lo que se tenga que cancelar en el proceso de sincronizacion
         }
         catch (\ErrorException $e) {
-           
-            Storage::append('log.sync', $fecha_generacion." CalculosPivotesSync Excepción: ".$e->getMessage());
+            echo $e->getMessage();
+            
             
 			if($remoto){
 				$conexion_remota->rollback();
@@ -64,7 +75,7 @@ class CalculosPivotesSync {
 			return false; // Retornamos false para que se cancele lo que se tenga que cancelar en el proceso de sincronizacion
         } 
         catch (\Exception $e) {            
-            Storage::append('log.sync', $fecha_generacion." CalculosPivotesSync Excepción: ".$e->getMessage());
+			echo $e->getMessage();
           
             if($remoto){
 				$conexion_remota->rollback();

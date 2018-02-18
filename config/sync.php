@@ -88,7 +88,7 @@ return [
         'permiso_rol',
         'sustancias_laboratorio',
         'unidad_medica_abasto_configuracion',
-        'unidad_medica_presupuesto'
+        //'unidad_medica_presupuesto'
     ],
 
     /*
@@ -188,7 +188,7 @@ return [
             'condicion_subida' => 'clues = "'.env('CLUES').'"',       // Si quieren meter mas agrupen todo entre parentesis ( condicion1 AND condicion2 OR condicion3)
             'condicion_bajada' =>'',
             'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible',
-            'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible',
+            'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible',           
         ],
         // Agregar más tablas copiando la estructura anterior
     ]
