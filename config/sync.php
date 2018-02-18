@@ -150,4 +150,46 @@ return [
         'receta_movimientos',
         'resguardos'
     ],
+     /*
+    |--------------------------------------------------------------------------
+    | Tablas para sincronizar en dos direcciones
+    |--------------------------------------------------------------------------
+    |
+    | En esta opción se debe especificar la tabla y los campos que se suben 
+    | y los campos que se bajan del servidor remoto, asímismo, si hay que hacer
+    | algú calculo en el proceso de subida o bajada, hay que escribir el nombre
+    | del método que se encuentra en namespace App\Librerias\Sync, ahí se pueden
+    | agregar los métodos necerios por si hay que hacer algún calculo en la subida
+    | o bajada y especificarlos en la propiedad: calculo_bajada y calculo_subida
+    |
+    */
+    'pivotes' => [
+        'unidad_medica_presupuesto' => [
+            'campos_subida' => [
+                'causes_comprometido',
+                'causes_devengado',
+                'no_causes_comprometido',
+                'no_causes_devengado',
+                'material_curacion_comprometido',
+                'material_curacion_devengado',
+                'insumos_comprometido',
+                'insumos_devengado',
+            ],
+            'campos_bajada' => [
+                'causes_autorizado',
+                'causes_modificado',
+                'no_causes_autorizado',
+                'no_causes_modificado',
+                'material_curacion_autorizado',
+                'material_curacion_modificado',
+                'insumos_autorizado',
+                'insumos_modificado',
+            ],
+            'condicion_subida' => 'clues = "'.env('CLUES').'"',       // Si quieren meter mas agrupen todo entre parentesis ( condicion1 AND condicion2 OR condicion3)
+            'condicion_bajada' =>'',
+            'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible',
+            'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible',
+        ],
+        // Agregar más tablas copiando la estructura anterior
+    ]
 ];

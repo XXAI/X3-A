@@ -44,6 +44,8 @@ class SincronizacionController extends \App\Http\Controllers\Controller
      */
     public function manual()
     {
+
+       
         ini_set('memory_limit', '-1');
         // 1. Debemos generar el link de descarga en una carpeta con una cadena aleatoria
         // 2. Cuando generemos el link en el controlador debe existir un middleware que al descargar el archivo lo borre del sistema
@@ -122,6 +124,94 @@ class SincronizacionController extends \App\Http\Controllers\Controller
 
                 } 
             }
+
+            // Incluimos las tablas pivotes en la sincronización
+            foreach(Config::get("sync.pivotes") as $tabla => $parametrosTabla){
+            
+                if ($ultima_sincronizacion) {
+                    
+                    $rows = DB::table($tabla)->whereBetween('updated_at',[$ultima_sincronizacion->fecha_generacion,$fecha_generacion]);
+
+                } else {             
+                    $rows = DB::table($tabla);
+                }
+
+                if($parametrosTabla['condicion_subida'] != ''){
+                    $rows = $rows->whereRaw($parametrosTabla['condicion_subida']);
+                    
+                        
+                }
+                $rows = $rows->get();
+               
+                if($rows){
+                    $query = "";
+                    //$rows_chunks = array_chunk($rows, 50);
+                    $columnas = DB::getSchemaBuilder()->getColumnListing($tabla);
+
+                    foreach($rows as $row){
+                        
+                        $query .= "INSERT INTO ".$tabla."  VALUES (";
+                        $update = "";
+                        //$query .= "UPDATE ".$table." SET ";
+
+                       
+                        
+                        $index_items = 0;
+                        $index_items_update = 0;
+                        
+                        foreach($columnas as $nombre){
+                            $up_flag = in_array($nombre,$parametrosTabla['campos_subida']);
+                            
+                            if ($index_items!=0){
+                                $query .= ",";
+                            }
+
+                            if ($index_items_update!=0 && $up_flag){
+                                $update .= ",";
+                            }
+                            if($up_flag){
+                                $update .= $nombre.'=';
+                            }
+                            $tipo  = gettype($row->$nombre);
+                            
+                            switch($tipo){
+                                case "string": 
+                                    $text = "\"".addslashes($row->$nombre)."\""; 
+                                    $query .= $text;
+                                    if($up_flag){
+                                        $update .= $text;
+                                    } 
+                                    break;
+                                case "NULL": 
+                                    $query .= "NULL"; 
+                                    if($up_flag){
+                                        $update .= "NULL"; 
+                                    }
+                                    break;
+                                default: 
+                                    $text = addslashes($row->$nombre);
+                                    $query .= $text;
+                                    if($up_flag){
+                                        $update .= $text;
+                                    }
+                            }                                
+                            $index_items += 1;
+                            if($up_flag){
+                                $index_items_update += 1;
+                            }
+                            
+                        }
+                        $query .= ") ON DUPLICATE KEY UPDATE ".$update."; \n";
+                        
+                                              
+                           
+                    }
+                  
+                    Storage::append('sync/sumami.sync', $query);
+                }
+            } 
+                
+            
            
             // Generamos archivo de catalogos para que cuando se sincronize en el servidor principal se sepa si están actualizados o no
           
@@ -295,13 +385,12 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                                                 $index_items += 1;
                                                             }
                                                             $item .= ") ";
-                                                            $index_replace += 1;
+                                                            $index_replace += 1;                                                            
                                                             
-                                                            //Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", $item);                       
                                                             $query .= $item;
                                                         }
                                                         $query .= "; \n";
-                                                        //Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", "; \n");
+                                                        
                                                     }
 
                                                     Storage::append("importar/".$servidor->id."/confirmacion/catalogos.sync", $query);
@@ -312,7 +401,8 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                             }
                                         }
                                     }
-                              
+
+                                   
                                     // Registramos la version del servidor y si los catálogos estan actualizados
                                     $servidor->version = $header_vars['VERSION'];
 
@@ -331,10 +421,105 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                         $actualizar_software = "false";
                                     }
                                    
+                                    // Se ejecuta la sincronización
                                     $contents = Storage::get("importar/".$servidor->id."/sumami.sync");
                                     DB::statement('SET FOREIGN_KEY_CHECKS=0');
                                     DB::connection()->getpdo()->exec($contents);
                                     DB::statement('SET FOREIGN_KEY_CHECKS=1');
+                                    
+
+                                
+                                    // Agregamos las tablas pivote al archivo de confirmación para su descarga en offline
+                                    Storage::put("importar/".$servidor->id."/confirmacion/pivotes.sync","");
+                                    foreach(Config::get("sync.pivotes") as $tabla => $parametrosTabla){
+                                    
+                                        
+                                        // Pero antes  ejecutamos las funciones de cálculo de las tablas pivotes
+                                        // para actualizar campos de ser necesario en el servidor princiapl
+                                        
+                                        $calculoSubidaFunction = $parametrosTabla['calculo_subida'];
+                                        if($calculoSubidaFunction != ''){
+                                            if(!call_user_func($calculoSubidaFunction)){
+                                                throw new \Exception("No se pudo hacer uno de los calculos de subida");
+                                            }
+                                        }
+                                        //call_user_func($calculoSubidaFunction, "parametro1","paremtro2");
+                                        
+
+                                        // Buscamos las tablas pivotes para que los offline actualicen
+                                        $rows = DB::table($tabla);
+
+                                        if($parametrosTabla['condicion_bajada'] != ''){
+                                            $rows = $rows->whereRaw($parametrosTabla['condicion_bajada']);
+                                        }
+                                        $rows = $rows->get();
+                                    
+                                        if($rows){
+                                            $query = "";
+                                            
+                                            $columnas = DB::getSchemaBuilder()->getColumnListing($tabla);
+
+                                            foreach($rows as $row){
+                        
+                                                $query .= "INSERT INTO ".$tabla."  VALUES (";
+                                                $update = "";
+                                                
+                                                $index_items = 0;
+                                                $index_items_update = 0;
+                                                
+                                                foreach($columnas as $nombre){
+                                                    // Solo los campos de bajada
+                                                    $up_flag = in_array($nombre,$parametrosTabla['campos_bajada']);
+                                                    
+                                                    if ($index_items!=0){
+                                                        $query .= ",";
+                                                    }
+                        
+                                                    if ($index_items_update!=0 && $up_flag){
+                                                        $update .= ",";
+                                                    }
+                                                    if($up_flag){
+                                                        $update .= $nombre.'=';
+                                                    }
+                                                    $tipo  = gettype($row->$nombre);
+                                                    
+                                                    switch($tipo){
+                                                        case "string": 
+                                                            $text = "\"".addslashes($row->$nombre)."\""; 
+                                                            $query .= $text;
+                                                            if($up_flag){
+                                                                $update .= $text;
+                                                            } 
+                                                            break;
+                                                        case "NULL": 
+                                                            $query .= "NULL"; 
+                                                            if($up_flag){
+                                                                $update .= "NULL"; 
+                                                            }
+                                                            break;
+                                                        default: 
+                                                            $text = addslashes($row->$nombre);
+                                                            $query .= $text;
+                                                            if($up_flag){
+                                                                $update .= $text;
+                                                            }
+                                                    }                                
+                                                    $index_items += 1;
+                                                    if($up_flag){
+                                                        $index_items_update += 1;
+                                                    }
+                                                    
+                                                }
+                                                $query .= ") ON DUPLICATE KEY UPDATE ".$update."; \n";
+                                                
+                                                                      
+                                                   
+                                            }
+                                            Storage::append("importar/".$servidor->id."/confirmacion/pivotes.sync", $query);
+                                        }
+                                    }
+
+                              
 
                                     // Registramos la sincronización en la base de datos. 
                                     $sincronizacion = new Sincronizacion;
@@ -470,6 +655,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     if ($confirmacion_vars["ID"] != env('SERVIDOR_ID')){
                                         Storage::delete("confirmacion/confirmacion.sync");
                                         Storage::delete("confirmacion/catalogos.sync");
+                                        Storage::delete("confirmacion/pivotes.sync");
                                         throw new Exception("El contenido del archivo de confirmación no corresponde al nombre del archivo, no se debe cambiar el nombre del archivo de confirmación que el servidor remoto genera.");
                                     }                                
 
@@ -485,6 +671,28 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                         DB::statement('SET FOREIGN_KEY_CHECKS=0');
                                         DB::connection()->getpdo()->exec($contents);
                                         DB::statement('SET FOREIGN_KEY_CHECKS=1');
+                                    }
+
+                                    // Tablas pivote
+                                    $contents = Storage::get("confirmacion/pivotes.sync");
+                                    if($contents != ""){
+                                        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+                                        DB::connection()->getpdo()->exec($contents);
+                                        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+                                    }
+
+                                    foreach(Config::get("sync.pivotes") as $tabla => $parametrosTabla){
+                                    
+                                        
+                                        // Ejecutamos las funciones de cálculo de las tablas pivotes
+                                        // para actualizar campos de ser necesario en el servidor local
+                                        $calculoBajadaFunction = $parametrosTabla['calculo_bajada'];
+                                        if($calculoBajadaFunction  != ''){
+                                            if(!call_user_func($calculoBajadaFunction)){
+                                                throw new \Exception("No se pudo hacer uno de los calculos de bajada");
+                                            }
+                                        }
+                                        
                                     }
                                     
                                     // Registramos la sincronización en la base de datos. 
