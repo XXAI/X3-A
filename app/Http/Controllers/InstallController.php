@@ -276,6 +276,9 @@ class InstallController extends Controller
         DB::insert('insert into almacen_usuario (usuario_id, almacen_id) values (?,?)', [$config['id'].':admin',$almacen->id]);
         DB::insert('insert into almacen_usuario (usuario_id, almacen_id) values (?,?)', [$config['id'].':almacen',$almacen->id]);
 
+        DB::insert('insert into usuario_unidad_medica (usuario_id, clues) values (?,?)', [$config['id'].':admin',$almacen->clues]);
+        DB::insert('insert into usuario_unidad_medica (usuario_id, clues) values (?,?)', [$config['id'].':almacen',$almacen->clues]);
+
         return view('install_complete');
     }
 
