@@ -25,17 +25,34 @@ class VerificarJWT
             $obj =  JWTAuth::parseToken()->getPayload();
             $usuario = Usuario::find($obj->get('id'));
             
-            
-
             if(!$usuario){
                 return response()->json(['error' => 'formato_token_invalido'], 401);                
             }
 
-            // Esta linea es para que si un usuario quiere editar/agregar/eliminar información
-            // en un servidor al cual no corresponde se le deniegue la petición.
-            // Digamos que la información de un servidor offline sincronizada en el principal quiera ser editada
-            // si un usuario entra e inicia sesión. Así que solo le permitimos lectura.
-            if($usuario->servidor_id != env('SERVIDOR_ID') && $request->getMethod() != "GET"){
+            if($request->path() == 'sync/importar'){
+                $tiene_permiso_sincronizar = false;
+                $usuario->load('roles.permisos');
+                if(count($usuario->roles)){
+                    foreach($usuario->roles as $rol){
+                        foreach ($rol->permisos as $permiso) {
+                            if($permiso->id == '3DMVRdBv4cLGzdfAqXO7oqTvAMbEdhI7'){
+                                $tiene_permiso_sincronizar = true;
+                                break;
+                            }
+                        }
+                        if($tiene_permiso_sincronizar){
+                            break;
+                        }
+                    }
+                }
+                if(!$tiene_permiso_sincronizar){
+                    return response()->json(['error' => 'usuario_no_tiene_permiso_sincronizar'], 403); 
+                }
+            }else if($usuario->servidor_id != env('SERVIDOR_ID') && $request->getMethod() != "GET"){
+                // Esta linea es para que si un usuario quiere editar/agregar/eliminar información
+                // en un servidor al cual no corresponde se le deniegue la petición.
+                // Digamos que la información de un servidor offline sincronizada en el principal quiera ser editada
+                // si un usuario entra e inicia sesión. Así que solo le permitimos lectura.
                 return response()->json(['error' => 'usuario_servidor_invitado_solo_lectura'], 403); 
             }
 

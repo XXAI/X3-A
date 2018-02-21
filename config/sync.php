@@ -184,6 +184,7 @@ return [
                 'material_curacion_modificado',
                 'insumos_autorizado',
                 'insumos_modificado',
+                'validation'
             ],
             'condicion_subida' => 'clues = "'.env('CLUES').'"',       // Si quieren meter mas agrupen todo entre parentesis ( condicion1 AND condicion2 OR condicion3)
             'condicion_bajada' =>'',

@@ -16,11 +16,14 @@ Route::get('/', function () {
 });
 
 Route::group(['middleware' => 'servidor.instalado'], function () {
-    Route::get('install', function () {
+    /*Route::get('install', function () {
         return view('install');
-    });
-    Route::get('config-server', 'InstallController@runDatabase');
-    Route::get('server-offline', 'InstallController@configServer');
+    });*/
+    Route::get('install', 'InstallController@iniciarInstalacion');
+    Route::get('instalar', 'InstallController@instalar');
+
+    //Route::get('config-server', 'InstallController@runDatabase');
+    //Route::get('server-offline', 'InstallController@configServer');
 });
 
 

@@ -12,6 +12,244 @@ use App\Models\UnidadMedica, App\Models\Servidor, App\Models\Proveedor, App\Mode
 
 class InstallController extends Controller
 {
+    public function iniciarInstalacion(){
+        $base_clues = [
+            "CSSSA018583" => "BELISARIO DOMÍNGUEZ",
+            "CSSSA017521" => "H. B. C.  DE TAPILULA",
+            "CSSSA018740" => "H. B. C.  DR. RAFAEL ALFARO GONZÁLEZ PIJIJIAPAN",
+            "CSSSA000412" => "H. B. C. DE ÁNGEL ALBINO CORZO",
+            "CSSSA018793" => "H. B. C. DE CHALCHIHUITÁN",
+            "CSSSA000832" => "H. B. C. DE CINTALAPA DE FIGUEROA",
+            "CSSSA018781" => "H. B. C. DE FRONTERA COMALAPA",
+            "CSSSA017726" => "H. B. C. DE LARRAINZAR",
+            "CSSSA003265" => "H. B. C. DE LAS MARGARITAS",
+            "CSSSA019645" => "H. B. C. DE OCOSINGO",
+            "CSSSA019242" => "H. B. C. DE OSTUACÁN",
+            "CSSSA017516" => "H. B. C. DE REVOLUCIÓN MEXICANA",
+            "CSSSA019481" => "H. B. C. DE SAN JUAN CHAMULA",
+            "CSSSA017731" => "H. B. C. DE SANTO DOMINGO",
+            "CSSSA018752" => "H. B. C. DE TEOPISCA",
+            "CSSSA006934" => "H. B. C. DE TILA",
+            "CSSSA017504" => "H. B. C. DEL PORVENIR",
+            "CSSSA000045" => "H. B. C. DR. MANUEL VELASCO SUAREZ ACALA",
+            "CSSSA019954" => "HOSPITAL CHIAPAS NOS UNE DR. JESUS GILBERTO GOMEZ MAZA",
+            "CSSSA018776" => "HOSPITAL DE LA MUJER COMITÁN",
+            "CSSSA005773" => "HOSPITAL DE LA MUJER SAN CRISTÓBAL DE LAS CASAS",
+            "CSSSA018764" => "HOSPITAL DE LAS CULTURAS SAN CRISTOBAL DE LAS CASAS",
+            "CSSSA018875" => "HOSPITAL GENERAL BICENTENARIO VILLAFLORES",
+            "CSSSA007074" => "HOSPITAL GENERAL DR. JUAN C. CORZO TONALÁ",
+            "CSSSA002611" => "HOSPITAL GENERAL HUIXTLA",
+            "CSSSA000453" => "HOSPITAL GENERAL JUÁREZ ARRIAGA",
+            "CSSSA001030" => "HOSPITAL GENERAL MARÍA IGNACIA GANDULFO COMITAN",
+            "CSSSA004595" => "HOSPITAL GENERAL PALENQUE",
+            "CSSSA004945" => "HOSPITAL GENERAL PICHUCALCO",
+            "CSSSA006403" => "HOSPITAL GENERAL TAPACHULA",
+            "CSSSA008264" => "HOSPITAL GENERAL YAJALÓN",
+            "CSSSA007540" => "HOSPITAL REGIONAL DR. RAFAEL PASCASIO GAMBOA TUXTLA",
+            "CSSSA004950" => "PICHUCALCO",
+            "CSSSA007634" => "TUXTLA GUTIÉRREZ"
+        ];
+
+        return view('install',['clues'=>$base_clues]);
+    }
+
+    public function instalar(Request $request){
+        //Arreglo con los datos para configurar el .env
+        $lista_config_server = [
+            "CSSSA018583" => [ 'id' => "0034",   'clues' => "CSSSA018583",  'secret' => "2247006975",   'proveedor' => 2,  'almacen' => "0001130",  'nombre' => "BELISARIO DOMÍNGUEZ"],
+            "CSSSA017521" => [ 'id' => "0021",   'clues' => "CSSSA017521",  'secret' => "1983359044",   'proveedor' => 3,  'almacen' => "000132",   'nombre' => "H. B. C.  DE TAPILULA"],
+            "CSSSA018740" => [ 'id' => "0031",   'clues' => "CSSSA018740",  'secret' => "5078409268",   'proveedor' => 3,  'almacen' => "000135",   'nombre' => "H. B. C.  DR. RAFAEL ALFARO GONZÁLEZ PIJIJIAPAN"],
+            "CSSSA000412" => [ 'id' => "0017",   'clues' => "CSSSA000412",  'secret' => "9995519635",   'proveedor' => 1,  'almacen' => "00012",    'nombre' => "H. B. C. DE ÁNGEL ALBINO CORZO"],
+            "CSSSA018793" => [ 'id' => "0007",   'clues' => "CSSSA018793",  'secret' => "3170902090",   'proveedor' => 3,  'almacen' => "000140",   'nombre' => "H. B. C. DE CHALCHIHUITÁN"],
+            "CSSSA000832" => [ 'id' => "0005",   'clues' => "CSSSA000832",  'secret' => "3660506709",   'proveedor' => 1,  'almacen' => "00015",    'nombre' => "H. B. C. DE CINTALAPA DE FIGUEROA"],
+            "CSSSA018781" => [ 'id' => "0013",   'clues' => "CSSSA018781",  'secret' => "2101156574",   'proveedor' => 2,  'almacen' => "000139",   'nombre' => "H. B. C. DE FRONTERA COMALAPA"],
+            "CSSSA017726" => [ 'id' => "0010",   'clues' => "CSSSA017726",  'secret' => "4664320142",   'proveedor' => 3,  'almacen' => "000133",   'nombre' => "H. B. C. DE LARRAINZAR"],
+            "CSSSA003265" => [ 'id' => "0015",   'clues' => "CSSSA003265",  'secret' => "3138767971",   'proveedor' => 2,  'almacen' => "00019",    'nombre' => "H. B. C. DE LAS MARGARITAS"],
+            "CSSSA019645" => [ 'id' => "0033",   'clues' => "CSSSA019645",  'secret' => "4089082143",   'proveedor' => 3,  'almacen' => "000144",   'nombre' => "H. B. C. DE OCOSINGO"],
+            "CSSSA019242" => [ 'id' => "0020",   'clues' => "CSSSA019242",  'secret' => "8817975671",   'proveedor' => 3,  'almacen' => "000142",   'nombre' => "H. B. C. DE OSTUACÁN"],
+            "CSSSA017516" => [ 'id' => "0018",   'clues' => "CSSSA017516",  'secret' => "7044768263",   'proveedor' => 1,  'almacen' => "000131",   'nombre' => "H. B. C. DE REVOLUCIÓN MEXICANA"],
+            "CSSSA019481" => [ 'id' => "0008",   'clues' => "CSSSA019481",  'secret' => "7878769657",   'proveedor' => 3,  'almacen' => "000143",   'nombre' => "H. B. C. DE SAN JUAN CHAMULA"],
+            "CSSSA017731" => [ 'id' => "0027",   'clues' => "CSSSA017731",  'secret' => "3736988669",   'proveedor' => 3,  'almacen' => "000134",   'nombre' => "H. B. C. DE SANTO DOMINGO"],
+            "CSSSA018752" => [ 'id' => "0011",   'clues' => "CSSSA018752",  'secret' => "3179677262",   'proveedor' => 3,  'almacen' => "000136",   'nombre' => "H. B. C. DE TEOPISCA"],
+            "CSSSA006934" => [ 'id' => "0025",   'clues' => "CSSSA006934",  'secret' => "5812555610",   'proveedor' => 3,  'almacen' => "000116",   'nombre' => "H. B. C. DE TILA"],
+            "CSSSA017504" => [ 'id' => "0035",   'clues' => "CSSSA017504",  'secret' => "9715488935",   'proveedor' => 2,  'almacen' => "000130",   'nombre' => "H. B. C. DEL PORVENIR"],
+            "CSSSA000045" => [ 'id' => "0003",   'clues' => "CSSSA000045",  'secret' => "8933717531",   'proveedor' => 1,  'almacen' => "00011",    'nombre' => "H. B. C. DR. MANUEL VELASCO SUAREZ ACALA"],
+            "CSSSA019954" => [ 'id' => "0006",   'clues' => "CSSSA019954",  'secret' => "7739033758",   'proveedor' => 1,  'almacen' => "000145",   'nombre' => "HOSPITAL CHIAPAS NOS UNE DR. JESUS GILBERTO GOMEZ MAZA"],
+            "CSSSA018776" => [ 'id' => "0016",   'clues' => "CSSSA018776",  'secret' => "489150398",    'proveedor' => 2,  'almacen' => "000138",   'nombre' => "HOSPITAL DE LA MUJER COMITÁN"],
+            "CSSSA005773" => [ 'id' => "0012",   'clues' => "CSSSA005773",  'secret' => "368112968",    'proveedor' => 3,  'almacen' => "000114",   'nombre' => "HOSPITAL DE LA MUJER SAN CRISTÓBAL DE LAS CASAS"],
+            "CSSSA018764" => [ 'id' => "0009",   'clues' => "CSSSA018764",  'secret' => "989932662",    'proveedor' => 3,  'almacen' => "000137",   'nombre' => "HOSPITAL DE LAS CULTURAS SAN CRISTOBAL DE LAS CASAS"],
+            "CSSSA018875" => [ 'id' => "0019",   'clues' => "CSSSA018875",  'secret' => "8660233373",   'proveedor' => 1,  'almacen' => "000141",   'nombre' => "HOSPITAL GENERAL BICENTENARIO VILLAFLORES"],
+            "CSSSA007074" => [ 'id' => "0032",   'clues' => "CSSSA007074",  'secret' => "5220912034",   'proveedor' => 3,  'almacen' => "000117",   'nombre' => "HOSPITAL GENERAL DR. JUAN C. CORZO TONALÁ"],
+            "CSSSA002611" => [ 'id' => "0028",   'clues' => "CSSSA002611",  'secret' => "3874109173",   'proveedor' => 3,  'almacen' => "00018",    'nombre' => "HOSPITAL GENERAL HUIXTLA"],
+            "CSSSA000453" => [ 'id' => "0030",   'clues' => "CSSSA000453",  'secret' => "9587203042",   'proveedor' => 3,  'almacen' => "00013",    'nombre' => "HOSPITAL GENERAL JUÁREZ ARRIAGA"],
+            "CSSSA001030" => [ 'id' => "0014",   'clues' => "CSSSA001030",  'secret' => "2507276605",   'proveedor' => 2,  'almacen' => "00016",    'nombre' => "HOSPITAL GENERAL MARÍA IGNACIA GANDULFO COMITAN"],
+            "CSSSA004595" => [ 'id' => "0024",   'clues' => "CSSSA004595",  'secret' => "7167855854",   'proveedor' => 3,  'almacen' => "000111",   'nombre' => "HOSPITAL GENERAL PALENQUE"],
+            "CSSSA004945" => [ 'id' => "0022",   'clues' => "CSSSA004945",  'secret' => "1938660584",   'proveedor' => 3,  'almacen' => "000112",   'nombre' => "HOSPITAL GENERAL PICHUCALCO"],
+            "CSSSA006403" => [ 'id' => "0029",   'clues' => "CSSSA006403",  'secret' => "2915515032",   'proveedor' => 3,  'almacen' => "000115",   'nombre' => "HOSPITAL GENERAL TAPACHULA"],
+            "CSSSA008264" => [ 'id' => "0026",   'clues' => "CSSSA008264",  'secret' => "674539541",    'proveedor' => 3,  'almacen' => "000119",   'nombre' => "HOSPITAL GENERAL YAJALÓN"],
+            "CSSSA007540" => [ 'id' => "0004",   'clues' => "CSSSA007540",  'secret' => "6593023161",   'proveedor' => 1,  'almacen' => "000118",   'nombre' => "HOSPITAL REGIONAL DR. RAFAEL PASCASIO GAMBOA TUXTLA"],
+            "CSSSA004950" => [ 'id' => "0023",   'clues' => "CSSSA004950",  'secret' => "1958902083",   'proveedor' => 3,  'almacen' => "0001142",  'nombre' => "PICHUCALCO"],
+            "CSSSA007634" => [ 'id' => "0002",   'clues' => "CSSSA007634",  'secret' => "7050669754",   'proveedor' => 1,  'almacen' => "000187",   'nombre' => "TUXTLA GUTIÉRREZ"]
+        ];
+
+        $lista_personal_clues = [
+            ['id'=>'00011',    'incremento' => 1,   'clues' => 'CSSSA004945', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "Dra. Trinidad Vera Juan"],
+            ['id'=>'000110',   'incremento' => 10,  'clues' => 'CSSSA018776', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. FRANCISCO JAVIER TREJO ESQUINCA"],
+            ['id'=>'0001103',  'incremento' => 103, 'clues' => 'CSSSA001030', 'created_at' => "2017-05-29 06:26:36", 'updated_at' => "2017-05-29 06:26:36", 'nombre' => "Dr. Rodolfo Lopez Solis"],
+            ['id'=>'0001104',  'incremento' => 104, 'clues' => 'CSSSA001030', 'created_at' => "2017-05-29 06:26:36", 'updated_at' => "2017-05-29 06:26:36", 'nombre' => "Ing. Alfredo Armando Maza Lopez"],
+            ['id'=>'0001105',  'incremento' => 105, 'clues' => 'CSSSA007074', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "MIGUEL ANGEL SURIANO MORALES"],
+            ['id'=>'0001106',  'incremento' => 106, 'clues' => 'CSSSA004595', 'created_at' => "2017-06-11 08:06:15", 'updated_at' => "2017-06-11 08:06:15", 'nombre' => "DR. OSCAR ALFARO ZEBADÚA"],
+            ['id'=>'0001107',  'incremento' => 107, 'clues' => 'CSSSA006403', 'created_at' => "2017-07-12 09:46:15", 'updated_at' => "2017-07-12 09:46:15", 'nombre' => "DR. ANGEL GABRIEL OCAMPO GONZALEZ"],
+            ['id'=>'000111',   'incremento' => 11,  'clues' => 'CSSSA005773', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. FRANCISCO ARTURO MARISCAL OCHOA"],
+            ['id'=>'0001112',  'incremento' => 112, 'clues' => 'CSSSA018740', 'created_at' => "2017-08-25 05:54:16", 'updated_at' => "2017-08-25 05:54:18", 'nombre' => "Lic. María Guadalupe Roque Cruz"],
+            ['id'=>'0001113',  'incremento' => 113, 'clues' => 'CSSSA007540', 'created_at' => "2017-09-04 06:20:26", 'updated_at' => "2017-09-04 06:20:26", 'nombre' => "DRA. VILMA MAYTE MESSNER RAMOS"],
+            ['id'=>'0001116',  'incremento' => 116, 'clues' => 'CSSSA019954', 'created_at' => "2017-10-03 08:39:00", 'updated_at' => "2017-10-03 08:39:00", 'nombre' => "DR. ZEIN NAZAR MORALES"],
+            ['id'=>'000112',   'incremento' => 12,  'clues' => 'CSSSA001030', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "Dr. Jorge Antonio Yañez Fuentes"],
+            ['id'=>'000113',   'incremento' => 13,  'clues' => 'CSSSA018764', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. MARCO ANTONIO FLORES PEREZ"],
+            ['id'=>'000114',   'incremento' => 14,  'clues' => 'CSSSA018752', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. DARVIN ALBERTO RODRIGUEZ MORALES"],
+            ['id'=>'000115',   'incremento' => 15,  'clues' => 'CSSSA000045', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DRA. NOEMI HERNÁNDEZ PÉREZ"],
+            ['id'=>'000116',   'incremento' => 16,  'clues' => 'CSSSA018740', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "Dr Pedro Hugo Ibarra Campero"],
+            ['id'=>'000117',   'incremento' => 17,  'clues' => 'CSSSA000832', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "Dr. Ramdoll Iván Hernández Rodriguez"],
+            ['id'=>'00012',    'incremento' => 2,   'clues' => 'CSSSA018875', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. MARCO ANTONIO MORENO GOMEZ"],
+            ['id'=>'000127',   'incremento' => 27,  'clues' => 'CSSSA004595', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. DANIEL ROBERTO MARTINEZ PÉREZ"],
+            ['id'=>'000128',   'incremento' => 28,  'clues' => 'CSSSA017731', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "Dr. Alfredo Hernandez Jimenez"],
+            ['id'=>'000129',   'incremento' => 29,  'clues' => 'CSSSA019481', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DRA. SOFIA CARLOTA AGUILAR HERRERA"],
+            ['id'=>'00013',    'incremento' => 3,   'clues' => 'CSSSA007540', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. ZEIN NAZAR MORALES"],
+            ['id'=>'000130',   'incremento' => 30,  'clues' => 'CSSSA017726', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "Dr. Alam Porfirio Campos Cruz"],
+            ['id'=>'000131',   'incremento' => 31,  'clues' => 'CSSSA006403', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. MIGUEL ANGEL BARRIOS ANDALUZ"],
+            ['id'=>'000132',   'incremento' => 32,  'clues' => 'CSSSA017504', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. OSVALDO BLANCO PEREZ"],
+            ['id'=>'000133',   'incremento' => 33,  'clues' => 'CSSSA018781', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR.EDUARD ORLANDO RUIZ DOMINGUEZ"],
+            ['id'=>'000134',   'incremento' => 34,  'clues' => 'CSSSA017516', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. ROUSSEL DAMIAN PALENCIA"],
+            ['id'=>'000136',   'incremento' => 36,  'clues' => 'CSSSA019954', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. MARTÍN ALONSO JARA BURGUETE"],
+            ['id'=>'000137',   'incremento' => 37,  'clues' => 'CSSSA000412', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "Dra. Dania Citlali Molina Palacios"],
+            ['id'=>'000138',   'incremento' => 38,  'clues' => 'CSSSA019242', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "Dr. Jose Luis Torres Valdes"],
+            ['id'=>'000139',   'incremento' => 39,  'clues' => 'CSSSA008264', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. KRISTIHAN RUBEN HERNANDEZ RODRIGUEZ"],
+            ['id'=>'00014',    'incremento' => 4,   'clues' => 'CSSSA019645', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. CARLOS MARTÍN RÍOS AGUILAR"],
+            ['id'=>'000140',   'incremento' => 40,  'clues' => 'CSSSA003265', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "LUIS EDUARDO SIERRA LEÓN"],
+            ['id'=>'000141',   'incremento' => 41,  'clues' => 'CSSSA018793', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DRA. MARGARITA DEL ROCIO MARTINEZ JACOBO"],
+            ['id'=>'000142',   'incremento' => 42,  'clues' => 'CSSSA017521', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DRA MANUELLY DE ITZEL CABRERA ABARCA"],
+            ['id'=>'00015',    'incremento' => 5,   'clues' => 'CSSSA000453', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "Dr. Alejandro Exzacarias Farrera"],
+            ['id'=>'000152',   'incremento' => 52,  'clues' => 'CSSSA004945', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "Lic. Jose Javier Diaz Eliaz"],
+            ['id'=>'000153',   'incremento' => 53,  'clues' => 'CSSSA018875', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. MAYRA ALEJANDRA SIBAJA DOMINGUEZ"],
+            ['id'=>'000154',   'incremento' => 54,  'clues' => 'CSSSA007540', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. RAMON GONZALO LOPEZ AGUILAR"],
+            ['id'=>'000155',   'incremento' => 55,  'clues' => 'CSSSA019645', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. ELISEO PINTO MORRISON"],
+            ['id'=>'000156',   'incremento' => 56,  'clues' => 'CSSSA000453', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "Nury Yaneth Hernandez Lopez"],
+            ['id'=>'000157',   'incremento' => 57,  'clues' => 'CSSSA002611', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "Ever Chacón Baneco"],
+            ['id'=>'000159',   'incremento' => 59,  'clues' => 'CSSSA006934', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. ERICK E. RAMÍREZ VÁZQUEZ"],
+            ['id'=>'00016',    'incremento' => 6,   'clues' => 'CSSSA002611', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "Dr. Víctor Hugo Mendoza Mérida"],
+            ['id'=>'000160',   'incremento' => 60,  'clues' => 'CSSSA007074', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "C.P GUILLERMO HERNANDEZ AGUILAR"],
+            ['id'=>'000161',   'incremento' => 61,  'clues' => 'CSSSA018776', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "ING. HECTOR EDUARDO SANCHEZ MATAMOROS"],
+            ['id'=>'000162',   'incremento' => 62,  'clues' => 'CSSSA005773', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. CARLOS ALBERTO COSTA GORDILLO"],
+            ['id'=>'000163',   'incremento' => 63,  'clues' => 'CSSSA001030', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "C.P. Alejandra Guadalupe Gonzalez De Paz"],
+            ['id'=>'000164',   'incremento' => 64,  'clues' => 'CSSSA018764', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. ROCIO DEL CARMEN SANCHEZ PÉREZ"],
+            ['id'=>'000165',   'incremento' => 65,  'clues' => 'CSSSA018752', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. NALDI ALFARO PEREZ"],
+            ['id'=>'000166',   'incremento' => 66,  'clues' => 'CSSSA000045', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "OCTAVIO JESUS VALSECA MORALES"],
+            ['id'=>'000167',   'incremento' => 67,  'clues' => 'CSSSA018740', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LAE. Antonio de Jesus Martinez Hernandez"],
+            ['id'=>'000168',   'incremento' => 68,  'clues' => 'CSSSA000832', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "Lic José de Jesús Salinas Santiago"],
+            ['id'=>'000178',   'incremento' => 78,  'clues' => 'CSSSA004595', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. BERTHA ALAVARADO NARVAÉZ"],
+            ['id'=>'000179',   'incremento' => 79,  'clues' => 'CSSSA017731', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "Baltazar Ramirez Perez"],
+            ['id'=>'00018',    'incremento' => 8,   'clues' => 'CSSSA006934', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. SERGIO ROBERTO SOBRINO RAMÍREZ"],
+            ['id'=>'000180',   'incremento' => 80,  'clues' => 'CSSSA019481', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. LUZ ESTER GÓMEZ AGUILAR"],
+            ['id'=>'000181',   'incremento' => 81,  'clues' => 'CSSSA017726', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "C. Lorena Roque Zepeda"],
+            ['id'=>'000182',   'incremento' => 82,  'clues' => 'CSSSA006403', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. ALEX HIRAM CAMEY BANECO"],
+            ['id'=>'000183',   'incremento' => 83,  'clues' => 'CSSSA017504', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "C.P. BENJAMIN WILFRIDO ROBLEDO MUÑOZ"],
+            ['id'=>'000184',   'incremento' => 84,  'clues' => 'CSSSA018781', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "I.S.C. Alejandro Miguel Monzon Ordoñez"],
+            ['id'=>'000185',   'incremento' => 85,  'clues' => 'CSSSA017516', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. ERNESTO MORENO RODAS"],
+            ['id'=>'000187',   'incremento' => 87,  'clues' => 'CSSSA019954', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "LIC. MARIA OLIVIA RIOS LÓPEZ"],
+            ['id'=>'000188',   'incremento' => 88,  'clues' => 'CSSSA000412', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "Jesús Moreno salas"],
+            ['id'=>'000189',   'incremento' => 89,  'clues' => 'CSSSA019242', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "Sergio perez Salas"],
+            ['id'=>'00019',    'incremento' => 9,   'clues' => 'CSSSA007074', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR SERGIO LUIS OROZCO CARRASCO"],
+            ['id'=>'000190',   'incremento' => 90,  'clues' => 'CSSSA008264', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "MARTHA EUNICE CONSTANTINO BERMUDEZ"],
+            ['id'=>'000191',   'incremento' => 91,  'clues' => 'CSSSA003265', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "ELI ALEJANDRO DOMINGUEZ GARCIA"],
+            ['id'=>'000192',   'incremento' => 92,  'clues' => 'CSSSA018793', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "JULIO CESAR MORALES ROBLES"],
+            ['id'=>'000193',   'incremento' => 93,  'clues' => 'CSSSA017521', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "JORGE MAURICIO ROMÁN ARIZMENDIZ"],
+        ];
+
+        //Si se ejecuta en el servidor offline
+        $host      = Config::get('database.connections.mysql.host');
+        $database  = Config::get('database.connections.mysql.database');
+        $username  = Config::get('database.connections.mysql.username');
+        $password  = Config::get('database.connections.mysql.password');
+       
+        echo shell_exec(env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "DROP DATABASE  IF EXISTS  ' . $database . '"');
+        echo shell_exec(env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "CREATE DATABASE ' . $database . '"');
+        //echo env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "CREATE DATABASE ' . $database . '"';
+        
+        \Artisan::call('migrate');
+        \Artisan::call('db:seed',['--class'=>'DatosCatalogosSeeder']);
+        
+        
+        $parametros = Input::all();
+
+        $config = $lista_config_server[$parametros['clues']];
+        
+        $mensaje = '';
+
+        $path = base_path('.env');
+
+        if (file_exists($path)) {
+            file_put_contents($path, str_replace('SERVIDOR_ID='.env('SERVIDOR_ID'), 'SERVIDOR_ID='.$config['id'], file_get_contents($path)));
+            file_put_contents($path, str_replace('SECRET_KEY='.env('SECRET_KEY'), 'SECRET_KEY='.$config['secret'], file_get_contents($path)));
+            file_put_contents($path, str_replace('CLUES='.env('CLUES'), 'CLUES='.$config['clues'], file_get_contents($path)));
+
+            // Si no existe la linea en el .env (que debería), lo agregamos
+            if(strpos(file_get_contents($path),'SERVIDOR_INSTALADO') === false){
+                file_put_contents($path, "\n\nSERVIDOR_INSTALADO=true", FILE_APPEND);
+            } else {
+                file_put_contents($path, str_replace('SERVIDOR_INSTALADO=false', 'SERVIDOR_INSTALADO=true', file_get_contents($path)));
+            }            
+        }
+
+        \Artisan::call('config:clear');
+
+        $servidor = Servidor::find($config['id']);
+
+        if(!$servidor){
+            $servidor = new Servidor();
+        }
+
+        $servidor->id = $config['id'];
+        $servidor->nombre = 'Servidor: '.$config['clues'];
+        $servidor->secret_key = $config['secret'];
+        $servidor->tiene_internet = 0;
+        $servidor->catalogos_actualizados = 0;
+        $servidor->version = 1.0;
+        $servidor->periodo_sincronizacion = 24;
+        $servidor->principal = 0;
+        $servidor->save();
+
+        //\Artisan::call('db:seed',['--class'=>'UsuariosSeeder']);
+        DB::table('usuarios')->insert([
+            [
+                'id' => 'root_'.$config['id'],
+                'servidor_id' =>  $config['id'],
+                'password' => Hash::make('ssa.s14l.0ffl1n3.'.$config['id']),
+                'nombre' => 'Super',
+                'apellidos' => 'Usuario',
+                'avatar' => 'avatar-circled-root',
+                'su' => true,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]
+        ]);
+
+        $almacen = Almacen::where('clues',$config['clues'])->where('tipo_almacen','ALMPAL')->first();
+
+        if(!$almacen){
+            DB::insert('insert into almacenes (id, incremento, servidor_id, nivel_almacen, tipo_almacen, clues, proveedor_id, subrogado, unidosis, nombre, usuario_id) values (?,?,?,?,?,?,?,?,?,?,?)', [$config['almacen'],1,$config['id'],1,'ALMPAL',$config['clues'],$config['proveedor'],0,0,'ALMACEN PRINCIPAL','root_'.$config['id']]);
+        }
+
+        $incremento = 0;
+        foreach ($lista_personal_clues as $personal) {
+            if($personal['clues'] == $config['clues']){
+                $incremento += 1;
+                DB::insert('insert into personal_clues (id, incremento, servidor_id, clues, nombre, surte_controlados, licencia_controlados, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?)', [$personal['id'],$incremento,$config['id'],$config['clues'],$personal['nombre'],0,'','root_'.$config['id'],$personal['created_at'],$personal['updated_at']]);
+            }
+        }
+
+        return view('install_complete');
+    }
+
     public function runDatabase(Request $request){
         //Si se ejecuta en el servidor offline
         $host      = Config::get('database.connections.mysql.host');
@@ -57,11 +295,10 @@ class InstallController extends Controller
                 file_put_contents($path, "\n\nSERVIDOR_INSTALADO=true", FILE_APPEND);
             } else {
                 file_put_contents($path, str_replace('SERVIDOR_INSTALADO=false', 'SERVIDOR_INSTALADO=true', file_get_contents($path)));
-            }
-            
-
-            
+            }            
         }
+
+        \Artisan::call('config:clear');
 
         $servidor = Servidor::find(env('SERVIDOR_ID'));
 
