@@ -230,14 +230,34 @@ class InstallController extends Controller
                 'su' => true,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
+            ],
+            [
+                'id' => $config['id'].':admin',
+                'servidor_id' =>  $config['id'],
+                'password' => Hash::make('administrador.'.$config['id']),
+                'nombre' => 'Administrador',
+                'apellidos' => 'Servidor',
+                'avatar' => 'avatar-circled-root',
+                'su' => true,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'id' => $config['id'].':almacen',
+                'servidor_id' =>  $config['id'],
+                'password' => Hash::make('almacen.'.$config['id']),
+                'nombre' => 'Encargado',
+                'apellidos' => 'Almacen',
+                'avatar' => 'avatar-circled-root',
+                'su' => true,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
             ]
         ]);
 
+        DB::insert('insert into almacenes (id, incremento, servidor_id, nivel_almacen, tipo_almacen, clues, proveedor_id, subrogado, unidosis, nombre, usuario_id) values (?,?,?,?,?,?,?,?,?,?,?)', [$config['almacen'],1,$config['id'],1,'ALMPAL',$config['clues'],$config['proveedor'],0,0,'ALMACEN PRINCIPAL','root_'.$config['id']]);
+        
         $almacen = Almacen::where('clues',$config['clues'])->where('tipo_almacen','ALMPAL')->first();
-
-        if(!$almacen){
-            DB::insert('insert into almacenes (id, incremento, servidor_id, nivel_almacen, tipo_almacen, clues, proveedor_id, subrogado, unidosis, nombre, usuario_id) values (?,?,?,?,?,?,?,?,?,?,?)', [$config['almacen'],1,$config['id'],1,'ALMPAL',$config['clues'],$config['proveedor'],0,0,'ALMACEN PRINCIPAL','root_'.$config['id']]);
-        }
 
         $incremento = 0;
         foreach ($lista_personal_clues as $personal) {
@@ -246,6 +266,15 @@ class InstallController extends Controller
                 DB::insert('insert into personal_clues (id, incremento, servidor_id, clues, nombre, surte_controlados, licencia_controlados, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?)', [$personal['id'],$incremento,$config['id'],$config['clues'],$personal['nombre'],0,'','root_'.$config['id'],$personal['created_at'],$personal['updated_at']]);
             }
         }
+
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [8,$config['id'].':admin']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [12,$config['id'].':almacen']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [13,$config['id'].':admin']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [14,$config['id'].':almacen']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [15,$config['id'].':almacen']);
+
+        DB::insert('insert into almacen_usuario (usuario_id, almacen_id) values (?,?)', [$config['id'].':admin',$almacen->id]);
+        DB::insert('insert into almacen_usuario (usuario_id, almacen_id) values (?,?)', [$config['id'].':almacen',$almacen->id]);
 
         return view('install_complete');
     }
