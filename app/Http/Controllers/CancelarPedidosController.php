@@ -26,7 +26,7 @@ class CancelarPedidosController extends Controller
         $pedido = Pedido::with("insumos.insumoDetalle","recepciones.entrada")->find($id);
 
         $recepion_abierta = false;
-
+        
         foreach($pedido->recepciones as $recepcion){
             if($recepcion->entrada->status == 'BR'){
                 $recepion_abierta = true;
