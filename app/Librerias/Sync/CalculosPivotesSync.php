@@ -139,12 +139,24 @@ class CalculosPivotesSync {
 					presupuesto.insumos_disponible = presupuesto.insumos_modificado - ajuste.insumos - presupuesto.insumos_devengado - presupuesto.insumos_comprometido
 				";
 
-			// Actualizamos los status  pendientes a 'AR' que significa aplicado en remoto
-			$statement3 = "UPDATE ajuste_presupuesto_pedidos_cancelados SET status = 'AR' WHERE status = 'P'";
+			//Harima: Creamos la transferencia en transferencias de presupuestos
+			$statement3 = "
+					INSERT INTO transferencias_presupuesto (`presupuesto_id`, `clues_origen`, `almacen_origen`, `mes_origen`, `anio_origen`, `causes`, `no_causes`, `material_curacion`, `clues_destino`, `almacen_destino`, `mes_destino`, `anio_destino`, `usuario_id`, `created_at`, `updated_at`) 
+					SELECT presupuesto.id as presupuesto_id, pedido.clues as clues_origen, pedido.almacen_solicitante as almacen_origen, ajuste.mes_origen, ajuste.anio_origen, ajuste.causes, ajuste.no_causes, ajuste.material_curacion, pedido.clues as clues_destino, pedido.almacen_solicitante as almacen_destino, ajuste.mes_destino, ajuste.anio_destino, ajuste.usuario_id, current_timestamp() as created_at, current_timestamp() as updated_at
+					FROM ajuste_presupuesto_pedidos_cancelados as ajuste
+					LEFT JOIN unidad_medica_presupuesto as presupuesto on presupuesto.id = ajuste.unidad_medica_presupuesto_id
+					LEFT JOIN pedidos as pedido on pedido.id = ajuste.pedido_id
+					WHERE ajuste.status = 'P'
+					;
+			";
 
-			$conexion->statement($statement1);				
-			$conexion->statement($statement2);		
-			$conexion->statement($statement3);	
+			// Actualizamos los status  pendientes a 'AR' que significa aplicado en remoto
+			$statement4 = "UPDATE ajuste_presupuesto_pedidos_cancelados SET status = 'AR' WHERE status = 'P'";
+
+			$conexion->statement($statement1);
+			$conexion->statement($statement2);
+			$conexion->statement($statement3);
+			$conexion->statement($statement4);
 			
 			//$conexion->commit();	
 			return true; // Retornamos true para indicar en el proceso de sincronización que se pudo hacer el update correctamente
