@@ -16,7 +16,8 @@ class Medicamento extends BaseModel{
     protected $table = 'medicamentos';  
     protected $primaryKey = 'insumo_medico_clave';
     protected $fillable = ["id","insumo_medico_clave","presentacion_id","es_controlado","es_surfactante","concentracion","contenido","cantidad_x_envase","unidad_medida_id","indicaciones","via_administracion_id","dosis"];
-
+    protected $casts = ["insumo_medico_clave" => "string","forma_farmaceutica_id" => "integer" ,"presentacion_id" => "integer" ,"es_controlado" => "boolean" ,"es_surfactante" => "boolean" ,"concentracion" => "string" ,"contenido" => "string" ,"cantidad_x_envase" => "float" ,"unidad_medida_id" => "integer" ,"via_administracion_id" => "integer"];
+    
     //Este scope carga los datos de catalogos que utiliza medicamentos
     public function scopeConDescripciones($query){
         return $query->select('medicamentos.*','presentaciones_medicamentos.nombre as presentacion_nombre','unidades_medida.nombre as unidad_medida_nombre','unidades_medida.clave as unidad_medida_clave',

@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
-use App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto,  App\Models\TransferenciaPresupuesto, App\Models\Pedido, App\Models\LogPedidoCancelado, App\Models\LogTransferenciaCancelada;
+use App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto,  App\Models\TransferenciaPresupuesto, App\Models\Pedido, App\Models\LogPedidoCancelado, App\Models\LogTransferenciaCancelada, App\Models\Servidor, App\Models\AjustePresupuestoPedidoCancelado;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -22,6 +22,8 @@ class CancelarPedidosController extends Controller
      */
     public function cancelarYTransferir(Request $request, $id){
         $input = Input::only('transferir_a_mes','transferir_a_anio');
+
+        $servidor = Servidor::find(env('SERVIDOR_ID'));
 
         $pedido = Pedido::with("insumos.insumoDetalle","recepciones.entrada")->find($id);
 
@@ -90,67 +92,93 @@ class CancelarPedidosController extends Controller
 
                     $presupuesto_pedido->save();
                 }else{
-                    $unidad_medica_origen_presupuesto = UnidadMedicaPresupuesto::where('clues',$pedido_clues)->where('almacen_id',$pedido_almacen)->where('mes',$pedido_mes)->where('anio',$pedido_anio)->first();
-                    $unidad_medica_destino_presupuesto = UnidadMedicaPresupuesto::where('clues',$pedido_clues)->where('almacen_id',$pedido_almacen)->where('mes',$input['transferir_a_mes'])->where('anio',$input['transferir_a_anio'])->first();
-                    
-                    if(!$unidad_medica_origen_presupuesto || !$unidad_medica_destino_presupuesto){
-                        throw new Exception("Una de meses no tiene presupuesto configurado para los valores proporcionados.");
-                    }
 
-                    //$unidad_medica_origen_presupuesto->causes_modificado   -= $total_causes_disponible;
-                    $unidad_medica_origen_presupuesto->causes_comprometido -= $total_causes_disponible;
-
-                    //$unidad_medica_destino_presupuesto->causes_modificado += $total_causes_disponible;
-                    //$unidad_medica_destino_presupuesto->causes_disponible += $total_causes_disponible;
-
-                    //$unidad_medica_origen_presupuesto->material_curacion_modificado -= $total_material_curacion_disponible;
-                    $unidad_medica_origen_presupuesto->material_curacion_comprometido -= $total_material_curacion_disponible;
-
-                    //$unidad_medica_destino_presupuesto->material_curacion_modificado += $total_material_curacion_disponible;
-                    //$unidad_medica_destino_presupuesto->material_curacion_disponible += $total_material_curacion_disponible;
-
-                    $unidad_medica_origen_presupuesto->insumos_modificado -= ($total_causes_disponible + $total_material_curacion_disponible);
-                    $unidad_medica_origen_presupuesto->insumos_comprometido -= ($total_causes_disponible + $total_material_curacion_disponible);
-
-                    $unidad_medica_destino_presupuesto->insumos_modificado += ($total_causes_disponible + $total_material_curacion_disponible);
-                    $unidad_medica_destino_presupuesto->insumos_disponible += ($total_causes_disponible + $total_material_curacion_disponible);
-
-                    $unidad_medica_origen_presupuesto->no_causes_modificado -= $total_no_causes_disponible;
-                    $unidad_medica_origen_presupuesto->no_causes_comprometido -= $total_no_causes_disponible;
-
-                    $unidad_medica_destino_presupuesto->no_causes_modificado += $total_no_causes_disponible;
-                    $unidad_medica_destino_presupuesto->no_causes_disponible += $total_no_causes_disponible;
-
-                    //Crear Hash de validación
-                    $secret = env('SECRET_KEY') . 'HASH-' . $unidad_medica_origen_presupuesto->clues . $unidad_medica_origen_presupuesto->mes . $unidad_medica_origen_presupuesto->anio . $unidad_medica_origen_presupuesto->insumos_modificado . $unidad_medica_origen_presupuesto->no_causes_modificado . '-HASH';
-                    $cadena_validacion = Hash::make($secret);
-                    $unidad_medica_origen_presupuesto->validation = $cadena_validacion;
-
-                    //Crear Hash de validación
-                    $secret = env('SECRET_KEY') . 'HASH-' . $unidad_medica_destino_presupuesto->clues . $unidad_medica_destino_presupuesto->mes . $unidad_medica_destino_presupuesto->anio . $unidad_medica_destino_presupuesto->insumos_modificado . $unidad_medica_destino_presupuesto->no_causes_modificado . '-HASH';
-                    $cadena_validacion = Hash::make($secret);
-                    $unidad_medica_destino_presupuesto->validation = $cadena_validacion;
+                    if($servidor->es_princial){
+                        $unidad_medica_origen_presupuesto = UnidadMedicaPresupuesto::where('clues',$pedido_clues)->where('almacen_id',$pedido_almacen)->where('mes',$pedido_mes)->where('anio',$pedido_anio)->first();
+                        $unidad_medica_destino_presupuesto = UnidadMedicaPresupuesto::where('clues',$pedido_clues)->where('almacen_id',$pedido_almacen)->where('mes',$input['transferir_a_mes'])->where('anio',$input['transferir_a_anio'])->first();
                         
-                    $unidad_medica_origen_presupuesto->save();
-                    $unidad_medica_destino_presupuesto->save();
+                        if(!$unidad_medica_origen_presupuesto || !$unidad_medica_destino_presupuesto){
+                            throw new Exception("Una de meses no tiene presupuesto configurado para los valores proporcionados.");
+                        }
 
-                    $datos_transferencia = [];
-                    $datos_transferencia['presupuesto_id'] = $unidad_medica_origen_presupuesto->presupuesto_id;
-                    $datos_transferencia['clues_origen'] = $pedido_clues;
-                    $datos_transferencia['almacen_origen'] = $pedido_almacen;
-                    $datos_transferencia['mes_origen'] = $pedido_mes;
-                    $datos_transferencia['anio_origen'] = $pedido_anio;
-                    $datos_transferencia['causes'] = $total_causes_disponible;
-                    $datos_transferencia['no_causes'] = $total_no_causes_disponible;
-                    $datos_transferencia['material_curacion'] = $total_material_curacion_disponible;
-                    $datos_transferencia['clues_destino'] = $pedido_clues;
-                    $datos_transferencia['almacen_destino'] = $pedido_almacen;
-                    $datos_transferencia['mes_destino'] = $input['transferir_a_mes'];
-                    $datos_transferencia['anio_destino'] = $input['transferir_a_anio'];
+                        //$unidad_medica_origen_presupuesto->causes_modificado   -= $total_causes_disponible;
+                        $unidad_medica_origen_presupuesto->causes_comprometido -= $total_causes_disponible;
 
+                        //$unidad_medica_destino_presupuesto->causes_modificado += $total_causes_disponible;
+                        //$unidad_medica_destino_presupuesto->causes_disponible += $total_causes_disponible;
+
+                        //$unidad_medica_origen_presupuesto->material_curacion_modificado -= $total_material_curacion_disponible;
+                        $unidad_medica_origen_presupuesto->material_curacion_comprometido -= $total_material_curacion_disponible;
+
+                        //$unidad_medica_destino_presupuesto->material_curacion_modificado += $total_material_curacion_disponible;
+                        //$unidad_medica_destino_presupuesto->material_curacion_disponible += $total_material_curacion_disponible;
+
+                        $unidad_medica_origen_presupuesto->insumos_modificado -= ($total_causes_disponible + $total_material_curacion_disponible);
+                        $unidad_medica_origen_presupuesto->insumos_comprometido -= ($total_causes_disponible + $total_material_curacion_disponible);
+
+                        $unidad_medica_destino_presupuesto->insumos_modificado += ($total_causes_disponible + $total_material_curacion_disponible);
+                        $unidad_medica_destino_presupuesto->insumos_disponible += ($total_causes_disponible + $total_material_curacion_disponible);
+
+                        $unidad_medica_origen_presupuesto->no_causes_modificado -= $total_no_causes_disponible;
+                        $unidad_medica_origen_presupuesto->no_causes_comprometido -= $total_no_causes_disponible;
+
+                        $unidad_medica_destino_presupuesto->no_causes_modificado += $total_no_causes_disponible;
+                        $unidad_medica_destino_presupuesto->no_causes_disponible += $total_no_causes_disponible;
+
+                        //Crear Hash de validación
+                        $secret = env('SECRET_KEY') . 'HASH-' . $unidad_medica_origen_presupuesto->clues . $unidad_medica_origen_presupuesto->mes . $unidad_medica_origen_presupuesto->anio . $unidad_medica_origen_presupuesto->insumos_modificado . $unidad_medica_origen_presupuesto->no_causes_modificado . '-HASH';
+                        $cadena_validacion = Hash::make($secret);
+                        $unidad_medica_origen_presupuesto->validation = $cadena_validacion;
+
+                        //Crear Hash de validación
+                        $secret = env('SECRET_KEY') . 'HASH-' . $unidad_medica_destino_presupuesto->clues . $unidad_medica_destino_presupuesto->mes . $unidad_medica_destino_presupuesto->anio . $unidad_medica_destino_presupuesto->insumos_modificado . $unidad_medica_destino_presupuesto->no_causes_modificado . '-HASH';
+                        $cadena_validacion = Hash::make($secret);
+                        $unidad_medica_destino_presupuesto->validation = $cadena_validacion;
+                            
+                        $unidad_medica_origen_presupuesto->save();
+                        $unidad_medica_destino_presupuesto->save();
+
+                        $datos_transferencia = [];
+                        $datos_transferencia['presupuesto_id'] = $unidad_medica_origen_presupuesto->presupuesto_id;
+                        $datos_transferencia['clues_origen'] = $pedido_clues;
+                        $datos_transferencia['almacen_origen'] = $pedido_almacen;
+                        $datos_transferencia['mes_origen'] = $pedido_mes;
+                        $datos_transferencia['anio_origen'] = $pedido_anio;
+                        $datos_transferencia['causes'] = $total_causes_disponible;
+                        $datos_transferencia['no_causes'] = $total_no_causes_disponible;
+                        $datos_transferencia['material_curacion'] = $total_material_curacion_disponible;
+                        $datos_transferencia['clues_destino'] = $pedido_clues;
+                        $datos_transferencia['almacen_destino'] = $pedido_almacen;
+                        $datos_transferencia['mes_destino'] = $input['transferir_a_mes'];
+                        $datos_transferencia['anio_destino'] = $input['transferir_a_anio'];
+
+                        $transferencia = TransferenciaPresupuesto::create($datos_transferencia);
+                    }else{
+                        $unidad_medica_origen_presupuesto = UnidadMedicaPresupuesto::where('clues',$pedido_clues)->where('almacen_id',$pedido_almacen)->where('mes',$pedido_mes)->where('anio',$pedido_anio)->first();
+                        $unidad_medica_origen_presupuesto->causes_comprometido -= $total_causes_disponible;
+                        $unidad_medica_origen_presupuesto->material_curacion_comprometido -= $total_material_curacion_disponible;
+                        $unidad_medica_origen_presupuesto->insumos_comprometido -= ($total_causes_disponible + $total_material_curacion_disponible);
+                        $unidad_medica_origen_presupuesto->no_causes_comprometido -= $total_no_causes_disponible;
+                        $unidad_medica_origen_presupuesto->save();
+
+                        $datos_ajuste = [
+                            'unidad_medica_presupuesto_id' => $unidad_medica_origen_presupuesto->id,
+                            'clues' => $pedido_clues,
+                            'mes_origen' => $pedido_mes,
+                            'anio_origen' => $pedido_anio,
+                            'mes_destino' => $input['transferir_a_mes'],
+                            'anio_destino' => $input['transferir_a_anio'],
+                            'causes' => $total_causes_disponible,
+                            'no_causes' => $total_no_causes_disponible,
+                            'material_curacion' => $total_material_curacion_disponible,
+                            'insumos' => ($total_causes_disponible + $total_material_curacion_disponible),
+                            'status' => 'P'
+                        ];
+
+                        $ajuste_cancelacion = AjustePresupuestoPedidoCancelado::create($datos_ajuste);
+
+                    }
                     //throw new Exception("La cantidad de No causes es mayor al presupuesto disponible del origen.");
-
-                    $transferencia = TransferenciaPresupuesto::create($datos_transferencia);
                 }
 
                 $datos_log_pedido_cancelado = [

@@ -17,7 +17,9 @@ class CrearTablaAjustePresupuestoPedidosCancelados extends Migration
         
             $table->string('id', 255);
 		    $table->integer('incremento');
-		    $table->string('servidor_id', 4);
+            $table->string('servidor_id', 4);
+            
+            $table->string('pedido_id');
             $table->integer('unidad_medica_presupuesto_id')->unsigned();
 
             $table->string('clues', 12);
@@ -33,15 +35,16 @@ class CrearTablaAjustePresupuestoPedidosCancelados extends Migration
             
             $table->string('status',3)->default("P")->comment("P = Pendiente / AR = Aplicado en Remoto / ARL = Aplicado en remoto y local");
 
-               
+            $table->string('usuario_id', 255);
             $table->timestamps();
             $table->softDeletes();
 
             $table->primary('id');
 
-            $table->foreign('unidad_medica_presupuesto_id','ajuste_presupuesto_ped_can_um_foreign')->references('id')->on('unidad_medica_presupuesto');            
+            $table->foreign('unidad_medica_presupuesto_id','ajuste_presupuesto_ped_can_um_foreign')->references('id')->on('unidad_medica_presupuesto');
             $table->foreign('clues')->references('clues')->on('unidades_medicas');
             $table->foreign('servidor_id')->references('id')->on('servidores');
+            $table->foreign('pedido_id')->references('id')->on('pedidos');
          
         });
     }

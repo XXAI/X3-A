@@ -17,6 +17,7 @@ class Insumo extends BaseModel{
     protected $table = 'insumos_medicos';  
     protected $primaryKey = 'clave';
     public $fillable = ["clave","tipo","generico_id","es_causes","descripcion"];
+    protected $casts = ["clave"=>"string","tipo"=>"string", "descripcion"=>"string","es_causes"=>"boolean", "es_unidosis"=>"boolean", "descontinuado"=>"boolean", "tiene_fecha_caducidad"=>"boolean", "generico_id"=>"integer"];
 
     //Este scope carga los datos de catalogos que utiliza insumos_medicos
     public function scopeConDescripciones($query){
