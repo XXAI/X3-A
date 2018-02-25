@@ -188,8 +188,30 @@ return [
             ],
             'condicion_subida' => 'clues = "'.env('CLUES').'"',       // Si quieren meter mas agrupen todo entre parentesis ( condicion1 AND condicion2 OR condicion3)
             'condicion_bajada' =>'',
-            'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible',
-            'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible',           
+            'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible',  // Esta funcion se ejecuta justo despues de haber bajado a local          
+        ],
+        'ajuste_presupuesto_pedidos_cancelados' => [
+            'campos_subida' => [
+                'mes_origen',
+                'anio_origen',
+                'mes_destion',
+                'anio_destino',
+                'causes',
+                'no_causes',
+                'material_curacion',
+                'insumos',
+                'status',
+                // No es necesario poner los campos porque directamente hará un insert de todos los campos la primera vez
+                // Pero si se "actualizara esta tabla hipotéticamente" estos serian los campos a subir
+            ],
+            'campos_bajada' => [
+                'status',
+            ],
+            'condicion_subida' => "status = 'P'", // Pendientes
+            'condicion_bajada' => "status = 'AR'", // Aplicados en remoto
+            'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosRemoto', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
         ],
         // Agregar más tablas copiando la estructura anterior
     ]
