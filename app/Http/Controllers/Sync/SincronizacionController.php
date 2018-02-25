@@ -980,9 +980,9 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                         }
                     }   
                     
-                    $log .= "Tabla pivote [subida] : ".$key."\t=> ".count($rows)." registros sincronizados \n";
+                    $log .= "Tabla pivote [subida] : ".$tabla."\t=> ".count($rows)." registros sincronizados \n";
                 } else{
-                    $log .= "Tabla pivote [subida] : ".$key."\t=> 0 registros sincronizados \n";
+                    $log .= "Tabla pivote [subida] : ".$tabla."\t=> 0 registros sincronizados \n";
                 }
                 // Fin offline a remoto
 
@@ -1143,9 +1143,9 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                             throw new \Exception("No se pudo hacer uno de los calculos de bajada");
                         }
                     }                                      
-                    $log .= "Tabla pivote [bajada] : ".$key."\t=> ".count($rows)." registros sincronizados \n";
+                    $log .= "Tabla pivote [bajada] : ".$tabla."\t=> ".count($rows)." registros sincronizados \n";
                 } else{
-                    $log .= "Tabla pivote [bajada] : ".$key."\t=> 0 registros sincronizados \n";
+                    $log .= "Tabla pivote [bajada] : ".$tabla."\t=> 0 registros sincronizados \n";
                 }
 
                 // Fin remoto a offline
