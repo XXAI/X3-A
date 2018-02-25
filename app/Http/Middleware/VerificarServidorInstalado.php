@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use App\Models\Usuario;
+use App\Models\UnidadMedica;
 
 
 class VerificarServidorInstalado
@@ -20,7 +21,8 @@ class VerificarServidorInstalado
 
         try{
 			if(env('SERVIDOR_INSTALADO') == 'true' ){
-				abort(403, 'El servidor ya fue instalado y configurado.');
+				return redirect('/instalado');
+				//abort(403, 'El servidor ya fue instalado y configurado.');
 			}
 
 			/*

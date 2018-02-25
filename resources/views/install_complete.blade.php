@@ -860,6 +860,60 @@
 	<div class="container">
 		<br>
 		<h1>Instalación completa</h1>
+		<hr>
+		<table width="100%">
+			<thead>
+				<tr><th colspan="2">DATOS DEL SERVIDOR</th></tr>
+			</thead>
+			<tbody>
+				<tr>
+					<th style="text-align:right;">ID</th>
+					<td>{{$data['servidor']['id']}}</td>
+				</tr>
+				<tr>
+					<th style="text-align:right;">NOMBRE</th>
+					<td>{{$data['servidor']['nombre']}}</td>
+				</tr>
+			</tbody>
+		</table>
+		
+		@if(isset($data['unidad']))
+		<table width="100%">
+			<thead>
+				<tr><th colspan="2">DATOS DE LA UNIDAD MEDICA</th></tr>
+			</thead>
+			<tbody>
+				<tr>
+					<th style="text-align:right;">CLUES</th>
+					<td>{{$data['unidad']['clues']}}</td>
+				</tr>
+				<tr>
+					<th style="text-align:right;">NOMBRE</th>
+					<td>{{$data['unidad']['nombre']}}</td>
+				</tr>
+			</tbody>
+		</table>
+		@endif
+
+		@if(isset($data['usuarios']))
+		<table width="100%">
+			<thead>
+				<tr><th colspan="2">DATOS DE USUARIOS</th></tr>
+			</thead>
+			<tbody>
+			@foreach ($data['usuarios'] as $usuario)
+				<tr>
+					<th style="text-align:right;">USUARIO</th>
+					<td>{{$usuario['user']}}</td>
+				</tr>
+				<tr>
+					<th style="text-align:right;">CONTRASEÑA</th>
+					<td>{{$usuario['pass']}}</td>
+				</tr>
+			@endforeach
+			</tbody>
+		</table>
+		@endif
 	</div>
 </body>
 </html>
