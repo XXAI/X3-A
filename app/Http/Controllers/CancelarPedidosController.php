@@ -163,6 +163,7 @@ class CancelarPedidosController extends Controller
 
                         $datos_ajuste = [
                             'unidad_medica_presupuesto_id' => $unidad_medica_origen_presupuesto->id,
+                            'pedido_id' => $pedido->id,
                             'clues' => $pedido_clues,
                             'mes_origen' => $pedido_mes,
                             'anio_origen' => $pedido_anio,
