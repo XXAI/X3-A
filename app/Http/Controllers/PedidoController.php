@@ -207,15 +207,11 @@ class PedidoController extends Controller{
     	//$pedido = Pedido::where('almacen_solicitante',$request->get('almacen_id'))->find($id);
         $pedido = Pedido::find($id);
         
-        if($pedido->almacen_proveedor != $almacen->id && $pedido->almacen_solicitante != $almacen->id  && $pedido->clues_destino != $almacen->clues && $pedido->clues != $almacen_clues){
-            return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_CONFLICT);
-        }
-
         if(!$pedido){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_CONFLICT);
         }
         
-        if($pedido->almacen_proveedor != $almacen->id && $pedido->almacen_solicitante != $almacen->id  && $pedido->clues_destino != $almacen->clues && $pedido->clues != $almacen_clues){
+        if($pedido->almacen_proveedor != $almacen->id && $pedido->almacen_solicitante != $almacen->id  && $pedido->clues_destino != $almacen->clues && $pedido->clues != $almacen->clues){
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_CONFLICT);
         }
         
