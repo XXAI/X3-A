@@ -13,13 +13,7 @@ class CalculosPivotesSync {
 		if($conexion == null){
 			return false;
 		}
-		// Probamos que se pueda hacer conexiones remotas o locales primerp
-		try{
-			$conexion->beginTransaction();
-        } 
-        catch (\Exception $e) {    
-			return false; // Retornamos false para que se cancele lo que se tenga que cancelar en el proceso de sincronizacion
-		}		
+			
 		
 		try{
 			$statement = "
@@ -33,28 +27,13 @@ class CalculosPivotesSync {
 			$conexion->statement($statement);					
 			//$conexion->commit();	
 			return true; // Retornamos true para indicar en el proceso de sincronización que se pudo hacer el update correctamente
-		}catch (\Illuminate\Database\QueryException $e){			
-            if($remoto){
-				$conexion_remota->rollback();
-			} else {
-				DB::rollback();
-			}
+		}catch (\Illuminate\Database\QueryException $e){	
 			return false; // Retornamos false para que se cancele lo que se tenga que cancelar en el proceso de sincronizacion
         }
-        catch (\ErrorException $e) {
-			if($remoto){
-				$conexion_remota->rollback();
-			} else {
-				DB::rollback();
-			}
+        catch (\ErrorException $e) {			
 			return false; // Retornamos false para que se cancele lo que se tenga que cancelar en el proceso de sincronizacion
         } 
-        catch (\Exception $e) {            
-            if($remoto){
-				$conexion_remota->rollback();
-			} else {
-				DB::rollback();
-			}
+        catch (\Exception $e) {   
 			return false; // Retornamos false para que se cancele lo que se tenga que cancelar en el proceso de sincronizacion
         }
 	}
@@ -70,14 +49,6 @@ class CalculosPivotesSync {
 		if($conexion == null){
 			return false;
 		}
-		// Probamos que se pueda hacer conexiones remotas o locales primerp
-		try{
-			$conexion->beginTransaction();
-        } 
-        catch (\Exception $e) {   
-			return false; // Retornamos false para que se cancele lo que se tenga que cancelar en el proceso de sincronizacion
-		}		
-		
 		try{
 			// Primero modificamos el presupuesto destino a partir de la cancelacion
 			$statement1 = "
@@ -148,28 +119,13 @@ class CalculosPivotesSync {
 			
 			//$conexion->commit();	
 			return true; // Retornamos true para indicar en el proceso de sincronización que se pudo hacer el update correctamente
-		}catch (\Illuminate\Database\QueryException $e){			
-            if($remoto){
-				$conexion_remota->rollback();
-			} else {
-				DB::rollback();
-			}
+		}catch (\Illuminate\Database\QueryException $e){	
 			return false; // Retornamos false para que se cancele lo que se tenga que cancelar en el proceso de sincronizacion
         }
-        catch (\ErrorException $e) {
-            if($remoto){
-				$conexion_remota->rollback();
-			} else {
-				DB::rollback();
-			}
+        catch (\ErrorException $e) {			
 			return false; // Retornamos false para que se cancele lo que se tenga que cancelar en el proceso de sincronizacion
         } 
-        catch (\Exception $e) {            
-			if($remoto){
-				$conexion_remota->rollback();
-			} else {
-				DB::rollback();
-			}
+        catch (\Exception $e) {   
 			return false; // Retornamos false para que se cancele lo que se tenga que cancelar en el proceso de sincronizacion
         }
 	}
