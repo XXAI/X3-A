@@ -31,16 +31,14 @@ use Carbon\Carbon;
 class RecepcionPedidoController extends Controller
 {
 
-	public function obtenerDatosPresupuesto($clues,$proveedor_id,$mes,$almacen_id){
+	public function obtenerDatosPresupuesto($clues,$presupuesto_id,$mes,$anio,$almacen_id){
         try{
-            $parametros = Input::all();
-
-            $presupuesto = Presupuesto::where('activo',1)->first();
-
-            $presupuesto_unidad_medica = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
-                                            ->where('clues',$clues)
-                                            //->where('proveedor_id',$proveedor_id)
+            //$parametros = Input::all();
+            //$presupuesto = Presupuesto::where('activo',1)->first();
+            $presupuesto_unidad_medica = UnidadMedicaPresupuesto::where('clues',$clues)
+                                            ->where('presupuesto_id',$presupuesto_id)
 											->where('mes',$mes)
+											->where('anio',$anio)
 											->where('almacen_id',$almacen_id)
                                             ->groupBy('clues')
 											->first();
@@ -594,17 +592,20 @@ class RecepcionPedidoController extends Controller
 					$historial->save();
 				}else{
 					/*Calculo de unidad presupuesto*/
-					$unidad_presupuesto = $this->obtenerDatosPresupuesto($almacen->clues,$almacen->proveedor_id,substr($pedido->fecha,5,2),$almacen->id);
+					$fecha = explode('-',$pedido->fecha);
+					$unidad_presupuesto = $this->obtenerDatosPresupuesto($almacen->clues,$pedido->presupuesto_id,$fecha[1],$fecha[0],$almacen->id);
 	
 					$unidad_presupuesto->causes_comprometido 				-= $causes_unidad_presupuesto;
 					$unidad_presupuesto->causes_devengado 					+= $causes_unidad_presupuesto;
+					$unidad_presupuesto->material_curacion_comprometido 	-= $material_curacion_unidad_presupuesto;
+					$unidad_presupuesto->material_curacion_devengado 		+= $material_curacion_unidad_presupuesto;
+
+					$unidad_presupuesto->insumos_comprometido 				-= ($causes_unidad_presupuesto + $material_curacion_unidad_presupuesto);
+					$unidad_presupuesto->insumos_devengado 					+= ($causes_unidad_presupuesto + $material_curacion_unidad_presupuesto);
 					
 					$unidad_presupuesto->no_causes_comprometido 			-= $no_causes_unidad_presupuesto;
 					$unidad_presupuesto->no_causes_devengado 				+= $no_causes_unidad_presupuesto;
-			
-					$unidad_presupuesto->material_curacion_comprometido 	-= $material_curacion_unidad_presupuesto;
-					$unidad_presupuesto->material_curacion_devengado 		+= $material_curacion_unidad_presupuesto;
-	
+					
 					$unidad_presupuesto->update();
 					/*Fin calculo de unidad presupuesto*/
 				}

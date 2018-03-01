@@ -222,12 +222,13 @@ class TransferenciasPresupuestosController extends Controller
             'mes_destino'       => 'required',
             'anio_origen'       => 'required',
             'anio_destino'      => 'required',
-            'causes'            => 'numeric',
+            'insumos'            => 'numeric',
             'no_causes'         => 'numeric',
-            'material_curacion' => 'numeric'
+            //'causes'            => 'numeric',
+            //'material_curacion' => 'numeric'
         ];
 
-        $input = Input::only('clues_origen','clues_destino','almacen_origen','almacen_destino', 'mes_origen','mes_destino', 'anio_origen','anio_destino','causes','no_causes','material_curacion');
+        $input = Input::only('clues_origen','clues_destino','almacen_origen','almacen_destino', 'mes_origen','mes_destino', 'anio_origen','anio_destino','insumos','no_causes');
 
         $v = Validator::make($input, $reglas, $mensajes);
 
@@ -247,8 +248,8 @@ class TransferenciasPresupuestosController extends Controller
 
             if(isset($input['insumos'])){
                 $input['insumos'] += 0.0;
-                if($input['insumos'] > $unidad_medica_origen_presupuesto->causes_disponible){
-                    throw new Exception("La cantidad de Causes/Material de Curación es mayor al presupuesto disponible del origen.");
+                if($input['insumos'] > $unidad_medica_origen_presupuesto->insumos_disponible){
+                    throw new \Exception("La cantidad de Causes/Material de Curación es mayor al presupuesto disponible del origen.");
                 }
                 if( $input['insumos'] > 0){
                     $unidad_medica_origen_presupuesto->insumos_modificado = $unidad_medica_origen_presupuesto->insumos_modificado - $input['insumos'];

@@ -27,6 +27,11 @@ class CancelarPedidosController extends Controller
 
         $pedido = Pedido::with("insumos.insumoDetalle","recepciones.entrada")->find($id);
 
+        $presupuesto = Presupuesto::find($pedido->presupuesto_id);
+        if(!$presupuesto->activo){
+            return Response::json([ 'data' => $pedido, 'error' => 'No se puede cancelar el pedido, ya que el presupuesto asignado ya no se encuentra activo.' ],500);
+        }
+
         $recepion_abierta = false;
         
         foreach($pedido->recepciones as $recepcion){
@@ -58,7 +63,7 @@ class CancelarPedidosController extends Controller
                 }
             }
 
-            $total_material_curacion_disponible += ($total_material_curacion_disponible*16/100);
+            $total_material_curacion_disponible += round($total_material_curacion_disponible*16/100,2);
 
             $fecha_pedido = explode('-',$pedido->fecha);
 
@@ -77,7 +82,7 @@ class CancelarPedidosController extends Controller
             //TODO:Agregar hash validacion
             if($pedido->save()){
                 if($pedido_mes == $input['transferir_a_mes'] && $pedido_anio == $input['transferir_a_anio']){
-                    $presupuesto_pedido = UnidadMedicaPresupuesto::where('clues',$pedido_clues)->where('almacen_id',$pedido_almacen)->where('mes',$pedido_mes)->where('anio',$pedido_anio)->first();
+                    $presupuesto_pedido = UnidadMedicaPresupuesto::where('clues',$pedido_clues)->where('almacen_id',$pedido_almacen)->where('mes',$pedido_mes)->where('anio',$pedido_anio)->where('presupuesto_id',$pedido->presupuesto_id)->first();
                     $presupuesto_pedido->causes_comprometido -= $total_causes_disponible;
                     //$presupuesto_pedido->causes_disponible += $total_causes_disponible;
 
@@ -92,13 +97,13 @@ class CancelarPedidosController extends Controller
 
                     $presupuesto_pedido->save();
                 }else{
-
-                    if($servidor->es_princial){
-                        $unidad_medica_origen_presupuesto = UnidadMedicaPresupuesto::where('clues',$pedido_clues)->where('almacen_id',$pedido_almacen)->where('mes',$pedido_mes)->where('anio',$pedido_anio)->first();
-                        $unidad_medica_destino_presupuesto = UnidadMedicaPresupuesto::where('clues',$pedido_clues)->where('almacen_id',$pedido_almacen)->where('mes',$input['transferir_a_mes'])->where('anio',$input['transferir_a_anio'])->first();
+                    if($servidor->principal){
+                        
+                        $unidad_medica_origen_presupuesto = UnidadMedicaPresupuesto::where('clues',$pedido_clues)->where('almacen_id',$pedido_almacen)->where('mes',$pedido_mes)->where('anio',$pedido_anio)->where('presupuesto_id',$pedido->presupuesto_id)->first();
+                        $unidad_medica_destino_presupuesto = UnidadMedicaPresupuesto::where('clues',$pedido_clues)->where('almacen_id',$pedido_almacen)->where('mes',$input['transferir_a_mes'])->where('anio',$input['transferir_a_anio'])->where('presupuesto_id',$pedido->presupuesto_id)->first();
                         
                         if(!$unidad_medica_origen_presupuesto || !$unidad_medica_destino_presupuesto){
-                            throw new Exception("Una de meses no tiene presupuesto configurado para los valores proporcionados.");
+                            throw new \Exception("Uno de los meses no tiene presupuesto configurado para los valores proporcionados.");
                         }
 
                         //$unidad_medica_origen_presupuesto->causes_modificado   -= $total_causes_disponible;
@@ -144,6 +149,7 @@ class CancelarPedidosController extends Controller
                         $datos_transferencia['almacen_origen'] = $pedido_almacen;
                         $datos_transferencia['mes_origen'] = $pedido_mes;
                         $datos_transferencia['anio_origen'] = $pedido_anio;
+                        $datos_transferencia['insumos'] = $total_causes_disponible + $total_material_curacion_disponible;
                         $datos_transferencia['causes'] = $total_causes_disponible;
                         $datos_transferencia['no_causes'] = $total_no_causes_disponible;
                         $datos_transferencia['material_curacion'] = $total_material_curacion_disponible;
@@ -177,9 +183,7 @@ class CancelarPedidosController extends Controller
                         ];
 
                         $ajuste_cancelacion = AjustePresupuestoPedidoCancelado::create($datos_ajuste);
-
                     }
-                    //throw new Exception("La cantidad de No causes es mayor al presupuesto disponible del origen.");
                 }
 
                 $datos_log_pedido_cancelado = [
@@ -197,7 +201,7 @@ class CancelarPedidosController extends Controller
                 DB::commit();
                 return Response::json([ 'data' => $pedido ],200);
             }else{
-                throw new Exception("No se pudieron guardar los cambios en el pedido.");
+                throw new \Exception("No se pudieron guardar los cambios en el pedido.");
             }
 
         }catch (\Exception $e) {

@@ -10,7 +10,7 @@ use \DB,  \Response, \Config;
 use Illuminate\Support\Facades\Input;
 use \Validator;
 use App\Models\Sincronizacion, App\Models\Servidor; 
-use App\Models\Rol;
+use App\Models\Rol, App\Models\Usuario;
 
 class ServidoresController extends \App\Http\Controllers\Controller
 {
@@ -19,8 +19,8 @@ class ServidoresController extends \App\Http\Controllers\Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
+    public function index(Request $request){
+        $usuario = Usuario::find($request->get('usuario_id'));
 		//return Response::json([ 'data' => []],200);
 		//return Response::json(['error' => "NO EXSITE LA BASE"], 500);
 		$parametros = Input::only('q','page','per_page','estatus');
@@ -28,7 +28,7 @@ class ServidoresController extends \App\Http\Controllers\Controller
 			$servidores =  Servidor::where('nombre','LIKE',"%".$parametros['q']."%")->orWhere('clues','LIKE',"%".$parametros['q']."%");
 		} else {
 			if(isset($parametros['estatus'])){
-				$servidores = $servidores =  Servidor::select('*', 
+				$servidores =  Servidor::select('*', 
 					DB::raw(
 						'ABS(TIMESTAMPDIFF(HOUR,NOW(),ultima_sincronizacion)) as horas_sin_sincronizar'
 					),
@@ -40,12 +40,13 @@ class ServidoresController extends \App\Http\Controllers\Controller
 				$servidores =  Servidor::select('*');
 			}
 			
-		}
-		
-		
+        }
 
+        if(!$usuario->su){
+            $servidores = $servidores->where('servidor_id',$usuario->servidor_id);
+        }
+        
 		if(isset($parametros['page'])){
-
 			$resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
 			$servidores = $servidores->paginate($resultadosPorPagina);
 		} else {

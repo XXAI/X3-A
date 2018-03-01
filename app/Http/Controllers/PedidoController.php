@@ -38,16 +38,12 @@ class PedidoController extends Controller{
 
             $parametros = Input::all();
 
-            $presupuesto = Presupuesto::where('activo',1)->first();
-
             $presupuesto_unidad_medica = UnidadMedicaPresupuesto::select('clues',
                                             DB::raw('sum(insumos_autorizado) as insumos_autorizado'),DB::raw('sum(insumos_modificado) as insumos_modificado'),DB::raw('sum(insumos_comprometido) as insumos_comprometido'),DB::raw('sum(insumos_devengado) as insumos_devengado'),DB::raw('sum(insumos_disponible) as insumos_disponible'),
                                             DB::raw('sum(causes_autorizado) as causes_autorizado'),DB::raw('sum(causes_modificado) as causes_modificado'),DB::raw('sum(causes_comprometido) as causes_comprometido'),DB::raw('sum(causes_devengado) as causes_devengado'),DB::raw('sum(causes_disponible) as causes_disponible'),
                                             DB::raw('sum(no_causes_autorizado) as no_causes_autorizado'),DB::raw('sum(no_causes_modificado) as no_causes_modificado'),DB::raw('sum(no_causes_comprometido) as no_causes_comprometido'),DB::raw('sum(no_causes_devengado) as no_causes_devengado'),DB::raw('sum(no_causes_disponible) as no_causes_disponible'),
                                             DB::raw('sum(material_curacion_autorizado) as material_curacion_autorizado'),DB::raw('sum(material_curacion_modificado) as material_curacion_modificado'),DB::raw('sum(material_curacion_comprometido) as material_curacion_comprometido'),DB::raw('sum(material_curacion_devengado) as material_curacion_devengado'),DB::raw('sum(material_curacion_disponible) as material_curacion_disponible'))
-                                            ->where('presupuesto_id',$presupuesto->id)
                                             ->where('clues',$almacen->clues)
-                                            //->where('proveedor_id',$almacen->proveedor_id)
                                             ->groupBy('clues');
             if(isset($parametros['mes'])){
                 if($parametros['mes']){
@@ -67,8 +63,19 @@ class PedidoController extends Controller{
                 }
             }
 
+            if(isset($parametros['presupuesto'])){
+                $presupuesto = null;
+                if($parametros['presupuesto']){
+                    $presupuesto_unidad_medica = $presupuesto_unidad_medica->where('presupuesto_id',$parametros['presupuesto']);
+                    $presupuesto = Presupuesto::find($parametros['presupuesto']);
+                }
+            }else{
+                $presupuesto = Presupuesto::where('activo',1)->first();
+                $presupuesto_unidad_medica = $presupuesto_unidad_medica->where('presupuesto_id',$presupuesto->id);
+            }
+
             $presupuesto_unidad_medica = $presupuesto_unidad_medica->first();
-            return Response::json([ 'data' => $presupuesto_unidad_medica],200);
+            return Response::json([ 'data' => $presupuesto_unidad_medica, 'presupuesto'=>$presupuesto],200);
         } catch (\Exception $e) {
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
@@ -218,9 +225,9 @@ class PedidoController extends Controller{
         if($pedido->tipo_pedido_id != 'PJS'){
             
             if($pedido->status == 'BR'){
-                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuestoApartado");
+                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuesto","presupuestoApartado");
             }else{
-                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","almacenProveedor","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
+                $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","almacenProveedor","proveedor","presupuesto","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
                 if($pedido->tipo_pedido_id == 'PEA'){
                     //$pedido = $pedido->load("movimientos.transferenciaSurtida.insumos");
                     $pedido = $pedido->load("historialTransferenciaCompleto");
@@ -231,9 +238,9 @@ class PedidoController extends Controller{
         else {
             
             if($pedido->status == 'BR'){
-                $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuestoApartado");
+                $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuesto","presupuestoApartado");
             }else{
-                $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","proveedor","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
+                $pedido = $pedido->load("insumos.tipoInsumo","insumos.listaClues","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","proveedor","presupuesto","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
             }
         }
         // ############################################
@@ -258,6 +265,7 @@ class PedidoController extends Controller{
 
         $almacen = Almacen::find($request->get('almacen_id'));
         $um = UnidadMedica::find( $almacen->clues);
+        $presupuesto = Presupuesto::where('activo',1)->first();
 
         if($almacen->nivel_almacen == 1 && ($almacen->tipo_almacen == 'ALMPAL' || $almacen->tipo_almacen == 'FARSBR')){
             $reglas['proveedor_id'] = 'required';
@@ -291,6 +299,7 @@ class PedidoController extends Controller{
         $parametros['datos']['clues'] = $almacen->clues;
         $parametros['datos']['status'] = 'BR'; //estatus de borrador
         $parametros['datos']['tipo_pedido_id'] = $tipo_pedido; //tipo de pedido Pedido de Abastecimiento
+        $parametros['datos']['presupuesto_id'] = $presupuesto->id; //Harima: Al crear el pedido, lo creamos sobre el presupuesto activo
 
         //$fecha = date($parametros['datos']['fecha']);
         //$fecha_expiracion = strtotime("+20 days", strtotime($fecha));
@@ -468,11 +477,11 @@ class PedidoController extends Controller{
                 return Response::json(['error' => 'El pedido ya no puede editarse.'], 500);
             }
 
-            //Harima:checamos si el pedido tiene presupuetso apartado, esto para ver si cambio almacen o mes del pedido, por lo pronto mandamos error al intentar hacer este cambio.
+            //Harima:checamos si el pedido tiene presupuetso apartado, esto para ver si cambio almacen, mes o año del pedido, por lo pronto mandamos error al intentar hacer este cambio.
             $pedido->load('presupuestoApartado');
             if($pedido->presupuestoApartado){
                 $fecha = explode('-',$parametros['datos']['fecha']);
-                if($parametros['datos']['almacen_solicitante'] != $pedido->presupuestoApartado->almacen_id || $fecha[1] != $pedido->presupuestoApartado->mes){
+                if($parametros['datos']['almacen_solicitante'] != $pedido->presupuestoApartado->almacen_id || $fecha[1] != $pedido->presupuestoApartado->mes || $fecha[0] != $pedido->presupuestoApartado->anio){
                     return Response::json(['error' => 'El cambio de mes y almacen para este pedido no se encuentra autorizado'], 500);
                 }
             }
@@ -627,10 +636,12 @@ class PedidoController extends Controller{
                 }
 
                 $fecha = explode('-',$pedido->fecha);
-                $presupuesto = Presupuesto::where('activo',1)->first();
-                $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$presupuesto->id)
+
+                //$presupuesto = Presupuesto::where('activo',1)->first();
+                //$presupuesto = Presupuesto::find($pedido->presupuesto_id);
+
+                $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$pedido->presupuesto_id)
                                             ->where('clues',$almacen->clues)
-                                            //->where('proveedor_id',$almacen->proveedor_id)
                                             ->where('almacen_id',$almacen_solicitante->id)
                                             ->where('mes',$fecha[1])
                                             ->where('anio',$fecha[0])
@@ -653,7 +664,8 @@ class PedidoController extends Controller{
                 $presupuesto_unidad->no_causes_disponible = $presupuesto_unidad->no_causes_disponible - round($total_monto['no_causes'],2);
 
                 //if($presupuesto_unidad->causes_disponible < 0 || $presupuesto_unidad->no_causes_disponible < 0 || $presupuesto_unidad->material_curacion_disponible < 0){
-                if(($presupuesto_unidad->causes_disponible + $presupuesto_unidad->material_curacion_disponible) < 0 || $presupuesto_unidad->no_causes_disponible < 0){
+                //if(($presupuesto_unidad->causes_disponible + $presupuesto_unidad->material_curacion_disponible) < 0 || $presupuesto_unidad->no_causes_disponible < 0){
+                if($presupuesto_unidad->insumos_disponible < 0 || $presupuesto_unidad->no_causes_disponible < 0){
                     DB::rollBack();
                     return Response::json(['error' => 'El presupuesto es insuficiente para este pedido, los cambios no se guardaron.', 'data'=>[$presupuesto_unidad,$total_monto]], 500);
                 }else{
@@ -767,8 +779,6 @@ class PedidoController extends Controller{
         }
 
     }
-
-    
 
     public function generarExcel($id) {
         $obj =  JWTAuth::parseToken()->getPayload();

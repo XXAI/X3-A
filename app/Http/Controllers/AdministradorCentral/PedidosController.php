@@ -30,7 +30,7 @@ class PedidosController extends Controller
                                             DB::raw('sum(no_causes_autorizado) as no_causes_autorizado'),DB::raw('sum(no_causes_modificado) as no_causes_modificado'),DB::raw('sum(no_causes_comprometido) as no_causes_comprometido'),DB::raw('sum(no_causes_devengado) as no_causes_devengado'),DB::raw('sum(no_causes_disponible) as no_causes_disponible'),
                                             DB::raw('sum(material_curacion_autorizado) as material_curacion_autorizado'),DB::raw('sum(material_curacion_modificado) as material_curacion_modificado'),DB::raw('sum(material_curacion_comprometido) as material_curacion_comprometido'),DB::raw('sum(material_curacion_devengado) as material_curacion_devengado'),DB::raw('sum(material_curacion_disponible) as material_curacion_disponible'))
                                             ->where('presupuesto_id',$presupuesto->id);
-                                           // ->where('clues',$almacen->clues)
+                                            //->where('clues',$almacen->clues)
                                             //->where('proveedor_id',$almacen->proveedor_id)
                                             //->groupBy('clues');
             
@@ -103,7 +103,7 @@ class PedidosController extends Controller
             }*/
 
             $presupuesto_unidad_medica = $presupuesto_unidad_medica->first();
-            return Response::json([ 'data' => $presupuesto_unidad_medica],200);
+            return Response::json([ 'data' => $presupuesto_unidad_medica, 'presupuesto'=>$presupuesto],200);
         } catch (\Exception $e) {
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
@@ -367,6 +367,7 @@ class PedidosController extends Controller
                     'pedido_id' => $pedido->id,
                     'almacen_id' => $pedido->almacen_solicitante,
                     'mes' => $fecha[1],
+                    'anio' => $fecha[0],
                     'causes_comprometido' => ($causes_solicitado-$causes_recibido),
                     'causes_devengado' => $causes_recibido,
                     'no_causes_comprometido' => ($no_causes_solicitado-$no_causes_recibido),

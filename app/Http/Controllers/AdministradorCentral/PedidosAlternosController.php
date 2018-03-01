@@ -248,7 +248,7 @@ class PedidosAlternosController extends Controller{
             $pedido->load('presupuestoApartado');
             if($pedido->presupuestoApartado){
                 $fecha = explode('-',$parametros['datos']['fecha']);
-                if($parametros['datos']['almacen_solicitante'] != $pedido->presupuestoApartado->almacen_id || $fecha[1] != $pedido->presupuestoApartado->mes){
+                if($parametros['datos']['almacen_solicitante'] != $pedido->presupuestoApartado->almacen_id || $fecha[1] != $pedido->presupuestoApartado->mes || $fecha[0] != $pedido->presupuestoApartado->anio){
                     return Response::json(['error' => 'El cambio de mes y almacen para este pedido no se encuentra autorizado'], 500);
                 }
             }

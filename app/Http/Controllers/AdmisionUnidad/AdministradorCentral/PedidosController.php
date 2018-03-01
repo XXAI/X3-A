@@ -367,6 +367,7 @@ class PedidosController extends Controller
                     'pedido_id' => $pedido->id,
                     'almacen_id' => $pedido->almacen_solicitante,
                     'mes' => $fecha[1],
+                    'anio' => $fecha[0],
                     'causes_comprometido' => ($causes_solicitado-$causes_recibido),
                     'causes_devengado' => $causes_recibido,
                     'no_causes_comprometido' => ($no_causes_solicitado-$no_causes_recibido),
