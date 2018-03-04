@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Patches;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use App\Http\Requests;
-use  \DB, \Storage, \ZipArchive, \Hash, \Response, \Config;
+use  App\Exceptions\PatchException as PatchException, \DB, \Storage, \ZipArchive, \Hash, \Response, \Config;
 use Illuminate\Support\Facades\Input;
 use App\Librerias\Patches;
 use Carbon\Carbon;
@@ -20,19 +20,12 @@ class PatchesController extends \App\Http\Controllers\Controller
     public function lista()
     {
 
-		$items_cliente = [];
-		foreach(Config::get("patches.cliente") as $item){
-			$items_cliente[] = $item;
-		 }
-		 
-		$items_api = [];
-		foreach(Config::get("patches.api") as $item){
-			$items_api[] = $item;
- 		}
-        
-        $data = ['cliente' => $items_cliente, 'api' => $items_api];
-       
-        return Response::json([ 'data' => $data],200);
+		$items = [];
+		foreach(Config::get("patches") as $item){
+			$items[] = $item;
+		}
+
+        return Response::json([ 'data' => $items],200);
 	}
 
 	public function ejecutar(Request $request){
@@ -61,64 +54,85 @@ class PatchesController extends \App\Http\Controllers\Controller
 						$patch_name .= $array_filename[$i];
 					}
 
-					if($array_filename[0] != md5($patch_name)){
+					if(strtoupper($array_filename[0]) != strtoupper(md5($patch_name))){
 						throw new \Exception("El nombre del archivo fue alterado");
 					}
 					
 					if($array_filename[2]=="cliente"){
-						$output = "ACTUALIZANDO PARCHE No. ".$array_filename[3]." AL CLIENTE\n";
-						$base_path = env("PATH_CLIENTE");	
+						$output = "Ejecutando parche No. ".$array_filename[3]." al cliente...\n\n";
 						$api_base_path = base_path();	
+						$base_path = env("PATH_CLIENTE");	
+						
+					
 						$script = "
-							cd $base_path
-							pwd
-							git apply --stat ".$api_base_path."/storage/app/patches/".$filename."
-							git apply --check ".$api_base_path."/storage/app/patches/".$filename."
+							cd $base_path	
 							git am --signoff < ".$api_base_path."/storage/app/patches/".$filename."
 						";
-						$output .= shell_exec($script);
 
-						foreach(Config::get("patches.cliente") as $item){
-							if($item['nombre'] == $filename){
-								if($item['ejecutar'] != ''){
-									
-									$o = call_user_func($item['ejecutar']);
-									if($o == false){
-										$output .= "\nEl parche se aplicó, pero no se pudieron ejecutar las instrucciones posteriores, debido a un error en la función configurada.";
-									}
-									$output .= "\n".$o;
-									break;
-								}  
-							}
+						$preout =  shell_exec($script);
+						$output.= $preout;
+
+						$patchFailed = strpos($preout,"Patch failed");
+						$patchEmpty = strpos($preout,"Patch is empty");
+
+						if($patchFailed !== false || $patchEmpty !== false ){
+
+							$script = "
+								cd $base_path	
+								git am --abort
+							";
+							shell_exec($script);
+							$output .= "\nEl parche no se pudo ejecutar :(";
+							throw new PatchException($output);
+						} else {
+							$output .= "\n¡Parche ejecutado correctamente!";
 						}
-						
+
+					
 					}
 
 					if($array_filename[2]=="api"){
-						$output = "ACTUALIZANDO PARCHE No. ".$array_filename[3]." A LA API\n";
+						$output = "Ejecutando parche No. ".$array_filename[3]." a la API...\n\n";
 						$base_path = base_path();	
 						$script = "
 							cd $base_path
-							pwd
-							git apply --stat storage/app/patches/".$filename."
-							git apply --check storage/app/patches/".$filename."
 							git am --signoff < storage/app/patches/".$filename."
+							
 						";
-						$output .= shell_exec($script);
 
-						foreach(Config::get("patches.api") as $item){
+
+						$preout =  shell_exec($script);
+						$output.= $preout;
+
+						$patchFailed = strpos($preout,"Patch failed");
+						$patchEmpty = strpos($preout,"Patch is empty");
+
+						if($patchFailed !== false || $patchEmpty !== false ){
+
+							$script = "
+								cd $base_path	
+								git am --abort
+							";
+							shell_exec($script);
+							$output .= "\nEl parche no se pudo ejecutar :(";
+							throw new PatchException($output);
+						} 
+
+						foreach(Config::get("patches") as $item){
 							if($item['nombre'] == $filename){
 								if($item['ejecutar'] != ''){
 									
 									$o = call_user_func($item['ejecutar']);
 									if($o == false){
 										$output .= "\nEl parche se aplicó, pero no se pudieron ejecutar las instrucciones posteriores, debido a un error en la función configurada.";
-									}
+									} 
 									$output .= "\n".$o;
 									break;
 								}  
 							}
 						}
+
+						$output .= "\n¡Parche ejecutado correctamente!";
 					}
 					
 					
@@ -134,11 +148,16 @@ class PatchesController extends \App\Http\Controllers\Controller
 				throw new \Exception("No hay archivo.");
 			}
 
-        } catch (\Exception $e) {
+		} 
+		catch (PatchException $e) {
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        }
+		catch (\Exception $e) {
+            return Response::json(['error' => $e->getMessage()], 500);
         } catch (\FatalErrorException $e) {
-            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+            return Response::json(['error' => $e->getMessage()], 500);
         } 
     }
 	
 }
+
