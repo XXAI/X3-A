@@ -193,9 +193,22 @@ class PedidoController extends Controller{
 
         $pedidos = $pedidos->with("director", "encargadoAlmacen"); // Villa: Obtenggo los datos de los firmantes para el modulo de configuracion
 
-        if(!isset($parametros['status']) || $parametros['status'] == 'ET'){
+        //Harima: Esto es para agregar las transferencias a la lista de pedidos
+        if(!isset($parametros['status'])){
             $pedidos = $pedidos->orWhere(function($query)use($almacen){
                 $query->where('almacen_solicitante',$almacen->id)->where('clues_destino',$almacen->clues)->where('tipo_pedido_id','PEA')->where('status','!=','BR');
+            });
+        }elseif($parametros['status'] == 'ET'){
+            $pedidos = $pedidos->orWhere(function($query)use($almacen){
+                $query->where('almacen_solicitante',$almacen->id)->where('clues_destino',$almacen->clues)->where('tipo_pedido_id','PEA')->where('status','=','ET');
+            });
+        }elseif($parametros['status'] == 'EX-CA'){
+            $pedidos = $pedidos->orWhere(function($query)use($almacen){
+                $query->where('almacen_solicitante',$almacen->id)->where('clues_destino',$almacen->clues)->where('tipo_pedido_id','PEA')->where('status','=','EX-CA');
+            });
+        }elseif($parametros['status'] == 'FI'){
+            $pedidos = $pedidos->orWhere(function($query)use($almacen){
+                $query->where('almacen_solicitante',$almacen->id)->where('clues_destino',$almacen->clues)->where('tipo_pedido_id','PEA')->where('status','=','FI');
             });
         }
         

@@ -43,7 +43,7 @@ class ServidoresController extends \App\Http\Controllers\Controller
         }
 
         if(!$usuario->su){
-            $servidores = $servidores->where('servidor_id',$usuario->servidor_id);
+            $servidores = $servidores->where('id',$usuario->servidor_id);
         }
         
 		if(isset($parametros['page'])){

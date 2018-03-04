@@ -430,11 +430,12 @@ class SincronizacionController extends \App\Http\Controllers\Controller
 
                                         // Buscamos las tablas pivotes para que los offline actualicen
                                         $rows =$conexion_local->table($tabla);
-
+                                        
                                         if($parametrosTabla['condicion_bajada'] != ''){
                                             $rows = $rows->whereRaw($parametrosTabla['condicion_bajada']);
                                         }
-                                        $rows = $rows->get();
+
+                                        $rows = $rows->whereBetween('updated_at',[$servidor->ultima_sincronizacion,date('Y-m-d H:i:s')])->get();
                                     
                                         if($rows){
                                             $query = "";
@@ -989,7 +990,14 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                 // Inicia remoto a offline
 
                 // Buscamos las tablas pivotes para que los offline actualicen
-                $rows = $conexion_remota->table($tabla);
+                //$rows = $conexion_remota->table($tabla);
+
+                // Inicia offline a remoto
+                if ($ultima_sincronizacion) {                    
+                    $rows = $conexion_remota->table($tabla)->whereBetween('updated_at',[$ultima_sincronizacion->fecha_generacion,$fecha_generacion]);
+                } else {             
+                    $rows = $conexion_remota->table($tabla);
+                }
 
                 if($parametrosTabla['condicion_bajada'] != ''){
                     $rows = $rows->whereRaw($parametrosTabla['condicion_bajada']);
@@ -1071,11 +1079,6 @@ class SincronizacionController extends \App\Http\Controllers\Controller
 
 
                 ///#######################
-
-
-
-
-
                 if($rows){
 
                     $columnas = $conexion_local->getSchemaBuilder()->getColumnListing($tabla);
@@ -1157,6 +1160,12 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             $servidor_remoto->catalogos_actualizados = true;
             $servidor_remoto->ultima_sincronizacion = Carbon::now();
             $servidor_remoto->save();
+
+            $servidor = Servidor::find(env('SERVIDOR_ID'));
+            $servidor->version = Config::get("sync.api_version");
+            $servidor->catalogos_actualizados = true;
+            $servidor->ultima_sincronizacion = Carbon::now();
+            $servidor->save();
 
             $sincronizacion_remoto = new Sincronizacion;
             $sincronizacion_remoto->setConnection("mysql_sync");
