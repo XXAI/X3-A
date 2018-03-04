@@ -77,7 +77,6 @@ class RecepcionPedidoController extends Controller
 		$pedido = $pedido->load("insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos", "tipoPedido", "almacenProveedor","almacenSolicitante.unidadMedica","proveedor");
 		
 		if($pedido->tipo_pedido_id == 'PEA'){
-			#$pedido = $pedido->load("movimientos.transferenciaSurtida.insumos","movimientos.transferenciaRecibidaBorrador.insumos","movimientos.transferenciaRecibida.insumos");
 			$pedido = $pedido->load("historialTransferenciaCompleto");
 		}
         
