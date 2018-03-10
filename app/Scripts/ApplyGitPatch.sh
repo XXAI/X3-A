@@ -4,4 +4,4 @@
 # - El segundo parametro es la ruta donde se subió el parche para ejecutarlo
 
 cd $1
-sudo git am --signoff  < $2
+sudo git am --resolvemsg="Patch error sumami" --signoff  < $2

@@ -70,11 +70,12 @@ class PatchesController extends \App\Http\Controllers\Controller
 						
 						$output.= $preout;
 
+						$patchSumami = strpos($preout,"Patch error sumami");
 						$patchFailed = strpos($preout,"Patch failed");
 						$patchEmpty = strpos($preout,"Patch is empty");
 
 							
-						if($patchFailed !== false || $patchEmpty !== false || trim($preout) == "" ){						
+						if($patchFailed !== false  || $patchFailed !== false || $patchEmpty !== false || trim($preout) == "" ){						
 							$script = $api_base_path."/app/Scripts/AbortGitPatch.sh ".$base_path." 2>&1";
 							$preout = shell_exec($script);
 							$output .= $preout;
@@ -95,10 +96,11 @@ class PatchesController extends \App\Http\Controllers\Controller
 						$preout =  shell_exec($script);
 						$output.= $preout;
 
+						$patchSumami = strpos($preout,"Patch error sumami");
 						$patchFailed = strpos($preout,"Patch failed");
 						$patchEmpty = strpos($preout,"Patch is empty");
 
-						if($patchFailed !== false || $patchEmpty !== false || trim($preout) == ""){
+						if($patchFailed !== false  || $patchFailed !== false || $patchEmpty !== false || trim($preout) == ""){
 							$script = $base_path."/app/Scripts/AbortGitPatch.sh ".$base_path." 2>&1";
 							$preout = shell_exec($script);
 							$output .= $preout;
