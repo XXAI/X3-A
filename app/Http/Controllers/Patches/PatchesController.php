@@ -64,10 +64,7 @@ class PatchesController extends \App\Http\Controllers\Controller
 						$base_path = env("PATH_CLIENTE");	
 						
 					
-						$script = "
-							cd $base_path	
-							git am --signoff < ".$api_base_path."/storage/app/patches/".$filename."
-						";
+						$script = $api_base_path."/app/Scripts/ApplyGitPatch.sh ".$base_path." ".$api_base_path."/storage/app/patches/".$filename." 2>&1";
 
 						$preout =  shell_exec($script);
 						$output.= $preout;
@@ -75,31 +72,24 @@ class PatchesController extends \App\Http\Controllers\Controller
 						$patchFailed = strpos($preout,"Patch failed");
 						$patchEmpty = strpos($preout,"Patch is empty");
 
-						if($patchFailed !== false || $patchEmpty !== false ){
-
-							$script = "
-								cd $base_path	
-								git am --abort
-							";
-							shell_exec($script);
+							
+						if($patchFailed !== false || $patchEmpty !== false ){						
+							$script = $api_base_path."/app/Scripts/AbortGitPatch.sh ".$base_path." 2>&1";
+							$preout = shell_exec($script);
+							$output .= $preout;
 							$output .= "\nEl parche no se pudo ejecutar :(";
 							throw new PatchException($output);
 						} else {
 							$output .= "\n¡Parche ejecutado correctamente!";
 						}
-
+						
 					
 					}
 
 					if($array_filename[2]=="api"){
 						$output = "Ejecutando parche No. ".$array_filename[3]." a la API...\n\n";
-						$base_path = base_path();	
-						$script = "
-							cd $base_path
-							git am --signoff < storage/app/patches/".$filename."
-							
-						";
-
+						$base_path = base_path();
+						$script = $base_path."/app/Scripts/ApplyGitPatch.sh ".$base_path." ".$base_path."/storage/app/patches/".$filename." 2>&1";
 
 						$preout =  shell_exec($script);
 						$output.= $preout;
@@ -108,12 +98,9 @@ class PatchesController extends \App\Http\Controllers\Controller
 						$patchEmpty = strpos($preout,"Patch is empty");
 
 						if($patchFailed !== false || $patchEmpty !== false ){
-
-							$script = "
-								cd $base_path	
-								git am --abort
-							";
-							shell_exec($script);
+							$script = $base_path."/app/Scripts/AbortGitPatch.sh ".$base_path." 2>&1";
+							$preout = shell_exec($script);
+							$output .= $preout;
 							$output .= "\nEl parche no se pudo ejecutar :(";
 							throw new PatchException($output);
 						} 
