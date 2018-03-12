@@ -266,13 +266,21 @@ class InstallController extends Controller
                 DB::insert('insert into personal_clues (id, incremento, servidor_id, clues, nombre, surte_controlados, licencia_controlados, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?)', [$personal['id'],$incremento,$config['id'],$config['clues'],$personal['nombre'],0,'','root_'.$config['id'],$personal['created_at'],$personal['updated_at']]);
             }
         }
-
+        
         DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [8,$config['id'].':admin']);
-        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [12,$config['id'].':almacen']);
-        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [13,$config['id'].':admin']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [12,$config['id'].':admin']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [19,$config['id'].':admin']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [21,$config['id'].':admin']);
+
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [8,$config['id'].':almacen']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [13,$config['id'].':almacen']);
         DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [14,$config['id'].':almacen']);
         DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [15,$config['id'].':almacen']);
-
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [16,$config['id'].':almacen']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [17,$config['id'].':almacen']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [18,$config['id'].':almacen']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [19,$config['id'].':almacen']);
+        
         DB::insert('insert into almacen_usuario (usuario_id, almacen_id) values (?,?)', [$config['id'].':admin',$almacen->id]);
         DB::insert('insert into almacen_usuario (usuario_id, almacen_id) values (?,?)', [$config['id'].':almacen',$almacen->id]);
 

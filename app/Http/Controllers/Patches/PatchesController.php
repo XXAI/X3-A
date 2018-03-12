@@ -29,7 +29,7 @@ class PatchesController extends \App\Http\Controllers\Controller
 	}
 
 	public function ejecutar(Request $request){
-		// Abrá que implementar algún tipo de seguridad para que no suban otro script que por ejemplo borre toda la bases de datos		
+		
 		ini_set('memory_limit', '-1');
         try{
 			Storage::makeDirectory("patches");
@@ -125,10 +125,6 @@ class PatchesController extends \App\Http\Controllers\Controller
 						$output .= "\n¡Parche ejecutado correctamente!";
 					}
 					
-					
-
-
-
 					return Response::json([ 'data' => $output],200);
 
 				} else {

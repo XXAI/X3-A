@@ -29,6 +29,7 @@ return [
         'catalogo_localidades',
         'catalogo_motivo_egreso',
         'catalogo_municipios',
+        'configuracion_general',
         'tipos_insumos',
         'tipos_movimientos',
         'tipos_pedidos',
