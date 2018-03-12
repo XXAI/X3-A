@@ -458,7 +458,7 @@ class MovimientoController extends Controller
                         $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
                         foreach ($detalle as $key => $value)
                             {
-                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo);
+                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
                                 if($validacion_insumos != "")
                                     {
                                         array_push($errors, $validacion_insumos);
@@ -506,7 +506,8 @@ class MovimientoController extends Controller
                         $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
                         foreach ($detalle as $key => $value)
                             {
-                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo);
+                                //Harima: se agrego fecha de movimiento para hacer la validación de la fecha de caducidad, para validar salidas con fechas anteriores a la actual
+                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
                                 if($validacion_insumos != "")
                                     {
                                         array_push($errors, $validacion_insumos);
@@ -1213,34 +1214,32 @@ class MovimientoController extends Controller
 
 ///**************************************************************************************************************************
 ///**************************************************************************************************************************
-   
-    private function ValidarInsumos($key, $id, $request,$tipo){ 
+   //Harima: se agrego fecha_validacion, para validar las fechas de caducidad en los movimientos, la fecha de caducidad debe validarse en relacion a la fecha del movimiento y no la actual.
+    private function ValidarInsumos($key, $id, $request,$tipo, $fecha_validacion){ 
         $mensajes = [
-                        'required'      => "required",
-                        'email'         => "email",
-                        'unique'        => "unique",
-                        'integer'       => "integer",
-                        'min'           => "min"
-                    ];
+            'required'      => "required",
+            'email'         => "email",
+            'unique'        => "unique",
+            'integer'       => "integer",
+            'min'           => "min"
+        ];
 
-        if($tipo=='E')
-                {
-                    $reglas = [
-                                'clave'                 => 'required',
-                                'cantidad'              => 'required|integer|min:0',
-                                'cantidad_x_envase'     => 'required|integer',
-                                'lote'                  => 'required',
-                                'fecha_caducidad'       => 'required',
-                                
-                              ];
-                }else{
-                        $reglas = [
-                                    'clave'                 => 'required',
-                                    'cantidad'              => 'required|integer|min:0',
-                                    'cantidad_solicitada'   => 'required|numeric|min:1',
-                                    'cantidad_x_envase'     => 'required|integer',
-                                  ];
-                     }
+        if($tipo=='E'){
+            $reglas = [
+                'clave'                 => 'required',
+                'cantidad'              => 'required|integer|min:0',
+                'cantidad_x_envase'     => 'required|integer',
+                'lote'                  => 'required',
+                'fecha_caducidad'       => 'required',
+            ];
+        }else{
+            $reglas = [
+                'clave'                 => 'required',
+                'cantidad'              => 'required|integer|min:0',
+                'cantidad_solicitada'   => 'required|numeric|min:1',
+                'cantidad_x_envase'     => 'required|integer',
+            ];
+        }
                      
         $v = \Validator::make($request, $reglas, $mensajes );
         $mensages_validacion = array();
@@ -1249,99 +1248,83 @@ class MovimientoController extends Controller
         //$request_object = (object) $request;
         //$lotes = $request_object->lotes;
 
-        if($tipo=='S')
-        {
-            foreach($request['lotes'] as $i => $lote)
-            {
+        if($tipo=='S'){
+            foreach($request['lotes'] as $i => $lote){
                 $lote = (object) $lote;
                 $lote_check =  Stock::where('clave_insumo_medico',$request['clave'])->find($lote->id);
 
-                $v->after(function($v) use($lote,$lote_check,$i)
-                {
+                $v->after(function($v) use($lote,$lote_check,$i,$fecha_validacion){
                     ///****************************************************************************************
-                    if($lote_check)
-                    {
-                        if($lote->cantidad <= 0)
-                        {
+                    if($lote_check){
+                        if($lote->cantidad <= 0){
                             $v->errors()->add('lote_'.$lote->id.'_', 'cantidad_invalida');
                         }
 
                         /// validar cantidad solicitada en req contra lo del find
-                        if($lote->modo_salida=='N')
-                        {
-                            if($lote->cantidad <= $lote_check->existencia)
-                            {
+                        if($lote->modo_salida=='N'){
+                            if($lote->cantidad <= $lote_check->existencia){
+                                //
                             }else{
-                                    $v->errors()->add('lote_'.$lote->id.'_', 'lote_insuficiente');
-                                 }
-                        }else {
-                                if($lote->cantidad <= $lote_check->existencia_unidosis)
-                                {
-                                }else{
-                                        $v->errors()->add('lote_'.$lote->id.'_', 'lote_insuficiente');
-                                    }
-                               }
+                                $v->errors()->add('lote_'.$lote->id.'_', 'lote_insuficiente');
+                            }
+                        }else{
+                            if($lote->cantidad <= $lote_check->existencia_unidosis){
+                                //
+                            }else{
+                                $v->errors()->add('lote_'.$lote->id.'_', 'lote_insuficiente');
+                            }
+                        }
                         
                         $fecha_caducidad = new DateTime($lote_check->fecha_caducidad);
-                        $now = new DateTime("now");
+                        $now = new DateTime($fecha_validacion);
 
-                        if($lote_check->fecha_caducidad == "" || $lote_check->fecha_caducidad == NULL)
-                        {
+                        if($lote_check->fecha_caducidad == "" || $lote_check->fecha_caducidad == NULL){
+                            //
                         }else{
-                                if($now >= $fecha_caducidad )
-                                {
-                                    $v->errors()->add('lote_'.$lote->id.'_', 'lote_caducado');
-                                }
-                             }
-                        
-                        
-
+                            if($now >= $fecha_caducidad ){
+                                $v->errors()->add('lote_'.$lote->id.'_', 'lote_caducado');
+                            }
+                        }
                     }else{
-                            if($lote->cantidad <= 0)
-                            {
-                                $v->errors()->add('lote_'.$lote->id.'_', 'cantidad_invalida');
-                            }
+                        if($lote->cantidad <= 0){
+                            $v->errors()->add('lote_'.$lote->id.'_', 'cantidad_invalida');
+                        }
 
-                            if(property_exists($lote, 'nuevo'))
-                            {
-                                // verificar si existe lote,codigo, barra y fecha cad
-                            }else{
-                                    $v->errors()->add('lote_'.$lote->id.'_', 'no_existe'); 
-                                 }
+                        if(property_exists($lote, 'nuevo')){
+                            // verificar si existe lote,codigo, barra y fecha cad
+                        }else{
+                            $v->errors()->add('lote_'.$lote->id.'_', 'no_existe'); 
+                        }
 
-                            $fecha_caducidad = new DateTime($lote->fecha_caducidad);
-                            $now = new DateTime("now");
-                            
-                            if($lote->fecha_caducidad == "" || $lote->fecha_caducidad == NULL)
-                            {
-                            }else{
-                                    if($now >= $fecha_caducidad )
-                                    {
-                                        $v->errors()->add('lote_'.$lote->id.'_', 'lote_caducado');
-                                    }
-                                 }
+                        $fecha_caducidad = new DateTime($lote->fecha_caducidad);
+                        $now = new DateTime($fecha_validacion);
+                        
+                        if($lote->fecha_caducidad == "" || $lote->fecha_caducidad == NULL){
+                            //
+                        }else{
+                            if($now >= $fecha_caducidad ){
+                                $v->errors()->add('lote_'.$lote->id.'_', 'lote_caducado');
                             }
+                        }
+                    }
                   ///****************************************************************************************    
                 });
-            }    
+            }
         }// FIN IF TIPO SALIDA
 
-        if ($v->fails())
-        {
+        if ($v->fails()){
             foreach ($v->errors()->messages() as $indice => $item)  // todos los mensajes de todos los campos
             {
                 $msg_validacion = array();
-                    foreach ($item as $msg)
-                    {
+                    foreach ($item as $msg){
                         array_push($msg_validacion, $msg);
                     }
                     array_push($mensages_validacion, array($indice.''.$key => $msg_validacion));
 			}
-           
 			return $mensages_validacion;
         }else{
-                return ;
-             }
+            return ;
+        }
 	}
 
 ///***************************************************************************************************************************
