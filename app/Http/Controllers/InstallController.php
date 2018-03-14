@@ -211,6 +211,7 @@ class InstallController extends Controller
         $servidor->id = $config['id'];
         $servidor->nombre = 'Servidor: '.$config['clues'];
         $servidor->secret_key = $config['secret'];
+        $servidor->clues = $config['clues'];
         $servidor->tiene_internet = 0;
         $servidor->catalogos_actualizados = 0;
         $servidor->version = 1.0;

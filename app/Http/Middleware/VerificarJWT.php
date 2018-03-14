@@ -29,21 +29,6 @@ class VerificarJWT
                 return response()->json(['error' => 'formato_token_invalido'], 401);                
             }
 
-            $clues = $request->header('X-clues');
-
-            $unidad_medica = UnidadMedica::where('clues',$clues)->first();
-            $servidor = Servidor::where('clues',$clues)->first();
-
-            //Harima: primero se valida sila clues es offline, debería tener un servidor dado de alta en el sistema
-            if($unidad_medica->es_offline && !$servidor){
-                return response()->json(['error' => 'servidor_no_encontrado'], 404); 
-            }
-
-            //Harima:Checamos si la clues seleccionada es offline y el servidor en el que se esta ejecutando es diferente al asignado a la clues, no permitimos ejecutar otra cosa que no sea GET, aun si el usuario es root
-            if($unidad_medica->es_offline && env('SERVIDOR_ID') != $servidor->id && $request->getMethod() != "GET"){
-                return response()->json(['error' => 'clues_offline_solo_lectura'], 403); 
-            }
-
             //Harima: Si la ruta es para sincronizar, checamos que el usuario tenga permisos para sincronizar
             if($request->path() == 'sync/importar'){
                 if($usuario->su && $usuario->servidor_id == env('SERVIDOR_ID')){
@@ -69,16 +54,31 @@ class VerificarJWT
                 if(!$tiene_permiso_sincronizar){
                     return response()->json(['error' => 'usuario_no_tiene_permiso_sincronizar'], 403); 
                 }
-            }
+            }else if($request->getMethod() != "GET"){
+                $clues = $request->header('X-clues');
 
-            if($usuario->servidor_id != env('SERVIDOR_ID') && $request->getMethod() != "GET"){
-                // Esta linea es para que si un usuario quiere editar/agregar/eliminar información
-                // en un servidor al cual no corresponde se le deniegue la petición.
-                // Digamos que la información de un servidor offline sincronizada en el principal quiera ser editada
-                // si un usuario entra e inicia sesión. Así que solo le permitimos lectura.
-                return response()->json(['error' => 'usuario_servidor_invitado_solo_lectura'], 403); 
-            }
+                $unidad_medica = UnidadMedica::where('clues',$clues)->first();
+                $servidor = Servidor::where('clues',$clues)->first();
 
+                //Harima: primero se valida sila clues es offline, debería tener un servidor dado de alta en el sistema
+                if($unidad_medica->es_offline && !$servidor){
+                    return response()->json(['error' => 'servidor_no_encontrado'], 404); 
+                }
+
+                //Harima:Checamos si la clues seleccionada es offline y el servidor en el que se esta ejecutando es diferente al asignado a la clues, no permitimos ejecutar otra cosa que no sea GET, aun si el usuario es root
+                if($unidad_medica->es_offline && env('SERVIDOR_ID') != $servidor->id && $request->getMethod() != "GET"){
+                    return response()->json(['error' => 'clues_offline_solo_lectura'], 403); 
+                }
+
+                if($usuario->servidor_id != env('SERVIDOR_ID') && $request->getMethod() != "GET"){
+                    // Esta linea es para que si un usuario quiere editar/agregar/eliminar información
+                    // en un servidor al cual no corresponde se le deniegue la petición.
+                    // Digamos que la información de un servidor offline sincronizada en el principal quiera ser editada
+                    // si un usuario entra e inicia sesión. Así que solo le permitimos lectura.
+                    return response()->json(['error' => 'usuario_servidor_invitado_solo_lectura'], 403); 
+                }
+            }
+            
             // Pasamos el usuario id como verificado
             $request->attributes->add(['usuario_id' => $usuario->id]);
         } catch (TokenExpiredException $e) {

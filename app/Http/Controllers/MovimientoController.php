@@ -428,7 +428,7 @@ class MovimientoController extends Controller
 
         $almacen_id=$request->get('almacen_id');    
 
-
+        $clues_activa = $request->get('clues'); //Harima: Obtenemos la CLUES del request, esta clues es la seleccionada por el usuario en la aplicación del cliente
 
         $validacion = $this->ValidarMovimiento("", NULL, Input::json()->all(),$almacen_id);
 
@@ -438,6 +438,8 @@ class MovimientoController extends Controller
 		}
         $datos = (object) Input::json()->all();	
         $success = false;
+
+        $datos->clues = $clues_activa; //Harima: Agregamos la clues a los datos del formulario, para usarlo mas adelante al agregar el personal
 
         $id_tipo_movimiento = $datos->tipo_movimiento_id;
         $tipo_movimiento = TiposMovimientos::Find($datos->tipo_movimiento_id);
@@ -2044,7 +2046,7 @@ class MovimientoController extends Controller
                 {
                     $almacen = Almacen::find($almacen_id);
                     $agregar_personal = new PersonalClues;
-                    $agregar_personal->clues = "CSSSA007605";
+                    $agregar_personal->clues = $datos->clues; //Harima:agregamos la clues al personal
                     $agregar_personal->tipo_personal_id = 1;
                     $agregar_personal->nombre = $datos->receta['doctor'];
                     $agregar_personal->surte_controlados = 0;
