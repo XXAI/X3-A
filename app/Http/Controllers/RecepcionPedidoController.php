@@ -116,6 +116,16 @@ class RecepcionPedidoController extends Controller
 		if(!$almacen){
 			return Response::json(['error' =>"No se encontró el almacen."], 500);
 		}
+
+		$pedido = Pedido::find($id);
+
+		if(!$pedido){
+			return Response::json(['error' => 'No se encontró el pedido.'],500);
+		}
+
+		if($almacen->id != $pedido->almacen_solicitante){
+			return Response::json(['error' => 'El almacen solicitante del pedido no corresponde al seleccionado.'],500);
+		}
         
         /*Recepcion de precios por insumo*/
 		$proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
@@ -148,13 +158,7 @@ class RecepcionPedidoController extends Controller
 		/*$pedido = Pedido::where('almacen_solicitante',$almacen->id)->with(['recepciones'=>function($recepciones){
 			$recepciones->has('entradaAbierta')->with('entradaAbierta.insumos');
 		}])->whereIn('status',['PS','EX', 'BR'])->find($id);*/
-		$pedido = Pedido::find($id);
-
-		if(!$pedido){
-			DB::rollBack();
-			return Response::json(['error' => 'No se encontró el pedido'],500);
-		}
-
+		
 		if($pedido->almacen_proveedor != $almacen->id && $pedido->almacen_solicitante != $almacen->id  && $pedido->clues_destino != $almacen->clues && $pedido->clues != $almacen_clues){
 			DB::rollBack();
             return Response::json(['error' => "No se encuentra el pedido que esta buscando."], HttpResponse::HTTP_CONFLICT);
@@ -675,8 +679,7 @@ class RecepcionPedidoController extends Controller
 	}
 
 
-	private function valida_fecha($fecha)
-	{
+	private function valida_fecha($fecha){
 		$mes = substr($fecha, 5,2);
 		$dia = substr($fecha, 8,2);
 		$anio = substr($fecha, 0,4);

@@ -280,6 +280,10 @@ class PedidoController extends Controller{
         $um = UnidadMedica::find( $almacen->clues);
         $presupuesto = Presupuesto::where('activo',1)->first();
 
+        if($almacen->subrogado && $almacen->tipo_almacen == 'FARSBR'){
+            return Response::json(['error' => 'El almacen seleccionado no puede crear pedidos'], 500);
+        }
+
         if($almacen->nivel_almacen == 1 && ($almacen->tipo_almacen == 'ALMPAL' || $almacen->tipo_almacen == 'FARSBR')){
             $reglas['proveedor_id'] = 'required';
             $parametros['datos']['proveedor_id'] = $almacen->proveedor_id;
@@ -507,7 +511,7 @@ class PedidoController extends Controller{
                     $parametros['datos']['fecha_concluido'] = $fecha_concluido;
                     $parametros['datos']['fecha_expiracion'] = date("Y-m-d", $fecha_expiracion);
                 }
-                if($parametros['datos']['status'] == 'PS'){
+                if($parametros['datos']['status'] == 'PS' || $parametros['datos']['status'] == 'EF'){
                     $parametros['datos']['recepcion_permitida'] = 1;
                 }else{
                     $parametros['datos']['recepcion_permitida'] = 0;
@@ -685,7 +689,8 @@ class PedidoController extends Controller{
                     $presupuesto_unidad->save();
                 }
 
-                if($pedido->tipo_pedido_id == 'PFS'){
+                //Harima: quitamos el surtimiento automatico para pedidos de farmacias subrogadas
+                /*if($pedido->tipo_pedido_id == 'PFS'){
                     //crear movimiento de entrada y generar stock
                     $recepcion = new MovimientoPedido;
 
@@ -738,7 +743,7 @@ class PedidoController extends Controller{
                         ];
                         $movimiento_insumo = MovimientoInsumos::create($nuevo_movimiento_insumo);
                     }
-                }
+                }*/
             }else if($pedido->status == 'SD' && $pedido->tipo_pedido_id == 'PEA'){
                 //Harima: agregamos control de historial para el proceso de transferencias
                 $almacen_proveedor = Almacen::find($pedido->almacen_proveedor);
