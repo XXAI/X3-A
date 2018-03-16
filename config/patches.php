@@ -9,5 +9,5 @@
 
 
 return [	
-	//[ "nombre" => "md5hash.sial.api.1.patch", "fecha" => "03 enero 2018", "ejecutar" =>  "\App\Librerias\Patches\ParcheDemo::ejecutar"],
+	[ "nombre" => "F24DBF6BE70AB8B018323D6EA4601455.sial.api.1.patch", "fecha" => "2018-03-16", "ejecutar" =>  "\App\Librerias\Patches\Parches::ejecutar"],
 ];

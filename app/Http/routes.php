@@ -338,6 +338,7 @@ Route::group(['middleware' => 'jwt'], function () {
     // #SECCION: Parches
     Route::group(['prefix' => 'patches','namespace' => 'Patches'], function () {
         Route::get('lista',                                 'PatchesController@lista');
+        Route::post('ejecutar-parche',                      'PatchesController@ejecutarParche');
         Route::post('ejecutar',                             'PatchesController@ejecutar');
     });
     

@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Patches;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use App\Http\Requests;
-use  App\Exceptions\PatchException as PatchException, \DB, \Storage, \ZipArchive, \Hash, \Response, \Config;
+use App\Exceptions\PatchException as PatchException, \DB, \Storage, \ZipArchive, \Hash, \Response, \Config;
 use Illuminate\Support\Facades\Input;
 use App\Librerias\Patches;
 use Carbon\Carbon;
+use App\Models\LogEjecucionParche;
 
 class PatchesController extends \App\Http\Controllers\Controller
 {
@@ -19,13 +20,57 @@ class PatchesController extends \App\Http\Controllers\Controller
      */
     public function lista()
     {
+		try{
+			$items = [];
+			$parches_aplicados = LogEjecucionParche::where('tipo_parche','api')->get();
+			$parches_api_aplicados = [];
 
-		$items = [];
-		foreach(Config::get("patches") as $item){
-			$items[] = $item;
+			foreach ($parches_aplicados as $parche) {
+				$parches_api_aplicados[$parche->nombre_parche] = $parche->toArray();
+			}
+			
+			foreach(Config::get("patches") as $item){
+				$item['fecha_ejecucion'] = null;
+				$item['fecha_aplicacion'] = null;
+				if(isset($parches_api_aplicados[$item['nombre']])){
+					$item['fecha_aplicacion'] = $parches_api_aplicados[$item['nombre']]['created_at'];
+					$item['fecha_ejecucion'] = $parches_api_aplicados[$item['nombre']]['fecha_ejecucion'];
+				}
+				$items[] = $item;
+			}
+
+			$parches_cliente_aplicados = LogEjecucionParche::where('tipo_parche','cliente')->get();
+
+			return Response::json([ 'data' => ['api'=>$items,'cliente'=>$parches_cliente_aplicados->pluck('fecha_ejecucion','nombre_parche')]],200);
+		}catch (\Exception $e) {
+			return Response::json(['error' => $e->getMessage()], 500);
+		} catch (\FatalErrorException $e) {
+			return Response::json(['error' => $e->getMessage()], 500);
 		}
+	}
 
-        return Response::json([ 'data' => $items],200);
+	public function ejecutarParche(Request $request){
+		try{
+			$parametros = Input::all();
+			$output = '';
+			foreach(Config::get("patches") as $item){
+				if($item['nombre'] == $parametros['nombre']){
+					if($item['ejecutar'] != ''){
+						$o = call_user_func($item['ejecutar']);
+						if($o == false){
+							throw new \Exception("No se pudieron ejecutar las instrucciones del parche, debido a un error en la función configurada.", 1);
+						}
+						$output .= "Instrucciones del parche ejecutadas correctamente.";
+						break;
+					}  
+				}
+			}
+			return Response::json([ 'data' => $output],200);
+		}catch (\Exception $e) {
+			return Response::json(['error' => $e->getMessage()], 500);
+		} catch (\FatalErrorException $e) {
+			return Response::json(['error' => $e->getMessage()], 500);
+		}
 	}
 
 	public function ejecutar(Request $request){
