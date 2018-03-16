@@ -13,7 +13,8 @@ class Almacen extends BaseModel
     protected $guardarIDServidor = true;
     protected $guardarIDUsuario = true;
     protected $fillable = ["created_at","updated_at"];
-    protected $table = 'almacenes';  
+    protected $table = 'almacenes';
+    protected $casts = ["clues"=>"string","encargado_almacen_id"=>"string","id"=>"string","nivel_almacen"=>"integer","nombre"=>"string","proveedor_id"=>"integer","servidor_id"=>"string","subrogado"=>"boolean","tipo_almacen"=>"string","unidosis"=>"boolean"];
     
     public function usuarios(){
       return $this->hasMany('App\Models\AlmacenUsuarios','almacen_id');

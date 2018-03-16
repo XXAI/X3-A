@@ -17,6 +17,8 @@ class UnidadMedica extends BaseModel{
     
     protected $table = 'unidades_medicas';  
     protected $fillable = ["clues","nombre","activa","jurisdiccion_id"];
+    protected $casts = ["activa"=>"boolean","clues"=>"string","director_id"=>"string","es_offline"=>"boolean","jurisdiccion_id"=>"integer","nombre"=>"string","tipo"=>"string"];
+    
 
     public function almacenes(){
       return $this->hasMany('App\Models\Almacen','clues');
