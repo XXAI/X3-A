@@ -112,8 +112,8 @@ class CalculosPivotesSync {
 
 			//Harima: Creamos la transferencia en transferencias de presupuestos
 			$statement3 = "
-					INSERT INTO transferencias_presupuesto (`presupuesto_id`, `clues_origen`, `almacen_origen`, `mes_origen`, `anio_origen`, `causes`, `no_causes`, `material_curacion`, `clues_destino`, `almacen_destino`, `mes_destino`, `anio_destino`, `usuario_id`, `created_at`, `updated_at`) 
-					SELECT presupuesto.id as presupuesto_id, pedido.clues as clues_origen, pedido.almacen_solicitante as almacen_origen, ajuste.mes_origen, ajuste.anio_origen, ajuste.causes, ajuste.no_causes, ajuste.material_curacion, pedido.clues as clues_destino, pedido.almacen_solicitante as almacen_destino, ajuste.mes_destino, ajuste.anio_destino, ajuste.usuario_id, current_timestamp() as created_at, current_timestamp() as updated_at
+					INSERT INTO transferencias_presupuesto (`presupuesto_id`, `clues_origen`, `almacen_origen`, `mes_origen`, `anio_origen`, `causes`, `no_causes`, `material_curacion`, `clues_destino`, `almacen_destino`, `mes_destino`, `anio_destino`, `created_at`, `updated_at`) 
+					SELECT presupuesto.id as presupuesto_id, pedido.clues as clues_origen, pedido.almacen_solicitante as almacen_origen, ajuste.mes_origen, ajuste.anio_origen, ajuste.causes, ajuste.no_causes, ajuste.material_curacion, pedido.clues as clues_destino, pedido.almacen_solicitante as almacen_destino, ajuste.mes_destino, ajuste.anio_destino, current_timestamp() as created_at, current_timestamp() as updated_at
 					FROM ajuste_presupuesto_pedidos_cancelados as ajuste
 					LEFT JOIN unidad_medica_presupuesto as presupuesto on presupuesto.id = ajuste.unidad_medica_presupuesto_id
 					LEFT JOIN pedidos as pedido on pedido.id = ajuste.pedido_id

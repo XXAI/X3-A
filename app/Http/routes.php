@@ -319,6 +319,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('avance_area',                          'AvanceController@areas');
 
     Route::group(['prefix' => 'sync','namespace' => 'Sync'], function () {
+        Route::get('log',                                 'SincronizacionController@log');
         Route::get('lista',                                 'SincronizacionController@lista');
         Route::get('manual',                                'SincronizacionController@manual');        
         Route::get('auto',                                  'SincronizacionController@auto');

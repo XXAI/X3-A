@@ -8,7 +8,7 @@ use Illuminate\Http\Response as HttpResponse;
 use App\Http\Requests;
 use \DB, \Storage, \ZipArchive, \Hash, \Response, \Config;
 use Illuminate\Support\Facades\Input;
-use App\Models\Sincronizacion, App\Models\Servidor; 
+use App\Models\Sincronizacion, App\Models\Servidor, App\Models\LogSync; 
 use App\Librerias\Sync\ArchivoSync;
 use Carbon\Carbon;
 
@@ -27,6 +27,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         
         
         
+        
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
             $items = $items->paginate($resultadosPorPagina);
@@ -36,6 +37,35 @@ class SincronizacionController extends \App\Http\Controllers\Controller
        
         return Response::json([ 'data' => $items],200);
     }
+
+
+    /**
+     * Display a listing of the log.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function log()
+    {
+
+        $parametros = Input::only('page','per_page','q');
+        $items = LogSync::select('log_sync.*', 'servidores.nombre as servidor_nombre')->leftjoin("servidores","servidores.id","=","log_sync.servidor_id")->orderBy('created_at','desc');
+        
+
+        if ($parametros['q']) {
+			$items =  $items->where('servidores.nombre','LIKE',"%".$parametros['q']."%")->orWhere('log_sync.descripcion','LIKE',"%".$parametros['q']."%")->orWhere('log_sync.usuario_id','LIKE',"%".$parametros['q']."%");
+		}
+        
+        
+        if(isset($parametros['page'])){
+            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+            $items = $items->paginate($resultadosPorPagina);
+        } else {
+            $items = $items->get();
+        }
+       
+        return Response::json([ 'data' => $items],200);
+    }
+
     
     /**
      * Crea un archivo comprimido para sincronización protegido con SECRET KEY 
@@ -58,6 +88,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         
         // Creamos o reseteamos archivo de respaldo
         Storage::put('sync/header.sync',"ID=".env('SERVIDOR_ID'));
+        Storage::put('sync/header.sync',"CLUES=".env('CLUES'));
         Storage::append('sync/header.sync',"SECRET_KEY=".env('SECRET_KEY'));
         Storage::append('sync/header.sync',"VERSION=".Config::get("sync.api_version"));
         Storage::append('sync/header.sync',"FECHA_SYNC=".$fecha_generacion);
@@ -246,11 +277,21 @@ class SincronizacionController extends \App\Http\Controllers\Controller
              
                 readfile($zippath.$zipname);
                 Storage::delete($zipname);
+
+                LogSync::create([
+                    "clues" => env("CLUES"),
+                    "descripcion" => "Generó archivo de sincronización manual."
+                ]);
+
                 exit();
             } else {                
                 throw new \Exception("No se pudo crear el archivo");
             }
         } catch (\Exception $e) {    
+            LogSync::create([
+                "clues" => env("CLUES"),
+                "descripcion" => "Intentó generar archivo de sincronización manual pero hubo un error."
+            ]);
             //echo " Sync Manual Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Manual Excepción: ".$e->getMessage());  
             Storage::deleteDirectory("sync");     
@@ -270,6 +311,8 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         ini_set('memory_limit', '-1');
         $conexion_local = DB::connection('mysql');
         $conexion_local->beginTransaction();
+        $clues_que_hace_sync = '';
+
         try {
              
             Storage::makeDirectory("importar");
@@ -313,7 +356,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     //Obtenemos información del servidor que está sincronizando
                                     $contents_header = Storage::get("importar/".$servidor->id."/header.sync");
                                     $header_vars = ArchivoSync::parseVars($contents_header);
-
+                                    $clues_que_hace_sync = $header_vars['CLUES'];
                                     // Obtenemos las fechas de actualizacion de sus catálogos
                                     $contents_catalogos = Storage::get("importar/".$servidor->id."/catalogos.sync");
                                     $catalogos_vars = ArchivoSync::parseVars($contents_catalogos);
@@ -539,6 +582,11 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                         Storage::deleteDirectory("importar/".$servidor->id);
 
                                         $conexion_local->commit();
+
+                                        LogSync::create([
+                                            "clues" => $clues_que_hace_sync,
+                                            "descripcion" => "Importó archivo de sincronización manual."
+                                        ]);
                                         exit();
                                     } else {            
                                         Storage::deleteDirectory("importar/".$servidor->id);    
@@ -571,13 +619,23 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                  
                 throw new \Exception("No hay archivo.");
             }
-        } catch (\Illuminate\Database\QueryException $e){
+        } catch (\Illuminate\Database\QueryException $e){            
             //echo " Sync Importación Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Importación Excepción: ".$e->getMessage());
             $conexion_local->rollback();
+            
+            LogSync::create([
+                "clues" => $clues_que_hace_sync,
+                "descripcion" => "Intentó importar archivo de sincronización manual pero hubo un error."
+            ]);
+            
             return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
         catch(\Exception $e ){
+            LogSync::create([
+                "clues" => $clues_que_hace_sync,
+                "descripcion" => "Intentó importar archivo de sincronización manual pero hubo un error."
+            ]);
             return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         }
     }
@@ -695,7 +753,10 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     Storage::delete("confirmacion/catalogos.sync");
 
                                     $conexion_local->commit();
-                                    
+                                    LogSync::create([
+                                        "clues" => env("CLUES"),
+                                        "descripcion" => "Confirmó sincronización manual exitosa con servidor remoto."
+                                    ]);
                                     return Response::json([ 'data' => "Sincronización con servidor remoto confirmada." ],200);
 
                                 } else {
@@ -725,13 +786,20 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             } else {
                 throw new \Exception("No hay archivo.");
             }
-        } catch (\Illuminate\Database\QueryException $e){
-            echo " Sync Confirmación Excepción: ".$e->getMessage();
+        } catch (\Illuminate\Database\QueryException $e){            
             Storage::append('log.sync', $fecha_generacion." Sync Confirmación Excepción: ".$e->getMessage());
             $conexion_local->rollback();            
+            LogSync::create([
+                "clues" => env("CLUES"),
+                "descripcion" => "Intentó confirmar sincronización manual con servidor remoto pero hubo un error."
+            ]);
             return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
         catch(\Exception $e ){
+            LogSync::create([
+                "clues" => env("CLUES"),
+                "descripcion" => "Intentó confirmar sincronización manual con servidor remoto pero hubo un error."
+            ]);
             return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         }
     }
@@ -1178,12 +1246,21 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             $sincronizacion->fecha_generacion = $fecha_generacion;
             $sincronizacion->save();
 
+           
+
+            LogSync::create([
+                "clues" => env("CLUES"),
+                "descripcion" => "Realizó sincronización automática online."
+            ]);
 
             $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
             $conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
 
+            
             $conexion_local->commit();
             $conexion_remota->commit();
+
+
 
             $log .= "\n[#] Fin de Sincronización [#] \n";
 
@@ -1191,12 +1268,30 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             return \Response::json([ 'data' => $log],200);
 
         } catch (\Illuminate\Database\QueryException $e){
+
+            
+
+
             $log .= " Sync Auto Excepción: ".$e->getMessage();
             Storage::append('log.sync', $fecha_generacion." Sync Auto Excepción: ".$e->getMessage());
             //DB::statement('SET FOREIGN_KEY_CHECKS=1');
             //$conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
             $conexion_local->rollback();
             $conexion_remota->rollback();
+
+            
+            
+            LogSync::create([
+                "clues" => env("CLUES"),
+                "descripcion" => "Intentó realizar sincronización automática online pro hubo un error."
+            ]);
+/*
+            $log_sync_remoto = new LogSync;
+            $log_sync_remoto->setConnection("mysql_sync");
+            $log_sync_remoto->clues = env("CLUES");
+            $log_sync_remoto->descripcion =  "Intentó realizar sincronización automática online pro hubo un error.";
+            $log_sync_remoto->save();*/
+
             return \Response::json([ 'data' => $log],500);
         }
         catch (\ErrorException $e) {
@@ -1206,6 +1301,18 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             $conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
             $conexion_local->rollback();
             $conexion_remota->rollback();
+
+            $log_sync_remoto = new LogSync;
+            $log_sync_remoto->setConnection("mysql_sync");
+            $log_sync_remoto->clues = env("CLUES");
+            $log_sync_remoto->descripcion =  "Intentó realizar sincronización automática online pro hubo un error.";
+            $log_sync_remoto->save();
+            
+            LogSync::create([
+                "clues" => env("CLUES"),
+                "descripcion" => "Intentó realizar sincronización automática online pro hubo un error."
+            ]);
+
             return \Response::json([ 'data' => $log],500);
         } 
         catch (\Exception $e) {            
@@ -1215,6 +1322,18 @@ class SincronizacionController extends \App\Http\Controllers\Controller
             $conexion_remota->statement('SET FOREIGN_KEY_CHECKS=1');
             $conexion_local->rollback();
             $conexion_remota->rollback();
+
+            $log_sync_remoto = new LogSync;
+            $log_sync_remoto->setConnection("mysql_sync");
+            $log_sync_remoto->clues = env("CLUES");
+            $log_sync_remoto->descripcion =  "Intentó realizar sincronización automática online pro hubo un error.";
+            $log_sync_remoto->save();
+            
+            LogSync::create([
+                "clues" => env("CLUES"),
+                "descripcion" => "Intentó realizar sincronización automática online pro hubo un error."
+            ]);
+            
             return \Response::json([ 'data' => $log],500);
         }
     }
