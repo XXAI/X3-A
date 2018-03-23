@@ -26,6 +26,7 @@ Route::post('obtener-token',                    'AutenticacionController@autenti
 Route::post('refresh-token',                    'AutenticacionController@refreshToken');
 Route::get('check-token',                       'AutenticacionController@verificar');
 
+Route::get('informacion-servidor',              'ServidorController@informacionServidorLocal');
 
 Route::post('reset-password/email',                 'ResetPasswordController@enviarEmail');
 Route::post('reset-password/validar-token',         'ResetPasswordController@validarToken');
