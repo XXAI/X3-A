@@ -16,8 +16,8 @@ class InicializacionInventario extends BaseModel{
     protected $table = 'inicializacion_inventario';
     //protected $fillable = ['status','almacen_id','tipo_movimiento_id','fecha_movimiento','observaciones'];
 
-    public function inicializacion_inventario_detalles(){
-        return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id')->with('stock.marca');
+    public function inicializacionInventarioDetalle(){
+        return $this->hasMany('App\Models\InicializacionInventarioDetalle','inicializacion_inventario_id');
     } 
     
     public function insumos(){

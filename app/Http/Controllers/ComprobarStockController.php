@@ -30,17 +30,21 @@ class ComprobarStockController extends Controller
         $stocks = array();
         $programa_id = $parametros['programa_id'];
 
-        if($parametros['programa_id']!= "")
+        if( ($parametros['programa_id']== "") || ($parametros['programa_id']== 'null') )
         {
-            $stocks = Stock::with('programa','movimientoInsumo')->where('clave_insumo_medico',$parametros['clave'])
+            $stocks = Stock::with('programa','movimientoInsumo')
+                        ->where('clave_insumo_medico',$parametros['clave'])
                         ->where('existencia','>',0)
-                        ->where('programa_id',$programa_id)
+                        ->where('exclusivo',0)
                         ->where('almacen_id',$parametros['almacen'])
                         ->orderBy('fecha_caducidad','ASC')
                         ->get();
+            
         }else{
-                $stocks = Stock::where('clave_insumo_medico',$parametros['clave'])
+                $stocks = Stock::with('programa','movimientoInsumo')
+                        ->where('clave_insumo_medico',$parametros['clave'])
                         ->where('existencia','>',0)
+                        ->where('programa_id',$programa_id)
                         ->where('almacen_id',$parametros['almacen'])
                         ->orderBy('fecha_caducidad','ASC')
                         ->get();
