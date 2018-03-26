@@ -12,7 +12,7 @@ class PedidoPresupuestoApartado extends BaseModel
     protected $generarID = false;
     protected $guardarIDServidor = false;
     protected $guardarIDUsuario = true;
-    protected $fillable = [ "clues", "pedido_id","almacen_id","mes","causes_comprometido", "causes_devengado","no_causes_comprometido", "no_causes_devengado", "material_curacion_comprometido", "material_curacion_devengado"];
+    protected $fillable = [ "clues", "pedido_id","almacen_id","mes", "anio","causes_comprometido", "causes_devengado","no_causes_comprometido", "no_causes_devengado", "material_curacion_comprometido", "material_curacion_devengado"];
     protected $table = 'pedido_presupuesto_apartado';
 
     public function unidadMedica(){

@@ -557,7 +557,7 @@ class EntradaAlmacenController extends Controller
                         $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
                         foreach ($detalle as $key => $value)
                             {
-                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo);
+                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
                                 if($validacion_insumos != "")
                                     {
                                         array_push($errors, $validacion_insumos);
@@ -1068,7 +1068,7 @@ class EntradaAlmacenController extends Controller
                         $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
                         foreach ($detalle as $key => $value)
                             {
-                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo);
+                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
                                 if($validacion_insumos != "")
                                     {
                                         array_push($errors, $validacion_insumos);
@@ -1228,7 +1228,7 @@ class EntradaAlmacenController extends Controller
 
 ///**************************************************************************************************************************
 ///**************************************************************************************************************************  
-    private function ValidarInsumos($key, $id, $request,$tipo)
+    private function ValidarInsumos($key, $id, $request,$tipo,$fecha_validacion)
     { 
         $mensajes = [
                         'required'      => "Debe ingresar este campo.",
@@ -1236,7 +1236,7 @@ class EntradaAlmacenController extends Controller
                         'unique'        => "unique",
                         'integer'       => "Solo cantidades enteras.",
                         'min'           => "La cantidad debe ser mayor de cero.",
-                        'after'         => "La fecha de caducidad debe ser mayor a hoy."
+                        'after'         => "La fecha de caducidad debe ser mayor a la fecha del movimiento."
                     ];
          
         $reglas = [
@@ -1244,7 +1244,7 @@ class EntradaAlmacenController extends Controller
                         'cantidad'              => 'required|integer|min:0',
                         'cantidad_x_envase'     => 'required|integer',
                         'lote'                  => 'required',
-                        'fecha_caducidad'       => 'required|date|after:today',      
+                        'fecha_caducidad'       => 'required|date|after:'.$fecha_validacion,      
                   ];
                          
         $v = \Validator::make($request, $reglas, $mensajes );

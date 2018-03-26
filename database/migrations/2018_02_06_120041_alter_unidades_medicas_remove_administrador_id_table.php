@@ -12,10 +12,12 @@ class AlterUnidadesMedicasRemoveAdministradorIdTable extends Migration
      */
     public function up()
     {
-        Schema::table('unidades_medicas', function (Blueprint $table) {
-            $table->dropForeign(['administrador_id']);
-            $table->dropColumn('administrador_id');   
-        });
+        if (Schema::hasColumn('unidades_medicas', 'administrador_id')){
+            Schema::table('unidades_medicas', function (Blueprint $table) {
+                $table->dropForeign(['administrador_id']);
+                $table->dropColumn('administrador_id');
+            });
+        }
     }
 
     /**

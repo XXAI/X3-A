@@ -13,8 +13,6 @@ class AgregarAdministradorATablaUnidadesMedicas extends Migration
     public function up()
     {
         Schema::table('unidades_medicas', function (Blueprint $table) {
-            //
-          
             $table->string('administrador_id', 255)->nullable()->after('director_id');
             $table->foreign('administrador_id')->references('id')->on('personal_clues');
         });

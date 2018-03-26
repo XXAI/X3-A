@@ -7,6 +7,7 @@ use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
 use App\Models\Usuario;
+use App\Models\Servidor;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 
@@ -50,9 +51,9 @@ class UsuarioController extends Controller
      */
     public function store(Request $request)
     {
+        $servidor = Servidor::find(env('SERVIDOR_ID'));
         //return Response::json(['error' => ""], HttpResponse::HTTP_UNAUTHORIZED);
         $mensajes = [
-            
             'required'      => "required",
             'email'         => "email",
             'unique'        => "unique"
@@ -66,6 +67,10 @@ class UsuarioController extends Controller
         ];
 
         $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','unidades_medicas','almacenes','medico_id',"pregunta_secreta","respuesta");
+
+        if(!$servidor->principal){
+            $inputs['id'] = env('SERVIDOR_ID') . ':' . $inputs['id'];
+        }
 
         if(isset($inputs['pregunta_secreta']) && trim($inputs['pregunta_secreta']) != ""){
             $reglas['respuesta'] = "required";
@@ -134,6 +139,8 @@ class UsuarioController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $servidor = Servidor::find(env('SERVIDOR_ID'));
+
         $mensajes = [
             
             'required'      => "required",
@@ -144,7 +151,7 @@ class UsuarioController extends Controller
         $reglas = [
             'id'            => 'required|unique:usuarios,id,'.$id,
             'password'      => 'required_with:cambiarPassword',
-            'respuesta'      => 'required_if:pregunta_secreta',
+            //'respuesta'      => 'required_if:pregunta_secreta',
             'nombre'        => 'required',
             'apellidos'     => 'required'
         ];
@@ -154,8 +161,15 @@ class UsuarioController extends Controller
             return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }
 
+        if($object->servidor_id != $servidor->id){
+            return Response::json(['error' => "No se puede editar este usuario, ya que fue creado en un servidor diferente al actual."], 500);
+        }
+
         $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','cambiarPassword','unidades_medicas','almacenes','medico_id',"pregunta_secreta","respuesta");
 
+        if(!$servidor->principal){
+            $inputs['id'] = env('SERVIDOR_ID') . ':' . $inputs['id'];
+        }
 
         if(isset($inputs['pregunta_secreta']) && trim($inputs['pregunta_secreta']) != ""){
             $reglas['respuesta'] = "required";
@@ -163,7 +177,7 @@ class UsuarioController extends Controller
 
 
         $v = Validator::make($inputs, $reglas, $mensajes);
-
+        
         if ($v->fails()) {
             return Response::json(['error' => $v->errors()], HttpResponse::HTTP_CONFLICT);
         }

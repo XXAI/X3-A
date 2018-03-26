@@ -7,7 +7,7 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 use Illuminate\Http\Request, DB;
 use \Hash, \Config, Carbon\Carbon;
-use App\Models\Usuario, App\Models\Permiso, App\Models\Almacen, App\Models\UnidadMedica, App\Models\Proveedor, App\Models\LogInicioSesion;
+use App\Models\Usuario, App\Models\Permiso, App\Models\Almacen, App\Models\UnidadMedica, App\Models\Proveedor, App\Models\LogInicioSesion, App\Models\Servidor;
 
 class AutenticacionController extends Controller
 {
@@ -113,6 +113,8 @@ class AutenticacionController extends Controller
                     }
                     $unidades_medicas = $ums;
                 }
+
+                $servidor_usuario = Servidor::find($usuario->servidor_id);
                 
 
                 $usuario_data = [
@@ -124,6 +126,7 @@ class AutenticacionController extends Controller
                     "medico_id" =>$usuario->medico_id,
                     "permisos" => $lista_permisos,                    
                     "unidades_medicas" =>  $unidades_medicas,
+                    "servidor" => $servidor_usuario,
                     "modulo_inicio" => $modulo_inicio
                 ];
 
@@ -134,7 +137,8 @@ class AutenticacionController extends Controller
                 $server_info = [
                     "server_datetime_snap" => getdate(),
                     "token_refresh_ttl" => Config::get("jwt.refresh_ttl"),
-                    "api_version" => Config::get("sync.api_version")
+                    "api_version" => Config::get("sync.api_version"),
+                    "data" => Servidor::find(env('SERVIDOR_ID')),
                 ];
 
                 $log_usuario->login_status = 'OK';
@@ -161,7 +165,9 @@ class AutenticacionController extends Controller
             $token =  JWTAuth::parseToken()->refresh();
             $server_info = [
                     "server_datetime_snap" => getdate(),
-                    "token_refresh_ttl" => Config::get("jwt.refresh_ttl")
+                    "token_refresh_ttl" => Config::get("jwt.refresh_ttl"),
+                    "api_version" => Config::get("sync.api_version"),
+                    "data" => Servidor::find(env('SERVIDOR_ID')),
             ];
             return response()->json(['token' => $token, 'server_info'=> $server_info], 200);
 

@@ -894,8 +894,14 @@
 		<h1>Instalación del SIAL</h1>
 		<p>Este procedimiento solo se ejecutará una vez, proceda si está seguro.</p>
 		<h2>Paso 1:<small>Creación de la base de datos y llenado de catalogos.</small> </h2>
-		<form action="./config-server" onsubmit="cargando()">
+		<form action="./instalar" onsubmit="cargando()">
 			<div class="row">
+				<label for="clues">Seleccione una clues</label>
+				<select name="clues" id="clues" class="u-full-width">
+					@foreach ($clues as $clues => $nombre)
+					<option value="{{ $clues }}">{{ $clues }} - {{ $nombre }}</option>
+					@endforeach
+				</select>
 				<input class="button-primary" type="submit"  value="Instalar base de datos">
 			</div>
 		</form>

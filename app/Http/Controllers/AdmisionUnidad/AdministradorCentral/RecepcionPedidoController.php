@@ -153,15 +153,10 @@ class RecepcionPedidoController extends Controller
                     }
                 }
                
-                
-                
-
                 $fecha = explode("-", $movimientos->movimientoPedido->pedido->fecha);
                 $clues = $movimientos->movimientoPedido->pedido->clues;
                 $almacen = $movimientos->movimientoPedido->pedido->almacen_solicitante;
-
                 
-
                 $presupuesto = UnidadMedicaPresupuesto::where("clues", $clues)
                                                         ->where("almacen_id", $almacen)            
                                                         ->where("mes", intVal($fecha[1]))
@@ -179,13 +174,18 @@ class RecepcionPedidoController extends Controller
 
 
 
-                $presupuesto->causes_devengado               = round((floatval($presupuesto->causes_devengado) - $total_causes),2);                                         
-                $presupuesto->no_causes_devengado            = round((floatval($presupuesto->no_causes_devengado) - $total_no_causes),2);                                         
+                $presupuesto->causes_devengado               = round((floatval($presupuesto->causes_devengado) - $total_causes),2);
                 $presupuesto->material_curacion_devengado    = round((floatval($presupuesto->material_curacion_devengado) - $total_material_curacion),2); 
 
-                $presupuesto->causes_comprometido                 = round((floatval($presupuesto->causes_comprometido) + $total_causes),2);     
-                $presupuesto->no_causes_comprometido              = round((floatval($presupuesto->no_causes_comprometido) + $total_no_causes),2);                                         
+                $presupuesto->insumos_devengado              = round((floatval($presupuesto->insumos_devengado) - ($total_causes + $total_material_curacion)),2);
+                $presupuesto->no_causes_devengado            = round((floatval($presupuesto->no_causes_devengado) - $total_no_causes),2);
+                
+                $presupuesto->causes_comprometido                 = round((floatval($presupuesto->causes_comprometido) + $total_causes),2);
                 $presupuesto->material_curacion_comprometido      = round((floatval($presupuesto->material_curacion_comprometido) + $total_material_curacion),2);
+
+                $presupuesto->insumos_comprometido                = round((floatval($presupuesto->insumos_comprometido) + ($total_causes + $total_material_curacion)),2);
+                $presupuesto->no_causes_comprometido              = round((floatval($presupuesto->no_causes_comprometido) + $total_no_causes),2);
+                
 
                 $presupuesto->save();
 

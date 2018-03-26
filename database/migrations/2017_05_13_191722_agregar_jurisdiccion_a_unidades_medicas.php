@@ -27,7 +27,8 @@ class AgregarJurisdiccionAUnidadesMedicas extends Migration
     public function down()
     {
         Schema::table('unidades_medicas', function (Blueprint $table) {
-             $table->dropColumn('jurisdiccion_id');
+            $table->dropForeign(['jurisdiccion_id']);
+            $table->dropColumn('jurisdiccion_id');
         });
     }
 }

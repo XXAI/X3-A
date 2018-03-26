@@ -7,3 +7,4 @@ id,tipo,nombre,created_at,updated_at,deleted_at
 6,E,"Ajuste Más","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
 7,S,"Ajuste Menos","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
 8,E,"Entrada desde pedido a Farmacia Subrogada","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL
+9,E,"Recepción Pedido entre Almacenes","2018-02-01 11:48:55","2018-02-01 11:48:55",NULL

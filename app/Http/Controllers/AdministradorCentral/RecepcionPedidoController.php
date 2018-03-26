@@ -177,16 +177,16 @@ class RecepcionPedidoController extends Controller
                         return Response::json(['error' =>"No se puede eliminar la recepción, porque el monto recibido es mayor al monto solicitado"], 500);
                 }
 
-
-
-                $presupuesto->causes_devengado               = round((floatval($presupuesto->causes_devengado) - $total_causes),2);                                         
-                $presupuesto->no_causes_devengado            = round((floatval($presupuesto->no_causes_devengado) - $total_no_causes),2);                                         
-                $presupuesto->material_curacion_devengado    = round((floatval($presupuesto->material_curacion_devengado) - $total_material_curacion),2); 
-
-                $presupuesto->causes_comprometido                 = round((floatval($presupuesto->causes_comprometido) + $total_causes),2);     
-                $presupuesto->no_causes_comprometido              = round((floatval($presupuesto->no_causes_comprometido) + $total_no_causes),2);                                         
+                $presupuesto->causes_devengado               = round((floatval($presupuesto->causes_devengado) - $total_causes),2);
+                $presupuesto->material_curacion_devengado    = round((floatval($presupuesto->material_curacion_devengado) - $total_material_curacion),2);
+                $presupuesto->insumos_devengado              = round((floatval($presupuesto->insumos_devengado) - ($total_causes + $total_material_curacion)),2);
+                $presupuesto->no_causes_devengado            = round((floatval($presupuesto->no_causes_devengado) - $total_no_causes),2);
+                
+                $presupuesto->causes_comprometido                 = round((floatval($presupuesto->causes_comprometido) + $total_causes),2);
                 $presupuesto->material_curacion_comprometido      = round((floatval($presupuesto->material_curacion_comprometido) + $total_material_curacion),2);
-
+                $presupuesto->insumos_comprometido                = round((floatval($presupuesto->insumos_comprometido) + ($total_causes + $total_material_curacion)),2);
+                $presupuesto->no_causes_comprometido              = round((floatval($presupuesto->no_causes_comprometido) + $total_no_causes),2);
+                
                 $presupuesto->save();
 
                 $pedido = Pedido::find($pedido_id);

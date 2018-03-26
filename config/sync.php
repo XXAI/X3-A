@@ -29,6 +29,7 @@ return [
         'catalogo_localidades',
         'catalogo_motivo_egreso',
         'catalogo_municipios',
+        'configuracion_general',
         'tipos_insumos',
         'tipos_movimientos',
         'tipos_pedidos',
@@ -88,7 +89,7 @@ return [
         'permiso_rol',
         'sustancias_laboratorio',
         'unidad_medica_abasto_configuracion',
-        'unidad_medica_presupuesto'
+        //'unidad_medica_presupuesto'
     ],
 
     /*
@@ -109,7 +110,7 @@ return [
         'personal_clues',
         'personal_clues_metadatos',
         'personal_clues_puesto',
-        'almacenes',
+        //'almacenes',
         'almacenes_servicios',
         'almacen_tipos_movimientos',
         'pedidos',
@@ -150,4 +151,465 @@ return [
         'receta_movimientos',
         'resguardos'
     ],
+     /*
+    |--------------------------------------------------------------------------
+    | Tablas para sincronizar en dos direcciones
+    |--------------------------------------------------------------------------
+    |
+    | En esta opción se debe especificar la tabla y los campos que se suben 
+    | y los campos que se bajan del servidor remoto, asímismo, si hay que hacer
+    | algú calculo en el proceso de subida o bajada, hay que escribir el nombre
+    | del método que se encuentra en namespace App\Librerias\Sync, ahí se pueden
+    | agregar los métodos necerios por si hay que hacer algún calculo en la subida
+    | o bajada y especificarlos en la propiedad: calculo_bajada y calculo_subida
+    |
+    */
+    'pivotes' => [
+        'unidad_medica_presupuesto' => [
+            'campos_subida' => [
+                'causes_comprometido',
+                'causes_devengado',
+                'no_causes_comprometido',
+                'no_causes_devengado',
+                'material_curacion_comprometido',
+                'material_curacion_devengado',
+                'insumos_comprometido',
+                'insumos_devengado',
+                'created_at',
+                'updated_at'
+            ],
+            'campos_bajada' => [
+                'causes_autorizado',
+                'causes_modificado',
+                'no_causes_autorizado',
+                'no_causes_modificado',
+                'material_curacion_autorizado',
+                'material_curacion_modificado',
+                'insumos_autorizado',
+                'insumos_modificado',
+                'validation',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'clues = "'.env('CLUES').'"',       // Si quieren meter mas agrupen todo entre parentesis ( condicion1 AND condicion2 OR condicion3)
+            'condicion_bajada' =>'',
+            'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible',  // Esta funcion se ejecuta justo despues de haber bajado a local          
+        ],
+        'ajuste_presupuesto_pedidos_cancelados' => [
+            'campos_subida' => [
+                'mes_origen',
+                'anio_origen',
+                'mes_destion',
+                'anio_destino',
+                'causes',
+                'no_causes',
+                'material_curacion',
+                'insumos',
+                'status',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+                // No es necesario poner los campos porque directamente hará un insert de todos los campos la primera vez
+                // Pero si se "actualizara esta tabla hipotéticamente" estos serian los campos a subir
+            ],
+            'campos_bajada' => [
+                'status',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => "status = 'P'", // Pendientes
+            'condicion_bajada' => "status = 'AR'", // Aplicados en remoto
+            'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosRemoto', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
+        ],
+        'almacenes'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'nivel_almacen',
+                'tipo_almacen',
+                'clues',
+                'subrogado',
+                'lista_insumo_id',
+                'proveedor_id',
+                'unidosis',
+                'nombre',
+                'encargado_almacen_id',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'nivel_almacen',
+                'tipo_almacen',
+                'clues',
+                'subrogado',
+                'lista_insumo_id',
+                'proveedor_id',
+                'unidosis',
+                'nombre',
+                'encargado_almacen_id',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'clues = "'.env('CLUES').'"', // Pendientes
+            'condicion_bajada' => '', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local                
+        ],
+        'pedidos'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'clues',
+                'clues_destino',
+                'tipo_insumo_id',
+                'tipo_pedido_id',
+                'descripcion',
+                'pedido_padre',
+                'folio',
+                'fecha',
+                'fecha_concluido',
+                'fecha_expiracion',
+                'fecha_cancelacion',
+                'almacen_solicitante',
+                'almacen_proveedor',
+                'organismo_dirigido',
+                'acta_id',
+                'status',
+                'recepcion_permitida',
+                'observaciones', 
+                'usuario_validacion',
+                'proveedor_id',
+                'presupuesto_id',
+                'total_monto_solicitado',
+                'total_monto_recibido',
+                'total_claves_solicitadas',
+                'total_claves_recibidas',
+                'total_cantidad_solicitada',
+                'total_cantidad_recibida',
+                'encargado_almacen_id',
+                'director_id',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'clues',
+                'clues_destino',
+                'tipo_insumo_id',
+                'tipo_pedido_id',
+                'descripcion',
+                'pedido_padre',
+                'folio',
+                'fecha',
+                'fecha_concluido',
+                'fecha_expiracion',
+                'fecha_cancelacion',
+                'almacen_solicitante',
+                'almacen_proveedor',
+                'organismo_dirigido',
+                'acta_id',
+                'status',
+                'recepcion_permitida',
+                'observaciones', 
+                'usuario_validacion',
+                'proveedor_id',
+                'presupuesto_id',
+                'total_monto_solicitado',
+                'total_monto_recibido',
+                'total_claves_solicitadas',
+                'total_claves_recibidas',
+                'total_cantidad_solicitada',
+                'total_cantidad_recibida',
+                'encargado_almacen_id',
+                'director_id',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            /*'tablas_relacion'=>[
+                'pedidos_insumos'=>[
+                    'id_padre'=> 'id',
+                    'id_local' => 'pedido_id',
+                    ''
+                ]
+            ],*/
+            'condicion_subida' => 'tipo_pedido_id = "PEA" AND servidor_id != "'.env('SERVIDOR_ID').'"', // Pendientes
+            'condicion_bajada' => 'tipo_pedido_id = "PEA"', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local                
+        ],
+        'pedidos_insumos'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'pedido_id',
+                'tipo_insumo_id',
+                'insumo_medico_clave',
+                'cantidad_enviada',
+                'cantidad_solicitada',
+                'cantidad_recibida',
+                'precio_unitario',
+                'monto_enviado',
+                'monto_solicitado',
+                'monto_recibido',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'pedido_id',
+                'tipo_insumo_id',
+                'insumo_medico_clave',
+                'cantidad_enviada',
+                'cantidad_solicitada',
+                'cantidad_recibida',
+                'precio_unitario',
+                'monto_enviado',
+                'monto_solicitado',
+                'monto_recibido',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'pedido_id in (select id from pedidos where tipo_pedido_id = "PEA") AND servidor_id != "'.env('SERVIDOR_ID').'"', // Pendientes
+            'condicion_bajada' => 'pedido_id in (select id from pedidos where tipo_pedido_id = "PEA")', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local    
+        ],
+        'historial_movimientos_transferencias'=>[
+            'campos_subida'=>[
+                'id',
+                'servidor_id',
+                'incremento',
+                'almacen_origen',
+                'almacen_destino',
+                'clues_origen',
+                'clues_destino',
+                'pedido_id',
+                'evento',
+                'movimiento_id',
+                'total_unidades',
+                'total_claves',
+                'total_monto',
+                'fecha_inicio_captura',
+                'fecha_finalizacion',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'servidor_id',
+                'incremento',
+                'almacen_origen',
+                'almacen_destino',
+                'clues_origen',
+                'clues_destino',
+                'pedido_id',
+                'evento',
+                'movimiento_id',
+                'total_unidades',
+                'total_claves',
+                'total_monto',
+                'fecha_inicio_captura',
+                'fecha_finalizacion',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'pedido_id in (select id from pedidos where tipo_pedido_id = "PEA") AND servidor_id != "'.env('SERVIDOR_ID').'"', // Pendientes
+            'condicion_bajada' => 'pedido_id in (select id from pedidos where tipo_pedido_id = "PEA")', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local    
+        ],
+        'movimientos'=>[
+            'campos_subida'=>[
+                'id',
+                'servidor_id',
+                'incremento',
+                'almacen_id',
+                'tipo_movimiento_id',
+                'status',
+                'fecha_movimiento', 
+                'programa_id',
+                'observaciones',
+                'cancelado',
+                'observaciones_cancelacion',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'servidor_id',
+                'incremento',
+                'almacen_id',
+                'tipo_movimiento_id',
+                'status',
+                'fecha_movimiento', 
+                'programa_id',
+                'observaciones',
+                'cancelado',
+                'observaciones_cancelacion',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'id in (select movimiento_id from historial_movimientos_transferencias where pedido_id in (select id from pedidos where tipo_pedido_id = "PEA")) AND servidor_id != "'.env('SERVIDOR_ID').'"', // Pendientes
+            'condicion_bajada' => 'id in (select movimiento_id from historial_movimientos_transferencias where pedido_id in (select id from pedidos where tipo_pedido_id = "PEA"))', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local    
+        ],
+        'movimiento_pedido'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'movimiento_id',
+                'pedido_id',
+                'recibe',
+                'entrega',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'movimiento_id',
+                'pedido_id',
+                'recibe',
+                'entrega',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'pedido_id in (select id from pedidos where tipo_pedido_id = "PEA") AND servidor_id != "'.env('SERVIDOR_ID').'"', // Pendientes
+            'condicion_bajada' => 'pedido_id in (select id from pedidos where tipo_pedido_id = "PEA")', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local    
+        ],
+        'movimiento_insumos'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'movimiento_id',
+                'tipo_insumo_id',
+                'stock_id',
+                'clave_insumo_medico',
+                'modo_salida',
+                'cantidad',
+                'cantidad_unidosis',
+                'precio_unitario',
+                'iva',
+                'precio_total',
+                'usuario_id',
+                'created_at', 
+                'updated_at', 
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'movimiento_id',
+                'tipo_insumo_id',
+                'stock_id',
+                'clave_insumo_medico',
+                'modo_salida',
+                'cantidad',
+                'cantidad_unidosis',
+                'precio_unitario',
+                'iva',
+                'precio_total',
+                'usuario_id',
+                'created_at', 
+                'updated_at', 
+                'deleted_at'
+            ],
+            'condicion_subida' => 'movimiento_id in (select movimiento_id from historial_movimientos_transferencias where pedido_id in (select id from pedidos where tipo_pedido_id = "PEA")) AND servidor_id != "'.env('SERVIDOR_ID').'"', // Pendientes
+            'condicion_bajada' => 'movimiento_id in (select movimiento_id from historial_movimientos_transferencias where pedido_id in (select id from pedidos where tipo_pedido_id = "PEA"))', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local    
+        ],
+        'stock'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'almacen_id',
+                'clave_insumo_medico',
+                'programa_id',
+                'marca_id',
+                'lote',
+                'fecha_caducidad', 
+                'codigo_barras',
+                'existencia',
+                'existencia_unidosis',
+                'unidosis_sueltas',
+                'envases_parciales',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'almacen_id',
+                'clave_insumo_medico',
+                'programa_id',
+                'marca_id',
+                'lote',
+                'fecha_caducidad', 
+                'codigo_barras',
+                'existencia',
+                'existencia_unidosis',
+                'unidosis_sueltas',
+                'envases_parciales',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'id in (select stock_id from movimiento_insumos where movimiento_id in (select movimiento_id from historial_movimientos_transferencias where pedido_id in (select id from pedidos where tipo_pedido_id = "PEA"))) AND servidor_id != "'.env('SERVIDOR_ID').'"', // Pendientes
+            'condicion_bajada' => 'id in (select stock_id from movimiento_insumos where movimiento_id in (select movimiento_id from historial_movimientos_transferencias where pedido_id in (select id from pedidos where tipo_pedido_id = "PEA")))', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local    
+        ],
+        // Agregar más tablas copiando la estructura anterior
+    ]
 ];

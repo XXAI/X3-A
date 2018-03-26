@@ -15,6 +15,17 @@ use \Validator,\Hash, \Response;
 
 class ServidorController extends Controller
 {
+
+    public function informacionServidorLocal(){
+        $servidor = Servidor::find(env('SERVIDOR_ID'));
+
+        if($servidor->principal){
+            $servidores = Servidor::all();
+            return Response::json([ 'data' => ['servidor'=>$servidor,'lista_servidores'=>$servidores]],200);
+        }else{
+            return Response::json([ 'data' => ['servidor'=>$servidor]],200);
+        }
+    }
     /**
      * Display a listing of the resource.
      *

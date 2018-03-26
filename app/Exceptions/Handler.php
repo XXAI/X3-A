@@ -34,7 +34,8 @@ class Handler extends ExceptionHandler
      */
     public function report(Exception $e)
     {
-        parent::report($e);
+
+       parent::report($e);
     }
 
     /**
@@ -51,8 +52,7 @@ class Handler extends ExceptionHandler
             return response()->json(['token_expired'], $e->getStatusCode());
         } else if ($e instanceof Tymon\JWTAuth\Exceptions\TokenInvalidException) {
             return response()->json(['token_invalid'], $e->getStatusCode());
-        }
-
+        } 
         
         return parent::render($request, $e);
     }

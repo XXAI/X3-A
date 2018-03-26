@@ -28,9 +28,8 @@ class PersonalMedicoController extends Controller
         ///************************************************************************
         $data =  DB::table("configuracion_general")->where('clave', 'personal_medico');
         $data = $data->first();
-        if(!$data)
-        {
-
+        if(!$data){
+            
         }
 
         $tipo_personal_id = $data->valor;
@@ -41,8 +40,7 @@ class PersonalMedicoController extends Controller
 
         ////***********************************************************************
 
-        if ($parametros['term']) 
-        {
+        if ($parametros['term']) {
              $data =  PersonalClues::where('clues',$parametros['clues'])
                                    ->where('tipo_personal_id', $parametros['tipo_personal_id'])
                                    ->where('nombre','LIKE',"%".$parametros['term']."%");

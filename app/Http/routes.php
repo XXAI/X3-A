@@ -16,17 +16,18 @@ Route::get('/', function () {
 });
 
 Route::group(['middleware' => 'servidor.instalado'], function () {
-    Route::get('install', function () {
-        return view('install');
-    });
-    Route::get('config-server', 'InstallController@runDatabase');
-    Route::get('server-offline', 'InstallController@configServer');
+    Route::get('install', 'InstallController@iniciarInstalacion');
+    Route::get('instalar', 'InstallController@instalar');
 });
+
+
+Route::get('instalado', 'InstallController@instalado');
 
 Route::post('obtener-token',                    'AutenticacionController@autenticar');
 Route::post('refresh-token',                    'AutenticacionController@refreshToken');
 Route::get('check-token',                       'AutenticacionController@verificar');
 
+Route::get('informacion-servidor',              'ServidorController@informacionServidorLocal');
 
 Route::post('reset-password/email',                 'ResetPasswordController@enviarEmail');
 Route::post('reset-password/validar-token',         'ResetPasswordController@validarToken');
@@ -81,13 +82,7 @@ Route::group(['middleware' => 'jwt'], function () {
     //Route::get('pedidos-presupuesto',   'PedidoController@obtenerDatosPresupuesto');
 
 
-    // # SECCION: Opciones avanzadas 
-    Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
-
-        Route::get('actualizar-plataforma-git',         'ActualizarPlataformaController@git');
-        Route::get('exportar-base-datos',               'BaseDatosController@exportar');
-        Route::post('importar-base-datos',              'BaseDatosController@importar');
-    });
+    
 
     // # SECCION: Administrador central
     Route::group(['prefix' =>                           'administrador-central','namespace' => 'AdministradorCentral'], function () {
@@ -333,6 +328,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('avance_area',                          'AvanceController@areas');
 
     Route::group(['prefix' => 'sync','namespace' => 'Sync'], function () {
+        Route::get('log',                                 'SincronizacionController@log');
         Route::get('lista',                                 'SincronizacionController@lista');
         Route::get('manual',                                'SincronizacionController@manual');        
         Route::get('auto',                                  'SincronizacionController@auto');
@@ -340,5 +336,21 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::post('confirmar',                            'SincronizacionController@confirmarSync');
         Route::resource('servidores',                       'ServidoresController',['only' => ['index', 'show', 'store','update','destroy']]);
     });
+
+
+    // # SECCION: Opciones avanzadas 
+    Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
+
+        Route::get('actualizar-plataforma-git',         'ActualizarPlataformaController@git');
+        Route::get('exportar-base-datos',               'BaseDatosController@exportar');
+        Route::post('importar-base-datos',              'BaseDatosController@importar');
+    });
+    // #SECCION: Parches
+    Route::group(['prefix' => 'patches','namespace' => 'Patches'], function () {
+        Route::get('lista',                                 'PatchesController@lista');
+        Route::post('ejecutar-parche',                      'PatchesController@ejecutarParche');
+        Route::post('ejecutar',                             'PatchesController@ejecutar');
+    });
+    
     
 });
