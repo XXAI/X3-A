@@ -222,7 +222,7 @@ class InstallController extends Controller
         //\Artisan::call('db:seed',['--class'=>'UsuariosSeeder']);
         DB::table('usuarios')->insert([
             [
-                'id' => 'root_'.$config['id'],
+                'id' => $config['id'].':root',
                 'servidor_id' =>  $config['id'],
                 'password' => Hash::make('ssa.s14l.0ffl1n3.'.$config['id']),
                 'nombre' => 'Super',
@@ -299,11 +299,11 @@ class InstallController extends Controller
             ],
             'usuarios' => [
                 [
-                    'user' => $config['id'].':admin',
+                    'user' => 'admin',//$config['id'].':admin',
                     'pass' => 'administrador.'.$config['id']
                 ],
                 [
-                    'user' => $config['id'].':almacen',
+                    'user' => 'almacen',//$config['id'].':almacen',
                     'pass' => 'almacen.'.$config['id'],
                 ]
             ]
@@ -333,11 +333,11 @@ class InstallController extends Controller
                 ],
                 'usuarios' => [
                     [
-                        'user' => env('SERVIDOR_ID').':admin',
+                        'user' => 'admin', //env('SERVIDOR_ID').':admin',
                         'pass' => 'administrador.'.env('SERVIDOR_ID')
                     ],
                     [
-                        'user' => env('SERVIDOR_ID').':almacen',
+                        'user' => 'almacen', //env('SERVIDOR_ID').':almacen',
                         'pass' => 'almacen.'.env('SERVIDOR_ID'),
                     ]
                 ]

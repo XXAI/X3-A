@@ -11,10 +11,10 @@ class UsuariosSeeder extends Seeder
      */
     public function run()
     {
-        $super_usuario = DB::table('usuarios')->where('id','root_'.env("SERVIDOR_ID"))->first();
+        $super_usuario = DB::table('usuarios')->where('id',env("SERVIDOR_ID").':root')->first();
         if(!$super_usuario){
             DB::table('usuarios')->insert([[
-                'id' => 'root_'.env("SERVIDOR_ID"),
+                'id' => env("SERVIDOR_ID").':root',
                 'servidor_id' =>  env("SERVIDOR_ID"),
                 'password' => Hash::make('ssa.s14l.0ffl1n3.'.env("SERVIDOR_ID")),
                 'nombre' => 'Super',
