@@ -172,7 +172,7 @@ class InstallController extends Controller
         $password  = Config::get('database.connections.mysql.password');
        
         echo shell_exec(env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "DROP DATABASE  IF EXISTS  ' . $database . '"');
-        echo shell_exec(env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "CREATE DATABASE ' . $database . '"');
+        echo shell_exec(env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "CREATE DATABASE ' . $database . ' DEFAULT CHARACTER SET utf8"');
         //echo env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "CREATE DATABASE ' . $database . '"';
         
         \Artisan::call('migrate');
