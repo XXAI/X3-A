@@ -224,6 +224,58 @@ return [
             'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosRemoto', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
         ],
+        'ajuste_presupuesto_pedidos_regresion' => [
+            'campos_subida' => [
+                'mes_origen',
+                'anio_origen',
+                'mes_destion',
+                'anio_destino',
+                'causes',
+                'no_causes',
+                'material_curacion',
+                'insumos',
+                'status',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+                // No es necesario poner los campos porque directamente hará un insert de todos los campos la primera vez
+                // Pero si se "actualizara esta tabla hipotéticamente" estos serian los campos a subir
+            ],
+            'campos_bajada' => [
+                'status',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => "", // Expirado Pendientes
+            'condicion_bajada' => "status = 'EP'", // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosRegresionLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
+        ],
+        'ajuste_pedidos_presupuesto_apartado' => [
+            'campos_subida' => [
+                ''
+                // No es necesario poner los campos porque directamente hará un insert de todos los campos la primera vez
+                // Pero si se "actualizara esta tabla hipotéticamente" estos serian los campos a subir
+            ],
+            'campos_bajada' => [
+                'clues',
+                'pedido_id',
+                'almacen_id',
+                'mes',
+                'anio',
+                'causes_comprometido',
+                'causes_devengado',
+                'no_causes_comprometido',
+                'no_causes_devengado',
+                'material_curacion_comprometido',
+                'material_curacion_devengado',
+            ],
+            'condicion_subida' => "", // Expirado Pendientes
+            'condicion_bajada' => "status = 'AR'", // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePedidosPresupuestoApartadoLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
+        ],
         'almacenes'=>[
             'campos_subida'=>[
                 'id',
