@@ -60,7 +60,7 @@ return [
         'categorias',
         'categorias_metadatos',
         'organismos',
-        'unidades_medicas',
+        //'unidades_medicas',
         //'areas', #no esta en migrations
         'articulos',
         'insumos_medicos',
@@ -276,7 +276,7 @@ return [
             'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePedidosPresupuestoApartadoLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
         ],*/
-        'personal_clues'=>[            
+        'personal_clues'=>[
             'campos_subida'=>[
                 'id',
                 'incremento',
@@ -318,22 +318,9 @@ return [
         ],
         'almacenes'=>[
             'campos_subida'=>[
-                /*'id',
-                'incremento',
-                'servidor_id',
-                'nivel_almacen',
-                'tipo_almacen',
-                'clues',
-                'subrogado',
-                'lista_insumo_id',
-                'proveedor_id',
-                'unidosis',
-                'nombre',*/
                 'encargado_almacen_id',
                 'usuario_id',
-                /*'created_at',
                 'updated_at',
-                'deleted_at'*/
             ],
             'campos_bajada'=>[
                 'id',
@@ -357,6 +344,28 @@ return [
             'condicion_bajada' => '', // Aplicados en remoto
             'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local                
+        ],
+        'unidades_medicas'=>[
+            'campos_subida'=>[
+                'director_id',
+                'updated_at'
+            ],
+            'campos_bajada'=>[
+                'clues',
+                'jurisdiccion_id',
+                'tipo',
+                'nombre',
+                'activa',
+                'es_offline',
+                'director_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'clues = "'.env('CLUES').'"', // Pendientes
+            'condicion_bajada' => '', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local   
         ],
         'pedidos'=>[
             'campos_subida'=>[

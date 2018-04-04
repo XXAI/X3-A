@@ -8,7 +8,7 @@ use Illuminate\Http\Response as HttpResponse;
 use App\Http\Requests;
 use \DB, \Storage, \ZipArchive, \Hash, \Response, \Config;
 use Illuminate\Support\Facades\Input;
-use App\Models\Sincronizacion, App\Models\Servidor, App\Models\LogSync; 
+use App\Models\Sincronizacion, App\Models\Servidor, App\Models\LogSync, App\Models\Usuario; 
 use App\Librerias\Sync\ArchivoSync;
 use Carbon\Carbon;
 
@@ -19,14 +19,16 @@ class SincronizacionController extends \App\Http\Controllers\Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function lista()
+    public function lista(Request $request)
     {
+        $usuario = Usuario::find($request->get('usuario_id'));
 
         $parametros = Input::only('page','per_page','q');
         $items = Sincronizacion::select('sincronizaciones.*', 'servidores.nombre as servidor_nombre')->leftjoin("servidores","servidores.id","=","sincronizaciones.servidor_id")->orderBy('created_at','desc');
         
-        
-        
+        if(!$usuario->su){
+            $servidores = $items->where('servidor_id',$usuario->servidor_id);
+        }
         
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
