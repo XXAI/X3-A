@@ -8,7 +8,7 @@ use Illuminate\Http\Response as HttpResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests;
 
-use App\Models\Usuario, App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen, App\Models\Repositorio, App\Models\LogPedidoBorrador, App\Models\PedidoPresupuestoApartado, App\Models\LogPedidoCancelado;
+use App\Models\Usuario, App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen, App\Models\Repositorio, App\Models\LogPedidoBorrador, App\Models\PedidoPresupuestoApartado, App\Models\LogPedidoCancelado, App\Models\AjustePresupuestoPedidoRegresion, App\Models\Servidor, App\Models\AjustePedidoPresupuestoApartado;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
@@ -323,6 +323,8 @@ class PedidosController extends Controller
                 return Response::json(['error' =>"El pedido ya se encuentra en borrador, por favor verificar"], 500);
             }
             
+            if($servidor->principal){
+
             $pedido->status = "BR";
             $pedido->save();
 
@@ -374,6 +376,21 @@ class PedidosController extends Controller
                     'no_causes_devengado' => $no_causes_recibido,
                     'material_curacion_comprometido' => ($material_curacion_solicitado-$material_curacion_recibido),
                     'material_curacion_devengado' => $material_curacion_recibido
+                ));
+
+                AjustePedidoPresupuestoApartado::create(array(
+                    'clues' => $pedido->clues,
+                    'pedido_id' => $pedido->id,
+                    'almacen_id' => $pedido->almacen_solicitante,
+                    'mes' => $fecha[1],
+                    'anio' => $fecha[0],
+                    'causes_comprometido' => ($causes_solicitado-$causes_recibido),
+                    'causes_devengado' => $causes_recibido,
+                    'no_causes_comprometido' => ($no_causes_solicitado-$no_causes_recibido),
+                    'no_causes_devengado' => $no_causes_recibido,
+                    'material_curacion_comprometido' => ($material_curacion_solicitado-$material_curacion_recibido),
+                    'material_curacion_devengado' => $material_curacion_recibido,
+                    'status'=> 'AR'
                 ));
 
                 $arreglo_log = array("pedido_id"=>$id,
@@ -437,25 +454,53 @@ class PedidosController extends Controller
                                                     ->where("anio", intVal($fecha[0]))
                                                     ->where("proveedor_id", $proveedor->id)
                                                     ->first();
+
+            $servidor = Servidor::find(env('SERVIDOR_ID'));
+
+                                                    
             
-            $presupuesto->insumos_disponible                = ($presupuesto->insumos_disponible + $total_causes + $total_material_curacion);
-            //$presupuesto->causes_disponible                 = ($presupuesto->causes_disponible + $total_causes);
-            //$presupuesto->material_curacion_disponible      = round(($presupuesto->material_curacion_disponible + $total_material_curacion),2);
-            $presupuesto->no_causes_disponible              = ($presupuesto->no_causes_disponible + $total_no_causes);
+                $presupuesto->insumos_disponible                = ($presupuesto->insumos_disponible + $total_causes + $total_material_curacion);
+                //$presupuesto->causes_disponible                 = ($presupuesto->causes_disponible + $total_causes);
+                //$presupuesto->material_curacion_disponible      = round(($presupuesto->material_curacion_disponible + $total_material_curacion),2);
+                $presupuesto->no_causes_disponible              = ($presupuesto->no_causes_disponible + $total_no_causes);
+                
+                $presupuesto->insumos_comprometido              = ($presupuesto->insumos_comprometido - ($total_causes + $total_material_curacion));
+                $presupuesto->causes_comprometido               = ($presupuesto->causes_comprometido - $total_causes);
+                $presupuesto->material_curacion_comprometido    = round(($presupuesto->material_curacion_comprometido - $total_material_curacion),2);
+                $presupuesto->no_causes_comprometido            = ($presupuesto->no_causes_comprometido - $total_no_causes);
+
+                $presupuesto->save(); 
+
+                $arreglo_log = array("pedido_id"=>$id,
+                                        'ip' =>$request->ip(),
+                                        'navegador' =>$request->header('User-Agent'),
+                                        "accion"=>"REGRESO BORRADOR SIN RECEPCIONES");
+                LogPedidoBorrador::create($arreglo_log);
             
-            $presupuesto->insumos_comprometido              = ($presupuesto->insumos_comprometido - ($total_causes + $total_material_curacion));
-            $presupuesto->causes_comprometido               = ($presupuesto->causes_comprometido - $total_causes);
-            $presupuesto->material_curacion_comprometido    = round(($presupuesto->material_curacion_comprometido - $total_material_curacion),2);
-            $presupuesto->no_causes_comprometido            = ($presupuesto->no_causes_comprometido - $total_no_causes);
+                $fecha_pedido = explode('-',$pedido->fecha);
 
-            $presupuesto->save(); 
+                $pedido_mes = $fecha_pedido[1];
+                $pedido_anio = $fecha_pedido[0];
+                
+                $datos_ajuste = [
+                    'unidad_medica_presupuesto_id' => $presupuesto->id,
+                    'pedido_id' => $pedido->id,
+                    'clues' => $pedido->clues,
+                    'mes_origen' => $pedido_mes,
+                    'anio_origen' => $pedido_anio,
+                    'mes_destino' => $pedido_mes,
+                    'anio_destino' => $pedido_anio,
+                    'causes' => $total_causes,
+                    'no_causes' => $total_no_causes,
+                    'material_curacion' => $total_material_curacion,
+                    'insumos' => ($total_causes + $total_material_curacion),
+                    'status' => 'BA'
+                ];
 
-            $arreglo_log = array("pedido_id"=>$id,
-                                     'ip' =>$request->ip(),
-                                     'navegador' =>$request->header('User-Agent'),
-                                     "accion"=>"REGRESO BORRADOR SIN RECEPCIONES");
-            LogPedidoBorrador::create($arreglo_log);
-
+                $ajuste_regresion = AjustePresupuestoPedidoRegresion::create($datos_ajuste);    
+            }else{
+                return Response::json(['error' =>"No cuenta con el privilegio necesario para realizar esta acción."], 500); 
+            }    
             DB::commit();
             
             return Response::json([ 'data' => $presupuesto],200);
@@ -479,6 +524,7 @@ class PedidosController extends Controller
             
             $proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
 
+            
             $contrato_activo = $proveedor->contratoActivo;
             $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad", "contratos_precios.tipo_insumo_id", "medicamentos.cantidad_x_envase")->withTrashed()->get();
             $lista_insumos = array();
@@ -518,7 +564,6 @@ class PedidosController extends Controller
 
             //return Response::json([ 'data' => $total_causes." - ".$total_no_causes." - ".$total_material_curacion],500);
             $logPedidoCancelado = LogPedidoCancelado::where("pedido_id", $id)->first();
-
             if(!$logPedidoCancelado)
             {
                  DB::rollBack();
@@ -552,54 +597,83 @@ class PedidosController extends Controller
             $unidad_medica->material_curacion_modificado -= $total_material_curacion;
             $unidad_medica->material_curacion_disponible -= $total_material_curacion;
             */
-            $unidad_medica->insumos_modificado -= ($total_causes + $total_material_curacion);
-            $unidad_medica->insumos_disponible -= ($total_causes + $total_material_curacion);
-
-            $unidad_medica->no_causes_modificado -= $total_no_causes;
-            $unidad_medica->no_causes_disponible -= $total_no_causes;
-
-            //Crear Hash de validación
-            $secret = env('SECRET_KEY') . 'HASH-' . $unidad_medica->clues . $unidad_medica->mes . $unidad_medica->anio . $unidad_medica->insumos_modificado . $unidad_medica->no_causes_modificado . '-HASH';
-            $cadena_validacion = Hash::make($secret);
-            $unidad_medica->validation = $cadena_validacion;
-
-            $unidad_medica->save();
+            $servidor = Servidor::find(env('SERVIDOR_ID'));
+            
             $fecha = explode("-", $pedido->fecha);
 
             $unidad_medica_destino = UnidadMedicaPresupuesto::where("almacen_id", $pedido->almacen_solicitante)
-                                                      ->where("clues", $pedido->clues)  
-                                                      ->where("mes", intVal($fecha[1]))
-                                                      ->where("anio", intVal($fecha[0]))
-                                                      ->first();  
+                                                    ->where("clues", $pedido->clues)  
+                                                    ->where("mes", intVal($fecha[1]))
+                                                    ->where("anio", intVal($fecha[0]))
+                                                    ->first();  
 
-            //return Response::json([ 'data' => $pedido->almacen_solicitante." - ".$pedido->clues." - ".intVal($fecha[1])." - ".intVal($fecha[0])],500);                                          
-            /*
-            $unidad_medica_destino->causes_comprometido += $total_causes;
-            $unidad_medica_destino->causes_modificado += $total_causes;
-            $unidad_medica_destino->material_curacion_comprometido += $total_material_curacion;
-            $unidad_medica_destino->material_curacion_modificado += $total_material_curacion;
-            */
-            $unidad_medica_destino->insumos_comprometido += ($total_causes + $total_material_curacion);
-            $unidad_medica_destino->insumos_modificado += ($total_causes + $total_material_curacion);
+                                                    
+            if($servidor->principal){
+                $unidad_medica->insumos_modificado -= ($total_causes + $total_material_curacion);
+                $unidad_medica->insumos_disponible -= ($total_causes + $total_material_curacion);
 
-            $unidad_medica_destino->no_causes_comprometido += $total_no_causes;
-            $unidad_medica_destino->no_causes_modificado += $total_no_causes;
+                $unidad_medica->no_causes_modificado -= $total_no_causes;
+                $unidad_medica->no_causes_disponible -= $total_no_causes;
+
+                //Crear Hash de validación
+                $secret = env('SECRET_KEY') . 'HASH-' . $unidad_medica->clues . $unidad_medica->mes . $unidad_medica->anio . $unidad_medica->insumos_modificado . $unidad_medica->no_causes_modificado . '-HASH';
+                $cadena_validacion = Hash::make($secret);
+                $unidad_medica->validation = $cadena_validacion;
+
+                $unidad_medica->save();
+                
+                //return Response::json([ 'data' => $pedido->almacen_solicitante." - ".$pedido->clues." - ".intVal($fecha[1])." - ".intVal($fecha[0])],500);                                          
+                /*
+                $unidad_medica_destino->causes_comprometido += $total_causes;
+                $unidad_medica_destino->causes_modificado += $total_causes;
+                $unidad_medica_destino->material_curacion_comprometido += $total_material_curacion;
+                $unidad_medica_destino->material_curacion_modificado += $total_material_curacion;
+                */
+                $unidad_medica_destino->insumos_comprometido += ($total_causes + $total_material_curacion);
+                $unidad_medica_destino->insumos_modificado += ($total_causes + $total_material_curacion);
+
+                $unidad_medica_destino->no_causes_comprometido += $total_no_causes;
+                $unidad_medica_destino->no_causes_modificado += $total_no_causes;
+                
+                //Crear Hash de validación
+                $secret = env('SECRET_KEY') . 'HASH-' . $unidad_medica_destino->clues . $unidad_medica_destino->mes . $unidad_medica_destino->anio . $unidad_medica_destino->insumos_modificado . $unidad_medica_destino->no_causes_modificado . '-HASH';
+                $cadena_validacion = Hash::make($secret);
+                $unidad_medica_destino->validation = $cadena_validacion;
+
+                $unidad_medica_destino->save();
             
-            //Crear Hash de validación
-            $secret = env('SECRET_KEY') . 'HASH-' . $unidad_medica_destino->clues . $unidad_medica_destino->mes . $unidad_medica_destino->anio . $unidad_medica_destino->insumos_modificado . $unidad_medica_destino->no_causes_modificado . '-HASH';
-            $cadena_validacion = Hash::make($secret);
-            $unidad_medica_destino->validation = $cadena_validacion;
+                LogPedidoCancelado::where("pedido_id", $id)->delete();
 
-            $unidad_medica_destino->save();
-        
-            LogPedidoCancelado::where("pedido_id", $id)->delete();
+                $pedido->status = "EX";
+                $pedido->save();
+                
+                //ajuste para regresion
+                $fecha_pedido = explode('-',$pedido->fecha);
 
-             $pedido->status = "EX";
-             $pedido->save();
-             
-             DB::commit();
-            
-            return Response::json([ 'data' => $unidad_medica_destino],200);
+                $pedido_mes = $fecha_pedido[1];
+                $pedido_anio = $fecha_pedido[0];
+
+                $datos_ajuste = [
+                    'unidad_medica_presupuesto_id' => $unidad_medica->id,
+                    'pedido_id' => $pedido->id,
+                    'clues' => $pedido->clues,
+                    'mes_origen' => $pedido_mes,
+                    'anio_origen' => $pedido_anio,
+                    'mes_destino' => $logPedidoCancelado->mes_destino,
+                    'anio_destino' => $logPedidoCancelado->anio_destino,
+                    'causes' => $total_causes,
+                    'no_causes' => $total_no_causes,
+                    'material_curacion' => $total_material_curacion,
+                    'insumos' => ($total_causes + $total_material_curacion),
+                    'status' => 'EA'
+                ];
+
+                $ajuste_regresion = AjustePresupuestoPedidoRegresion::create($datos_ajuste);
+                //fin ajuste regresion
+               
+            }
+            DB::commit();
+            return Response::json([ 'data' => $logPedidoCancelado],200);
         } catch (\Exception $e) {
             DB::rollBack();
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
