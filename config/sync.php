@@ -225,7 +225,7 @@ return [
             'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosRemoto', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
         ],
-        'ajuste_presupuesto_pedidos_regresion' => [
+        /*'ajuste_presupuesto_pedidos_regresion' => [
             'campos_subida' => [
                 'mes_origen',
                 'anio_origen',
@@ -252,8 +252,7 @@ return [
             'condicion_bajada' => "status = 'EP'", // Aplicados en remoto
             'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosRegresionLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
-        ],
-        'ajuste_pedidos_presupuesto_apartado' => [
+        ],'ajuste_pedido_presupuesto_apartado' => [
             'campos_subida' => [
                 ''
                 // No es necesario poner los campos porque directamente hará un insert de todos los campos la primera vez
@@ -276,7 +275,7 @@ return [
             'condicion_bajada' => "status = 'AR'", // Aplicados en remoto
             'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePedidosPresupuestoApartadoLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
-        ],
+        ],*/
         'personal_clues'=>[            
             'campos_subida'=>[
                 'id',
