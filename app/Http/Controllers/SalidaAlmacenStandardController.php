@@ -299,7 +299,7 @@ class SalidaAlmacenStandardController extends Controller
                 try{
                         $movimiento_salida = new Movimiento;
                         $success = $this->validarTransaccionSalida($datos, $movimiento_salida,$almacen_id);
-                } catch (\Exception $e) {
+                } catch (\Exception $e){
                     DB::rollback();
                     return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
                 } 

@@ -15,7 +15,7 @@ class Pedido extends BaseModel
     protected $fillable = [ 'tipo_insumo_id', 'tipo_pedido_id', 'clues','pedido_padre', 'folio', 'fecha', 'fecha_concluido', 'fecha_expiracion','descripcion','observaciones', 'almacen_solicitante', 'almacen_proveedor', 'organismo_dirigido', 'acta_id', 'recepcion_permitida','status', 'usuario_validacion', 'proveedor_id', 'presupuesto_id','clues_destino', "created_at","updated_at"];
     
     public function insumos(){
-        return $this->hasMany('App\Models\PedidoInsumo','pedido_id','id');
+        return $this->hasMany('App\Models\PedidoInsumo','pedido_id','id')->with('infoInsumo');
     }
 
     public function pedidoAlterno(){

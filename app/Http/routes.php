@@ -245,11 +245,9 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('clues-servicio',                       'CluesServicioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
     //  pedidos Compra consolidada.
-    Route::resource('pedidos-cc-dam',                        'PedidoCompraConsolidadaDamController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('pedidos-cc-dam',                       'PedidoCompraConsolidadaDamController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('pedidos-cc-um',                        'PedidoCompraConsolidadaUmController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('concentrar-pedido-cc-dam/{id}',        'PedidoCompraConsolidadaDamController@concentrarPedido');
-
-
+    Route::post('concentrar-pedido-cc-dam',                 'PedidoCompraConsolidadaDamController@concentrarPedidoDam');
 
     //catalogos  
     Route::resource('unidad-medida',                        'UnidadMedidaController',    ['only' => ['index', 'show', 'store','update','destroy']]);

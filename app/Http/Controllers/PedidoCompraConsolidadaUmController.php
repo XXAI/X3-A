@@ -72,6 +72,7 @@ class PedidoCompraConsolidadaUmController extends Controller
                  $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('folio','LIKE',"%".$parametros['q']."%");
              });
         }
+        $pedidos = $pedidos->orderBy('updated_at', 'DESC');
  //////*********************************************************************************************************
  if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
@@ -107,84 +108,6 @@ class PedidoCompraConsolidadaUmController extends Controller
 public function store(Request $request)
 {
 
-    $parametros = Input::only('q','page','per_page');
-          
-    $input_data = (object)Input::json()->all();
-    $servidor_id = property_exists($input_data, "servidor_id") ? $input_data->servidor_id : env('SERVIDOR_ID');
-
-    $errors     = array();
-    $nuevo      = 0;
-
-    $presupuesto_compra               = 0;
-    $presupuesto_causes               = 0;
-    $presupuesto_no_causes            = 0;
-    $presupuesto_causes_asignado      = 0;
-    $presupuesto_causes_disponible    = 0;
-    $presupuesto_no_causes_asignado   = 0;
-    $presupuesto_no_causes_disponible = 0;
-
-
-///*****************************************************************************************************************************************
-if($input_data->estatus=="INICIALIZADO")
-{
-}/// fin if INICIALIZADO
-    
-///*****************************************************************************************************************************************
-if( count($errors) > 0 )
-{
-    return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
-} 
-///*****************************************************************************************************************************************
-    
-$success = false;
-DB::beginTransaction();
-try{
-////****************************************************************************************************************************************
-        
-        $pedido = new Pedido;
-        $pedido->clues          = "";
-        $pedido->tipo_pedido_id = "PCC";
-        $pedido->folio          = "";
-        $pedido->fecha          = date('Y-m-d');
-        $pedido->status         = $input_data->estatus;
-        $pedido->save();
-
-        $insumos = $input_data->insumos;
-
-        foreach ($insumos as $key => $insumo)
-        {
-            $insumo = (object) $insumo;  
-
-            $insumo_db = new PedidoInsumo; 
-            $insumo_db->pedido_id             = $pedido->id;
-            $insumo_db->insumo_medico_clave   = $insumo->insumo_medico_clave;
-            $insumo_db->cantidad_enviada      = $insumo->cantidad_enviada;
-            $insumo_db->cantidad_solicitada   = $insumo->cantidad_solicitada;
-            $insumo_db->cantidad_recibida     = 0;
-            $insumo_db->precio_unitario       = $insumo->precio_unitario;
-            $insumo_db->monto_enviado         = ( $insumo->precio_unitario * $insumo->cantidad_enviada );
-            $insumo_db->monto_solicitado      = ( $insumo->precio_unitario * $insumo->cantidad_solicitada );
-            $insumo_db->monto_recibido        = 0;
-            $insumo_db->save();
-        }
-
-////*****************************************************************************************************************************************
-        $success = true;
-        } catch (\Exception $e) {   
-                                    $success = false;
-                                    DB::rollback();
-                                    return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
-                                } 
-        if ($success)
-        {
-            DB::commit();
-            return Response::json(array("status" => 201,"messages" => "Pedido para Compra Consolidadda creado correctamente","data" => $pedido), 201);
-        }else{
-                DB::rollback();
-                return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
-             }
-////*****************************************************************************************************************************************
-
  }  // fin store method
 
 ///*************************************************************************************************************************************
@@ -217,6 +140,14 @@ public function update(Request $request, $id)
 
     $errors     = array();
     $nuevo      = 0;
+
+    $presupuesto_compra               = 0;
+    $presupuesto_causes               = 0;
+    $presupuesto_no_causes            = 0;
+    $presupuesto_causes_asignado      = 0;
+    $presupuesto_causes_disponible    = 0;
+    $presupuesto_no_causes_asignado   = 0;
+    $presupuesto_no_causes_disponible = 0;
 ///*****************************************************************************************************************************************
 $pedido = Pedido::with('metadatoCompraConsolidada','unidadMedica')->find($id);
     if(!$pedido){
@@ -254,25 +185,63 @@ try{
 
         foreach ($insumos as $key => $insumo)
         {
-            $insumo = (object) $insumo;             
-            $insumo_db = PedidoInsumo::withTrashed()
-                                     ->where('pedido_id',$pedido->id)
-                                     ->where('insumo_medico_clave',$insumo->insumo_medico_clave)
-                                     ->first();
-                        
-            if($insumo_db)
-            {   $insumo_db->restore(); }else{ $insumo_db = new PedidoInsumo; }
+            $insumo = (object) $insumo;
 
-            $insumo_db->pedido_id             = $pedido->id;
-            $insumo_db->insumo_medico_clave   = $insumo->insumo_medico_clave;
-            $insumo_db->cantidad_enviada      = $insumo->cantidad_enviada;
-            $insumo_db->cantidad_solicitada   = $insumo->cantidad_solicitada;
-            $insumo_db->cantidad_recibida     = 0;
-            $insumo_db->precio_unitario       = $insumo->precio_unitario;
-            $insumo_db->monto_enviado         = ( $insumo->precio_unitario * $insumo->cantidad_enviada );
-            $insumo_db->monto_solicitado      = ( $insumo->precio_unitario * $insumo->cantidad_solicitada );
-            $insumo_db->monto_recibido        = 0;
-            $insumo_db->save();
+            $precio_base = DB::table('precios_base')
+                                ->select('precios_base.anio', 'precios_base_detalles.*')
+                                ->leftJoin('precios_base_detalles', function ($join){
+                                    $join->on('precios_base.id', '=', 'precios_base_detalles.precio_base_id');
+                                })->where('precios_base.activo', 1)
+                                  ->where('precios_base_detalles.insumo_medico_clave', $insumo->insumo_medico_clave)
+                                  ->first();
+            if($precio_base)
+            {
+
+                $insumo_db = PedidoInsumo::withTrashed()
+                                        ->where('pedido_id',$pedido->id)
+                                        ->where('insumo_medico_clave',$insumo->insumo_medico_clave)
+                                        ->first();
+                if($insumo_db)
+                {   $insumo_db->restore(); }else{ $insumo_db = new PedidoInsumo; }
+
+                $insumo_db->pedido_id             = $pedido->id;
+                $insumo_db->insumo_medico_clave   = $insumo->insumo_medico_clave;
+                $insumo_db->cantidad_enviada      = 0;
+                $insumo_db->cantidad_solicitada   = $insumo->cantidad_solicitada;
+                $insumo_db->cantidad_recibida     = 0;
+                $insumo_db->precio_unitario       = $insumo->precio_unitario;
+                $insumo_db->monto_enviado         = ( $insumo->precio_unitario * $insumo->cantidad_solicitada );
+                $insumo_db->monto_solicitado      = ( $insumo->precio_unitario * $insumo->cantidad_solicitada );
+                $insumo_db->monto_recibido        = 0;
+                $insumo_db->save();
+            }
+
+            if($precio_base->es_causes == 1)
+                {
+                    $presupuesto_causes_asignado += ( $insumo->precio_unitario * $insumo->cantidad_solicitada );
+                }else{
+                        $presupuesto_no_causes_asignado += ( $insumo->precio_unitario * $insumo->cantidad_solicitada );
+                     }
+        }
+
+        $pedido_padre_dam = Pedido::with('unidadesMedicas')->find($pedido->pedido_padre);
+        if ($pedido_padre_dam)
+        {
+            $pedido_padre_dam = (object) $pedido_padre_dam;
+            
+            foreach ($pedido_padre_dam->unidadesMedicas as $key => $um)
+            {
+                if($um->clues == $pedido->clues)
+                {
+                    $pedido_cc_clues = PedidoCcClues::find($um->id);
+                    $pedido_cc_clues->estatus                          = $pedido->status;
+                    $pedido_cc_clues->presupuesto_causes_asignado      = $presupuesto_causes_asignado;
+                    $pedido_cc_clues->presupuesto_no_causes_asignado   = $presupuesto_no_causes_asignado;
+                    $pedido_cc_clues->presupuesto_causes_disponible    = $pedido_cc_clues->presupuesto_causes - $presupuesto_causes_asignado;
+                    $pedido_cc_clues->presupuesto_no_causes_disponible = $pedido_cc_clues->presupuesto_no_causes - $presupuesto_no_causes_asignado;
+                    $pedido_cc_clues->save();
+                }
+            }
         }
 
 ////*****************************************************************************************************************************************
@@ -302,29 +271,45 @@ try{
  
 ///**************************************************************************************************************************
 
-private function validarPrograma($request)
+private function ValidarPedido($request)
     { 
+        $errors_validar_movimiento = array();
+
         $mensajes = [
-                        'required'      => "Debe ingresar este campo.",
-                        'integer'       => "Solo cantidades enteras.",
+                        'required'      => "required",
+                        'email'         => "email",
+                        'unique'        => "unique",
+                        'integer'       => "not_integer",
+                        'in'            => 'no_valido',
                     ];
+
+        $reglas = array();
+                
         $reglas = [
-                        'id'            => 'required'
+                    'tipo_movimiento_id'                 => 'required|integer|in:18',
+                    'movimiento_metadato.persona_recibe' => 'required|string',
+                    'movimiento_metadato.turno_id'       => 'required|integer',
                   ];
-                         
-        $v = \Validator::make($request, $reglas, $mensajes );
-        $mensages_validacion = array();
- 
+        
+
+    $v = \Validator::make($request, $reglas, $mensajes );
+
+    //*********************************************************************************************************
         if ($v->fails())
         {
-            foreach ($v->errors()->messages() as $indice => $item) 
+			$mensages_validacion = array();
+            foreach ($v->errors()->messages() as $indice => $item)  // todos los mensajes de todos los campos
             {
                 $msg_validacion = array();
-                array_push($mensages_validacion, $item);
-			}  
+                    foreach ($item as $msg)
+                    {
+                        array_push($msg_validacion, $msg);
+                    }
+                    array_push($mensages_validacion, array($indice.''.$key => $msg_validacion));
+			}
 			return $mensages_validacion;
         }else{
-                return ;
+                return true;
              }
 	}
 
@@ -333,10 +318,14 @@ private function validarPrograma($request)
     private function validarInsumo($request)
     { 
         $mensajes = [
-                        'required' => "Debe ingresar este campo."
+                        'required' => "Debe ingresar este campo.",
+                        'integer'  => "Solo cantidades enteras.",
+                        'numeric'  => "Solo numeros validos."
                     ];
         $reglas = [
-                        'clave_insumo_medico'  => 'required'
+                        'insumo_medico_clave'  => 'required|string',
+                        'cantidad_solicitada'  => 'required|integer',
+                        'precio_unitario'      => 'required|numeric'
                   ];
                          
         $v = \Validator::make($request, $reglas, $mensajes );
