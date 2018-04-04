@@ -47,7 +47,18 @@ class InstallController extends Controller
             "CSSSA008264" => "HOSPITAL GENERAL YAJALÓN",
             "CSSSA007540" => "HOSPITAL REGIONAL DR. RAFAEL PASCASIO GAMBOA TUXTLA",
             "CSSSA004950" => "PICHUCALCO",
-            "CSSSA007634" => "TUXTLA GUTIÉRREZ"
+            "CSSSA007634" => "TUXTLA GUTIÉRREZ",
+            //Harima: Se agregan Jurisdicciones
+            "CSSSA017336" => "ALMACÉN JURISDICCIONAL (TUXTLA GUTIÉRREZ)",
+            "CSSSA017341" => "ALMACÉN JURISDICCIONAL (SAN CRISTÓBAL DE LAS CASAS)",
+            "CSSSA017353" => "ALMACÉN JURISDICCIONAL (COMITÁN)",
+            "CSSSA017365" => "ALMACÉN JURISDICCIONAL (VILLAFLORES)",
+            "CSSSA017370" => "ALMACÉN JURISDICCIONAL (PICHUCALCO)",
+            "CSSSA017382" => "ALMACÉN JURISDICCIONAL (PALENQUE)",
+            "CSSSA017394" => "ALMACÉN JURISDICCIONAL (TAPACHULA)",
+            "CSSSA017406" => "ALMACÉN JURISDICCIONAL (TONALÁ)",
+            "CSSSA017411" => "ALMACÉN JURISDICCIONAL (OCOSINGO)",
+            "JURISMOTO10" => "ALMACÉN JURISDICCIONAL (MOTOZINTLA)"
         ];
 
         return view('install',['clues'=>$base_clues]);
@@ -89,7 +100,18 @@ class InstallController extends Controller
             "CSSSA008264" => [ 'id' => "0026",   'clues' => "CSSSA008264",  'secret' => "674539541",    'proveedor' => 3,  'almacen' => "000119",   'nombre' => "HOSPITAL GENERAL YAJALÓN"],
             "CSSSA007540" => [ 'id' => "0004",   'clues' => "CSSSA007540",  'secret' => "6593023161",   'proveedor' => 1,  'almacen' => "000118",   'nombre' => "HOSPITAL REGIONAL DR. RAFAEL PASCASIO GAMBOA TUXTLA"],
             "CSSSA004950" => [ 'id' => "0023",   'clues' => "CSSSA004950",  'secret' => "1958902083",   'proveedor' => 3,  'almacen' => "0001142",  'nombre' => "PICHUCALCO"],
-            "CSSSA007634" => [ 'id' => "0002",   'clues' => "CSSSA007634",  'secret' => "7050669754",   'proveedor' => 1,  'almacen' => "000187",   'nombre' => "TUXTLA GUTIÉRREZ"]
+            "CSSSA007634" => [ 'id' => "0002",   'clues' => "CSSSA007634",  'secret' => "7050669754",   'proveedor' => 1,  'almacen' => "000187",   'nombre' => "TUXTLA GUTIÉRREZ"],
+            //Harima: Se agregan Jurisdicciones
+            "CSSSA017336" => [ 'id' => "0036",   'clues' => "CSSSA017336",   'secret' => "3159842440",  'proveedor' => 1,   'almacen' => "000121",   'nombre' => "ALMACÉN JURISDICCIONAL (TUXTLA GUTIÉRREZ)"],
+            "CSSSA017341" => [ 'id' => "0037",   'clues' => "CSSSA017341",   'secret' => "7878818111",  'proveedor' => 3,   'almacen' => "000122",   'nombre' => "ALMACÉN JURISDICCIONAL (SAN CRISTÓBAL DE LAS CASAS)"],
+            "CSSSA017353" => [ 'id' => "0038",   'clues' => "CSSSA017353",   'secret' => "8914563545",  'proveedor' => 2,   'almacen' => "000123",   'nombre' => "ALMACÉN JURISDICCIONAL (COMITÁN)"],
+            "CSSSA017365" => [ 'id' => "0039",   'clues' => "CSSSA017365",   'secret' => "9936363698",  'proveedor' => 1,   'almacen' => "000124",   'nombre' => "ALMACÉN JURISDICCIONAL (VILLAFLORES)"],
+            "CSSSA017370" => [ 'id' => "0040",   'clues' => "CSSSA017370",   'secret' => "1938128168",  'proveedor' => 3,   'almacen' => "000125",   'nombre' => "ALMACÉN JURISDICCIONAL (PICHUCALCO)"],
+            "CSSSA017382" => [ 'id' => "0041",   'clues' => "CSSSA017382",   'secret' => "8881550050",  'proveedor' => 3,   'almacen' => "000126",   'nombre' => "ALMACÉN JURISDICCIONAL (PALENQUE)"],
+            "CSSSA017394" => [ 'id' => "0042",   'clues' => "CSSSA017394",   'secret' => "7593366056",  'proveedor' => 3,   'almacen' => "000127",   'nombre' => "ALMACÉN JURISDICCIONAL (TAPACHULA)"],
+            "CSSSA017406" => [ 'id' => "0043",   'clues' => "CSSSA017406",   'secret' => "1032218043",  'proveedor' => 3,   'almacen' => "000128",   'nombre' => "ALMACÉN JURISDICCIONAL (TONALÁ)"],
+            "CSSSA017411" => [ 'id' => "0044",   'clues' => "CSSSA017411",   'secret' => "7830804335",  'proveedor' => 3,   'almacen' => "000129",   'nombre' => "ALMACÉN JURISDICCIONAL (OCOSINGO)"],
+            "JURISMOTO10" => [ 'id' => "0045",   'clues' => "JURISMOTO10",   'secret' => "7187480665",  'proveedor' => 2,   'almacen' => "000147",   'nombre' => "ALMACÉN JURISDICCIONAL (MOTOZINTLA)"]
         ];
 
         $lista_personal_clues = [
@@ -163,6 +185,30 @@ class InstallController extends Controller
             ['id'=>'000191',   'incremento' => 91,  'clues' => 'CSSSA003265', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "ELI ALEJANDRO DOMINGUEZ GARCIA"],
             ['id'=>'000192',   'incremento' => 92,  'clues' => 'CSSSA018793', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "JULIO CESAR MORALES ROBLES"],
             ['id'=>'000193',   'incremento' => 93,  'clues' => 'CSSSA017521', 'created_at' => "2017-05-09 07:13:48", 'updated_at' => "2017-05-09 07:13:48", 'nombre' => "JORGE MAURICIO ROMÁN ARIZMENDIZ"],
+            //Harima: Se agregan Jurisdicciones
+            ['id'=>'0001111',  'incremento'=>111,	'clues' => 'CSSSA017411', 'created_at' => "2017-08-04 12:44:56", 'updated_at'=>"2017-08-04 12:44:56", 'nombre' => "Dr. José Irán Zenteno Pérez"],
+            ['id'=>'0001117',  'incremento'=>117,	'clues' => 'CSSSA017336', 'created_at' => "2018-01-31 10:11:34", 'updated_at'=>"2018-01-31 10:11:34", 'nombre' => "DR. JOSUE RODRIGO COSÍO CERÓN"],
+            ['id'=>'0001118',  'incremento'=>118,	'clues' => 'CSSSA017336', 'created_at' => "2018-01-31 10:12:04", 'updated_at'=>"2018-01-31 10:12:04", 'nombre' => "LIC. LUVIA ESTHER DIAZ RINCON"],
+            ['id'=>'000118',   'incremento'=>18,	'clues' => 'CSSSA017336', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "DR. FRANCISCO ANTONIO CASTELLANOS COUTIÑO"],
+            ['id'=>'000119',   'incremento'=>19,	'clues' => 'CSSSA017406', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "DR. ALFREDO COUTIÑO MENDEZ"],
+            ['id'=>'000120',   'incremento'=>20,	'clues' => 'CSSSA017341', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "DR. OCTAVIO ALBERTO COUTIÑO NIÑO"],
+            ['id'=>'000121',   'incremento'=>21,	'clues' => 'CSSSA017394', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "DR. JOSE ESAU GUZMAN MORALEZ"],
+            ['id'=>'000122',   'incremento'=>22,	'clues' => 'CSSSA017411', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "DR. GABRIEL AUGUSTO LEÓN JIMENEZ"],
+            ['id'=>'000123',   'incremento'=>23,    'clues' => 'JURISMOTO10', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "DR. CELIN CLEMENTE VARGAS"],
+            ['id'=>'000124',   'incremento'=>24,	'clues' => 'CSSSA017353', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "DR. HENRY JOEL HERNÁNDEZ BALLINAS"],
+            ['id'=>'000125',   'incremento'=>25,	'clues' => 'CSSSA017365', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "DR. OSCAR EDGARDO SARMIENTO MACIAS"],
+            ['id'=>'000126',   'incremento'=>26,	'clues' => 'CSSSA017370', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "DR. CARLOS GARCÍA LARA"],
+            ['id'=>'000158',   'incremento'=>58,	'clues' => 'CSSSA017382', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "Encargado"],
+            ['id'=>'000169',   'incremento'=>69,	'clues' => 'CSSSA017336', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "LIC. FABIAN DIAZ ALFARO"],
+            ['id'=>'00017',    'incremento'=>7,	    'clues' => 'CSSSA017382', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "Director"],
+            ['id'=>'000170',   'incremento'=>70,	'clues' => 'CSSSA017406', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "ENCARGADO: RAUL BALCAZAR HERNANDEZ"],
+            ['id'=>'000171',   'incremento'=>71,	'clues' => 'CSSSA017341', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "C.P. JESUS GUADALUPE HERNANDEZ OSEGUERA"],
+            ['id'=>'000172',   'incremento'=>72,	'clues' => 'CSSSA017394', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "LCI. ANGEL PRIMITIVO VILLATORO MECINAS"],
+            ['id'=>'000173',   'incremento'=>73,	'clues' => 'CSSSA017411', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "JUAN CARLOS FARRERA TREJO"],
+            ['id'=>'000174',   'incremento'=>74,    'clues' => 'JURISMOTO10', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "LIC. MARCO ANTONIO GALINDO PEREZ"],
+            ['id'=>'000175',   'incremento'=>75,	'clues' => 'CSSSA017353', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "C. HERNAN ALEJANDRO MORALES AGUILAR"],
+            ['id'=>'000176',   'incremento'=>76,	'clues' => 'CSSSA017365', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "LIC. MICHEL ARMANDO ASTUDILLO ARCE"],
+            ['id'=>'000177',   'incremento'=>77,	'clues' => 'CSSSA017370', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "ENF. LUIS HERNÁNDEZ RUIZ"]
         ];
 
         //Si se ejecuta en el servidor offline
@@ -281,6 +327,7 @@ class InstallController extends Controller
         DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [17,$config['id'].':almacen']);
         DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [18,$config['id'].':almacen']);
         DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [19,$config['id'].':almacen']);
+        DB::insert('insert into rol_usuario (rol_id, usuario_id) values (?,?)', [22,$config['id'].':almacen']);
         
         DB::insert('insert into almacen_usuario (usuario_id, almacen_id) values (?,?)', [$config['id'].':admin',$almacen->id]);
         DB::insert('insert into almacen_usuario (usuario_id, almacen_id) values (?,?)', [$config['id'].':almacen',$almacen->id]);

@@ -107,7 +107,7 @@ return [
 
     'tablas' => [
         'usuarios',
-        'personal_clues',
+        //'personal_clues',
         'personal_clues_metadatos',
         'personal_clues_puesto',
         //'almacenes',
@@ -225,9 +225,49 @@ return [
             'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosRemoto', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
         ],
-        'almacenes'=>[
+        'personal_clues'=>[
             'campos_subida'=>[
                 'id',
+                'incremento',
+                'servidor_id',
+                'clues',
+                'tipo_personal_id',
+                'usuario_asignado',
+                'nombre',
+                'surte_controlados',
+                'licencia_controlados',
+                'celular',
+                'email',
+                'usuario_id',
+                'created_at', 
+                'updated_at', 
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'clues',
+                'tipo_personal_id',
+                'usuario_asignado',
+                'nombre',
+                'surte_controlados',
+                'licencia_controlados',
+                'celular',
+                'email',
+                'usuario_id',
+                'created_at', 
+                'updated_at', 
+                'deleted_at'
+            ],
+            'condicion_subida' => 'clues = "'.env('CLUES').'"', // Pendientes
+            'condicion_bajada' => '', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local
+        ],
+        'almacenes'=>[
+            'campos_subida'=>[
+                /*'id',
                 'incremento',
                 'servidor_id',
                 'nivel_almacen',
@@ -237,12 +277,12 @@ return [
                 'lista_insumo_id',
                 'proveedor_id',
                 'unidosis',
-                'nombre',
+                'nombre',*/
                 'encargado_almacen_id',
                 'usuario_id',
-                'created_at',
+                /*'created_at',
                 'updated_at',
-                'deleted_at'
+                'deleted_at'*/
             ],
             'campos_bajada'=>[
                 'id',
