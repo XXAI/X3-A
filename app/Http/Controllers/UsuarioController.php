@@ -198,7 +198,7 @@ class UsuarioController extends Controller
             $object->respuesta = $inputs['respuesta'];
             $object->apellidos =  $inputs['apellidos'];
             $object->avatar =  $inputs['avatar'];
-            $object->id =  $inputs['id'];
+            //$object->id =  $inputs['id'];
             if ($inputs['cambiarPassword'] ){
                 $object->password = Hash::make($inputs['password']);
             }
