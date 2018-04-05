@@ -20,6 +20,7 @@ Route::group(['middleware' => 'servidor.instalado'], function () {
     Route::get('instalar', 'InstallController@instalar');
 });
 
+
 Route::get('instalado', 'InstallController@instalado');
 
 Route::post('obtener-token',                    'AutenticacionController@autenticar');
@@ -37,20 +38,19 @@ Route::post('reset-password/validar-respuesta',     'ResetPasswordController@val
  
 Route::get('grupo-permiso',                     'AutoCompleteController@grupo_permiso');
 Route::get('clues-auto',                        'AutoCompleteController@clues');
+Route::get('clues-auto-pcc',                    'AutoCompleteController@cluesPedidosCC');
 Route::get('insumos-auto',                      'AutoCompleteController@insumos');
 Route::get('insumos-entrada-auto',              'AutoCompleteController@insumos_entradas');
 Route::get('insumos-laboratorio-clinico-auto',  'AutoCompleteController@insumosLaboratorioClinico');
 Route::get('articulos-auto',                    'AutoCompleteController@articulos');
-Route::get('inventario-articulo-auto', "AutoCompleteController@articulos_inventarios");
+Route::get('inventario-articulo-auto',          "AutoCompleteController@articulos_inventarios");
 
 Route::resource('personal-clues',               'PersonalCluesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 Route::resource('personal-medico',              'PersonalMedicoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
-
 // reportes y graficas
 Route::get('grafica-entregas',                  'ReportePedidoController@graficaEntregas');
 Route::get('estatus-pedidos',                   'ReportePedidoController@estatusEntregaPedidos');
-
 
 // Akira: tuve que agregar esto aqui porque no me iba a poner a batallar para interceptar la peticion de conchita
 // con su auto complete, y no se puede refrescar el token con la libreria del cliente
@@ -223,6 +223,7 @@ Route::group(['middleware' => 'jwt'], function () {
 	    Route::resource('mis-turnos',                   'MisTurnosController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 	    Route::resource('mis-claves',                   'MisClavesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('firmantes',                    'FirmantesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('documentos-firmantes',         'DocumentoAlmacenFirmanteController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
         //Ruta para listado de medicamentos a travez de un autocomplete, soporta paginación y busqueda
         Route::resource('catalogo-insumos',             'CatalogoInsumoController',     ['only' => ['index', 'show']]);
@@ -242,6 +243,11 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('entregas-stats',                            'EntregaController@stats'); 
  
     Route::resource('clues-servicio',                       'CluesServicioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+
+    //  pedidos Compra consolidada.
+    Route::resource('pedidos-cc-dam',                       'PedidoCompraConsolidadaDamController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('pedidos-cc-um',                        'PedidoCompraConsolidadaUmController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::post('concentrar-pedido-cc-dam',                 'PedidoCompraConsolidadaDamController@concentrarPedidoDam');
 
     //catalogos  
     Route::resource('unidad-medida',                        'UnidadMedidaController',    ['only' => ['index', 'show', 'store','update','destroy']]);

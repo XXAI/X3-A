@@ -15,7 +15,7 @@ class Pedido extends BaseModel
     protected $fillable = [ 'tipo_insumo_id', 'tipo_pedido_id', 'clues','pedido_padre', 'folio', 'fecha', 'fecha_concluido', 'fecha_expiracion','descripcion','observaciones', 'almacen_solicitante', 'almacen_proveedor', 'organismo_dirigido', 'acta_id', 'recepcion_permitida','status', 'usuario_validacion', 'proveedor_id', 'presupuesto_id','clues_destino', "created_at","updated_at"];
     
     public function insumos(){
-        return $this->hasMany('App\Models\PedidoInsumo','pedido_id','id');
+        return $this->hasMany('App\Models\PedidoInsumo','pedido_id','id')->with('infoInsumo');
     }
 
     public function pedidoAlterno(){
@@ -94,4 +94,11 @@ class Pedido extends BaseModel
     public function metadatosSincronizaciones(){
         return $this->hasOne('App\Models\PedidoMetadatoSincronizacion','pedido_id','id');
     } 
+    public function metadatoCompraConsolidada(){
+        return $this->hasOne('App\Models\PedidoMetadatoCC','pedido_id','id');
+    } 
+    // para apertura de pedidos desde DAM de compra consolidada
+    public function unidadesMedicas(){
+        return $this->hasMany('App\Models\PedidoCcClues','pedido_id')->with('unidadMedica');
+    }
 }

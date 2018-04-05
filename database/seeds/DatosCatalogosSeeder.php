@@ -76,7 +76,9 @@ class DatosCatalogosSeeder extends Seeder
             'permiso_rol', #actualziar
             //'sustancias_laboratorio',  #vacio
             'unidad_medica_abasto_configuracion',
-            'unidad_medica_presupuesto'
+            'unidad_medica_presupuesto',
+            'precios_base',
+            'precios_base_detalles'
         ];
 
         foreach($lista_csv as $csv){

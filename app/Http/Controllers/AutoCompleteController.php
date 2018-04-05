@@ -44,13 +44,27 @@ class AutoCompleteController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function clues()
-    {
+    {  
         $parametros = Input::only('term');
         
 		$data =  UnidadMedica::with('jurisdiccion')->where(function($query) use ($parametros) {
 		 	$query->where('clues','LIKE',"%".$parametros['term']."%")
 		 	->orWhere('nombre','LIKE',"%".$parametros['term']."%");
 		});
+        
+        $data = $data->get();
+
+        return Response::json([ 'data' => $data],200);
+    }
+
+    public function cluesPedidosCC()
+    {  
+        $parametros = Input::only('term');
+        
+		$data =  UnidadMedica::with('jurisdiccion')->where(function($query) use ($parametros){
+		 	                            $query->where('clues','LIKE',"%".$parametros['term']."%")
+		 	                                  ->orWhere('nombre','LIKE',"%".$parametros['term']."%");
+		                    })->whereIn('tipo',['HO','AJ']);
         
         $data = $data->get();
 
@@ -125,12 +139,21 @@ class AutoCompleteController extends Controller
             return Response::json([ 'data' => $data],200);
 
         } else {
-            $data1 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo", "g.nombre",DB::raw("um.nombre AS unidad_medida"), "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"),"pm.nombre AS presentacion_nombre")        
+            $data1 =  DB::table("insumos_medicos AS im")
+            ->select(DB::raw("pbd.precio as precio_unitario_base"),DB::raw("pbd.precio as precio_unitario"),"im.clave", "im.tipo", "g.nombre",DB::raw("um.nombre AS unidad_medida"), "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"),"pm.nombre AS presentacion_nombre")        
             ->leftJoin('stock AS s', 's.clave_insumo_medico', '=', 'im.clave')
             ->leftJoin('genericos AS g', 'g.id', '=', 'im.generico_id')
             ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'im.clave')
             ->leftJoin('unidades_medida AS um', 'um.id', '=', 'm.unidad_medida_id')
             ->leftJoin('presentaciones_medicamentos AS pm', 'pm.id', '=', 'm.presentacion_id')
+
+            ->leftJoin('precios_base AS pb', 'pb.activo','=',DB::raw("1"))
+            ->leftJoin('precios_base_detalles AS pbd', function($join){
+                    $join->on('im.clave', '=', 'pbd.insumo_medico_clave');
+                    $join->on('pbd.precio_base_id', '=', 'pb.id');
+                })
+
+
             ->where('almacen_id', $parametros['almacen'])
             ->where('im.deleted_at',NULL)
             ->where(function($query1) use ($parametros) {
@@ -146,11 +169,18 @@ class AutoCompleteController extends Controller
     
             //$parametros = Input::only('term', 'clues', 'almacen');
             
-            $data2 =  DB::table("insumos_medicos AS im")->distinct()->select("im.clave", "im.tipo", "g.nombre",DB::raw("um.nombre AS unidad_medida"), "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"),"pm.nombre AS presentacion_nombre")
+            $data2 =  DB::table("insumos_medicos AS im")->select(DB::raw("pbd.precio as precio_unitario_base"),DB::raw("pbd.precio as precio_unitario"),"im.clave", "im.tipo", "g.nombre",DB::raw("um.nombre AS unidad_medida"), "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"),"pm.nombre AS presentacion_nombre")
             ->leftJoin('genericos AS g', 'g.id', '=', 'im.generico_id')
             ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'im.clave')
             ->leftJoin('unidades_medida AS um', 'um.id', '=', 'm.unidad_medida_id')
             ->leftJoin('presentaciones_medicamentos AS pm', 'pm.id', '=', 'm.presentacion_id')
+
+            ->leftJoin('precios_base AS pb', 'pb.activo','=',DB::raw("1"))
+            ->leftJoin('precios_base_detalles AS pbd', function($join){
+                    $join->on('im.clave', '=', 'pbd.insumo_medico_clave');
+                    $join->on('pbd.precio_base_id', '=', 'pb.id');
+                })
+
             ->where('im.deleted_at',NULL)
             ->where(function($query2) use ($parametros) {
                 $query2->where('im.tipo','ME')
@@ -164,9 +194,6 @@ class AutoCompleteController extends Controller
     
             
             $data = $data1->union($data2);
-    
-            
-    
             $data = $data->groupBy("clave")->get();
     
             return Response::json([ 'data' => $data],200);

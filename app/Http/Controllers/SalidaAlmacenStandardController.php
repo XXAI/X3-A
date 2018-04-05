@@ -34,6 +34,7 @@ use App\Models\CluesTurno;
 use App\Models\CluesServicio;
 use App\Models\Turno;
 use App\Models\Servicio;
+use App\Models\Programa;
 use App\Models\PersonalClues;
 
 
@@ -298,7 +299,7 @@ class SalidaAlmacenStandardController extends Controller
                 try{
                         $movimiento_salida = new Movimiento;
                         $success = $this->validarTransaccionSalida($datos, $movimiento_salida,$almacen_id);
-                } catch (\Exception $e) {
+                } catch (\Exception $e){
                     DB::rollback();
                     return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
                 } 
@@ -321,7 +322,6 @@ class SalidaAlmacenStandardController extends Controller
 
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
-
 /////                             S    H    O    W 
 ///*************************************************************************************************************************************
 ///*************************************************************************************************************************************
@@ -331,13 +331,17 @@ class SalidaAlmacenStandardController extends Controller
 
     public function show($id)
     {
+        $movimiento =  Movimiento::with('almacen','movimientoMetadato','programa')->find($id);
 
-        $movimiento =  Movimiento::with('almacen','movimientoMetadato')->find($id);
-
-        if(!$movimiento){
+        if(!$movimiento)
+        {
 			return Response::json(array("status" => 404,"messages" => "No se encuentra el movimiento solicitado"), 200);
 		} 
         $movimiento = (object) $movimiento;
+
+        $monto_total    = 0;
+        $monto_subtotal = 0;
+        $monto_iva      = 0;
 
 ////**************************************************************************************************************************************
 ////**************************************************************************************************************************************
@@ -358,12 +362,14 @@ class SalidaAlmacenStandardController extends Controller
             {
                     $objeto_insumo = new \stdClass();
                     $array_lotes = array();
+                    $subtotal_con_iva = 0;
 
                     $insumos2 = DB::table('movimiento_insumos')
-                                ->where('movimiento_id',$id)
-                                ->where('modo_salida',"N")
-                                 ->where('deleted_at',NULL)
-                                ->get();
+                                    ->where('movimiento_id',$id)
+                                    ->where('modo_salida',"N")
+                                    ->where('deleted_at',NULL)
+                                    ->get();
+
                     foreach($insumos2 as $insumo2)
                     {
                         $lote = DB::table('stock')->find($insumo2->stock_id);
@@ -378,12 +384,28 @@ class SalidaAlmacenStandardController extends Controller
                             $objeto_lote->codigo_barras       = $lote->codigo_barras;
                             $objeto_lote->fecha_caducidad     = $lote->fecha_caducidad;
 
+                            $programa_temp = Programa::find($lote->programa_id);
+                            if($programa_temp){
+                                $objeto_lote->programa_nombre = $programa_temp->nombre;
+                            }else{
+                                $objeto_lote->programa_nombre = NULL;
+                            }
+
                             $objeto_lote->modo_salida         = $insumo2->modo_salida;
                             $objeto_lote->cantidad            = $insumo2->cantidad;
 
-                            $objeto_lote->importe             = $insumo2->precio_total - ($insumo2->iva * $insumo2->cantidad) ;
+                            /// precio_total -> es la multiplicacion de cantidad * precion_unitario sin iva
+
+                            $objeto_lote->importe             = $insumo2->precio_total;
+                            $objeto_lote->importe_con_iva     = $insumo2->precio_total + $insumo2->iva ;
                             $objeto_lote->precio_unitario     = $insumo2->precio_unitario;
-                            $objeto_lote->iva                 = $insumo2->iva;
+                            $objeto_lote->iva                 = ( $insumo2->iva / $insumo2->cantidad ) ;
+
+                            $monto_iva      += $insumo2->iva;
+                            $monto_subtotal += ( $insumo2->precio_unitario * $insumo2->cantidad );
+                            $monto_total    += ( $insumo2->precio_total + $insumo2->iva );
+
+                            $subtotal_con_iva += ($insumo2->precio_total + $insumo2->iva);
 
                             array_push($array_lotes,$objeto_lote);
                         }
@@ -411,6 +433,8 @@ class SalidaAlmacenStandardController extends Controller
                     $objeto_insumo->detalles            = property_exists($objeto_insumo, "detalles") ? $objeto_insumo->detalles : $insumo_detalles;
                     $objeto_insumo->lotes               = $array_lotes;
 
+                    $objeto_insumo->subtotal_con_iva    = $subtotal_con_iva;
+
               array_push($array_insumos,$objeto_insumo);
             }
         ///*****************************************************************************************
@@ -426,6 +450,7 @@ class SalidaAlmacenStandardController extends Controller
             foreach($insumos as $insumo)
             {
                     $objeto_insumo = new \stdClass();
+                    $subtotal_con_iva = 0;
                     $array_lotes = array();
 
                     $insumos2 = DB::table('movimiento_insumos')
@@ -447,8 +472,31 @@ class SalidaAlmacenStandardController extends Controller
                             $objeto_lote->codigo_barras       = $lote->codigo_barras;
                             $objeto_lote->fecha_caducidad     = $lote->fecha_caducidad;
 
+                            $programa_temp = Programa::find($lote->programa_id);
+                            if($programa_temp){
+                                $objeto_lote->programa_nombre = $programa_temp->nombre;
+                            }else{
+                                $objeto_lote->programa_nombre = NULL;
+                            }
+
                             $objeto_lote->modo_salida         = $insumo2->modo_salida;
                             $objeto_lote->cantidad            = $insumo2->cantidad_unidosis;
+
+                            ////****************************************************************************************************
+                            /// precio_total es la multiplicacion de cantidad * precion_unitario sin iva
+
+                            $objeto_lote->importe             = $insumo2->precio_total;
+                            $objeto_lote->importe_con_iva     = $insumo2->precio_total + $insumo2->iva ;
+                            $objeto_lote->precio_unitario     = $insumo2->precio_unitario;
+                            $objeto_lote->iva                 = ( $insumo2->iva / $insumo2->cantidad_unidosis ) ;
+
+                            $monto_iva      += $insumo2->iva;
+                            $monto_subtotal += ( $insumo2->precio_unitario * $insumo2->cantidad_unidosis );
+                            $monto_total    += ( $insumo2->precio_total + $insumo2->iva );
+
+                            $subtotal_con_iva += ($insumo2->precio_total + $insumo2->iva);
+                            ////****************************************************************************************************
+                            
 
                             array_push($array_lotes,$objeto_lote);
                         }
@@ -474,6 +522,8 @@ class SalidaAlmacenStandardController extends Controller
 
                     $objeto_insumo->detalles            = property_exists($objeto_insumo, "detalles") ? $objeto_insumo->detalles : $insumo_detalles;
                     $objeto_insumo->lotes               = $array_lotes;
+
+                    $objeto_insumo->subtotal_con_iva    = $subtotal_con_iva;
 
               array_push($array_insumos,$objeto_insumo);
             }
@@ -522,6 +572,10 @@ class SalidaAlmacenStandardController extends Controller
                 $movimiento->insumos = $array_insumos;
                 $movimiento->estatus = $movimiento->status;
 
+                $movimiento->total       = $monto_total;
+                $movimiento->subtotal    = $monto_subtotal;
+                $movimiento->iva         = $monto_iva;
+
                 $movimiento->insumos_negados = $array_insumos_negados;
 
 
@@ -530,20 +584,14 @@ class SalidaAlmacenStandardController extends Controller
 ////**************************************************************************************************************************************
 ///****************************************************************************************************************************************
 
-        
-
 			return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $movimiento), 200);
-		 
         
     }
 
-   
 
 ///***************************************************************************************************************************
 ///***************************************************************************************************************************
  
-
-
     public function update(Request $request, $id)
     {
  
@@ -569,15 +617,9 @@ class SalidaAlmacenStandardController extends Controller
                     ];
 
         $reglas = array();
-        $reglas = [
-                    'tipo_movimiento_id' => 'required|integer|in:18',
-                  ];
-
-
                 
         $reglas = [
-                    'tipo_movimiento_id'                 => 'required|integer|in:1,2,3,4,5,6,7,8',
-                    'movimiento_metadato.servicio_id'    => 'required|integer',
+                    'tipo_movimiento_id'                 => 'required|integer|in:18',
                     'movimiento_metadato.persona_recibe' => 'required|string',
                     'movimiento_metadato.turno_id'       => 'required|integer',
                   ];
@@ -838,6 +880,7 @@ class SalidaAlmacenStandardController extends Controller
         //agregar al modelo los datos
         $movimiento_salida->almacen_id                   =  $almacen_id;
         $movimiento_salida->tipo_movimiento_id           =  18;
+        $movimiento_salida->programa_id                  =  $datos->programa_id; 
         $movimiento_salida->status                       =  $datos->estatus; 
         $movimiento_salida->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")          ? $datos->fecha_movimiento          : '';
         $movimiento_salida->observaciones                =  property_exists($datos, "observaciones")             ? $datos->observaciones             : '';
@@ -855,7 +898,7 @@ class SalidaAlmacenStandardController extends Controller
             {
                 $metadatos = new MovimientoMetadato;
                 $metadatos->movimiento_id  = $movimiento_salida->id;
-                $metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
+                $metadatos->servicio_id    = NULL;
                 $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
                 $metadatos->turno_id       = $datos->movimiento_metadato['turno_id'];
 
@@ -909,6 +952,8 @@ class SalidaAlmacenStandardController extends Controller
                                                 //$lote_temp->existencia_unidosis = 0;
                                                 //aqui se calcula la exstencia unidosis parcial
 
+                                                /// CHECAR AQUI EÑ CASO DEL LOTE EXCLUSIVO Y EL CASO DE EXCLUSIVO AL SUMAR LOTE EXISTENTE
+
                                                 $lote_temp->save();
                                                 // adicion del campo cantidad al objeto lote/stock
                                                 $lote_temp->cantidad    = property_exists($lote_temp, "cantidad") ? $lote_temp->cantidad : $lote->cantidad;
@@ -922,6 +967,7 @@ class SalidaAlmacenStandardController extends Controller
                                                     $lote_insertar->almacen_id             = $movimiento_salida->almacen_id;
                                                     $lote_insertar->clave_insumo_medico    = $clave_insumo_medico;
                                                     $lote_insertar->marca_id               = NULL;
+                                                    $lote_insertar->exclusivo              = $lote->exclusivo;
                                                     $lote_insertar->lote                   = $lote->lote;
                                                     $lote_insertar->fecha_caducidad        = $lote->fecha_caducidad;
                                                     $lote_insertar->codigo_barras          = $lote->codigo_barras;
@@ -1277,247 +1323,7 @@ class SalidaAlmacenStandardController extends Controller
 
 
 
-
-///**************************************************************************************************************************
-///                  M O V I M I E N T O          S   A  L  I   D  A       R  E  C  E  T  A 
-///**************************************************************************************************************************
-    
-    
-      private function validarTransaccionSalidaReceta($datos, $movimiento_salida_receta,$almacen_id)
-      {
-		$success = false;
-
-        //comprobar que el servidor id no me lo envian por parametro, si no poner el servidor por default de la configuracion local, si no seleccionar el servidor del parametro
-        $servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
-
-        //agregar al modelo los datos
-        $movimiento_salida_receta->almacen_id                   =  $almacen_id;
-        $movimiento_salida_receta->tipo_movimiento_id           =  $datos->tipo_movimiento_id;
-        $movimiento_salida_receta->status                       =  $datos->status; 
-        $movimiento_salida_receta->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")          ? $datos->fecha_movimiento          : '';
-        $movimiento_salida_receta->observaciones                =  property_exists($datos, "observaciones")             ? $datos->observaciones             : '';
-        $movimiento_salida_receta->cancelado                    =  property_exists($datos, "cancelado")                 ? $datos->cancelado                 : '';
-        $movimiento_salida_receta->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion") ? $datos->observaciones_cancelacion : '';
-
-        $lotes_master = array();
-
-        // si se guarda el movimiento tratar de guardar el detalle de insumos
-        if( $movimiento_salida_receta->save() )
-        {
-            $success = true;
-            $receta = new Receta;
-
-            if(property_exists($datos,"receta"))
-            {
-
-                
-                $receta->personal_clues_id  = $datos->receta['personal_clues_id'];
-                       
-
-                $receta->movimiento_id      = $movimiento_salida_receta->id;
-                $receta->folio              = $datos->receta['folio'];
-                $receta->tipo_receta_id     = $datos->receta['tipo_receta_id'];
-                $receta->fecha_receta       = $datos->receta['fecha_receta'];
-                
-                
-                $receta->paciente           = $datos->receta['paciente'];
-
-                if((bool)$datos->receta['tiene_seguro_popular'] == true)
-                {
-                    $receta->poliza_seguro_popular = $datos->receta['poliza_seguro_popular'];
-                }
-                
-                $receta->diagnostico        = $datos->receta['diagnostico'];
-
-                $receta->save();
-
-                //$receta_movimiento = new RecetaMovimiento;
-                //$receta_movimiento->receta_id      = $receta->id;
-                //$receta_movimiento->movimiento_id  = $movimiento_salida_receta->id;
-
-                //$receta_movimiento->save();
-
-            }
-
-            if(property_exists($datos,"movimiento_metadato"))
-            {
-                $metadatos = new MovimientoMetadato;
-                $metadatos->movimiento_id  = $movimiento_salida_receta->id;
-                //$metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
-                //$metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
-                $metadatos->turno_id       = $datos->movimiento_metadato['turno_id'];
-
-                $metadatos->save();
-                
-            }
-
-            if(property_exists($datos, "insumos"))
-            {
-                $insumos = array_filter($datos->insumos, function($v){return $v !== NULL;});
-
-                $lotes_nuevos  = array();
-                $lotes_ajustar = array();
-          ///  PRIMER PASADA PARA IDENTIFICAR LOS LOTES NUEVOS A AJUSTAR / GENERAR ENTRADA 
-                 foreach ($insumos as $key => $insumo)
-                {
-                     if($insumo != NULL)
-                     {
-                         if(is_array($insumo))
-                            $insumo = (object) $insumo;
-
-                            $clave_insumo_medico = $insumo->clave;
-                            $precio_unitario = 0;
-                            $iva             = 0;
-
-                            $contrato_precio = ContratoPrecio::where('insumo_medico_clave',$clave_insumo_medico)->first();
-                            if($contrato_precio){
-                                $precio_unitario = $contrato_precio->precio;
-                                if($contrato_precio->tipo_insumo_id == 3){
-                                    $iva = $precio_unitario - ($precio_unitario/1.16 );
-                                }
-                            }
-
-                            //****************************************************************************************************
-                                /// AQUI INSERTAR DETALLES DE RECETA 
-                                $receta_detalle = new RecetaDetalle;
-
-                                $receta_detalle->receta_id            = $receta->id;
-                                $receta_detalle->clave_insumo_medico  = $insumo->clave;
-                                $receta_detalle->cantidad             = $insumo->cantidad_recetada;
-                                $receta_detalle->dosis                = $insumo->dosis;
-                                $receta_detalle->frecuencia           = $insumo->frecuencia;
-                                $receta_detalle->duracion             = $insumo->duracion;
-
-                                $receta_detalle->save();
-                            //****************************************************************************************************
-
-                            if($insumo->cantidad_recetada > $insumo->cantidad_surtida)
-                            {
-                                $cantidad_negada = $$insumo->cantidad_recetada - $insumo->cantidad_surtida;
-                                $this->guardarEstadisticaNegacion($clave_insumo_medico,$almacen_id,$cantidad_negada);
-                            }
-
-                            //****************************************************************************************************
-                                foreach($insumo->lotes as $index => $lote)
-                                {
-                                     if(is_array($lote))
-                                        $lote = (object) $lote;
-
-                                    if(property_exists($lote, "nuevo"))
-                                    {
-                                         $lote_temp = Stock::where('lote',$lote->lote)
-                                                            ->where('fecha_caducidad',$lote->fecha_caducidad)
-                                                            ->where('codigo_barras',$lote->codigo_barras)
-                                                            ->where('clave_insumo_medico',$insumo->clave)
-                                                            ->orderBy('created_at','DESC')->first();
-
-                                        if($lote_temp){ /// si ya existe un lote vacio con esos detalles : se agrega un
-                                                        $lote_temp->existencia = $lote->existencia;
-                                                        $lote_temp->save();
-                                                        // adicion del campo cantidad al objeto lote/stock
-                                                        $lote_temp->cantidad = property_exists($lote_temp, "cantidad") ? $lote_temp->cantidad : $lote->cantidad;
-
-                                                        array_push($lotes_nuevos,$lote_temp);
-                                                        array_push($lotes_master,$lote_temp);
-                                                       }else{
-                                                                    $lote_insertar = new Stock;
-
-                                                                    $lote_insertar->almacen_id             = $movimiento_salida_receta->almacen_id;
-                                                                    $lote_insertar->clave_insumo_medico    = $insumo->clave;
-                                                                    $lote_insertar->marca_id               = NULL;
-                                                                    $lote_insertar->lote                   = $lote->lote;
-                                                                    $lote_insertar->fecha_caducidad        = $lote->fecha_caducidad;
-                                                                    $lote_insertar->codigo_barras          = $lote->codigo_barras;
-                                                                    $lote_insertar->existencia             = $lote->existencia;
-                                                                    $lote_insertar->existencia_unidosis    = ( $insumo->cantidad_x_envase * $lote->cantidad );
-
-                                                                    $lote_insertar->save();
-                                                                    // adicion del campo cantidad al objeto lote/stock
-                                                                    $lote_insertar->cantidad = property_exists($lote_insertar, "cantidad") ? $lote_insertar->cantidad : $lote->cantidad;
-
-                                                                    array_push($lotes_nuevos,$lote_insertar);
-                                                                    array_push($lotes_master,$lote_insertar);
-                                                            }
-
-                                    }else{
-                                            // aqui ya trae el campo cantidad el objeto lote/stock
-                                            array_push($lotes_master,$lote);
-                                         }
-                            /// ***************************************************************************************************************************************************
-                                } /// FIN PRIMER FOREACH QUE RECORRE TODOS LOS INSUMOS PARA SALIR
-                    
-                    }///FIN IF INSUMO != NULL
-
-                }////   FIN FOREACH     I N S U M O S     -> PRIMERA PASADA
-            ///********************************************************************************************************************************************
-                                /// insertar el movimiento entrada de ajuste y ligar los detalles con su stock ya agregado en pasada anterior
-                                if(count($lotes_nuevos) > 0)
-                                {
-                                    /// insertar movimiento de entrada por ajuste ( tipo_movimiento_id = 6 )
-                                    $movimiento_ajuste = new Movimiento;
-                                    $movimiento_ajuste->almacen_id                   =  $almacen_id;
-                                    $movimiento_ajuste->tipo_movimiento_id           =  6;
-                                    $movimiento_ajuste->status                       =  "FI";  
-                                    $movimiento_ajuste->fecha_movimiento             =  date("Y-m-d");
-                                    $movimiento_ajuste->observaciones                =  "SE REALIZA ENTRADA POR AJUSTE";
-                                    $movimiento_ajuste->cancelado                    =  property_exists($datos, "cancelado")                 ? $datos->cancelado                 : '';
-                                    $movimiento_ajuste->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion") ? $datos->observaciones_cancelacion : '';
-                                
-                                    $movimiento_ajuste->save();
-
-                                    foreach($lotes_nuevos as $lote_link)
-                                    {
-                                        $item_detalles = new MovimientoInsumos;
-
-                                        ///var_dump(json_encode($lote_link));
-
-                                        $item_detalles->movimiento_id           = $movimiento_ajuste->id; 
-                                        $item_detalles->stock_id                = $lote_link->id; 
-                                        $item_detalles->cantidad                = $lote_link->cantidad;
-                                        $item_detalles->precio_unitario         = $precio_unitario;
-                                        $item_detalles->iva                     = $iva; 
-                                        $item_detalles->precio_total            = ( $precio_unitario + $iva ) * $lote_link->cantidad; 
-
-                                        $item_detalles->save();
-                                    }
-                                } /// FIN IF EXISTEN LOTES NUEVOS 
-
-////*************************************************************************************************************************
-                    /// FOREACH SEGUNDA PASADA A INSUMOS PARA ACTUALIZAR STOCK DE SALIDA
-                        foreach($lotes_master as $index => $lote)
-                        {
-                            //var_dump($lote); die();
-                            $precio_insumo              = $this->conseguirPrecio($lote->clave_insumo_medico);                                                                   
-                            $insumo_info                = Insumo::datosUnidosis()->where('clave',$lote->clave_insumo_medico)->first();
-                            $cantidad_x_envase_insumo   = $insumo_info->cantidad_x_envase; 
-
-                            $lote_stock                      = Stock::find($lote->id);
-                            $lote_stock->existencia          = ($lote_stock->existencia - $lote->cantidad );
-                            $lote_stock->existencia_unidosis = ( $lote_stock->existencia_unidosis - ($lote->cantidad * $cantidad_x_envase_insumo) );
-                            $lote_stock->save();
-
-                            $item_detalles = new MovimientoInsumos;
-
-                            $item_detalles->movimiento_id           = $movimiento_salida_receta->id; 
-                            $item_detalles->stock_id                = $lote_stock->id; 
-                            $item_detalles->cantidad                = $lote->cantidad;
-                            $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                            $item_detalles->iva                     = $precio_insumo['iva']; 
-                            $item_detalles->precio_total            = ($precio_insumo['precio_unitario']+$precio_insumo['iva']) * $lote->cantidad;
-
-                            $item_detalles->save();
-
-                            
-                        
-                         }/// FIN FOREACH SEGUNDA PASADA A INSUMOS
-
-
-
-            } /// FIN IF EXISTE INSUMOS           
-        }
-        
-        return $success;
-    }
+ 
 
 ///**************************************************************************************************************************
 ///                  F U N C I O N      C O N S E G U I R      P R E C I O    I N S U M O  

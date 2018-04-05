@@ -315,6 +315,7 @@ class EntradaAlmacenStandardController extends Controller
                                             $stock_borrador->clave_insumo_medico    = $insumo->clave;
                                             $stock_borrador->programa_id            = $programa_id;
                                             $stock_borrador->marca_id               = NULL;
+                                            $stock_borrador->exclusivo              = $insumo->exclusivo;
                                             $stock_borrador->lote                   = $insumo->lote;
                                             $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
                                             $stock_borrador->codigo_barras          = $insumo->codigo_barras;
@@ -381,7 +382,7 @@ class EntradaAlmacenStandardController extends Controller
                         $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
                         foreach ($detalle as $key => $value)
                             {
-                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo);
+                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value);
                                 if($validacion_insumos != "")
                                     {
                                         array_push($errors, $validacion_insumos);
@@ -512,13 +513,43 @@ class EntradaAlmacenStandardController extends Controller
                             $objeto_lote->marca_id            = $lote->marca_id;
                             $objeto_lote->lote                = $lote->lote;
                             $objeto_lote->codigo_barras       = $lote->codigo_barras;
-                            $objeto_lote->fecha_caducidad     = $lote->fecha_caducidad;
+
+                            if ($lote->fecha_caducidad == NULL || $lote->fecha_caducidad == '0000-00-00')
+                            {
+                                $objeto_lote->fecha_caducidad     = '';
+                            }else{
+                                    $objeto_lote->fecha_caducidad     = $lote->fecha_caducidad;
+                                 }
+                            //$objeto_lote->fecha_caducidad     = $lote->fecha_caducidad;
+
+                            $objeto_lote->exclusivo           = $lote->exclusivo;
+                            $objeto_lote->programa_id         = $lote->programa_id;
+
 
                             $objeto_lote->movimiento_insumo_id= $insumo2->id;
                             $objeto_lote->stock_id            = $insumo2->stock_id;
 
                             $objeto_lote->modo_salida         = $insumo2->modo_salida;
                             $objeto_lote->cantidad            = $insumo2->cantidad;
+
+                ///****************************************************************************************************************************
+                    $data_precios =  DB::table("precios_base_detalles AS pbd")->select(DB::raw("pbd.precio as precio_unitario"),"pb.anio")
+                                    ->leftJoin('precios_base AS pb', function($join){
+                                                $join->on('pb.activo','=',DB::raw("1"));
+                                                $join->on('pbd.precio_base_id', '=', 'pb.id');
+                                              })
+                                    ->where('pbd.insumo_medico_clave',$lote->clave_insumo_medico)
+                                    ->where('pbd.deleted_at',NULL)->first();
+
+                    if($data_precios)
+                    {
+                        $objeto_lote->anio                  = $data_precios->anio;
+                        $objeto_lote->precio_unitario_base  = $data_precios->precio_unitario;
+                    }else{
+                            $objeto_lote->anio                  = NULL;
+                            $objeto_lote->precio_unitario_base  = NULL;
+                         }
+                 ///****************************************************************************************************************************
 
                                     $objeto_lote->importe             = $insumo2->precio_total - ($insumo2->iva * $insumo2->cantidad) ;
                                     $objeto_lote->precio_unitario     = $insumo2->precio_unitario;
@@ -609,8 +640,7 @@ class EntradaAlmacenStandardController extends Controller
                 DB::beginTransaction();
                 try{
 
-                $movimiento_entrada_br = Movimiento::find($id);
-                                
+                $movimiento_entrada_br = Movimiento::find($id);             
                 $servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
 
                 //agregar al modelo los datos
@@ -668,6 +698,7 @@ class EntradaAlmacenStandardController extends Controller
                                                 $stock_borrador->clave_insumo_medico    = $insumo->clave;
                                                 $stock_borrador->programa_id            = $programa_id;
                                                 $stock_borrador->marca_id               = NULL;
+                                                $stock_borrador->exclusivo              = $insumo->exclusivo;
                                                 $stock_borrador->lote                   = $insumo->lote;
                                                 $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
                                                 $stock_borrador->codigo_barras          = $insumo->codigo_barras;
@@ -705,6 +736,7 @@ class EntradaAlmacenStandardController extends Controller
                                                         $stock_borrador->clave_insumo_medico    = $insumo->clave;
                                                         $stock_borrador->programa_id            = $programa_id;
                                                         $stock_borrador->marca_id               = NULL;
+                                                        $stock_borrador->exclusivo              = $insumo->exclusivo;
                                                         $stock_borrador->lote                   = $insumo->lote;
                                                         $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
                                                         $stock_borrador->codigo_barras          = $insumo->codigo_barras;
@@ -835,6 +867,7 @@ class EntradaAlmacenStandardController extends Controller
                 } 
 
                 DB::beginTransaction();
+                
                 try{
                         $movimiento_entrada = new Movimiento;
                         $movimiento_entrada = Movimiento::find($id);
@@ -843,6 +876,7 @@ class EntradaAlmacenStandardController extends Controller
                     } catch (\Exception $e) {
                                                 DB::rollback();
                                                 return Response::json(["status" => 500, 'error' => "ERROR AL EJECUTAR TRANSACCIÓN. ".$e->getMessage()], 500);
+                                           
                                             } 
                 if($success)
                 {
@@ -908,7 +942,6 @@ class EntradaAlmacenStandardController extends Controller
 
         $reglas = [
                     'tipo_movimiento_id'                  => 'required|integer',
-                    'movimiento_metadato.persona_entrega' => 'required|string',
                     'movimiento_metadato.proveedor_id'    => 'required|string',
                     'movimiento_metadato.folio_factura'   => 'required|string',
                     'movimiento_metadato.numero_pedido'   => 'required|string',
@@ -953,7 +986,7 @@ class EntradaAlmacenStandardController extends Controller
 
 ///**************************************************************************************************************************
 ///**************************************************************************************************************************  
-    private function ValidarInsumos($key, $id, $request,$tipo)
+    private function ValidarInsumos($key, $id, $request)
     { 
         $mensajes = [
                         'required'      => "Debe ingresar este campo.",
@@ -1051,7 +1084,7 @@ class EntradaAlmacenStandardController extends Controller
                         $insumo_info         = Insumo::datosUnidosis()->where('clave',$value->clave)->first();
                         $iva = 0;
                         if($insumo_info->tipo == "MC")
-                        {   $iva = $insumo->precio_unitario * 0.16; }
+                        {   $iva = $value->precio_unitario * 0.16; }
 
                         //*************************************************************************************
                         //Verificar si esta en la lista de negados
@@ -1070,6 +1103,7 @@ class EntradaAlmacenStandardController extends Controller
                         $item_stock->clave_insumo_medico    = $value->clave;
                         $item_stock->programa_id            = $datos->programa_id;
                         $item_stock->marca_id               = NULL;
+                        $item_stock->exclusivo              = $value->exclusivo;
                         $item_stock->lote                   = $value->lote;
                         $item_stock->fecha_caducidad        = $value->fecha_caducidad;
                         $item_stock->codigo_barras          = $value->codigo_barras;
@@ -1115,7 +1149,7 @@ class EntradaAlmacenStandardController extends Controller
                                         $item_detalles->movimiento_id           = $movimiento_entrada->id; 
                                         $item_detalles->stock_id                = $item_stock->id;
                                         $item_detalles->clave_insumo_medico     = $value->clave;
-                                        $item_detalles->programa_id             = $datos->programa_id;
+                                        ////$item_detalles->programa_id             = $datos->programa_id;
 
                                         $item_detalles->modo_salida             = "N";
                                         $item_detalles->cantidad                = $item_stock->existencia;
@@ -1229,6 +1263,7 @@ class EntradaAlmacenStandardController extends Controller
                             $item_stock_ok->clave_insumo_medico    = $value->clave;
                             $item_stock_ok->programa_id            = $datos->programa_id;
                             $item_stock_ok->marca_id               = NULL;
+                            $item_stock_ok->exclusivo              = $value->exclusivo;
                             $item_stock_ok->lote                   = $value->lote;
                             $item_stock_ok->fecha_caducidad        = $value->fecha_caducidad;
                             $item_stock_ok->codigo_barras          = $value->codigo_barras;
@@ -1269,7 +1304,7 @@ class EntradaAlmacenStandardController extends Controller
                                         $item_detalles->movimiento_id           = $movimiento_entrada->id; 
                                         $item_detalles->stock_id                = $item_stock_check->id;
                                         $item_detalles->clave_insumo_medico     = $value->clave;
-                                       // $item_detalles->programa_id             = $datos->programa_id;
+                                       /////  $item_detalles->programa_id             = $datos->programa_id;
                                         $item_detalles->modo_salida             = "N";
                                         $item_detalles->cantidad                = $value->cantidad;
                                         $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
@@ -1285,6 +1320,7 @@ class EntradaAlmacenStandardController extends Controller
                                             $item_stock->clave_insumo_medico    = $value->clave;
                                             $item_stock->programa_id            = $datos->programa_id;
                                             $item_stock->marca_id               = NULL;
+                                            $item_stock->exclusivo              = $value->exclusivo;
                                             $item_stock->lote                   = $value->lote;
                                             $item_stock->fecha_caducidad        = $value->fecha_caducidad;
                                             $item_stock->codigo_barras          = $value->codigo_barras;
@@ -1337,6 +1373,29 @@ class EntradaAlmacenStandardController extends Controller
                                     $iva = $precio_unitario - ($precio_unitario/1.16 );
                                 }
                             }
+
+    ///****************************************************************************************************************************
+    /*
+    $data_precios =  DB::table("precios_base_detalles AS pbd")->select(DB::raw("pbd.precio as precio_unitario"),"pb.anio")
+                        ->leftJoin('precios_base AS pb', function($join){
+                                    $join->on('pb.activo','=',DB::raw("1"));
+                                    $join->on('pbd.precio_base_id', '=', 'pb.id');
+                                  })
+                        ->where('pbd.insumo_medico_clave',$clave_insumo_medico)
+                        ->where('pbd.deleted_at',NULL)->first();
+
+    if($data_precios)
+        {
+            $objeto_lote->anio                  = $data_precios->anio;
+            $objeto_lote->precio_unitario_base  = $data_precios->precio_unitario;
+        }else{
+                $objeto_lote->anio                  = NULL;
+                $objeto_lote->precio_unitario_base  = NULL;
+             }
+
+             */
+    ///****************************************************************************************************************************
+
 
     $response['tipo_insumo_id'] = $tipo_insumo_id;
     $response['precio_unitario'] = $precio_unitario;
