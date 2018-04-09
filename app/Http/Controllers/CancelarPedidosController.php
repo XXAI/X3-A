@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
-use App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto,  App\Models\TransferenciaPresupuesto, App\Models\Pedido, App\Models\LogPedidoCancelado, App\Models\LogTransferenciaCancelada, App\Models\Servidor, App\Models\AjustePresupuestoPedidoCancelado;
+use App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto,  App\Models\TransferenciaPresupuesto, App\Models\Pedido, App\Models\Almacen, App\Models\LogPedidoCancelado, App\Models\LogTransferenciaCancelada, App\Models\Servidor, App\Models\AjustePresupuestoPedidoCancelado;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -71,7 +71,13 @@ class CancelarPedidosController extends Controller
             $pedido_anio = $fecha_pedido[0];
 
             $pedido_almacen = $pedido->almacen_solicitante;
-            $pedido_clues = $pedido->clues;
+            // Akira: ESO ES PARA PEDIDOS DE ALMACENES EXTERNOS. En el presupuesto se debe de poner la clues del almacen porque
+            // es la que tiene el presupuesto, no la clues del pedido porque este fue capturado con otra clues, porque 
+            // los almacenes externos no pueden capturar sus propios pedidos.
+
+            $almacen = Almacen::find($pedido_almacen);
+            //$pedido_clues = $pedido->clues;
+            $pedido_clues = $almacen->externo == 1 ? $almacen->clues : $pedido->clues;
 
             $pedido->status = 'EX-CA';
             $pedido->recepcion_permitida = 0;

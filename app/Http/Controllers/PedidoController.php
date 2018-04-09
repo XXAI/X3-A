@@ -84,7 +84,7 @@ class PedidoController extends Controller{
     public function stats(Request $request){
         try{
             $almacen = Almacen::find($request->get('almacen_id'));
-            
+            $clues = $almacen->externo == 1 ? $almacen->clues_perteneciente : $almacen->clues;
             // Akira: en los datos de alternos hay que ver si se pone la cantidad de alternos o en base a su estatus
             $pedidos = Pedido::select(DB::raw(
                 '
@@ -119,12 +119,12 @@ class PedidoController extends Controller{
                     case when tipo_pedido_id = "PALT" then 1 else null end
                 ) as alternos,
                 (
-                    select count(id) from actas where clues = "'.$almacen->clues.'"
+                    select count(id) from actas where clues = "'.$clues.'"
                 ) as actas
     
                 '
             //))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
-            ))->where('clues',$almacen->clues); //->first();
+            ))->where('clues',$clues); //->first();
                 
             //Harima: Filtro para diferentes tipos de almacenes, solo los almacenes principales pueden ver pedidos a farmcias subrogadas
             if($almacen->tipo_almacen == 'ALMPAL'){
@@ -173,7 +173,7 @@ class PedidoController extends Controller{
         }
 
         //$pedidos = $pedidos->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues);
-        $pedidos = $pedidos->where('clues',$almacen->clues);
+        $pedidos = $pedidos->where('clues',$almacen->externo == 1 ? $almacen->clues_perteneciente : $almacen->clues);
         
         if(isset($parametros['status'])) {
             $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
@@ -277,7 +277,9 @@ class PedidoController extends Controller{
         $parametros = Input::all();
 
         $almacen = Almacen::find($request->get('almacen_id'));
-        $um = UnidadMedica::find( $almacen->clues);
+        $clues_real = $almacen->externo == 1 ? $almacen->clues_perteneciente : $almacen->clues;
+        
+        $um = UnidadMedica::find($clues_real);
         $presupuesto = Presupuesto::where('activo',1)->first();
 
         if($almacen->subrogado && $almacen->tipo_almacen == 'FARSBR'){
@@ -313,7 +315,7 @@ class PedidoController extends Controller{
         }
         
         //$parametros['datos']['almacen_solicitante'] = $almacen->id;
-        $parametros['datos']['clues'] = $almacen->clues;
+        $parametros['datos']['clues'] = $almacen->externo == 1 ? $almacen->clues_perteneciente : $almacen->clues;
         $parametros['datos']['status'] = 'BR'; //estatus de borrador
         $parametros['datos']['tipo_pedido_id'] = $tipo_pedido; //tipo de pedido Pedido de Abastecimiento
         $parametros['datos']['presupuesto_id'] = $presupuesto->id; //Harima: Al crear el pedido, lo creamos sobre el presupuesto activo
@@ -430,7 +432,9 @@ class PedidoController extends Controller{
         $parametros = Input::all();
 
         $almacen = Almacen::find($request->get('almacen_id'));
-        $um = UnidadMedica::find( $almacen->clues);
+
+        $clues_real = $almacen->externo == 1 ? $almacen->clues_perteneciente : $almacen->clues;
+        $um = UnidadMedica::find( $clues_real);
 
         if($almacen->nivel_almacen == 1 && ($almacen->tipo_almacen == 'ALMPAL' || $almacen->tipo_almacen == 'FARSBR')){
             //$reglas['proveedor_id'] = 'required';
@@ -610,9 +614,9 @@ class PedidoController extends Controller{
             
             if(!$pedido->folio && $pedido->status != 'BR'){
                 $anio = date('Y');
-
-                $folio_template = $almacen->clues . '-' . $anio . '-'.$tipo_pedido.'-';
-                $max_folio = Pedido::where('clues',$almacen->clues)->where('folio','like',$folio_template.'%')->max('folio');
+                $clues_real = $almacen->externo ? $almacen->clues_perteneciente : $almacen->clues;
+                $folio_template = $clues_real . '-' . $anio . '-'.$tipo_pedido.'-';
+                $max_folio = Pedido::where('clues',$clues_real)->where('folio','like',$folio_template.'%')->max('folio');
                 
                 if(!$max_folio){
                     $prox_folio = 1;
@@ -657,8 +661,12 @@ class PedidoController extends Controller{
                 //$presupuesto = Presupuesto::where('activo',1)->first();
                 //$presupuesto = Presupuesto::find($pedido->presupuesto_id);
 
+                
+
                 $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$pedido->presupuesto_id)
-                                            ->where('clues',$almacen->clues)
+                                           // ->where('clues',$almacen->clues)
+                                           // Akira:
+                                           ->where('clues',$clues_real)
                                             ->where('almacen_id',$almacen_solicitante->id)
                                             ->where('mes',$fecha[1])
                                             ->where('anio',$fecha[0])
