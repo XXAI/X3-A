@@ -69,7 +69,15 @@ class InstallController extends Controller
             "CSSSA017283" => "OFICINA JURISDICCIONAL (TAPACHULA)",
             "CSSSA017295" => "OFICINA JURISDICCIONAL (TONALÁ)",
             "CSSSA017300" => "OFICINA JURISDICCIONAL (OCOSINGO)",
-            "CSSSA017312" => "OFICINA JURISDICCIONAL (MOTOZINTLA)"
+            "CSSSA017312" => "OFICINA JURISDICCIONAL (MOTOZINTLA)",
+            //AGREGADAS POR MI
+            "CSSSAHICCOR" => "H. B. C. CHIAPA DE CORZO",
+            "CSSSA009162" => "USM SAN AGUSTIN",
+            "CSSSAHIROSA" => "H. B. C. LAS ROSAS",
+            "CSSSAHGREFO" => "HOSPITAL GENERAL REFORMA ",
+            "CSSSAHIBERR" => "H. B. C. BERRIOZABAL",
+            "CSSSAOXCHUC" => "H. B. C. OXCHUC ",
+            "CSSSASIMOJO" => "H. B. C. DE SIMOJOVEL",
         ];
 
         return view('install',['clues'=>$base_clues]);
@@ -123,21 +131,27 @@ class InstallController extends Controller
             "CSSSA017406" => [ 'id' => "0043",   'clues' => "CSSSA017406",   'secret' => "1032218043",  'proveedor' => 3,   'almacen' => "000128",   'nombre' => "ALMACÉN JURISDICCIONAL (TONALÁ)"],
             "CSSSA017411" => [ 'id' => "0044",   'clues' => "CSSSA017411",   'secret' => "7830804335",  'proveedor' => 3,   'almacen' => "000129",   'nombre' => "ALMACÉN JURISDICCIONAL (OCOSINGO)"],
             "JURISMOTO10" => [ 'id' => "0045",   'clues' => "JURISMOTO10",   'secret' => "7187480665",  'proveedor' => 2,   'almacen' => "000147",   'nombre' => "ALMACÉN JURISDICCIONAL (MOTOZINTLA)"],
-
             // Akira: Se agregan las oficinas jurisdiccionales
-            "CSSSA017225" => [ 'id' => "0053",   'clues' => "CSSSA017225",   'secret' => "3159842440",  'proveedor' => 1,   'almacen' => "000121",   'nombre' => "OFICINA JURISDICCIONAL (TUXTLA GUTIÉRREZ)"],
-            "CSSSA017230" => [ 'id' => "0054",   'clues' => "CSSSA017230",   'secret' => "7878818111",  'proveedor' => 3,   'almacen' => "000122",   'nombre' => "OFICINA JURISDICCIONAL (SAN CRISTÓBAL DE LAS CASAS)"],
-            "CSSSA017242" => [ 'id' => "0055",   'clues' => "CSSSA017242",   'secret' => "8914563545",  'proveedor' => 2,   'almacen' => "000123",   'nombre' => "OFICINA JURISDICCIONAL (COMITÁN)"],
-            "CSSSA008112" => [ 'id' => "0056",   'clues' => "CSSSA008112",   'secret' => "9936363698",  'proveedor' => 1,   'almacen' => "000124",   'nombre' => "OFICINA JURISDICCIONAL (VILLAFLORES)"],
-            "CSSSA017266" => [ 'id' => "0057",   'clues' => "CSSSA017266",   'secret' => "1938128168",  'proveedor' => 3,   'almacen' => "000125",   'nombre' => "OFICINA JURISDICCIONAL (PICHUCALCO)"],
-            "CSSSA017271" => [ 'id' => "0058",   'clues' => "CSSSA017271",   'secret' => "8881550050",  'proveedor' => 3,   'almacen' => "000126",   'nombre' => "OFICINA JURISDICCIONAL (PALENQUE)"],
-            "CSSSA017283" => [ 'id' => "0059",   'clues' => "CSSSA017283",   'secret' => "7593366056",  'proveedor' => 3,   'almacen' => "000127",   'nombre' => "OFICINA JURISDICCIONAL (TAPACHULA)"],
-            "CSSSA017295" => [ 'id' => "0060",   'clues' => "CSSSA017295",   'secret' => "1032218043",  'proveedor' => 3,   'almacen' => "000128",   'nombre' => "OFICINA JURISDICCIONAL (TONALÁ)"],
-            "CSSSA017300" => [ 'id' => "0061",   'clues' => "CSSSA017300",   'secret' => "7830804335",  'proveedor' => 3,   'almacen' => "000129",   'nombre' => "OFICINA JURISDICCIONAL (OCOSINGO)"],
-            "CSSSA017312" => [ 'id' => "0062",   'clues' => "CSSSA017312",   'secret' => "7187480665",  'proveedor' => 2,   'almacen' => "000147",   'nombre' => "OFICINA JURISDICCIONAL (MOTOZINTLA)"]
-
+            "CSSSA017225" => [ 'id' => "0053",   'clues' => "CSSSA017225",   'secret' => "6798232336",  'proveedor' => 1,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (TUXTLA GUTIÉRREZ)"],
+            "CSSSA017230" => [ 'id' => "0054",   'clues' => "CSSSA017230",   'secret' => "1073598978",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (SAN CRISTÓBAL DE LAS CASAS)"],
+            "CSSSA017242" => [ 'id' => "0055",   'clues' => "CSSSA017242",   'secret' => "8627238963",  'proveedor' => 2,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (COMITÁN)"],
+            "CSSSA008112" => [ 'id' => "0056",   'clues' => "CSSSA008112",   'secret' => "7133401780",  'proveedor' => 1,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (VILLAFLORES)"],
+            "CSSSA017266" => [ 'id' => "0057",   'clues' => "CSSSA017266",   'secret' => "8679923415",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (PICHUCALCO)"],
+            "CSSSA017271" => [ 'id' => "0058",   'clues' => "CSSSA017271",   'secret' => "8422071869",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (PALENQUE)"],
+            "CSSSA017283" => [ 'id' => "0059",   'clues' => "CSSSA017283",   'secret' => "7864626441",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (TAPACHULA)"],
+            "CSSSA017295" => [ 'id' => "0060",   'clues' => "CSSSA017295",   'secret' => "4143478746",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (TONALÁ)"],
+            "CSSSA017300" => [ 'id' => "0061",   'clues' => "CSSSA017300",   'secret' => "1043177405",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (OCOSINGO)"],
+            "CSSSA017312" => [ 'id' => "0062",   'clues' => "CSSSA017312",   'secret' => "9005130614",  'proveedor' => 2,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (MOTOZINTLA)"],
+            //Nuevos Mario
+            "CSSSAHICCOR" => [ 'id' => "0046",   'clues' => "CSSSAHICCOR",   'secret' => "4985136749",  'proveedor' => 1,   'almacen' => "00017",   'nombre' => "H. B. C. CHIAPA DE CORZO"],
+            "CSSSA009162" => [ 'id' => "0047",   'clues' => "CSSSA009162",   'secret' => "3154796318",  'proveedor' => 1,   'almacen' => "000120",   'nombre' => "USM SAN AGUSTIN"],
+            "CSSSAHIROSA" => [ 'id' => "0048",   'clues' => "CSSSAHIROSA",   'secret' => "5219746318",  'proveedor' => 1,   'almacen' => "000113",   'nombre' => "H. B. C. LAS ROSAS"],
+            "CSSSAHGREFO" => [ 'id' => "0049",   'clues' => "CSSSAHGREFO",   'secret' => "3482167945",  'proveedor' => 1,   'almacen' => "000146",   'nombre' => "HOSPITAL GENERAL REFORMA"],
+            "CSSSAHIBERR" => [ 'id' => "0050",   'clues' => "CSSSAHIBERR",   'secret' => "2497615487",  'proveedor' => 1,   'almacen' => "00014",   'nombre' => "H. B. C. BERRIOZABAL"],
+            "CSSSAOXCHUC" => [ 'id' => "0051",   'clues' => "CSSSAOXCHUC",   'secret' => "3415798462",  'proveedor' => 1,   'almacen' => "0001282",   'nombre' => "H. B. C. OXCHUC"],
+            "CSSSASIMOJO" => [ 'id' => "0052",   'clues' => "CSSSASIMOJO",   'secret' => "3486197469",  'proveedor' => 1,   'almacen' => "0001283",   'nombre' => "H. B. C. DE SIMOJOVEL"]
         ];
-
+        
         $lista_personal_clues = [
             ['id'=>'00011',    'incremento' => 1,   'clues' => 'CSSSA004945', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "Dra. Trinidad Vera Juan"],
             ['id'=>'000110',   'incremento' => 10,  'clues' => 'CSSSA018776', 'created_at' => "2017-05-09 07:06:39", 'updated_at' => "2017-05-09 07:06:39", 'nombre' => "DR. FRANCISCO JAVIER TREJO ESQUINCA"],
@@ -232,7 +246,14 @@ class InstallController extends Controller
             ['id'=>'000174',   'incremento'=>74,    'clues' => 'JURISMOTO10', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "LIC. MARCO ANTONIO GALINDO PEREZ"],
             ['id'=>'000175',   'incremento'=>75,	'clues' => 'CSSSA017353', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "C. HERNAN ALEJANDRO MORALES AGUILAR"],
             ['id'=>'000176',   'incremento'=>76,	'clues' => 'CSSSA017365', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "LIC. MICHEL ARMANDO ASTUDILLO ARCE"],
-            ['id'=>'000177',   'incremento'=>77,	'clues' => 'CSSSA017370', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "ENF. LUIS HERNÁNDEZ RUIZ"]
+            ['id'=>'000177',   'incremento'=>77,	'clues' => 'CSSSA017370', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "ENF. LUIS HERNÁNDEZ RUIZ"],
+            //Nuevas Clues
+            [ 'id'=>'0001102',	'incremento'=>102,	'clues' => 'CSSSAHGREFO', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "Nini Morales Mingo"],
+            [ 'id'=>'0001108',	'incremento'=>108,	'clues' => 'CSSSAHIBERR', 'created_at' => "2017-07-31 10:29:24", 'updated_at'=>"2017-07-31 10:29:24", 'nombre' => "Lic. Edmundo Armando Saldaña Garcia"],
+            [ 'id'=>'0001109',	'incremento'=>109,	'clues' => 'CSSSAHIBERR', 'created_at' => "2017-07-31 10:29:24", 'updated_at'=>"2017-07-31 10:29:24", 'nombre' => "Dr. Rafael Ildefonso Hernandez Gutierrez"],
+            [ 'id'=>'000135',	'incremento'=>35,	'clues' => 'CSSSA009162', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "PSIC. VIVIANA JANETH ACEVES CHAVEZ"],
+            [ 'id'=>'000151',	'incremento'=>51,	'clues' => 'CSSSAHGREFO', 'created_at' => "2017-05-09 12:06:39", 'updated_at'=>"2017-05-09 12:06:39", 'nombre' => "Dr. Tirso Raul Sanchez Parra"],
+            [ 'id'=>'000186',	'incremento'=>86,	'clues' => 'CSSSA009162', 'created_at' => "2017-05-09 12:13:48", 'updated_at'=>"2017-05-09 12:13:48", 'nombre' => "LIC. GLORIA DEL CARMEN RODRIGUEZ CARTAGENA"]
         ];
 
         //Si se ejecuta en el servidor offline
@@ -326,7 +347,9 @@ class InstallController extends Controller
             ]
         ]);
 
-        DB::insert('insert into almacenes (id, incremento, servidor_id, nivel_almacen, tipo_almacen, clues, proveedor_id, subrogado, unidosis, nombre, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?)', [$config['almacen'],1,$config['id'],1,'ALMPAL',$config['clues'],$config['proveedor'],0,0,'ALMACEN PRINCIPAL','root_'.$config['id'],Carbon::now(),Carbon::now()]);
+        if($config['almacen']){
+            DB::insert('insert into almacenes (id, incremento, servidor_id, nivel_almacen, tipo_almacen, clues, proveedor_id, subrogado, unidosis, nombre, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?)', [$config['almacen'],1,$config['id'],1,'ALMPAL',$config['clues'],$config['proveedor'],0,0,'ALMACEN PRINCIPAL','root_'.$config['id'],Carbon::now(),Carbon::now()]);
+        }
         
         $almacen = Almacen::where('clues',$config['clues'])->where('tipo_almacen','ALMPAL')->first();
 
