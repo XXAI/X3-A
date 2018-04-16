@@ -639,7 +639,7 @@ class PedidoController extends Controller{
 
             //Harima: Ajustamos el presupuesto, colocamos los totales en comprometido
             //if($pedido->status == 'PS' || $pedido->status == 'ET'){ //OJO falta checar si cambian almacen y mes
-            if($pedido->status != 'BR' && ($pedido->tipo_pedido_id == 'PA' || $pedido->tipo_pedido_id == 'PFS')){
+            if($pedido->status != 'BR' && ($pedido->tipo_pedido_id == 'PA' || $pedido->tipo_pedido_id == 'PFS' || $pedido->tipo_pedido_id == 'PJS')){
 
                 if($pedido->total_monto_solicitado == $pedido->total_monto_recibido){
                     $pedido->status = 'FI';

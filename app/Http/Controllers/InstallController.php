@@ -132,16 +132,16 @@ class InstallController extends Controller
             "CSSSA017411" => [ 'id' => "0044",   'clues' => "CSSSA017411",   'secret' => "7830804335",  'proveedor' => 3,   'almacen' => "000129",   'nombre' => "ALMACÉN JURISDICCIONAL (OCOSINGO)"],
             "JURISMOTO10" => [ 'id' => "0045",   'clues' => "JURISMOTO10",   'secret' => "7187480665",  'proveedor' => 2,   'almacen' => "000147",   'nombre' => "ALMACÉN JURISDICCIONAL (MOTOZINTLA)"],
             // Akira: Se agregan las oficinas jurisdiccionales
-            "CSSSA017225" => [ 'id' => "0053",   'clues' => "CSSSA017225",   'secret' => "6798232336",  'proveedor' => 1,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (TUXTLA GUTIÉRREZ)"],
-            "CSSSA017230" => [ 'id' => "0054",   'clues' => "CSSSA017230",   'secret' => "1073598978",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (SAN CRISTÓBAL DE LAS CASAS)"],
-            "CSSSA017242" => [ 'id' => "0055",   'clues' => "CSSSA017242",   'secret' => "8627238963",  'proveedor' => 2,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (COMITÁN)"],
-            "CSSSA008112" => [ 'id' => "0056",   'clues' => "CSSSA008112",   'secret' => "7133401780",  'proveedor' => 1,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (VILLAFLORES)"],
-            "CSSSA017266" => [ 'id' => "0057",   'clues' => "CSSSA017266",   'secret' => "8679923415",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (PICHUCALCO)"],
-            "CSSSA017271" => [ 'id' => "0058",   'clues' => "CSSSA017271",   'secret' => "8422071869",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (PALENQUE)"],
-            "CSSSA017283" => [ 'id' => "0059",   'clues' => "CSSSA017283",   'secret' => "7864626441",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (TAPACHULA)"],
-            "CSSSA017295" => [ 'id' => "0060",   'clues' => "CSSSA017295",   'secret' => "4143478746",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (TONALÁ)"],
-            "CSSSA017300" => [ 'id' => "0061",   'clues' => "CSSSA017300",   'secret' => "1043177405",  'proveedor' => 3,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (OCOSINGO)"],
-            "CSSSA017312" => [ 'id' => "0062",   'clues' => "CSSSA017312",   'secret' => "9005130614",  'proveedor' => 2,   'almacen' => "",   'nombre' => "OFICINA JURISDICCIONAL (MOTOZINTLA)"],
+            "CSSSA017225" => [ 'id' => "0053",   'clues' => "CSSSA017225",   'secret' => "6798232336",  'proveedor' => 1,   'almacen' => "000121",   'nombre' => "OFICINA JURISDICCIONAL (TUXTLA GUTIÉRREZ)"],
+            "CSSSA017230" => [ 'id' => "0054",   'clues' => "CSSSA017230",   'secret' => "1073598978",  'proveedor' => 3,   'almacen' => "000122",   'nombre' => "OFICINA JURISDICCIONAL (SAN CRISTÓBAL DE LAS CASAS)"],
+            "CSSSA017242" => [ 'id' => "0055",   'clues' => "CSSSA017242",   'secret' => "8627238963",  'proveedor' => 2,   'almacen' => "000123",   'nombre' => "OFICINA JURISDICCIONAL (COMITÁN)"],
+            "CSSSA008112" => [ 'id' => "0056",   'clues' => "CSSSA008112",   'secret' => "7133401780",  'proveedor' => 1,   'almacen' => "000124",   'nombre' => "OFICINA JURISDICCIONAL (VILLAFLORES)"],
+            "CSSSA017266" => [ 'id' => "0057",   'clues' => "CSSSA017266",   'secret' => "8679923415",  'proveedor' => 3,   'almacen' => "000125",   'nombre' => "OFICINA JURISDICCIONAL (PICHUCALCO)"],
+            "CSSSA017271" => [ 'id' => "0058",   'clues' => "CSSSA017271",   'secret' => "8422071869",  'proveedor' => 3,   'almacen' => "000126",   'nombre' => "OFICINA JURISDICCIONAL (PALENQUE)"],
+            "CSSSA017283" => [ 'id' => "0059",   'clues' => "CSSSA017283",   'secret' => "7864626441",  'proveedor' => 3,   'almacen' => "000127",   'nombre' => "OFICINA JURISDICCIONAL (TAPACHULA)"],
+            "CSSSA017295" => [ 'id' => "0060",   'clues' => "CSSSA017295",   'secret' => "4143478746",  'proveedor' => 3,   'almacen' => "000128",   'nombre' => "OFICINA JURISDICCIONAL (TONALÁ)"],
+            "CSSSA017300" => [ 'id' => "0061",   'clues' => "CSSSA017300",   'secret' => "1043177405",  'proveedor' => 3,   'almacen' => "000129",   'nombre' => "OFICINA JURISDICCIONAL (OCOSINGO)"],
+            "CSSSA017312" => [ 'id' => "0062",   'clues' => "CSSSA017312",   'secret' => "9005130614",  'proveedor' => 2,   'almacen' => "000147",   'nombre' => "OFICINA JURISDICCIONAL (MOTOZINTLA)"],
             //Nuevos Mario
             "CSSSAHICCOR" => [ 'id' => "0046",   'clues' => "CSSSAHICCOR",   'secret' => "4985136749",  'proveedor' => 1,   'almacen' => "00017",   'nombre' => "H. B. C. CHIAPA DE CORZO"],
             "CSSSA009162" => [ 'id' => "0047",   'clues' => "CSSSA009162",   'secret' => "3154796318",  'proveedor' => 1,   'almacen' => "000120",   'nombre' => "USM SAN AGUSTIN"],
@@ -262,8 +262,8 @@ class InstallController extends Controller
         $username  = Config::get('database.connections.mysql.username');
         $password  = Config::get('database.connections.mysql.password');
        
-        echo shell_exec(env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "DROP DATABASE  IF EXISTS  ' . $database . '"');
-        echo shell_exec(env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "CREATE DATABASE ' . $database . ' DEFAULT CHARACTER SET utf8"');
+        echo shell_exec(env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "DROP DATABASE  IF EXISTS '.$database.'; CREATE DATABASE ' . $database . ' DEFAULT CHARACTER SET utf8;"');
+        //echo shell_exec(env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "CREATE DATABASE ' . $database . ' DEFAULT CHARACTER SET utf8"');
         //echo env('PATH_MYSQL').'/mysql -h ' . $host . ' -u ' . $username . ' -p' . $password . ' -e "CREATE DATABASE ' . $database . '"';
         
         \Artisan::call('migrate');
@@ -348,7 +348,7 @@ class InstallController extends Controller
         ]);
 
         if($config['almacen']){
-            DB::insert('insert into almacenes (id, incremento, servidor_id, nivel_almacen, tipo_almacen, clues, proveedor_id, subrogado, unidosis, nombre, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?)', [$config['almacen'],1,$config['id'],1,'ALMPAL',$config['clues'],$config['proveedor'],0,0,'ALMACEN PRINCIPAL','root_'.$config['id'],Carbon::now(),Carbon::now()]);
+            DB::insert('insert into almacenes (id, incremento, servidor_id, nivel_almacen, tipo_almacen, clues, proveedor_id, subrogado, unidosis, nombre, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?)', [$config['almacen'],1,$config['id'],1,'ALMPAL',$config['clues'],$config['proveedor'],0,0,'ALMACEN PRINCIPAL',$config['id'].":root",Carbon::now(),Carbon::now()]);
         }
         
         $almacen = Almacen::where('clues',$config['clues'])->where('tipo_almacen','ALMPAL')->first();
@@ -357,7 +357,7 @@ class InstallController extends Controller
         foreach ($lista_personal_clues as $personal) {
             if($personal['clues'] == $config['clues']){
                 $incremento += 1;
-                DB::insert('insert into personal_clues (id, incremento, servidor_id, clues, nombre, surte_controlados, licencia_controlados, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?)', [$personal['id'],$incremento,$config['id'],$config['clues'],$personal['nombre'],0,'','root_'.$config['id'],$personal['created_at'],$personal['updated_at']]);
+                DB::insert('insert into personal_clues (id, incremento, servidor_id, clues, nombre, surte_controlados, licencia_controlados, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?)', [$personal['id'],$incremento,$config['id'],$config['clues'],$personal['nombre'],0,'',$config['id'].':root',$personal['created_at'],$personal['updated_at']]);
             }
         }
         

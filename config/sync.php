@@ -181,18 +181,26 @@ return [
             'campos_bajada' => [
                 'causes_autorizado',
                 'causes_modificado',
+                'causes_comprometido', // Akira: Agregue esto por los almacenes externos ya que estos no pueden comprometer presupuesto, si estoy mal borren esta línea
+                'causes_devengado', // Akira: Agregue esto por las oficinas juris que tienen almacen externo ya que estos no pueden devengar presupuesto, si estoy mal borren esta línea
                 'no_causes_autorizado',
                 'no_causes_modificado',
+                'no_causes_comprometido', // Akira: Agregue esto por los almacenes externos ya que estos no pueden comprometer presupuesto, si estoy mal borren esta línea
+                'no_causes_devengado', // Akira: Agregue esto por las oficinas juris que tienen almacen externo ya que estos no pueden devengar presupuesto, si estoy mal borren esta línea
                 'material_curacion_autorizado',
                 'material_curacion_modificado',
+                'material_curacion_comprometido', // Akira: Agregue esto por los almacenes externos ya que estos no pueden comprometer presupuesto, si estoy mal borren esta línea
+                'material_curacion_devengado', // Akira: Agregue esto por las oficinas juris que tienen almacen externo ya que estos no pueden devengar presupuesto, si estoy mal borren esta línea
                 'insumos_autorizado',
                 'insumos_modificado',
+                'insumos_comprometido', // Akira: Agregue esto por los almacenes externos ya que estos no pueden comprometer presupuesto, si estoy mal borren esta línea
+                'insumos_devengado',  // Akira: Agregue esto por las oficinas juris que tienen almacen externo ya que estos no pueden devengar presupuesto, si estoy mal borren esta línea
                 'validation',
                 'created_at',
                 'updated_at',
                 'deleted_at'
             ],
-            'condicion_subida' => 'clues = "'.env('CLUES').'"',       // Si quieren meter mas agrupen todo entre parentesis ( condicion1 AND condicion2 OR condicion3)
+            'condicion_subida' => '(clues = "'.env('CLUES').'" or clues in (SELECT clues FROM almacenes WHERE externo = 1 and clues_perteneciente="'.env('CLUES').'" ))',       // Si quieren meter mas agrupen todo entre parentesis ( condicion1 AND condicion2 OR condicion3)
             'condicion_bajada' =>'',
             'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible',  // Esta funcion se ejecuta justo despues de haber bajado a local          
@@ -329,7 +337,9 @@ return [
                 'nivel_almacen',
                 'tipo_almacen',
                 'clues',
+                'clues_perteneciente',
                 'subrogado',
+                'externo',
                 'lista_insumo_id',
                 'proveedor_id',
                 'unidosis',
@@ -711,5 +721,163 @@ return [
             'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local    
         ],
         // Agregar más tablas copiando la estructura anterior
+
+        //Akira: Pedidos en almacenes externos
+        'pedidos'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'clues',
+                'clues_destino',
+                'tipo_insumo_id',
+                'tipo_pedido_id',
+                'descripcion',
+                'pedido_padre',
+                'folio',
+                'fecha',
+                'fecha_concluido',
+                'fecha_expiracion',
+                'fecha_cancelacion',
+                'almacen_solicitante',
+                'almacen_proveedor',
+                'organismo_dirigido',
+                'acta_id',
+                'status',
+                'recepcion_permitida',
+                'observaciones', 
+                'usuario_validacion',
+                'proveedor_id',
+                'presupuesto_id',
+                'total_monto_solicitado',
+                'total_monto_recibido',
+                'total_claves_solicitadas',
+                'total_claves_recibidas',
+                'total_cantidad_solicitada',
+                'total_cantidad_recibida',
+                'encargado_almacen_id',
+                'director_id',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'clues',
+                'clues_destino',
+                'tipo_insumo_id',
+                'tipo_pedido_id',
+                'descripcion',
+                'pedido_padre',
+                'folio',
+                'fecha',
+                'fecha_concluido',
+                'fecha_expiracion',
+                'fecha_cancelacion',
+                'almacen_solicitante',
+                'almacen_proveedor',
+                'organismo_dirigido',
+                'acta_id',
+                'status',
+                'recepcion_permitida',
+                'observaciones', 
+                'usuario_validacion',
+                'proveedor_id',
+                'presupuesto_id',
+                'total_monto_solicitado',
+                'total_monto_recibido',
+                'total_claves_solicitadas',
+                'total_claves_recibidas',
+                'total_cantidad_solicitada',
+                'total_cantidad_recibida',
+                'encargado_almacen_id',
+                'director_id',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'tipo_pedido_id = "PJS"', // Pedidos jurisdiccionales aunque bien podríamos quitar el PJS, por si alguien hace un pedido diferente a esto
+            'condicion_bajada' => 'tipo_pedido_id = "PJS" AND (clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1) OR servidor_id= "'.env('SERVIDOR_ID').'")', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local                
+        ],
+        'pedidos_insumos'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'pedido_id',
+                'tipo_insumo_id',
+                'insumo_medico_clave',
+                'cantidad_enviada',
+                'cantidad_solicitada',
+                'cantidad_recibida',
+                'precio_unitario',
+                'monto_enviado',
+                'monto_solicitado',
+                'monto_recibido',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'pedido_id',
+                'tipo_insumo_id',
+                'insumo_medico_clave',
+                'cantidad_enviada',
+                'cantidad_solicitada',
+                'cantidad_recibida',
+                'precio_unitario',
+                'monto_enviado',
+                'monto_solicitado',
+                'monto_recibido',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'pedido_id in (select id from pedidos where tipo_pedido_id = "PJS")', 
+            'condicion_bajada' => 'pedido_id in (select id from pedidos where tipo_pedido_id = "PJS" AND (clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1) OR servidor_id= "'.env('SERVIDOR_ID').'"))', 
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local    
+        ],
+        'pedidos_insumos_clues'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'pedido_insumo_id',
+                'cantidad',
+                'clues',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'pedido_insumo_id',
+                'cantidad',
+                'clues',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'pedido_insumo_id in ( select id from pedidos_insumos where pedido_id in (select id from pedidos where tipo_pedido_id = "PJS"))', 
+            'condicion_bajada' => 'pedido_insumo_id in ( select id from pedidos_insumos where pedido_id in (select id from pedidos where tipo_pedido_id = "PJS" AND (clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1) OR servidor_id= "'.env('SERVIDOR_ID').'")))', 
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '', // Esta funcion se ejecuta justo despues de haber bajado a local    
+        ],
     ]
 ];
