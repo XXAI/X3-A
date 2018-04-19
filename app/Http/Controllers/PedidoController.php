@@ -666,7 +666,9 @@ class PedidoController extends Controller{
                 $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$pedido->presupuesto_id)
                                            // ->where('clues',$almacen->clues)
                                            // Akira:
-                                           ->where('clues',$clues_real)
+                                           //->where('clues',$clues_real)
+                                           //Harima:
+                                           ->where('clues',$almacen_solicitante->clues)
                                             ->where('almacen_id',$almacen_solicitante->id)
                                             ->where('mes',$fecha[1])
                                             ->where('anio',$fecha[0])

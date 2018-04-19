@@ -9,5 +9,6 @@
 
 
 return [	
+	[ "nombre" => "B8DD2113084EC4D3B2E97F081BD081E4.sial.api.2.patch", "fecha" => "2018-03-16", "ejecutar" =>  "\App\Librerias\Patches\Parches::ejecutar"],
 	[ "nombre" => "F24DBF6BE70AB8B018323D6EA4601455.sial.api.1.patch", "fecha" => "2018-03-16", "ejecutar" =>  "\App\Librerias\Patches\Parches::ejecutar"],
 ];

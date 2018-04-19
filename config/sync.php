@@ -55,6 +55,8 @@ return [
         'programas',
         'proveedores',
         'puestos',
+        'precios_base',
+        'precios_base_detalles',
         'presentaciones_medicamentos',
         'presentaciones_sustancias',
         'categorias',
@@ -149,7 +151,9 @@ return [
         'receta_detalles',
         'receta_digital_detalles',
         'receta_movimientos',
-        'resguardos'
+        'resguardos',
+        'inicializacion_inventario',
+        'inicializacion_inventario_detalles'
     ],
      /*
     |--------------------------------------------------------------------------
