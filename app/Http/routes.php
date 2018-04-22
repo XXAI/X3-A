@@ -338,7 +338,8 @@ Route::group(['middleware' => 'jwt'], function () {
 
     // # SECCION: Opciones avanzadas 
     Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
-
+        Route::get('fecha-hora-servidor',               'FechaHoraServidorController@get');
+        Route::post('fecha-hora-servidor/actualizar',    'FechaHoraServidorController@update');
         Route::get('actualizar-plataforma-git',         'ActualizarPlataformaController@git');
         Route::get('exportar-base-datos',               'BaseDatosController@exportar');
         Route::post('importar-base-datos',              'BaseDatosController@importar');
