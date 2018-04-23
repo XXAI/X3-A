@@ -55,7 +55,7 @@ class FechaHoraServidorController extends Controller
 			$output.= $preout;
 
 			$fecha_actualizada = strpos($preout,$parametros["fecha"]." ".$parametros["hora"]);
-			if($fecha_actualizada){
+			if($fecha_actualizada !== false ){
 				return Response::json([ 'data' => $output],200);
 			} else {
 				throw new \Exception($output);
