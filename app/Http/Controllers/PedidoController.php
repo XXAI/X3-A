@@ -297,6 +297,10 @@ class PedidoController extends Controller{
         $almacen_solicitante = Almacen::find($parametros['datos']['almacen_solicitante']);
 
         if($almacen_solicitante){
+            if($almacen_solicitante->externo == "1" && $almacen_solicitante->clues_perteneciente != env("CLUES")){
+                return Response::json(['error' => 'No puedes hacer pedidos en un almacen externo que pertenece a otra unidad médica.'], 500);
+            }
+
             if($um->tipo == 'OA' && $almacen_solicitante->subrogado == 0 && $almacen_solicitante->nivel_almacen == 1){  // ######### PEDIDOS JURISDICCIONALES #########
                 $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales, solo cuando el almacen solictante no sea subrogado, sea de nivel 1 y la clues sea Oficina Administrativa
             }else{ // ############################################
@@ -448,6 +452,11 @@ class PedidoController extends Controller{
 
         $tipo_pedido = '';
         if($almacen_solicitante){
+
+            if($almacen_solicitante->externo == "1" && $almacen_solicitante->clues_perteneciente != env("CLUES")){
+                return Response::json(['error' => 'No puedes hacer pedidos en un almacen externo que pertenece a otra unidad médica.'], 500);
+            }
+
             if($um->tipo == 'OA' && $almacen_solicitante->subrogado == 0 && $almacen_solicitante->nivel_almacen == 1){  // ######### PEDIDOS JURISDICCIONALES #########
                 $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales, solo cuando el almacen solictante no sea subrogado, sea de nivel 1 y la clues sea Oficina Administrativa
             }else{ // ############################################
