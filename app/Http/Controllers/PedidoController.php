@@ -934,7 +934,6 @@ class PedidoController extends Controller{
                         $insumos_no_surtidos[$insumo->tipoInsumo->clave][] = $insumo;
                     }
             }
-
             foreach($insumos_tipo as $tipo => $lista_insumos){
                 $excel->sheet($tipo, function($sheet) use($pedido,$lista_insumos,$tipo) {
                     //$sheet->setAutoSize(true);
@@ -1239,19 +1238,19 @@ class PedidoController extends Controller{
                     );
 
                     $sheet->mergeCells('A1:D1');
-                    $sheet->mergeCells('E1:G1');
+                    $sheet->mergeCells('E1:I1');
                     $sheet->row(1, array('FOLIO DEL PEDIDO: '.$pedido->folio,'','','','PEDIDO '.$pedido->status_descripcion));
 
-                    $sheet->cells("E1:G1", function($cells) {
+                    $sheet->cells("E1:I1", function($cells) {
                         $cells->setAlignment('right');
                     });
 
                     if($pedido->status == 'EX-CA'){
                         $sheet->mergeCells('A2:D2');
-                        $sheet->mergeCells('E2:G2');
+                        $sheet->mergeCells('E2:I2');
                         $sheet->row(2, array('ENTREGAR A: '.$pedido->almacenSolicitante->nombre,'','','','FECHA DE CANCELACIÓN: '.$pedido->fecha_cancelacion));
 
-                        $sheet->cells("E2:G2", function($cells) {
+                        $sheet->cells("E2:I2", function($cells) {
                             $cells->setAlignment('right');
                         });
 
@@ -1259,50 +1258,50 @@ class PedidoController extends Controller{
                         $sheet->getStyle('E2')->applyFromArray($estilo_cancelado);
                     }else if($pedido->status == 'EX'){
                         $sheet->mergeCells('A2:D2');
-                        $sheet->mergeCells('E2:G2');
+                        $sheet->mergeCells('E2:I2');
                         $sheet->row(2, array('ENTREGAR A: '.$pedido->almacenSolicitante->nombre,'','','','FECHA DE EXPIRACIÓN: '.$pedido->fecha_expiracion));
 
-                        $sheet->cells("E2:G2", function($cells) {
+                        $sheet->cells("E2:I2", function($cells) {
                             $cells->setAlignment('right');
                         });
 
                         $sheet->getStyle('D1')->applyFromArray($estilo_cancelado);
                         $sheet->getStyle('D2')->applyFromArray($estilo_cancelado);
                     }else{
-                        $sheet->mergeCells('A2:G2');
+                        $sheet->mergeCells('A2:I2');
                         $sheet->row(2, array('ENTREGAR A: '.$pedido->almacenSolicitante->nombre));
                     }
                     
 
-                    $sheet->mergeCells('A3:G3');
+                    $sheet->mergeCells('A3:I3');
                     $sheet->row(3, array('NOMBRE DEL PEDIDO: '.$pedido->descripcion));
 
-                    $sheet->mergeCells('A4:G4'); 
+                    $sheet->mergeCells('A4:I4'); 
                     $sheet->row(4, array('UNIDAD MEDICA: '.$pedido->almacenSolicitante->unidadMedica->nombre));
 
-                    $sheet->mergeCells('A5:G5'); 
+                    $sheet->mergeCells('A5:I5'); 
                     $sheet->row(5, array('PROVEEDOR: '.$pedido->proveedor->nombre));
 
                     $sheet->mergeCells('A6:D6');
-                    $sheet->mergeCells('E6:G6');
+                    $sheet->mergeCells('E6:I6');
                     $sheet->row(6, array('FECHA DEL PEDIDO: '.$pedido->fecha[2]." DE ".$pedido->fecha[1]." DEL ".$pedido->fecha[0],'','','','FECHA DE NOTIFICACIÓN: '.$pedido->fecha_concluido));
 
-                    $sheet->cells("E6:G6", function($cells) {
+                    $sheet->cells("E6:I6", function($cells) {
                         $cells->setAlignment('right');
                     });
 
-                    $sheet->mergeCells('A7:G7'); 
+                    $sheet->mergeCells('A7:I7'); 
                     $sheet->row(7, array('INSUMOS NO SURTIDOS'));
 
-                    $sheet->cells("A7:G7", function($cells) {
+                    $sheet->cells("A7:I7", function($cells) {
                         $cells->setAlignment('center');
                     });
 
                     $sheet->row(8, array(
-                        'NO.', 'TIPO', 'CLAVE','DESCRIPCIÓN','CANTIDAD FALTANTE','PRECIO UNITARIO','MONTO'
+                        'NO.', 'TIPO', 'CLAVE','DESCRIPCIÓN','CANTIDAD FALTANTE','PRECIO UNITARIO','MONTO', '% DE PENALIZACIÓN', 'MONTO PENALIZACIÓN'
                     ));
 
-                    $sheet->cells("A8:G8", function($cells) {
+                    $sheet->cells("A8:I8", function($cells) {
                         $cells->setAlignment('center');
                     });
 
@@ -1353,6 +1352,7 @@ class PedidoController extends Controller{
                     foreach($insumos_no_surtidos as $tipo => $insumos){
                         foreach($insumos as $insumo){
                             $contador_filas++;
+                            $subtotal_monto = $insumo->precio_unitario * ($insumo->cantidad_solicitada - ($insumo->cantidad_recibida | 0));
                             $sheet->appendRow(array(
                                 ($contador_filas-8),
                                 $insumo->tipoInsumo->nombre, 
@@ -1360,7 +1360,9 @@ class PedidoController extends Controller{
                                 $insumo->insumosConDescripcion->descripcion,
                                 $insumo->cantidad_solicitada - ($insumo->cantidad_recibida | 0),
                                 $insumo->precio_unitario,
-                                $insumo->precio_unitario * ($insumo->cantidad_solicitada - ($insumo->cantidad_recibida | 0))
+                                $subtotal_monto,
+                                0.05,
+                                (0.05 * $subtotal_monto * 30)
                             ));
 
                             if($insumo->insumosConDescripcion->tipo == 'MC'){
@@ -1369,13 +1371,13 @@ class PedidoController extends Controller{
                         }
                     }
 
-                    $sheet->cells("A9:G".$contador_filas, function($cells) {
+                    $sheet->cells("A9:I".$contador_filas, function($cells) {
                         $cells->setValignment('center');
                     });
 
                     $iva_solicitado = $iva_solicitado*16/100;
                     
-                    $sheet->setBorder("A1:G$contador_filas", 'thin');
+                    $sheet->setBorder("A1:I$contador_filas", 'thin');
 
                     $sheet->appendRow(array(
                             '', 
@@ -1385,6 +1387,8 @@ class PedidoController extends Controller{
                             '=SUM(E9:E'.($contador_filas).')',
                             'SUBTOTAL',
                             '=SUM(G9:G'.($contador_filas).')',
+                            '',
+                            '=SUM(I9:I'.($contador_filas).')',
                         ));
                     $sheet->appendRow(array(
                             '', 
@@ -1394,6 +1398,8 @@ class PedidoController extends Controller{
                             '',
                             'IVA',
                             $iva_solicitado,
+                            '',
+                            $iva_solicitado
                         ));
                     $sheet->appendRow(array(
                             '', 
@@ -1403,6 +1409,8 @@ class PedidoController extends Controller{
                             '',
                             'TOTAL',
                             '=SUM(G'.($contador_filas+1).':G'.($contador_filas+2).')',
+                            '',
+                            '=SUM(I'.($contador_filas+1).':I'.($contador_filas+2).')'
                         ));
                     $contador_filas += 3;
 
@@ -1412,13 +1420,14 @@ class PedidoController extends Controller{
 
                     $sheet->setColumnFormat(array(
                         "E9:E$contador_filas" => '#,##0',
-                        "F9:G$contador_filas" => '"$" #,##0.00_-'
+                        "F9:G$contador_filas" => '"$" #,##0.00_-',
+                        "I9:I$contador_filas" => '"$" #,##0.00_-'
                     ));
 
                     $sheet->getStyle('D9:D'.$contador_filas)->getAlignment()->setWrapText(true);
                     /*
                     $sheet->appendRow(array('', '','','','','','','',''));
-                    $sheet->appendRow(array('', '','','','','','','',''));
+                    $sheet->appendRow(array('' '','','','','','','',''));
                     $sheet->appendRow(array('', '','','','','','','',''));
                     $sheet->appendRow(array('', '','','','','','','',''));
                     $sheet->appendRow(array('', '','','','','','','',''));
@@ -1456,6 +1465,11 @@ class PedidoController extends Controller{
                 $excel->getActiveSheet()->getColumnDimension('F')->setWidth(18);
                 $excel->getActiveSheet()->getColumnDimension('G')->setAutoSize(false);
                 $excel->getActiveSheet()->getColumnDimension('G')->setWidth(21);
+                $excel->getActiveSheet()->getColumnDimension('H')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('H')->setWidth(21);
+                $excel->getActiveSheet()->getColumnDimension('I')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('I')->setWidth(21);
+
 
                 $excel->getActiveSheet()->getPageSetup()->setPaperSize(\PHPExcel_Worksheet_PageSetup::PAPERSIZE_LEGAL);
                 $excel->getActiveSheet()->getPageSetup()->setOrientation(\PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE);

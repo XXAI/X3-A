@@ -94,6 +94,7 @@ Route::group(['middleware' => 'jwt'], function () {
         
         Route::get('presupuesto-pedidos',               'PedidosController@presupuesto');
         Route::get('pedidos',                           'PedidosController@lista');
+        Route::get('mes-disponible',                    'PedidosController@mesDisponible');
         Route::get('pedidos-excel',                     'PedidosController@excel');
         Route::get('pedidos-archivos-proveedor/{id}',   'PedidosController@listaArchivosProveedor');
         
