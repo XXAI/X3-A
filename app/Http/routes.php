@@ -98,6 +98,15 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-excel',                     'PedidosController@excel');
         Route::get('pedidos-archivos-proveedor/{id}',   'PedidosController@listaArchivosProveedor');
         
+        // PENAS CONVENCIONALES
+        Route::get('meses',                                 'PenasConvencionalesController@meses');
+        Route::get('periodos',                              'PenasConvencionalesController@periodos');
+        Route::get('penas-convencionales-resumen',          'PenasConvencionalesController@resumen');
+        Route::get('penas-convencionales-detalle',          'PenasConvencionalesController@detalle');
+        Route::get('penas-convencionales-excel-individual/{id}', 'PenasConvencionalesController@excel');
+        Route::get('penas-convencionales-excel-resumen',    'PenasConvencionalesController@excelResumen');
+
+
         // TRANSFERENCIAS DE PRESUPUESTO
         Route::get('unidades-medicas-con-presupuesto',  'TransferenciasPresupuestosController@unidadesMedicasConPresupuesto');
         Route::get('meses-presupuesto-actual',          'TransferenciasPresupuestosController@mesesPresupuestoActual');
