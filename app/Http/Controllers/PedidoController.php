@@ -1399,7 +1399,7 @@ class PedidoController extends Controller{
                             'IVA',
                             $iva_solicitado,
                             '',
-                            $iva_solicitado
+                            ($iva_solicitado * 0.05 *30)
                         ));
                     $sheet->appendRow(array(
                             '', 
