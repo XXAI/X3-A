@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure, Request, \Exception;
-use App\Models\Usuario;
+use App\Models\Usuario, App\Models\UnidadMedica, App\Models\Servidor;
 
 class VerificarAlmacen
 {
