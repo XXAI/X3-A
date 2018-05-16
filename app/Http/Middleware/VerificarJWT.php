@@ -54,7 +54,7 @@ class VerificarJWT
                 if(!$tiene_permiso_sincronizar){
                     return response()->json(['error' => 'usuario_no_tiene_permiso_sincronizar'], 403); 
                 }
-            }else if($request->getMethod() != "GET"){
+            }/*else if($request->getMethod() != "GET"){
                 $clues = $request->header('X-clues');
 
                 $unidad_medica = UnidadMedica::where('clues',$clues)->first();
@@ -67,7 +67,7 @@ class VerificarJWT
 
                 //Harima:Checamos si la clues seleccionada es offline y el servidor en el que se esta ejecutando es diferente al asignado a la clues, no permitimos ejecutar otra cosa que no sea GET, aun si el usuario es root
                 if($unidad_medica->es_offline && env('SERVIDOR_ID') != $servidor->id && $request->getMethod() != "GET"){
-                    return response()->json(['error' => 'clues_offline_solo_lectura'], 403); 
+                    return response()->json(['error' => 'clues_offline_solo_lectura', 'unidad'=>$unidad_medica, 'servidor'=>$servidor], 403); 
                 }
 
                 if($usuario->servidor_id != env('SERVIDOR_ID') && $request->getMethod() != "GET"){
@@ -77,7 +77,7 @@ class VerificarJWT
                     // si un usuario entra e inicia sesión. Así que solo le permitimos lectura.
                     return response()->json(['error' => 'usuario_servidor_invitado_solo_lectura'], 403); 
                 }
-            }
+            }*/
             
             // Pasamos el usuario id como verificado
             $request->attributes->add(['usuario_id' => $usuario->id]);

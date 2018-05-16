@@ -68,6 +68,8 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('unidades-medicas',          'UnidadesMedicasController',    ['only' => ['index']]);
     Route::resource('proveedores',               'ProveedoresController',    ['only' => ['index']]);
 
+    Route::resource('presupuestos',               'PresupuestoController',    ['only' => ['index']]);
+
     //Route::resource('unidades-medicas', 'UnidadesMedicasController',    ['only' => ['index']]);
     Route::resource('almacenes',                 'AlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('proveedor',                 'ProveedorController',    ['only' => ['index', 'show', 'store','update','destroy']]);

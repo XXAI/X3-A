@@ -583,7 +583,11 @@ class RecepcionPedidoController extends Controller
 	        	$pedido->total_cantidad_recibida 	= $total_cantidad_recibido;
 
 	        	if($validador_cantidad_solicitada == $total_cantidad_recibido)
-	        		$pedido->status = "FI";
+					$pedido->status = "FI";
+					
+				if($pedido->status == 'EX'){
+					$pedido->recepcion_permitida = 0;
+				}
 	        	
 	        	$pedido->update();
 
