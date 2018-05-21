@@ -149,6 +149,10 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-alternos/{id}',                 'PedidosAlternosController@ver');      
         Route::put('pedidos-alternos/validacion/{id}',      'PedidosAlternosController@validar');
         Route::put('pedidos-alternos/proveedor/{id}',       'PedidosAlternosController@asignarProveedor');
+
+
+        // Insumos médicos
+        Route::resource('insumos-medicos',                      'InsumosMedicosController',['only' => ['index', 'show', 'store','update','destroy']]);
     });
     // # FIN SECCION
 
