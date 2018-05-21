@@ -424,135 +424,134 @@ class MovimientoController extends Controller
 	 */
     public function store(Request $request)
     {
-        $errors = array(); 
+            $errors = array(); 
+            
+            $almacen_id=$request->get('almacen_id');    
 
-        $almacen_id=$request->get('almacen_id');    
+            $clues_activa = $request->get('clues'); //Harima: Obtenemos la CLUES del request, esta clues es la seleccionada por el usuario en la aplicación del cliente
 
-        $clues_activa = $request->get('clues'); //Harima: Obtenemos la CLUES del request, esta clues es la seleccionada por el usuario en la aplicación del cliente
+            $validacion = $this->ValidarMovimiento("", NULL, Input::json()->all(),$almacen_id);
 
-        $validacion = $this->ValidarMovimiento("", NULL, Input::json()->all(),$almacen_id);
+            if(is_array($validacion))
+            {
+                return Response::json(['error' => $validacion], HttpResponse::HTTP_CONFLICT);
+            }
+            $datos = (object) Input::json()->all();	
+            $success = false;
 
-        if(is_array($validacion))
-        {
-			return Response::json(['error' => $validacion], HttpResponse::HTTP_CONFLICT);
-		}
-        $datos = (object) Input::json()->all();	
-        $success = false;
+            $datos->clues = $clues_activa; //Harima: Agregamos la clues a los datos del formulario, para usarlo mas adelante al agregar el personal
 
-        $datos->clues = $clues_activa; //Harima: Agregamos la clues a los datos del formulario, para usarlo mas adelante al agregar el personal
+            $id_tipo_movimiento = $datos->tipo_movimiento_id;
+            $tipo_movimiento = TiposMovimientos::Find($datos->tipo_movimiento_id);
 
-        $id_tipo_movimiento = $datos->tipo_movimiento_id;
-        $tipo_movimiento = TiposMovimientos::Find($datos->tipo_movimiento_id);
+            $tipo = NULL;
+            if($tipo_movimiento)
+                $tipo = $tipo_movimiento->tipo;
 
-        $tipo = NULL;
-        if($tipo_movimiento)
-            $tipo = $tipo_movimiento->tipo;
-
-///*************************************************************************************************************************************
-       
-        if($id_tipo_movimiento == 1)
-        {
-
-                if(property_exists($datos, "insumos"))
-                {
-                    if(count($datos->insumos) > 0 )
-                    {
-                        $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
-                        foreach ($detalle as $key => $value)
-                            {
-                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
-                                if($validacion_insumos != "")
-                                    {
-                                        array_push($errors, $validacion_insumos);
-                                    }
-                            }
-                    }else{
-                            array_push($errors, array(array('insumos' => array('no_items_insumos'))));
-                         }
-                    
-                }else{
-                        array_push($errors, array(array('insumos' => array('no_existe_insumos'))));
-                     }
-
-                if( count($errors) > 0 )
-                {
-                    return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
-                } 
-
-                DB::beginTransaction();
-                try{
-                        $movimiento_entrada = new Movimiento;
-                        $success = $this->validarTransaccionEntrada($datos, $movimiento_entrada,$almacen_id);
-                } catch (\Exception $e) {
-                    DB::rollback();
-                    return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
-                } 
-                if ($success){
-                    DB::commit();
-                    return Response::json(array("status" => 201,"messages" => "Creado","data" => $movimiento_entrada), 201);
-                } 
-                else{
-                    DB::rollback();
-                    return Response::json(array("status" => 409,"messages" => "Conflicto"), 409);
-                }
-        }//FIN IF TIPO MOVIMIENTO = 1  -> ENTRADA MANUAL
-
-///*************************************************************************************************************************************
-    
-        if($id_tipo_movimiento == 2)
-        {
-                if(property_exists($datos, "insumos"))
-                {
-                    if(count($datos->insumos) > 0 )
-                    {
-                        $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
-                        foreach ($detalle as $key => $value)
-                            {
-                                //Harima: se agrego fecha de movimiento para hacer la validación de la fecha de caducidad, para validar salidas con fechas anteriores a la actual
-                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
-                                if($validacion_insumos != "")
-                                    {
-                                        array_push($errors, $validacion_insumos);
-                                    }
-                            }
-                    }else{
-                            array_push($errors, array(array('insumos' => array('no_items_insumos'))));
-                    }
-                }else{
-                        array_push($errors, array(array('insumos' => array('no_exist_insumos'))));
-                }
-
-                if( count($errors) > 0 )
-                {
-                    return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
-                } 
-
-                DB::beginTransaction();
-                try{
-                        $movimiento_salida = new Movimiento;
-                        $success = $this->validarTransaccionSalida($datos, $movimiento_salida,$almacen_id);
-                } catch (\Exception $e) {
-                    DB::rollback();
-                    return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
-                } 
-                if ($success){
-                    DB::commit();
-                    $ms = Movimiento::with('movimientoMetadato')->find($movimiento_salida->id);
-                    return Response::json(array("status" => 201,"messages" => "Creado","data" => $ms), 201);
-                } 
-                else{
-                    DB::rollback();
-                    return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
-                }
-                
-        }///FIN IF TIPO MOVIMIENTO = 2 -->  SALIDA MANUAL
-
-///*************************************************************************************************************************************
-////        SALIDA POR RECETA CON METADATOS 
-            if($id_tipo_movimiento == 5)
+    ///*************************************************************************************************************************************
+        
+            if($id_tipo_movimiento == 1)
             {
 
                     if(property_exists($datos, "insumos"))
+                    {
+                        if(count($datos->insumos) > 0 )
+                        {
+                            $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
+                            foreach ($detalle as $key => $value)
+                                {
+                                    $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
+                                    if($validacion_insumos != "")
+                                        {
+                                            array_push($errors, $validacion_insumos);
+                                        }
+                                }
+                        }else{
+                                array_push($errors, array(array('insumos' => array('no_items_insumos'))));
+                            }
+                        
+                    }else{
+                            array_push($errors, array(array('insumos' => array('no_existe_insumos'))));
+                        }
+
+                    if( count($errors) > 0 )
+                    {
+                        return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+                    } 
+
+                    DB::beginTransaction();
+                    try{
+                            $movimiento_entrada = new Movimiento;
+                            $success = $this->validarTransaccionEntrada($datos, $movimiento_entrada,$almacen_id);
+                    } catch (\Exception $e) {
+                        DB::rollback();
+                        return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
+                    } 
+                    if ($success){
+                        DB::commit();
+                        return Response::json(array("status" => 201,"messages" => "Creado","data" => $movimiento_entrada), 201);
+                    } 
+                    else{
+                        DB::rollback();
+                        return Response::json(array("status" => 409,"messages" => "Conflicto"), 409);
+                    }
+            }//FIN IF TIPO MOVIMIENTO = 1  -> ENTRADA MANUAL
+
+    ///*************************************************************************************************************************************
+        
+            if($id_tipo_movimiento == 2)
+            {
+                    if(property_exists($datos, "insumos"))
+                    {
+                        if(count($datos->insumos) > 0 )
+                        {
+                            $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
+                            foreach ($detalle as $key => $value)
+                                {
+                                    //Harima: se agrego fecha de movimiento para hacer la validación de la fecha de caducidad, para validar salidas con fechas anteriores a la actual
+                                    $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
+                                    if($validacion_insumos != "")
+                                        {
+                                            array_push($errors, $validacion_insumos);
+                                        }
+                                }
+                        }else{
+                                array_push($errors, array(array('insumos' => array('no_items_insumos'))));
+                        }
+                    }else{
+                            array_push($errors, array(array('insumos' => array('no_exist_insumos'))));
+                    }
+
+                    if( count($errors) > 0 )
+                    {
+                        return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+                    } 
+
+                    DB::beginTransaction();
+                    try{
+                            $movimiento_salida = new Movimiento;
+                            $success = $this->validarTransaccionSalida($datos, $movimiento_salida,$almacen_id);
+                    } catch (\Exception $e) {
+                        DB::rollback();
+                        return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
+                    } 
+                    if ($success){
+                        DB::commit();
+                        $ms = Movimiento::with('movimientoMetadato')->find($movimiento_salida->id);
+                        return Response::json(array("status" => 201,"messages" => "Creado","data" => $ms), 201);
+                    } 
+                    else{
+                        DB::rollback();
+                        return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
+                    }
+                    
+            }///FIN IF TIPO MOVIMIENTO = 2 -->  SALIDA MANUAL
+
+    ///*************************************************************************************************************************************
+    ////        SALIDA POR RECETA CON METADATOS 
+            if($id_tipo_movimiento == 5)
+            {
+                if(property_exists($datos, "insumos"))
                 {
                     if(count($datos->insumos) > 0 )
                     {
@@ -583,7 +582,7 @@ class MovimientoController extends Controller
                         $success = $this->validarTransaccionSalidaReceta($datos, $movimiento_salida_receta,$almacen_id);
                 } catch (\Exception $e) {
                     DB::rollback();
-                    return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
+                    return Response::json(["status" => 500, 'error' => $e->getMessage(), "line"=>$e->getLine()], 500);
                 } 
                 if ($success){
                     DB::commit();
@@ -594,8 +593,6 @@ class MovimientoController extends Controller
                     DB::rollback();
                     return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
                 }
-
-
             }/// FIN IF TIPO MOVIMIENTO = 5   -->  SALIDA POR RECETA MEDICA
 
 ///*************************************************************************************************************************************
@@ -2136,8 +2133,10 @@ class MovimientoController extends Controller
 
                             if($insumo->cantidad_recetada > $insumo->cantidad_surtida)
                             {
-                                $cantidad_negada = $$insumo->cantidad_recetada - $insumo->cantidad_surtida;
+                                $cantidad_negada = $insumo->cantidad_recetada - $insumo->cantidad_surtida;
                                 $this->guardarEstadisticaNegacion($clave_insumo_medico,$almacen_id,$cantidad_negada);
+                                //DB::rollback();
+                                //return Response::json(["status" => 500, 'error' => "shets", "data"=>$insumo], 500);
                             }
 
                             //****************************************************************************************************
@@ -2216,6 +2215,7 @@ class MovimientoController extends Controller
 
                                         $item_detalles->movimiento_id           = $movimiento_ajuste->id; 
                                         $item_detalles->stock_id                = $lote_link->id; 
+                                        $item_detalles->clave_insumo_medico     = $lote_link->clave_insumo_medico;
                                         $item_detalles->cantidad                = $lote_link->cantidad;
                                         $item_detalles->precio_unitario         = $precio_unitario;
                                         $item_detalles->iva                     = $iva; 
@@ -2243,6 +2243,7 @@ class MovimientoController extends Controller
 
                             $item_detalles->movimiento_id           = $movimiento_salida_receta->id; 
                             $item_detalles->stock_id                = $lote_stock->id; 
+                            $item_detalles->clave_insumo_medico     = $lote->clave_insumo_medico;
                             $item_detalles->cantidad                = $lote->cantidad;
                             $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
                             $item_detalles->iva                     = $precio_insumo['iva']; 

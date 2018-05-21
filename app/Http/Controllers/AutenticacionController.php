@@ -102,13 +102,38 @@ class AutenticacionController extends Controller
                 $unidades_medicas = [];
                
                 if( $usuario->su ){
-                    $unidades_medicas = UnidadMedica::has('almacenes')->with('almacenes')->orderBy('unidades_medicas.nombre')->get();
+                    //buscar que tengan almacenes y almacenes externos
+                    //$ums = UnidadMedica::where('activa',1)->orderBy('unidades_medicas.nombre')->get();
+                    
+                    $ums_ext = UnidadMedica::whereIn('clues', function($query){
+                        $query->select('clues_perteneciente')->from('almacenes')->where('externo',1);
+                    });
+
+                    $ums = UnidadMedica::has('almacenes')->orderBy('unidades_medicas.nombre')
+                        ->union($ums_ext)
+                        ->get();
+
+                    foreach($ums as $um){
+                        
+                        $almacenes_externos = Almacen::where('clues_perteneciente',$um->clues)->get();
+                        
+                        $um->almacenes; // Obtenemos los almacenes
+                        $um->almacenes_externos = $almacenes_externos; // Obtenemos los almacenes externos
+
+                       
+
+                    }
+                    $unidades_medicas = $ums;
+
+                    //$unidades_medicas = UnidadMedica::has('almacenes')->with('almacenes')->orderBy('unidades_medicas.nombre')->get();
                 } else {
                     $ums = $usuario->unidadesMedicas;
                     $almacenes = $usuario->almacenes()->lists("almacenes.id");
                     foreach($ums as $um){
-                        $almacenes_res = $um->almacenes()->whereIn('almacenes.id',$almacenes)->get();
+                        $almacenes_res = $um->almacenes()->whereIn('almacenes.id',$almacenes)->get(); // aqui inserta almaces que dependande mi
                         $um->almacenes = $almacenes_res;
+                        $almacenes_externos = Almacen::where('clues_perteneciente',$um->clues)->get();
+                        $um->almacenes_externos = $almacenes_externos; // Obtenemos los almacenes externos
                         //$almacenes = $um->almacenes()->has('usuarios')->where('usuario_id',$usuario->id)->get();
                     }
                     $unidades_medicas = $ums;

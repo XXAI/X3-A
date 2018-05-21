@@ -66,7 +66,7 @@ class UsuarioController extends Controller
             'apellidos'     => 'required'
         ];
 
-        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','unidades_medicas','almacenes','medico_id',"pregunta_secreta","respuesta");
+        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','unidades_medicas','almacenes','medico_id','proveedor_id',"pregunta_secreta","respuesta");
 
         if(!$servidor->principal){
             $inputs['id'] = env('SERVIDOR_ID') . ':' . $inputs['id'];
@@ -86,6 +86,12 @@ class UsuarioController extends Controller
             if(isset($inputs['medico_id'])){
                 if( $inputs['medico_id'] == '-1'){
                    unset($inputs['medico_id']);
+                } 
+            };
+
+            if(isset($inputs['proveedor_id'])){
+                if( $inputs['proveedor_id'] == -1){
+                   unset($inputs['proveedor_id']);
                 } 
             };
 
@@ -165,7 +171,7 @@ class UsuarioController extends Controller
             return Response::json(['error' => "No se puede editar este usuario, ya que fue creado en un servidor diferente al actual."], 500);
         }
 
-        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','cambiarPassword','unidades_medicas','almacenes','medico_id',"pregunta_secreta","respuesta");
+        $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','cambiarPassword','unidades_medicas','almacenes','medico_id','proveedor_id',"pregunta_secreta","respuesta");
 
         if(!$servidor->principal){
             $inputs['id'] = env('SERVIDOR_ID') . ':' . $inputs['id'];
@@ -193,12 +199,20 @@ class UsuarioController extends Controller
                     $object->medico_id = null;
                 } 
             };
+
+            if(isset($inputs['proveedor_id'])){
+                if( $inputs['proveedor_id'] != -1){
+                    $object->proveedor_id = $inputs['proveedor_id'];
+                } else {
+                    $object->proveedor_id = null;
+                } 
+            };
             
             $object->pregunta_secreta = $inputs['pregunta_secreta'];
             $object->respuesta = $inputs['respuesta'];
             $object->apellidos =  $inputs['apellidos'];
             $object->avatar =  $inputs['avatar'];
-            $object->id =  $inputs['id'];
+            //$object->id =  $inputs['id'];
             if ($inputs['cambiarPassword'] ){
                 $object->password = Hash::make($inputs['password']);
             }

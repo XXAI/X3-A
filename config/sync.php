@@ -55,12 +55,14 @@ return [
         'programas',
         'proveedores',
         'puestos',
+        'precios_base',
+        'precios_base_detalles',
         'presentaciones_medicamentos',
         'presentaciones_sustancias',
         'categorias',
         'categorias_metadatos',
         'organismos',
-        'unidades_medicas',
+        //'unidades_medicas',
         //'areas', #no esta en migrations
         'articulos',
         'insumos_medicos',
@@ -107,7 +109,7 @@ return [
 
     'tablas' => [
         'usuarios',
-        'personal_clues',
+        //'personal_clues',
         'personal_clues_metadatos',
         'personal_clues_puesto',
         //'almacenes',
@@ -149,7 +151,9 @@ return [
         'receta_detalles',
         'receta_digital_detalles',
         'receta_movimientos',
-        'resguardos'
+        'resguardos',
+        'inicializacion_inventario',
+        'inicializacion_inventario_detalles'
     ],
      /*
     |--------------------------------------------------------------------------
@@ -162,6 +166,8 @@ return [
     | del método que se encuentra en namespace App\Librerias\Sync, ahí se pueden
     | agregar los métodos necerios por si hay que hacer algún calculo en la subida
     | o bajada y especificarlos en la propiedad: calculo_bajada y calculo_subida
+    | En las condiciones de subida o bajada, puedes usar la clave: {CLUES_QUE_SINCRONIZA}
+    | para que al sincronizar se compare con la clues de quien sincroniza.
     |
     */
     'pivotes' => [
@@ -181,18 +187,26 @@ return [
             'campos_bajada' => [
                 'causes_autorizado',
                 'causes_modificado',
+                'causes_comprometido', // Akira: Agregue esto por los almacenes externos ya que estos no pueden comprometer presupuesto, si estoy mal borren esta línea
+                'causes_devengado', // Akira: Agregue esto por las oficinas juris que tienen almacen externo ya que estos no pueden devengar presupuesto, si estoy mal borren esta línea
                 'no_causes_autorizado',
                 'no_causes_modificado',
+                'no_causes_comprometido', // Akira: Agregue esto por los almacenes externos ya que estos no pueden comprometer presupuesto, si estoy mal borren esta línea
+                'no_causes_devengado', // Akira: Agregue esto por las oficinas juris que tienen almacen externo ya que estos no pueden devengar presupuesto, si estoy mal borren esta línea
                 'material_curacion_autorizado',
                 'material_curacion_modificado',
+                'material_curacion_comprometido', // Akira: Agregue esto por los almacenes externos ya que estos no pueden comprometer presupuesto, si estoy mal borren esta línea
+                'material_curacion_devengado', // Akira: Agregue esto por las oficinas juris que tienen almacen externo ya que estos no pueden devengar presupuesto, si estoy mal borren esta línea
                 'insumos_autorizado',
                 'insumos_modificado',
+                'insumos_comprometido', // Akira: Agregue esto por los almacenes externos ya que estos no pueden comprometer presupuesto, si estoy mal borren esta línea
+                'insumos_devengado',  // Akira: Agregue esto por las oficinas juris que tienen almacen externo ya que estos no pueden devengar presupuesto, si estoy mal borren esta línea
                 'validation',
                 'created_at',
                 'updated_at',
                 'deleted_at'
             ],
-            'condicion_subida' => 'clues = "'.env('CLUES').'"',       // Si quieren meter mas agrupen todo entre parentesis ( condicion1 AND condicion2 OR condicion3)
+            'condicion_subida' => '(clues = "'.env('CLUES').'" or clues in (SELECT clues FROM almacenes WHERE externo = 1 and clues_perteneciente="'.env('CLUES').'" ))',       // Si quieren meter mas agrupen todo entre parentesis ( condicion1 AND condicion2 OR condicion3)
             'condicion_bajada' =>'',
             'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularPresupuestoDisponible',  // Esta funcion se ejecuta justo despues de haber bajado a local          
@@ -225,7 +239,7 @@ return [
             'calculo_subida' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosRemoto', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosCanceladosLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
         ],
-        'ajuste_presupuesto_pedidos_regresion' => [
+        /*'ajuste_presupuesto_pedidos_regresion' => [
             'campos_subida' => [
                 'mes_origen',
                 'anio_origen',
@@ -252,8 +266,7 @@ return [
             'condicion_bajada' => "status = 'EP'", // Aplicados en remoto
             'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePresupuestoPedidosRegresionLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
-        ],
-        'ajuste_pedidos_presupuesto_apartado' => [
+        ],'ajuste_pedido_presupuesto_apartado' => [
             'campos_subida' => [
                 ''
                 // No es necesario poner los campos porque directamente hará un insert de todos los campos la primera vez
@@ -276,25 +289,52 @@ return [
             'condicion_bajada' => "status = 'AR'", // Aplicados en remoto
             'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '\App\Librerias\Sync\CalculosPivotesSync::calcularAjustePedidosPresupuestoApartadoLocal',  // Esta funcion se ejecuta justo despues de haber bajado a local                
-        ],
-        'almacenes'=>[
+        ],*/
+        'personal_clues'=>[
             'campos_subida'=>[
                 'id',
                 'incremento',
                 'servidor_id',
-                'nivel_almacen',
-                'tipo_almacen',
                 'clues',
-                'subrogado',
-                'lista_insumo_id',
-                'proveedor_id',
-                'unidosis',
+                'tipo_personal_id',
+                'usuario_asignado',
                 'nombre',
+                'surte_controlados',
+                'licencia_controlados',
+                'celular',
+                'email',
+                'usuario_id',
+                'created_at', 
+                'updated_at', 
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'clues',
+                'tipo_personal_id',
+                'usuario_asignado',
+                'nombre',
+                'surte_controlados',
+                'licencia_controlados',
+                'celular',
+                'email',
+                'usuario_id',
+                'created_at', 
+                'updated_at', 
+                'deleted_at'
+            ],
+            'condicion_subida' => 'clues = "'.env('CLUES').'"', // Pendientes
+            'condicion_bajada' => '', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local
+        ],
+        'almacenes'=>[
+            'campos_subida'=>[
                 'encargado_almacen_id',
                 'usuario_id',
-                'created_at',
                 'updated_at',
-                'deleted_at'
             ],
             'campos_bajada'=>[
                 'id',
@@ -303,7 +343,9 @@ return [
                 'nivel_almacen',
                 'tipo_almacen',
                 'clues',
+                'clues_perteneciente',
                 'subrogado',
+                'externo',
                 'lista_insumo_id',
                 'proveedor_id',
                 'unidosis',
@@ -318,6 +360,28 @@ return [
             'condicion_bajada' => '', // Aplicados en remoto
             'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local                
+        ],
+        'unidades_medicas'=>[
+            'campos_subida'=>[
+                'director_id',
+                'updated_at'
+            ],
+            'campos_bajada'=>[
+                'clues',
+                'jurisdiccion_id',
+                'tipo',
+                'nombre',
+                'activa',
+                'es_offline',
+                'director_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => 'clues = "'.env('CLUES').'"', // Pendientes
+            'condicion_bajada' => '', // Aplicados en remoto
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local   
         ],
         'pedidos'=>[
             'campos_subida'=>[
@@ -663,5 +727,163 @@ return [
             'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local    
         ],
         // Agregar más tablas copiando la estructura anterior
+
+        //Akira: Pedidos en almacenes externos
+        'pedidos'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'clues',
+                'clues_destino',
+                'tipo_insumo_id',
+                'tipo_pedido_id',
+                'descripcion',
+                'pedido_padre',
+                'folio',
+                'fecha',
+                'fecha_concluido',
+                'fecha_expiracion',
+                'fecha_cancelacion',
+                'almacen_solicitante',
+                'almacen_proveedor',
+                'organismo_dirigido',
+                'acta_id',
+                'status',
+                'recepcion_permitida',
+                'observaciones', 
+                'usuario_validacion',
+                'proveedor_id',
+                'presupuesto_id',
+                'total_monto_solicitado',
+                'total_monto_recibido',
+                'total_claves_solicitadas',
+                'total_claves_recibidas',
+                'total_cantidad_solicitada',
+                'total_cantidad_recibida',
+                'encargado_almacen_id',
+                'director_id',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'clues',
+                'clues_destino',
+                'tipo_insumo_id',
+                'tipo_pedido_id',
+                'descripcion',
+                'pedido_padre',
+                'folio',
+                'fecha',
+                'fecha_concluido',
+                'fecha_expiracion',
+                'fecha_cancelacion',
+                'almacen_solicitante',
+                'almacen_proveedor',
+                'organismo_dirigido',
+                'acta_id',
+                'status',
+                'recepcion_permitida',
+                'observaciones', 
+                'usuario_validacion',
+                'proveedor_id',
+                'presupuesto_id',
+                'total_monto_solicitado',
+                'total_monto_recibido',
+                'total_claves_solicitadas',
+                'total_claves_recibidas',
+                'total_cantidad_solicitada',
+                'total_cantidad_recibida',
+                'encargado_almacen_id',
+                'director_id',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => '(clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1))',
+            'condicion_bajada' => '(clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1 AND clues = "{CLUES_QUE_SINCRONIZA}") OR servidor_id= "'.env('SERVIDOR_ID').'")', // Esto funciona muy bien en sync online, pero offline me va abajar todo
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local                
+        ],
+        'pedidos_insumos'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'pedido_id',
+                'tipo_insumo_id',
+                'insumo_medico_clave',
+                'cantidad_enviada',
+                'cantidad_solicitada',
+                'cantidad_recibida',
+                'precio_unitario',
+                'monto_enviado',
+                'monto_solicitado',
+                'monto_recibido',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'pedido_id',
+                'tipo_insumo_id',
+                'insumo_medico_clave',
+                'cantidad_enviada',
+                'cantidad_solicitada',
+                'cantidad_recibida',
+                'precio_unitario',
+                'monto_enviado',
+                'monto_solicitado',
+                'monto_recibido',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => '(pedido_id in (select id from pedidos where clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1)))', // Deberia considerar si dejo vacio los campos de subida o bajada que pasa, total arriba se sincronizan
+            'condicion_bajada' => '(pedido_id in (select id from pedidos where (clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1 AND clues = "{CLUES_QUE_SINCRONIZA}")) OR servidor_id= "'.env('SERVIDOR_ID').'"))', 
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local    
+        ],
+        'pedidos_insumos_clues'=>[
+            'campos_subida'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'pedido_insumo_id',
+                'cantidad',
+                'clues',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'campos_bajada'=>[
+                'id',
+                'incremento',
+                'servidor_id',
+                'pedido_insumo_id',
+                'cantidad',
+                'clues',
+                'usuario_id',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ],
+            'condicion_subida' => '(pedido_insumo_id in ( select id from pedidos_insumos where pedido_id in (select id from pedidos where clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1))))', 
+            'condicion_bajada' => '(pedido_insumo_id in ( select id from pedidos_insumos where pedido_id in (select id from pedidos where (clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1 AND clues = "{CLUES_QUE_SINCRONIZA}")) OR servidor_id= "'.env('SERVIDOR_ID').'")))', 
+            'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
+            'calculo_bajada' => '', // Esta funcion se ejecuta justo despues de haber bajado a local    
+        ],
     ]
 ];
