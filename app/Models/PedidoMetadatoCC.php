@@ -14,6 +14,10 @@ class PedidoMetadatoCC extends BaseModel
     protected $guardarIDUsuario = true;
     protected $table = 'pedido_metadatos_cc';
 
+    public function programa(){
+        return $this->belongsTo('App\Models\Programa','programa_id');
+    }
+
      
 
 }

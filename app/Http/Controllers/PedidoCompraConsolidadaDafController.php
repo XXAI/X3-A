@@ -51,29 +51,26 @@ use App\Models\PedidoCcClues;
 * Controlador ``: Controlador 
 *
 */
-class PedidoCompraConsolidadaDamController extends Controller
+class PedidoCompraConsolidadaDafController extends Controller
 {
      
     public function index(Request $request)
     {
-        $parametros = Input::only('q','page','per_page','clues','almacen','fecha_desde','fecha_hasta');
+        $parametros = Input::only('q','page','per_page','clues','almacen');
      
-        $pedidos  = Pedido::with("metadatoCompraConsolidada")->where('tipo_pedido_id','PCC')->where('pedido_padre',NULL);
+        $pedidos  = Pedido::with("metadatoCompraConsolidada")
+                            ->where('tipo_pedido_id','PCC')
+                            ->where('pedido_padre',NULL)
+                            ->where( function($q){
+                                $q->where('status','CONCENTRADO')->orWhere('status','AJUSTADO');
+                            });
 
         if ($parametros['q'])
         {
             $pedidos =  $pedidos->where(function($query) use ($parametros) {
-                 $query->where('id','LIKE',"%".$parametros['q']."%")
-                       ->orWhere('descripcion','LIKE',"%".$parametros['q']."%")
-                       ->orWhere('folio','LIKE',"%".$parametros['q']."%");
+                 $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('folio','LIKE',"%".$parametros['q']."%");
              });
         }
-        if($parametros['fecha_desde'] && $parametros['fecha_hasta'])
-        {
-            $pedidos = $pedidos->where('fecha', '>=', $parametros['fecha_desde'] )
-                               ->where('fecha', '<=', $parametros['fecha_hasta']);
-        }
-
         $pedidos = $pedidos->orderBy('updated_at','DESC');
  //////*********************************************************************************************************
         if(isset($parametros['page'])){
@@ -103,167 +100,16 @@ class PedidoCompraConsolidadaDamController extends Controller
    }
 
 
+
+
+
 //////                   S   T   O   R   E
 ///********************************************************************************************************************************************
 ///*****************************************************************************************************************************************
 
 public function store(Request $request)
 {
-    $parametros = Input::only('q','page','per_page');
-          
-    $input_data = (object)Input::json()->all();
-    $servidor_id = property_exists($input_data, "servidor_id") ? $input_data->servidor_id : env('SERVIDOR_ID');
-
-    $errors     = array();
-    $nuevo      = 0;
-
-///*****************************************************************************************************************************************
-if($input_data->estatus=="INICIALIZADO")
-{
-    foreach ($input_data->unidades_medicas as $key => $um)
-    {
-       $validacion_unidad = $this->validarUnidadMedica($um);
-       if($validacion_unidad != "")
-        {
-            array_push($errors, $validacion_unidad);
-        }
-    }
-
-    $validacion_metadatos = $this->validarMetadatos($input_data->metadato_compra_consolidada);
-    if($validacion_metadatos != "")
-        {
-            array_push($errors, $validacion_metadatos);
-        }
-
-    $validacion_pedido = $this->validarPedidoDam(Input::json()->all());
-    if($validacion_pedido != "")
-        {
-            array_push($errors, $validacion_pedido);
-        }
-
-        $unidades_medicas = $input_data->unidades_medicas;
-        $metadato_cc      = (object) $input_data->metadato_compra_consolidada;
-        $total_asignado_ums = 0;
-        foreach ($unidades_medicas as $key => $um)
-        {
-            $um = (object) $um;
-            $total_asignado_ums += $um->presupuesto_clues;
-        }
-        if( $total_asignado_ums < $metadato_cc->presupuesto_compra)
-        {
-            array_push($errors, ["El presupuesto no se asignado completamente todavia."]);
-        }
-        if( $total_asignado_ums > $metadato_cc->presupuesto_compra)
-        {
-            array_push($errors, ["Se esta excediendo el presupuesto de la compra."]);
-        }
-}/// fin if INICIALIZADO
     
-///*****************************************************************************************************************************************
-if( count($errors) > 0 )
-{
-    return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
-} 
-///*****************************************************************************************************************************************
-    
-$success = false;
-DB::beginTransaction();
-try{
-////****************************************************************************************************************************************
-        
-        $pedido = new Pedido;
-        $pedido->clues          = "";
-        $pedido->tipo_pedido_id = "PCC";
-        $pedido->folio          = "";
-        $pedido->fecha          = date('Y-m-d');
-        $pedido->status         = $input_data->estatus;
-        $pedido->save();
-
-        $pedido_mcc = new PedidoMetadatoCC;
-        $pedido_mcc->pedido_id                        = $pedido->id;
-
-        $programa_id = $input_data->metadato_compra_consolidada['programa_id'];
-        if($programa_id == "")
-        {   $programa_id= NULL; }else{  $programa_id = $input_data->metadato_compra_consolidada['programa_id']; }
-
-
-        $pedido_mcc->programa_id                      = $programa_id;
-        $pedido_mcc->fecha_limite_captura             = $input_data->metadato_compra_consolidada['fecha_limite_captura'];
-        $pedido_mcc->lugar_entrega                    = $input_data->metadato_compra_consolidada['lugar_entrega'];
-        $pedido_mcc->presupuesto_compra               = $input_data->metadato_compra_consolidada['presupuesto_compra'];
-        $pedido_mcc->presupuesto_causes               = $input_data->metadato_compra_consolidada['presupuesto_causes'];
-        $pedido_mcc->presupuesto_causes_asignado      = $input_data->metadato_compra_consolidada['presupuesto_causes_asignado'];
-        $pedido_mcc->presupuesto_causes_disponible    = $input_data->metadato_compra_consolidada['presupuesto_causes_disponible'];
-        $pedido_mcc->presupuesto_no_causes            = $input_data->metadato_compra_consolidada['presupuesto_no_causes'];
-        $pedido_mcc->presupuesto_no_causes_asignado   = $input_data->metadato_compra_consolidada['presupuesto_no_causes_asignado'];
-        $pedido_mcc->presupuesto_no_causes_disponible = $input_data->metadato_compra_consolidada['presupuesto_no_causes_disponible'];
-        $pedido_mcc->save();
-
-        $unidades_medicas = $input_data->unidades_medicas;
-
-        foreach ($unidades_medicas as $key => $um)
-        {
-            $um = (object) $um;
-            if($um->clues != "")
-            {
-                
-                    $pedido_cc_clues = new PedidoCcClues;
-
-                    $pedido_cc_clues->pedido_id                      =  $pedido->id;
-                    $pedido_cc_clues->clues                          =  $um->clues;
-                    $pedido_cc_clues->estatus                        =  $um->estatus;
-                    $pedido_cc_clues->presupuesto_clues              =  $um->presupuesto_clues;
-                    $pedido_cc_clues->presupuesto_causes             =  $um->presupuesto_causes;
-                    $pedido_cc_clues->presupuesto_no_causes          =  $um->presupuesto_no_causes;
-                    $pedido_cc_clues->save();
-                    
-                    
-                    if($input_data->estatus =="INICIALIZADO")
-                    {
-                        $pedido_um = new Pedido;
-                        $pedido_um->pedido_padre   = $pedido->id;
-                        $pedido_um->clues          = $um->clues;
-                        $pedido_um->tipo_pedido_id = "PCC";
-                        $pedido_um->folio          = "";
-                        $pedido_um->fecha          = date("Y-m-d");
-                        $pedido_um->status         = "BR";
-                        $pedido_um->save();
-
-                        $pedido_um_mcc = new PedidoMetadatoCC;
-                        $pedido_um_mcc->pedido_id                         = $pedido_um->id;
-                        $pedido_um_mcc->programa_id                       = $input_data->metadato_compra_consolidada['programa_id'];
-                        $pedido_um_mcc->fecha_limite_captura              = $input_data->metadato_compra_consolidada['fecha_limite_captura'];
-                        $pedido_um_mcc->presupuesto_compra                = $um->presupuesto_clues;
-                        $pedido_um_mcc->presupuesto_causes                = $um->presupuesto_causes;
-                        $pedido_um_mcc->presupuesto_causes_asignado       = 0;
-                        $pedido_um_mcc->presupuesto_causes_disponible     = $um->presupuesto_causes;
-                        $pedido_um_mcc->presupuesto_no_causes             = $um->presupuesto_no_causes;
-                        $pedido_um_mcc->presupuesto_no_causes_asignado    = 0;
-                        $pedido_um_mcc->presupuesto_no_causes_disponible  = $um->presupuesto_no_causes;
-                        $pedido_um_mcc->save();
-                    }
-                
-            }
-        }
-
-
-////*****************************************************************************************************************************************
-
-        $success = true;
-        } catch (\Exception $e) {   
-                                    $success = false;
-                                    DB::rollback();
-                                    return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
-                                } 
-        if ($success)
-        {
-            DB::commit();
-            return Response::json(array("status" => 201,"messages" => "Pedido para Compra Consolidadda creado correctamente","data" => $pedido), 201);
-        }else{
-                DB::rollback();
-                return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
-             }
-////*****************************************************************************************************************************************
 
  }  // fin store method
 
@@ -276,7 +122,7 @@ try{
 
     public function show($id)
     {
-        $pedido = Pedido::with('metadatoCompraConsolidada','unidadesMedicas')->find($id);
+        $pedido = Pedido::with('metadatoCompraConsolidada','insumos','unidadesMedicas')->find($id);
         if(!$pedido){
 			return Response::json(array("status" => 404,"messages" => "No se encuentra el pedido solicitado"), 200);
 		}
@@ -298,7 +144,144 @@ try{
 
 ///***************************************************************************************************************************
 ///***************************************************************************************************************************
+///***************************************************************************************************************************
+///***************************************************************************************************************************
 
+public function update(Request $request, $id)
+{
+    $parametros = Input::only('q','page','per_page');      
+    $input_data = (object)Input::json()->all();
+    $servidor_id = property_exists($input_data, "servidor_id") ? $input_data->servidor_id : env('SERVIDOR_ID');
+
+    $errors     = array();
+    $nuevo      = 0;
+
+    $presupuesto_compra               = 0;
+    $presupuesto_causes               = 0;
+    $presupuesto_no_causes            = 0;
+    $presupuesto_causes_asignado      = 0;
+    $presupuesto_causes_disponible    = 0;
+    $presupuesto_no_causes_asignado   = 0;
+    $presupuesto_no_causes_disponible = 0;
+///*****************************************************************************************************************************************
+$pedido = Pedido::with('metadatoCompraConsolidada','unidadMedica')->find($id);
+    if(!$pedido){
+			return Response::json(array("status" => 404,"messages" => "No se encuentra el pedido solicitado"), 200);
+		} 
+
+
+///*****************************************************************************************************************************************
+if($input_data->estatus=="AJUSTADO")
+{
+
+}/// fin if INICIALIZADO
+    
+///*****************************************************************************************************************************************
+if( count($errors) > 0 )
+{
+    return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+} 
+///*****************************************************************************************************************************************
+    
+$success = false;
+DB::beginTransaction();
+try{
+////****************************************************************************************************************************************
+        
+        $pedido->clues          = $input_data->clues;
+        $pedido->tipo_pedido_id = "PCC";
+        $pedido->folio          = "";
+        $pedido->fecha          = $input_data->fecha;
+        $pedido->status         = $input_data->estatus;
+        $pedido->save();
+
+        $insumos = $input_data->insumos;
+        PedidoInsumo::where('pedido_id',$pedido->id)->delete();
+
+        foreach ($insumos as $key => $insumo)
+        {
+            $insumo = (object) $insumo;
+
+            $precio_base = DB::table('precios_base')
+                                ->select('precios_base.anio', 'precios_base_detalles.*')
+                                ->leftJoin('precios_base_detalles', function ($join){
+                                    $join->on('precios_base.id', '=', 'precios_base_detalles.precio_base_id');
+                                })->where('precios_base.activo', 1)
+                                  ->where('precios_base_detalles.insumo_medico_clave', $insumo->insumo_medico_clave)
+                                  ->first();
+            if($precio_base)
+            {
+
+                $insumo_db = PedidoInsumo::withTrashed()
+                                        ->where('pedido_id',$pedido->id)
+                                        ->where('insumo_medico_clave',$insumo->insumo_medico_clave)
+                                        ->first();
+                if($insumo_db)
+                {   $insumo_db->restore(); }else{ $insumo_db = new PedidoInsumo; }
+
+                $insumo_db->pedido_id             = $pedido->id;
+                $insumo_db->insumo_medico_clave   = $insumo->insumo_medico_clave;
+                //$insumo_db->cantidad_enviada      = 0;
+                $insumo_db->cantidad_solicitada   = $insumo->cantidad_solicitada;
+                $insumo_db->cantidad_recibida     = 0;
+                $insumo_db->precio_unitario       = $insumo->precio_unitario;
+                //$insumo_db->monto_enviado         = ( $insumo->precio_unitario * $insumo->cantidad_solicitada );
+                $insumo_db->monto_solicitado      = ( $insumo->precio_unitario * $insumo->cantidad_solicitada );
+                $insumo_db->monto_recibido        = 0;
+                $insumo_db->save();
+            }
+
+            if($precio_base->es_causes == 1)
+                {
+                    $presupuesto_causes_asignado += ( $insumo->precio_unitario * $insumo->cantidad_solicitada );
+                }else{
+                        $presupuesto_no_causes_asignado += ( $insumo->precio_unitario * $insumo->cantidad_solicitada );
+                     }
+        }
+
+/*
+        $pedido_padre_dam = Pedido::with('unidadesMedicas')->find($pedido->pedido_padre);
+        if ($pedido_padre_dam)
+        {
+            $pedido_padre_dam = (object) $pedido_padre_dam;
+            
+            foreach ($pedido_padre_dam->unidadesMedicas as $key => $um)
+            {
+                if($um->clues == $pedido->clues)
+                {
+                    $pedido_cc_clues = PedidoCcClues::find($um->id);
+                    $pedido_cc_clues->estatus                          = $pedido->status;
+                    $pedido_cc_clues->presupuesto_causes_asignado      = $presupuesto_causes_asignado;
+                    $pedido_cc_clues->presupuesto_no_causes_asignado   = $presupuesto_no_causes_asignado;
+                    $pedido_cc_clues->presupuesto_causes_disponible    = $pedido_cc_clues->presupuesto_causes - $presupuesto_causes_asignado;
+                    $pedido_cc_clues->presupuesto_no_causes_disponible = $pedido_cc_clues->presupuesto_no_causes - $presupuesto_no_causes_asignado;
+                    $pedido_cc_clues->save();
+                }
+            }
+        }
+*/
+
+////*****************************************************************************************************************************************
+
+        $success = true;
+        } catch (\Exception $e) {   
+                                    $success = false;
+                                    DB::rollback();
+                                    return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
+                                } 
+        if ($success)
+        {
+            DB::commit();
+            $pedido->estatus         = $pedido->status;
+            return Response::json(array("status" => 201,"messages" => "Pedido para Compra Consolidadda creado correctamente","data" => $pedido), 201);
+        }else{
+                DB::rollback();
+                return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
+             }
+////*****************************************************************************************************************************************
+    }
+
+/*
     public function update(Request $request, $id)
     {
 
@@ -309,15 +292,15 @@ try{
 
     $errors     = array();
     $nuevo      = 0;
-///*****************************************************************************************************************************************
+
     $pedido = Pedido::with('metadatoCompraConsolidada','unidadesMedicas')->find($id);
         if(!$pedido){
 			return Response::json(array("status" => 404,"messages" => "No se encuentra el pedido solicitado"), 200);
 		} 
 
 
-///*****************************************************************************************************************************************
-if($input_data->estatus=="INICIALIZADO")
+
+if($input_data->estatus=="AJUSTADO")
 {
     foreach ($input_data->unidades_medicas as $key => $um)
     {
@@ -338,38 +321,19 @@ if($input_data->estatus=="INICIALIZADO")
         {
             array_push($errors, $validacion_pedido);
         }
-
-        $unidades_medicas = $input_data->unidades_medicas;
-        $metadato_cc      = (object) $input_data->metadato_compra_consolidada;
-        $total_asignado_ums = 0;
-        foreach ($unidades_medicas as $key => $um)
-        {
-            $um = (object) $um;
-            $total_asignado_ums += $um->presupuesto_clues;
-        }
-        if( $total_asignado_ums < $metadato_cc->presupuesto_compra)
-        {
-            //array_push($errors, ["El presupuesto no se ha asignado completamente."]);
-            array_push($errors, ["PRESUPUESTO"=>"El presupuesto no se asignado completamente todavia."]);
-
-        }
-        if( $total_asignado_ums > $metadato_cc->presupuesto_compra)
-        {
-            array_push($errors, ["Se esta excediendo el presupuesto de la compra."]);
-        }
  }/// fin if INICIALIZADO
     
-///*****************************************************************************************************************************************
+
 if( count($errors) > 0 )
 {
     return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
 } 
-///*****************************************************************************************************************************************
+
     
 $success = false;
 DB::beginTransaction();
 try{
-////****************************************************************************************************************************************
+
         
         $pedido->clues          = "";
         $pedido->tipo_pedido_id = "PCC";
@@ -380,13 +344,7 @@ try{
 
         $pedido_mcc = PedidoMetadatoCC::where('pedido_id',$pedido->id)->first();
         $pedido_mcc->pedido_id                        = $pedido->id;
-
-        $programa_id = $input_data->metadato_compra_consolidada['programa_id'];
-        if($programa_id == "")
-        {   $programa_id= NULL; }else{  $programa_id = $input_data->metadato_compra_consolidada['programa_id']; }
-
-
-        $pedido_mcc->programa_id                      = $programa_id;
+        $pedido_mcc->programa_id                      = $input_data->metadato_compra_consolidada['programa_id'];
         $pedido_mcc->fecha_limite_captura             = $input_data->metadato_compra_consolidada['fecha_limite_captura'];
         $pedido_mcc->lugar_entrega                    = $input_data->metadato_compra_consolidada['lugar_entrega'];
         $pedido_mcc->presupuesto_compra               = $input_data->metadato_compra_consolidada['presupuesto_compra'];
@@ -420,6 +378,7 @@ try{
 
                 if($input_data->estatus =="INICIALIZADO")
                 {
+
                         $pedido_um = new Pedido;
                         $pedido_um->pedido_padre   = $pedido->id;
                         $pedido_um->clues          = $um->clues;
@@ -446,7 +405,7 @@ try{
             }
         }
 
-////*****************************************************************************************************************************************
+
 
             $success = true;
         } catch (\Exception $e) {   
@@ -463,9 +422,14 @@ try{
                 DB::rollback();
                 return Response::json(array("status" => 409,"messages" => "Conflicto"), 200);
              }
-////*****************************************************************************************************************************************
+
     }
      
+
+     */
+
+
+
     public function destroy($id)
     {
         
@@ -477,7 +441,7 @@ try{
 private function validarUnidadMedica($request)
     { 
         $mensajes = [
-                        'required'      => "Campo requerido para Unidad Medica.",
+                        'required'      => "Debe ingresar este campo de la UM.",
                         'integer'       => "Solo cantidades enteras.",
                         'numeric'       => "Debe ingresar un numero valido.",
                         'email'         => "formato de email invalido",
@@ -518,10 +482,9 @@ private function validarMetadatos($request)
                         'email'         => "formato de email invalido",
                         'unique'        => "unique",
                         'min'           => "La cantidad debe ser mayor de cero.",
-                        'date'           => "La fecha limite de captura no es valida.",
                     ];
         $reglas = [
-                        'fecha_limite_captura'          => 'required|date',
+                        'fecha_limite_captura'          => 'required',
                         'lugar_entrega'                 => 'required',
                         'presupuesto_compra'            => 'required',
                         'presupuesto_causes'            => 'required',
@@ -530,7 +493,6 @@ private function validarMetadatos($request)
                         'presupuesto_no_causes_asignado'     => 'required',
                         'presupuesto_causes_disponible'      => 'required',
                         'presupuesto_no_causes_disponible'   => 'required',
-                        'programa_id'                        => 'required|integer',
                   ];
                          
         $v = \Validator::make($request, $reglas, $mensajes );
@@ -607,7 +569,7 @@ try{
                     $insumo_db = new PedidoInsumo;
                     $insumo_db->pedido_id             = $input_data->id;
                     $insumo_db->insumo_medico_clave   = $insumo->insumo_medico_clave;
-                    $insumo_db->cantidad_enviada      = $insumo->total_cantidad;
+                    $insumo_db->cantidad_enviada      = 0;
                     $insumo_db->cantidad_solicitada   = $insumo->total_cantidad;
                     $insumo_db->cantidad_recibida     = 0;
                     $insumo_db->precio_unitario       = $insumo->precio_unitario;
