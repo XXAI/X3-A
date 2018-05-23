@@ -129,6 +129,8 @@ class EntradaLaboratorioController extends Controller
             $movimiento_response->numero_claves  = $cantidad_claves;
             $movimiento_response->numero_insumos = $cantidad_insumos;
 
+            $movimiento_response->estatus = $movimiento_response->status;
+
             array_push($data,$movimiento_response);
         }
 
@@ -259,7 +261,7 @@ class EntradaLaboratorioController extends Controller
 
 ///*************************************************************************************************************************************
 
-            if($datos->status == "BR")
+            if($datos->estatus == "BR")
             {
                 $success = false;
 
@@ -275,7 +277,7 @@ class EntradaLaboratorioController extends Controller
                 //agregar al modelo los datos
                 $movimiento_entrada_br->almacen_id                   =  $almacen_id;
                 $movimiento_entrada_br->tipo_movimiento_id           =  $datos->tipo_movimiento_id;
-                $movimiento_entrada_br->status                       =  $datos->status; 
+                $movimiento_entrada_br->status                       =  $datos->estatus; 
                 $movimiento_entrada_br->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")               ? $datos->fecha_movimiento          : '';
                 $movimiento_entrada_br->programa_id                  =  $datos->programa_id;
                 $movimiento_entrada_br->observaciones                =  property_exists($datos, "observaciones")                  ? $datos->observaciones             : '';
@@ -408,6 +410,9 @@ class EntradaLaboratorioController extends Controller
                 } 
                 if ($success){
                     DB::commit();
+
+                    $movimiento_entrada->estatus = $movimiento_entrada->status;
+
                     return Response::json(array("status" => 201,"messages" => "Creado","refrescar"=>true,"data" => $movimiento_entrada), 201);
                 } 
                 else{
@@ -537,6 +542,7 @@ class EntradaLaboratorioController extends Controller
         ///*****************************************************************************************
          
                 $movimiento->insumos = $array_insumos;
+                $movimiento->estatus = $movimiento->status;
        
 
 ////**************************************************************************************************************************************
@@ -738,6 +744,7 @@ class EntradaLaboratorioController extends Controller
                 } 
                 if ($success){
                                 DB::commit();
+                                $movimiento_entrada_br->estatus    = $movimiento_entrada_br->status;
                                 $movimiento_entrada_br->actualizar = true;
                                 return Response::json(array("status" => 201,"messages" => "Borrador creado","data" => $movimiento_entrada_br), 201);
                              }else{
@@ -810,6 +817,7 @@ class EntradaLaboratorioController extends Controller
                     }
 
                     DB::commit();
+                    $movimiento_entrada->estatus    = $movimiento_entrada->status;
                     return Response::json(array("status" => 201,"messages" => "Creado","data" => $movimiento_entrada), 201);
                 }else{
                         DB::rollback();

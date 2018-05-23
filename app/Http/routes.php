@@ -47,7 +47,7 @@ Route::get('inventario-articulo-auto',          "AutoCompleteController@articulo
 
 Route::resource('personal-clues',               'PersonalCluesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 Route::resource('personal-medico',              'PersonalMedicoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-
+ 
 // reportes y graficas
 Route::get('grafica-entregas',                  'ReportePedidoController@graficaEntregas');
 Route::get('estatus-pedidos',                   'ReportePedidoController@estatusEntregaPedidos');
@@ -262,8 +262,10 @@ Route::group(['middleware' => 'jwt'], function () {
 
     //  pedidos Compra consolidada.
     Route::resource('pedidos-cc-dam',                       'PedidoCompraConsolidadaDamController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('pedidos-cc-um',                        'PedidoCompraConsolidadaUmController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('pedidos-cc-um',                        'PedidoCompraConsolidadaUmController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('pedidos-cc-daf',                       'PedidoCompraConsolidadaDafController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::post('concentrar-pedido-cc-dam',                 'PedidoCompraConsolidadaDamController@concentrarPedidoDam');
+    Route::get('pedido-concentrado-cc-dam/{id}',            'PedidoCompraConsolidadaDamController@verPedidoConcentradoDam');
 
     //catalogos  
     Route::resource('unidad-medida',                        'UnidadMedidaController',    ['only' => ['index', 'show', 'store','update','destroy']]);
