@@ -152,7 +152,10 @@ Route::group(['middleware' => 'jwt'], function () {
 
 
         // Insumos médicos
-        Route::resource('insumos-medicos',                      'InsumosMedicosController',['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::resource('insumos-medicos',                  'InsumosMedicosController',['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::get('presentaciones',                        'InsumosMedicosController@presentaciones');     
+        Route::get('unidades-medida',                       'InsumosMedicosController@unidadesMedida');     
+        Route::get('vias-administracion',                   'InsumosMedicosController@viasAdministracion');     
     });
     // # FIN SECCION
 
