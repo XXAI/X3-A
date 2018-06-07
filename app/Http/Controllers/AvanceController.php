@@ -94,7 +94,8 @@ class AvanceController extends Controller
         }
 
         if(isset($parametros['page'])){
-            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
+            //$resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
+            $resultadosPorPagina = isset($parametros["per_page"])? 100 : 25;
             $avance = $avance->paginate($resultadosPorPagina);
         } else {
             $avance = $avance->get();
