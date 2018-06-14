@@ -95,7 +95,7 @@ class Pedido extends BaseModel
         return $this->hasOne('App\Models\PedidoMetadatoSincronizacion','pedido_id','id');
     } 
     public function metadatoCompraConsolidada(){
-        return $this->hasOne('App\Models\PedidoMetadatoCC','pedido_id','id');
+        return $this->hasOne('App\Models\PedidoMetadatoCC','pedido_id','id')->with('programa');
     } 
     // para apertura de pedidos desde DAM de compra consolidada
     public function unidadesMedicas(){

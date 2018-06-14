@@ -128,6 +128,13 @@ class PatchesController extends \App\Http\Controllers\Controller
 							throw new PatchException($output);
 						} else {
 							$output .= "\n¡Parche ejecutado correctamente!";
+
+							//$parche_log = LogEjecucionParche::where('nombre_parche',$ultimo_parche['nombre'])->first();
+							//if(!$parche_log){
+							//}
+							$parche_log = LogEjecucionParche::create(['clues'=>env('CLUES'),'nombre_parche'=>$patch_name,'tipo_parche'=>'cliente','fecha_liberacion'=>Carbon::now()]);
+							$parche_log->fecha_ejecucion = Carbon::now();
+							$parche_log->save();
 						}
 						
 					

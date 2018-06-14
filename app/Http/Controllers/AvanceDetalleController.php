@@ -46,7 +46,7 @@ class AvanceDetalleController extends Controller
         $general = false;
         $permisos = [];
         $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
-            $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+            $permisos->where('permisos.id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
         }])->find($request->get('usuario_id'));
 
         foreach ($usuario_general->roles as $index => $rol) {
@@ -150,7 +150,7 @@ class AvanceDetalleController extends Controller
             $general = false;
             $permisos = [];
             $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
-                $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+                $permisos->where('permisos.id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
             }])->find($request->get('usuario_id'));
 
             foreach ($usuario_general->roles as $index => $rol) {
@@ -191,7 +191,7 @@ class AvanceDetalleController extends Controller
             $variables = Input::all();
 
             /*$usuario = Usuario::with(['roles.permisos'=>function($permisos){
-                $permisos->where('id','MrL06vIO12iNhchP14h57Puvg71eUmYb')->orWhere('id','bsIbPL3qv6XevcAyrRm1GxJufDbzLOax');
+                $permisos->where('permisos.id','MrL06vIO12iNhchP14h57Puvg71eUmYb')->orWhere('id','bsIbPL3qv6XevcAyrRm1GxJufDbzLOax');
             }])->find($request->get('usuario_id'));
             
             $tiene_acceso = false;
@@ -234,6 +234,8 @@ class AvanceDetalleController extends Controller
                     $headers = array(
                         'Content-Type: application/pdf',
                     );
+
+                    
                     if(!file_exists($pathToFile))
                         return Response::make("No se encontro el recurso solicitado, por favor comuniquese al área de soporte", 500);
                     else
@@ -256,7 +258,7 @@ class AvanceDetalleController extends Controller
             $variables = Input::all();
 
             /*$usuario = Usuario::with(['roles.permisos'=>function($permisos){
-                $permisos->where('id','MrL06vIO12iNhchP14h57Puvg71eUmYb')->orWhere('id','bsIbPL3qv6XevcAyrRm1GxJufDbzLOax');
+                $permisos->where('permisos.id','MrL06vIO12iNhchP14h57Puvg71eUmYb')->orWhere('id','bsIbPL3qv6XevcAyrRm1GxJufDbzLOax');
             }])->find($request->get('usuario_id'));
             
             $tiene_acceso = false;
@@ -330,7 +332,7 @@ class AvanceDetalleController extends Controller
             $general = false;
             $permisos = [];
             $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
-                $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+                $permisos->where('permisos.id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
             }])->find($request->get('usuario_id'));
 
             foreach ($usuario_general->roles as $index => $rol) {

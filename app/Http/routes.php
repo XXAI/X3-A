@@ -47,7 +47,7 @@ Route::get('inventario-articulo-auto',          "AutoCompleteController@articulo
 
 Route::resource('personal-clues',               'PersonalCluesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 Route::resource('personal-medico',              'PersonalMedicoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-
+ 
 // reportes y graficas
 Route::get('grafica-entregas',                  'ReportePedidoController@graficaEntregas');
 Route::get('estatus-pedidos',                   'ReportePedidoController@estatusEntregaPedidos');
@@ -67,6 +67,8 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('jurisdicciones',            'JurisdiccionesController',    ['only' => ['index']]);
     Route::resource('unidades-medicas',          'UnidadesMedicasController',    ['only' => ['index']]);
     Route::resource('proveedores',               'ProveedoresController',    ['only' => ['index']]);
+
+    Route::resource('presupuestos',               'PresupuestoController',    ['only' => ['index']]);
 
     //Route::resource('unidades-medicas', 'UnidadesMedicasController',    ['only' => ['index']]);
     Route::resource('almacenes',                 'AlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -94,9 +96,19 @@ Route::group(['middleware' => 'jwt'], function () {
         
         Route::get('presupuesto-pedidos',               'PedidosController@presupuesto');
         Route::get('pedidos',                           'PedidosController@lista');
+        Route::get('mes-disponible',                    'PedidosController@mesDisponible');
         Route::get('pedidos-excel',                     'PedidosController@excel');
         Route::get('pedidos-archivos-proveedor/{id}',   'PedidosController@listaArchivosProveedor');
         
+        // PENAS CONVENCIONALES
+        Route::get('meses',                                 'PenasConvencionalesController@meses');
+        Route::get('periodos',                              'PenasConvencionalesController@periodos');
+        Route::get('penas-convencionales-resumen',          'PenasConvencionalesController@resumen');
+        Route::get('penas-convencionales-detalle',          'PenasConvencionalesController@detalle');
+        Route::get('penas-convencionales-excel-individual/{id}', 'PenasConvencionalesController@excel');
+        Route::get('penas-convencionales-excel-resumen',    'PenasConvencionalesController@excelResumen');
+
+
         // TRANSFERENCIAS DE PRESUPUESTO
         Route::get('unidades-medicas-con-presupuesto',  'TransferenciasPresupuestosController@unidadesMedicasConPresupuesto');
         Route::get('meses-presupuesto-actual',          'TransferenciasPresupuestosController@mesesPresupuestoActual');
@@ -137,6 +149,13 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-alternos/{id}',                 'PedidosAlternosController@ver');      
         Route::put('pedidos-alternos/validacion/{id}',      'PedidosAlternosController@validar');
         Route::put('pedidos-alternos/proveedor/{id}',       'PedidosAlternosController@asignarProveedor');
+
+
+        // Insumos médicos
+        Route::resource('insumos-medicos',                  'InsumosMedicosController',['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::get('presentaciones',                        'InsumosMedicosController@presentaciones');     
+        Route::get('unidades-medida',                       'InsumosMedicosController@unidadesMedida');     
+        Route::get('vias-administracion',                   'InsumosMedicosController@viasAdministracion');     
     });
     // # FIN SECCION
 
@@ -246,8 +265,10 @@ Route::group(['middleware' => 'jwt'], function () {
 
     //  pedidos Compra consolidada.
     Route::resource('pedidos-cc-dam',                       'PedidoCompraConsolidadaDamController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('pedidos-cc-um',                        'PedidoCompraConsolidadaUmController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('pedidos-cc-um',                        'PedidoCompraConsolidadaUmController',     ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('pedidos-cc-daf',                       'PedidoCompraConsolidadaDafController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::post('concentrar-pedido-cc-dam',                 'PedidoCompraConsolidadaDamController@concentrarPedidoDam');
+    Route::get('pedido-concentrado-cc-dam/{id}',            'PedidoCompraConsolidadaDamController@verPedidoConcentradoDam');
 
     //catalogos  
     Route::resource('unidad-medida',                        'UnidadMedidaController',    ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -338,10 +359,12 @@ Route::group(['middleware' => 'jwt'], function () {
 
     // # SECCION: Opciones avanzadas 
     Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
-
+        Route::get('fecha-hora-servidor',               'FechaHoraServidorController@get');
+        Route::post('fecha-hora-servidor/actualizar',    'FechaHoraServidorController@update');
         Route::get('actualizar-plataforma-git',         'ActualizarPlataformaController@git');
         Route::get('exportar-base-datos',               'BaseDatosController@exportar');
         Route::post('importar-base-datos',              'BaseDatosController@importar');
+        Route::post('obtener-datos-central',            'DatosServidorCentralController@exportar');
     });
     // #SECCION: Parches
     Route::group(['prefix' => 'patches','namespace' => 'Patches'], function () {

@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests;
 
 use App\Models\Usuario, App\Models\Proveedor, App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto, App\Models\Pedido, App\Models\Insumo, App\Models\Almacen, App\Models\Repositorio, App\Models\LogPedidoBorrador, App\Models\PedidoPresupuestoApartado, App\Models\LogPedidoCancelado, App\Models\AjustePresupuestoPedidoRegresion, App\Models\Servidor, App\Models\AjustePedidoPresupuestoApartado;
+use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
@@ -46,22 +47,7 @@ class PedidosController extends Controller
                 });
             } 
 
-            $fecha_desde = isset($parametros['fecha_desde']) ? $parametros['fecha_desde'] : '';
-            $fecha_hasta = isset($parametros['fecha_hasta']) ? $parametros['fecha_hasta'] : '';
-
-            if ($fecha_desde != "" && $fecha_hasta != "" ) {
-                $items = $items->whereBetween('fecha',[$fecha_desde, $fecha_hasta]);
-            } 
-
-            if ($fecha_desde != "" && $fecha_hasta == "" ) {
-                $items = $items->where('fecha',">=",$fecha_desde);
-            } 
-
-            if ($fecha_desde == "" && $fecha_hasta != "" ) {
-                $items = $items->where('fecha',"<=",$fecha_hasta);
-            } 
-            
-            if(isset($parametros['status']) && $parametros['status'] != ""){
+           if(isset($parametros['status']) && $parametros['status'] != ""){
                 $status = explode(',',$parametros['status']);            
                 if(count($status)>0){
                     $items = $items->whereIn('status',$status);
@@ -79,6 +65,41 @@ class PedidosController extends Controller
                 $jurisdicciones = explode(',',$parametros['jurisdicciones']);            
                 if(count($jurisdicciones)>0){
                     $items = $items->whereIn('jurisdiccion_id',$jurisdicciones);
+                }              
+            }
+
+            if(isset($parametros['meses']) && $parametros['meses'] != ""){
+                $mes_filtro = explode(',',$parametros['meses']);  
+                     
+                if(count($mes_filtro)>0){
+                    $fecha_mes = Carbon::createFromDate(null, $mes_filtro[0],01);
+                    $fecha_mes->timezone('America/Mexico_City');
+                    
+                    $dia_fin_mes = $fecha_mes->daysInMonth;
+                    $fecha_inicio = $fecha_mes->year."-".$mes_filtro[0]."-01";
+                    $fecha_fin = $fecha_mes->year."-".$mes_filtro[0]."-".$dia_fin_mes;  
+
+                    $items = $items->whereBetween('fecha', array($fecha_inicio, $fecha_fin));
+                }              
+            }
+
+            if(isset($parametros['statusRecepcion']) && $parametros['statusRecepcion'] != ""){
+                $statusRecepcion_filtro = explode(',',$parametros['statusRecepcion']);  
+                     
+                if(count($statusRecepcion_filtro)>0){
+                    if($statusRecepcion_filtro[0] == 1)
+                    {
+                        $fecha_actual = Carbon::now();
+                        $fecha_actual->timezone('America/Mexico_City');
+                        
+                        $fecha_limite = $fecha_actual->year."-".$fecha_actual->month."-".$fecha_actual->day;
+                        
+                        $items = $items->where('fecha_expiracion', '<', $fecha_limite);
+                        $items = $items->where('total_monto_solicitado', '>', 'total_monto_recibido');
+                    }else if($statusRecepcion_filtro[0] == 2)
+                    {
+                        $items = $items->where('total_monto_solicitado','=', 'total_monto_recibido');
+                    }
                 }              
             }
 
@@ -116,9 +137,10 @@ class PedidosController extends Controller
      */
     public function lista()
     {
-        $parametros = Input::only('q','status','proveedores','jurisdicciones','page','per_page', 'fecha_desde','fecha_hasta', 'ordenar_causes','ordenar_no_causes','ordenar_material_curacion');
+        $parametros = Input::only('q','status','proveedores','jurisdicciones','page','per_page', 'ordenar_causes','ordenar_no_causes','ordenar_material_curacion', 'meses', 'statusRecepcion');
 
         $items = self::getItemsQuery($parametros);
+        
         
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
@@ -1040,8 +1062,44 @@ class PedidosController extends Controller
             });
         } 
 
+        if(isset($parametros['meses']) && $parametros['meses'] != ""){
+            $mes_filtro = explode(',',$parametros['meses']);  
+                 
+            if(count($mes_filtro)>0){
+                $fecha_mes = Carbon::createFromDate(null, $mes_filtro[0],01);
+                $fecha_mes->timezone('America/Mexico_City');
+                
+                $dia_fin_mes = $fecha_mes->daysInMonth;
+                $fecha_inicio = $fecha_mes->year."-".$mes_filtro[0]."-01";
+                $fecha_fin = $fecha_mes->year."-".$mes_filtro[0]."-".$dia_fin_mes;  
 
-        $fecha_desde = isset($parametros['fecha_desde']) ? $parametros['fecha_desde'] : '';
+                $items = $items->whereBetween('fecha', array($fecha_inicio, $fecha_fin));
+
+            }              
+        }
+
+        if(isset($parametros['statusRecepcion']) && $parametros['statusRecepcion'] != ""){
+            $statusRecepcion_filtro = explode(',',$parametros['statusRecepcion']);  
+                 
+            if(count($statusRecepcion_filtro)>0){
+                if($statusRecepcion_filtro[0] == 1)
+                {
+                    $fecha_actual = Carbon::now();
+                    $fecha_actual->timezone('America/Mexico_City');
+                    
+                    $fecha_limite = $fecha_actual->year."-".$fecha_actual->month."-".$fecha_actual->day;
+                    
+                    $items = $items->where('fecha_expiracion', '<', $fecha_limite);
+                    $items = $items->whereRaw(DB::RAW('total_monto_solicitado > total_monto_recibido'));
+                    
+                }else if($statusRecepcion_filtro[0] == 2)
+                {
+                    $items = $items->whereRaw(DB::RAW('total_monto_solicitado = total_monto_recibido'));
+                }
+            }              
+        }
+
+        /*$fecha_desde = isset($parametros['fecha_desde']) ? $parametros['fecha_desde'] : '';
         $fecha_hasta = isset($parametros['fecha_hasta']) ? $parametros['fecha_hasta'] : '';
 
 
@@ -1055,7 +1113,9 @@ class PedidosController extends Controller
 
         if ($fecha_desde == "" && $fecha_hasta != "" ) {
             $items = $items->where('fecha',"<=",$fecha_hasta);
-        } 
+        }*/
+        
+        
         
         if(isset($parametros['status']) && $parametros['status'] != ""){
             $status = explode(',',$parametros['status']);            
@@ -1106,4 +1166,15 @@ class PedidosController extends Controller
         return $items;
     }
     
+    public function mesDisponible()
+    {
+        $meses = array("ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE");
+        $mes = [];
+        for($month = 1; $month <= Carbon::now()->month; $month++)
+        {
+            $mes[] = array('id'=>$month, 'descripcion' => $meses[$month-1]." ".Carbon::now()->year);
+        }
+        
+        return Response::json([ 'data' => $mes],200);
+    }
 }

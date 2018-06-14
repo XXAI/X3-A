@@ -36,6 +36,7 @@ use App\Models\Turno;
 use App\Models\Servicio;
 use App\Models\Programa;
 use App\Models\PersonalClues;
+use App\Models\UnidadMedica;
 
 
 
@@ -132,6 +133,8 @@ class SalidaAlmacenStandardController extends Controller
             $movimiento_response->numero_insumos = $cantidad_insumos;
 
             $movimiento_response->estatus = $movimiento_response->status;
+
+            
 
             
 
@@ -576,6 +579,10 @@ class SalidaAlmacenStandardController extends Controller
                 $movimiento->subtotal    = $monto_subtotal;
                 $movimiento->iva         = $monto_iva;
 
+                $clues = $movimiento->movimientoMetadato['unidad_medica_destino'];
+                $unidad_medica = UnidadMedica::find($clues);
+                $movimiento->movimientoMetadato['unidad_medica'] = $unidad_medica;
+
                 $movimiento->insumos_negados = $array_insumos_negados;
 
 
@@ -897,10 +904,11 @@ class SalidaAlmacenStandardController extends Controller
             if(property_exists($datos,"movimiento_metadato"))
             {
                 $metadatos = new MovimientoMetadato;
-                $metadatos->movimiento_id  = $movimiento_salida->id;
-                $metadatos->servicio_id    = NULL;
-                $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
-                $metadatos->turno_id       = $datos->movimiento_metadato['turno_id'];
+                $metadatos->movimiento_id          = $movimiento_salida->id;
+                $metadatos->unidad_medica_destino  = $datos->movimiento_metadato['unidad_medica_destino'];
+                $metadatos->servicio_id            = NULL;
+                $metadatos->persona_recibe         = $datos->movimiento_metadato['persona_recibe'];
+                $metadatos->turno_id               = $datos->movimiento_metadato['turno_id'];
 
                 $metadatos->save();
                 
