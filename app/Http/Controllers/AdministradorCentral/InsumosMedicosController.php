@@ -10,6 +10,7 @@ use App\Http\Requests;
 use App\Models\ClavesBasicas, App\Models\ClavesBasicasDetalle,App\Models\ClavesBasicasUnidadMedica,App\Models\UnidadMedica;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
+use \Excel;
 
 use App\Models\Insumo, App\Models\Medicamento, App\Models\MaterialCuracion, App\Models\PresentacionesMedicamentos, App\Models\UnidadMedida, App\Models\ViasAdministracion;
 
@@ -204,7 +205,7 @@ class InsumosMedicosController extends Controller
             if($insumo->tipo == "ME"){
                 $medicamento = $insumo->medicamento();
             } else {
-
+ 
                 $material_curacion = $insumo->materialCuracion();
             }
             
@@ -217,7 +218,7 @@ class InsumosMedicosController extends Controller
             $insumo->descripcion = $inputs['descripcion'];
             $insumo->atencion_medica = !isset($inputs['atencion_medica'])? false : $inputs['atencion_medica'] ;
             $insumo->salud_publica = !isset($inputs['salud_publica'])? false : $inputs['salud_publica'] ;
-
+          
 
             if($inputs["tipo"]=="ME"){
                 if($medicamento){
@@ -283,5 +284,96 @@ class InsumosMedicosController extends Controller
     }
 
 
-    
+    public function exportarExcel(Request $request){
+
+        $medicamentos = Insumo::where("tipo","ME")->with("medicamento","medicamento.UnidadMedida","medicamento.PresentacionMedicamento","medicamento.ViaAdministracion")->get();
+        $material_curacion = Insumo::where("tipo","MC")->with("materialCuracion","materialCuracion.UnidadMedida")->get();
+        
+        Excel::create("Insumos médicos SIAL - ".date('Y-m-d'), function($excel) use($medicamentos, $material_curacion) {
+
+
+            $excel->sheet('Medicamentos', function($sheet) use($medicamentos) {
+                $sheet->setAutoSize(true);
+                $sheet->row(1, array(
+                    'Clave', 'Tipo','Causes','Unidosis','Tiene Fecha Caducidad','Descontinuado','Descripción',
+                    'Presentación','Controlado','Surfactante','Concentración','Contenido','Cantidad X Envase','Unidad de medida', 'Vía de Administración','Dosis','Indicaciones'
+                ));
+                $sheet->cells("A1:Q1", function($cells) {
+                    $cells->setAlignment('center');
+                });
+                $sheet->row(1, function($row) {
+                    $row->setBackground('#DDDDDD');
+                    $row->setFontWeight('bold');
+                });
+
+                $contador_filas = 1;
+                foreach($medicamentos as $item){
+                    $contador_filas++;
+                    $sheet->appendRow(array(
+                        $item->clave,
+                        $item->tipo,
+                        $item->es_causes?1:0,
+                        $item->es_unidosis?1:0,
+                        $item->tiene_fecha_caducidad?1:0,
+                        $item->descontinuado?1:0,
+                        $item->descripcion,
+                        $item->medicamento->PresentacionMedicamento != null ? $item->medicamento->PresentacionMedicamento->nombre: "",
+                        $item->medicamento->es_controlado?1:0,
+                        $item->medicamento->es_surfactante?1:0,
+                        $item->medicamento->concentracion,
+                        $item->medicamento->contenido,
+                        $item->medicamento->cantidad_x_envase,
+                        $item->medicamento->UnidadMedida != null ? $item->medicamento->unidadMedida->nombre ." (".$item->medicamento->unidadMedida->clave.")": "",
+                        $item->medicamento->ViaAdministracion != null ? $item->medicamento->ViaAdministracion->nombre: "",
+                        $item->medicamento->dosis,
+                        $item->medicamento->indicaciones
+                    )); 
+                }
+
+                $sheet->setAutoFilter('A1:Q1');
+            });
+
+            $excel->sheet('Material de Curación', function($sheet) use($material_curacion) {
+                $sheet->setAutoSize(true);
+                $sheet->row(1, array(
+                    'Clave', 'Tipo','Causes','Unidosis','Tiene Fecha Caducidad','Descontinuado','Descripción',
+                    'Cantidad X Envase','Unidad de medida'
+                ));
+                $sheet->cells("A1:I1", function($cells) {
+                    $cells->setAlignment('center');
+                });
+                $sheet->row(1, function($row) {
+                    $row->setBackground('#DDDDDD');
+                    $row->setFontWeight('bold');
+                });
+
+                $contador_filas = 1;
+                foreach($material_curacion as $item){
+                    $contador_filas++;
+                    $sheet->appendRow(array(
+                        $item->clave,
+                        $item->tipo,
+                        $item->es_causes?1:0,
+                        $item->es_unidosis?1:0,
+                        $item->tiene_fecha_caducidad?1:0,
+                        $item->descontinuado?1:0,
+                        $item->descripcion,
+                        $item->materialCuracion->cantidad_x_envase,
+                        $item->materialCuracion->UnidadMedida != null ? $item->materialCuracion->unidadMedida->nombre ." (".$item->materialCuracion->unidadMedida->clave.")": "",
+                    )); 
+                }
+                $sheet->setBorder("A1:I$contador_filas", 'thin');
+                $sheet->setAutoFilter('A1:I1');
+            });
+
+
+            
+           
+           $excel->setActiveSheetIndex(0);
+
+           
+
+
+         })->export('xls');
+    }   
 }
