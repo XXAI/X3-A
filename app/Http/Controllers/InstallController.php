@@ -352,7 +352,7 @@ class InstallController extends Controller
         ]);
 
         if($config['almacen']){
-            DB::insert('insert into almacenes (id, incremento, servidor_id, nivel_almacen, tipo_almacen, clues, proveedor_id, subrogado, externo, unidosis, nombre, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?)', [$config['almacen'],1,$config['id'],1,'ALMPAL',$config['clues'],$config['proveedor'],0,0,0,'ALMACEN PRINCIPAL',$config['id'].":root",Carbon::now(),Carbon::now()]);
+            DB::insert('insert into almacenes (id, incremento, servidor_id, nivel_almacen, tipo_almacen, clues, proveedor_id, subrogado, externo, unidosis, nombre, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$config['almacen'],1,$config['id'],1,'ALMPAL',$config['clues'],$config['proveedor'],0,0,0,'ALMACEN PRINCIPAL',$config['id'].":root",Carbon::now(),Carbon::now()]);
         }
         
         $almacen = Almacen::where('clues',$config['clues'])->where('tipo_almacen','ALMPAL')->first();
