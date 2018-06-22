@@ -20,7 +20,7 @@ class PenasConvencionalesController extends Controller {
 		$parametros = Input::only('clues', 'periodo','mes','proveedor','tipo_unidad');
 
 
-		$porcentaje_penalizacion = 0.05;
+		$porcentaje_penalizacion = 0.005;
 
 		$proveedor_where = "";
 
@@ -307,10 +307,10 @@ class PenasConvencionalesController extends Controller {
 			$excel->sheet('Reporte de penas convencionales', function($sheet) use($items,$pedido,  $unidad_medica, $proveedor) {
 				$sheet->setAutoSize(true);
 				
-				$sheet->mergeCells('B1:G1');
-				$sheet->mergeCells('B2:G2');
-				$sheet->mergeCells('B3:G3');
-				$sheet->mergeCells('B4:G4');
+				$sheet->mergeCells('B1:I1');
+				$sheet->mergeCells('B2:I2');
+				$sheet->mergeCells('B3:I3');
+				$sheet->mergeCells('B4:I4');
 
 				//($item->folio)?$item->folio:'S/F'
 
@@ -328,7 +328,7 @@ class PenasConvencionalesController extends Controller {
 				));
 				
 				$sheet->row(5, array(
-					'Clave','Descripcion', 'Tipo', 'Cantidad','Precio unitario','Monto (iva incluido)','Pena convencional'
+					'Clave','Descripcion', 'Tipo', 'Cantidad','Precio unitario','Monto (iva incluido)',	'% Pena Convencional', 'Días Pena Convencional','Pena convencional'
 				));
 				$sheet->setColumnFormat(array(
 					"B4:G4" => 'dd/MM/yyyy'
@@ -367,9 +367,11 @@ class PenasConvencionalesController extends Controller {
 						$item->tipo_insumo,
 						$item->cantidad_faltante,
 						$item->precio_unitario,
-
 						$item->monto,
-						$item->pena_convencional
+						0.005,
+						30,
+						'=PRODUCT(F'.$contador_filas.':H'.$contador_filas.')'
+						//$item->pena_convencional
 					)); 
 				}
 
@@ -380,14 +382,16 @@ class PenasConvencionalesController extends Controller {
 					'',
 					'TOTAL',
 					"=SUM(F3:F$contador_filas)",
-			       "=SUM(G3:G$contador_filas)"
+					'',
+					'',
+			       "=SUM(I3:I$contador_filas)"
 				));
 
-				$sheet->setBorder("A1:G$contador_filas", 'thin');
+				$sheet->setBorder("A1:I$contador_filas", 'thin');
 
 				$contador_filas += 1;
 
-				$sheet->setBorder("E$contador_filas:G$contador_filas", 'thin');
+				$sheet->setBorder("E$contador_filas:I$contador_filas", 'thin');
 				$sheet->row($contador_filas, function($row) {
 					$row->setBackground('#DDDDDD');
 					$row->setFontWeight('bold');
@@ -396,8 +400,12 @@ class PenasConvencionalesController extends Controller {
 				
 				
 				$sheet->setColumnFormat(array(
-						"E6:G$contador_filas" => '"$" #,##0.00_-',
+						"E6:F$contador_filas" => '"$" #,##0.00_-',
 					));
+
+				$sheet->setColumnFormat(array(
+					"I6:I$contador_filas" => '"$" #,##0.00_-',
+				));	
 			});
 			})->export('xls');
 	}
@@ -469,10 +477,10 @@ class PenasConvencionalesController extends Controller {
 			$excel->sheet('Reporte de penas convencionales', function($sheet) use($items,$proveedor, $parametros) {
 				$sheet->setAutoSize(true);
 				
-				$sheet->mergeCells('B1:G1');
-				$sheet->mergeCells('B2:G2');
-				$sheet->mergeCells('B3:G3');
-				$sheet->mergeCells('B4:G4');
+				$sheet->mergeCells('B1:I1');
+				$sheet->mergeCells('B2:I2');
+				$sheet->mergeCells('B3:I3');
+				$sheet->mergeCells('B4:I4');
 
 				//($item->folio)?$item->folio:'S/F'
 
@@ -513,7 +521,7 @@ class PenasConvencionalesController extends Controller {
 				));
 				
 				$sheet->row(5, array(
-					'Clave','Descripcion', 'Tipo', 'Cantidad','Precio unitario','Monto (iva incluido)','Pena convencional'
+					'Clave','Descripcion', 'Tipo', 'Cantidad','Precio unitario','Monto (iva incluido)', '% Penalizacion', 'Días Penalización','Pena convencional'
 				));
 				$sheet->setColumnFormat(array(
 					"B4:G4" => 'dd/MM/yyyy'
@@ -552,9 +560,12 @@ class PenasConvencionalesController extends Controller {
 						$item->tipo_insumo,
 						$item->cantidad_faltante,
 						$item->precio_unitario,
-
 						$item->monto,
-						$item->pena_convencional
+						0.005,
+						30,
+						//'=PRODUCT(F:'.$contador_filas.':H'.$contador_filas.')'
+						'=PRODUCT(F'.$contador_filas.':H'.$contador_filas.')'
+						//$item->pena_convencional
 					)); 
 				}
 
@@ -565,14 +576,16 @@ class PenasConvencionalesController extends Controller {
 					'',
 					'TOTAL',
 					"=SUM(F3:F$contador_filas)",
-			       "=SUM(G3:G$contador_filas)"
+					'',
+					'',
+			       "=SUM(I3:I$contador_filas)"
 				));
 
-				$sheet->setBorder("A1:G$contador_filas", 'thin');
+				$sheet->setBorder("A1:I$contador_filas", 'thin');
 
 				$contador_filas += 1;
 
-				$sheet->setBorder("E$contador_filas:G$contador_filas", 'thin');
+				$sheet->setBorder("E$contador_filas:I$contador_filas", 'thin');
 				$sheet->row($contador_filas, function($row) {
 					$row->setBackground('#DDDDDD');
 					$row->setFontWeight('bold');
@@ -581,8 +594,11 @@ class PenasConvencionalesController extends Controller {
 				
 				
 				$sheet->setColumnFormat(array(
-						"E6:G$contador_filas" => '"$" #,##0.00_-',
+						"E6:F$contador_filas" => '"$" #,##0.00_-',
 					));
+				$sheet->setColumnFormat(array(
+						"I6:I$contador_filas" => '"$" #,##0.00_-',
+				));	
 			});
 			})->export('xls');
 	}
