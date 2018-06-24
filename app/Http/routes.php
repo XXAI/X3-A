@@ -156,7 +156,8 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('presentaciones',                        'InsumosMedicosController@presentaciones');     
         Route::get('unidades-medida',                       'InsumosMedicosController@unidadesMedida');     
         Route::get('vias-administracion',                   'InsumosMedicosController@viasAdministracion');     
-        Route::get('insumos-medicos-excel',                  'InsumosMedicosController@exportarExcel');
+        Route::get('insumos-medicos-excel',                 'InsumosMedicosController@exportarExcel');
+        Route::get('formato-insumos-medicos-excel',         'InsumosMedicosController@descargarFormato');
     });
     // # FIN SECCION
 

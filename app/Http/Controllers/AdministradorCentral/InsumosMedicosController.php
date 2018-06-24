@@ -295,8 +295,8 @@ class InsumosMedicosController extends Controller
             $excel->sheet('Medicamentos', function($sheet) use($medicamentos) {
                 $sheet->setAutoSize(true);
                 $sheet->row(1, array(
-                    'Clave', 'Tipo','Causes','Unidosis','Tiene Fecha Caducidad','Descontinuado','Descripción',
-                    'Presentación','Controlado','Surfactante','Concentración','Contenido','Cantidad X Envase','Unidad de medida', 'Vía de Administración','Dosis','Indicaciones'
+                    'Clave', 'Tipo','Causes','Unidosis','Tiene Fecha Caducidad','Controlado','Surfactante','Descontinuado','Descripción',
+                    'Presentación','Concentración','Contenido','Cantidad X Envase','Unidad de medida', 'Vía de Administración','Dosis','Indicaciones'
                 ));
                 $sheet->cells("A1:Q1", function($cells) {
                     $cells->setAlignment('center');
@@ -315,11 +315,11 @@ class InsumosMedicosController extends Controller
                         $item->es_causes?1:0,
                         $item->es_unidosis?1:0,
                         $item->tiene_fecha_caducidad?1:0,
-                        $item->descontinuado?1:0,
-                        $item->descripcion,
-                        $item->medicamento->PresentacionMedicamento != null ? $item->medicamento->PresentacionMedicamento->nombre: "",
                         $item->medicamento->es_controlado?1:0,
                         $item->medicamento->es_surfactante?1:0,
+                        $item->descontinuado?1:0,
+                        $item->descripcion,
+                        $item->medicamento->PresentacionMedicamento != null ? $item->medicamento->PresentacionMedicamento->nombre: "",                        
                         $item->medicamento->concentracion,
                         $item->medicamento->contenido,
                         $item->medicamento->cantidad_x_envase,
@@ -331,6 +331,7 @@ class InsumosMedicosController extends Controller
                 }
 
                 $sheet->setAutoFilter('A1:Q1');
+                $sheet->setBorder("A1:Q$contador_filas", 'thin');
             });
 
             $excel->sheet('Material de Curación', function($sheet) use($material_curacion) {
@@ -375,5 +376,188 @@ class InsumosMedicosController extends Controller
 
 
          })->export('xls');
-    }   
+    }
+    
+    public function descargarFormato(Request $request){
+
+        $unidadesMedida = UnidadMedida::all();
+        $presentaciones = PresentacionesMedicamentos::all();
+        $viasAdministracion = ViasAdministracion::all();
+
+        
+        Excel::create("Formato de carga de Insumos médicos SIAL", function($excel) use($unidadesMedida, $presentaciones, $viasAdministracion) {
+
+
+            $excel->sheet('Medicamentos', function($sheet)  {
+                $sheet->setAutoSize(true);
+                $sheet->row(1, array(
+                    'Clave','Causes (1 = SI, 0 = NO)','Unidosis (1 = SI, 0 = NO)','Tiene Fecha Caducidad (1 = SI, 0 = NO)','Controlado (1 = SI, 0 = NO)','Surfactante (1 = SI, 0 = NO)','Descontinuado (1 = SI, 0 = NO)','Descripción',
+                    'Presentación (CLAVE Pestaña: REF PRESENTACION)','Concentración','Contenido','Cantidad X Envase','Unidad de medida (CLAVE Pestaña: REF UNIDAD MEDIDA)', 'Vía de Administración(CLAVE Pestaña: REF VIA ADMON)','Dosis','Indicaciones'
+                ));
+                $sheet->cells("A1:P1", function($cells) {
+                    $cells->setAlignment('center');
+                });
+                $sheet->row(1, function($row) {
+                    $row->setBackground('#DDDDDD');
+                    $row->setFontWeight('bold');
+                });
+
+                $sheet->appendRow(array(
+                    "010.000.000.00 (EJEMPLO)",
+                    1,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    "Descripción completa (EJEMPLO): ÁCIDO ACETILSALICÍLICO Tableta soluble o efervescente 300 mg 20 tabletas solubles o efervescentes",
+                    11,                    
+                    "300 mg",
+                    "Caja con 20 tabletas solubles o efervescentes",
+                    20,
+                    1,
+                    39,
+                    "La que el médico señale, etc.",
+                    "Artritis reumatoide. Osteoartritis. Espondilitis anquilosante. Fiebre reumática aguda. Dolor o fiebre."
+                )); 
+
+                $sheet->setAutoFilter('A1:P1');
+            });
+
+            $excel->sheet('Material de Curación', function($sheet) {
+                $sheet->setAutoSize(true);
+                $sheet->row(1, array(
+                    'Clave', 'Causes  (1 = SI, 0 = NO)','Unidosis  (1 = SI, 0 = NO)','Tiene Fecha Caducidad  (1 = SI, 0 = NO)','Descontinuado  (1 = SI, 0 = NO)','Descripción',
+                    'Cantidad X Envase','Unidad de medida (CLAVE Pestaña: REF UNIDAD MEDIDA)'
+                ));
+                $sheet->cells("A1:H1", function($cells) {
+                    $cells->setAlignment('center');
+                });
+                $sheet->row(1, function($row) {
+                    $row->setBackground('#DDDDDD');
+                    $row->setFontWeight('bold');
+                });
+
+                $sheet->appendRow(array(
+                    "010.000.000.00 (EJEMPLO)",
+                    0,
+                    0,
+                    0,
+                    0,
+                    "VENDA DE GASA DE ALGODÓN. LONGITUD 27 M. ANCHO 5 CM. PIEZA (EJEMPLO)",
+                    1,
+                    1,
+                )); 
+                
+                $sheet->setAutoFilter('A1:H1');
+
+                //$sheet->getComment('H2')->getText()->createTextRun('hola:');
+               /* $sheet->getComment('H1')->setAuthor('Hugo Corzo');
+                $objCommentRichText = $sheet->getComment('H1')->getText()->createTextRun('Clave de la unidad de medida:');
+                $objCommentRichText->getFont()->setBold(true);
+                $sheet->getComment('H1')->getText()->createTextRun("\r\n");
+                $sheet->getComment('H1')->getText()->createTextRun('Debe escribir un valor tomando como referencia la columna: "CLAVE" de la pestaña "REF UNIDAD MEDIDA".');*/
+            });
+
+
+            $excel->sheet('REF PRESENTACION', function($sheet) use($presentaciones) {
+                $sheet->setAutoSize(true);
+                $sheet->row(1, array(
+                    'CLAVE', 'NOMBRE'
+                ));
+                $sheet->cells("A1:B1", function($cells) {
+                    $cells->setAlignment('center');
+                });
+                $sheet->row(1, function($row) {
+                    $row->setBackground('#DDDDDD');
+                   
+                });
+
+                $contador_filas = 1;
+                foreach($presentaciones as $item){
+                    $contador_filas++;
+                    $sheet->appendRow(array(
+                        $item->id,
+                        $item->nombre
+                    )); 
+                }
+                $sheet->cells("A1:A".$contador_filas, function($cells) {
+                    $cells->setFontWeight('bold');
+                    $cells->setAlignment('center');
+                });
+                $sheet->setBorder("A1:B$contador_filas", 'thin');
+                $sheet->setAutoFilter('A1:B1');
+
+                $sheet->getProtection()->setSheet(true);
+            });
+
+            $excel->sheet('REF UNIDAD MEDIDA', function($sheet) use($unidadesMedida) {
+                $sheet->setAutoSize(true);
+                $sheet->row(1, array(
+                    'CLAVE', 'NOTACION','NOMBRE'
+                ));
+                $sheet->cells("A1:C1", function($cells) {
+                    $cells->setAlignment('center');
+                });
+                $sheet->row(1, function($row) {
+                    $row->setBackground('#DDDDDD');
+                   
+                });
+
+                $contador_filas = 1;
+                foreach($unidadesMedida as $item){
+                    $contador_filas++;
+                    $sheet->appendRow(array(
+                        $item->id,
+                        $item->clave,
+                        $item->nombre
+                    )); 
+                }
+                $sheet->cells("A1:A".$contador_filas, function($cells) {
+                    $cells->setFontWeight('bold');
+                    $cells->setAlignment('center');
+                });
+                $sheet->setBorder("A1:C$contador_filas", 'thin');
+                $sheet->setAutoFilter('A1:C1');
+
+                $sheet->getProtection()->setSheet(true);
+            });
+            $excel->sheet('REF VIAS ADMON', function($sheet) use($viasAdministracion) {
+                $sheet->setAutoSize(true);
+                $sheet->row(1, array(
+                    'CLAVE', 'NOMBRE'
+                ));
+                $sheet->cells("A1:B1", function($cells) {
+                    $cells->setAlignment('center');
+                });
+                $sheet->row(1, function($row) {
+                    $row->setBackground('#DDDDDD');
+                   
+                });
+
+                $contador_filas = 1;
+                foreach($viasAdministracion as $item){
+                    $contador_filas++;
+                    $sheet->appendRow(array(
+                        $item->id,
+                        $item->nombre
+                    )); 
+                }
+                $sheet->cells("A1:A".$contador_filas, function($cells) {
+                    $cells->setFontWeight('bold');
+                    $cells->setAlignment('center');
+                });
+                $sheet->setBorder("A1:B$contador_filas", 'thin');
+                $sheet->setAutoFilter('A1:B1');
+                $sheet->getProtection()->setSheet(true);
+            });
+            
+           
+           $excel->setActiveSheetIndex(0);
+
+           
+
+
+         })->export('xls');
+    }
 }
