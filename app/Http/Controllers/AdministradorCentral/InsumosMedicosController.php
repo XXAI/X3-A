@@ -233,7 +233,7 @@ class InsumosMedicosController extends Controller
                 if($material_curacion){
                     $material_curacion->update($inputs["material_curacion"]);
                  } else {
-                     $material_curacion = new Medicamento($inputs["material_curacion"]);
+                     $material_curacion = new MaterialCuracion($inputs["material_curacion"]);
                      $insumo->materialCuracion()->save($material_curacion);
                  }
             }
@@ -391,10 +391,18 @@ class InsumosMedicosController extends Controller
             $excel->sheet('Medicamentos', function($sheet)  {
                 $sheet->setAutoSize(true);
                 $sheet->row(1, array(
-                    'Clave','Causes (1 = SI, 0 = NO)','Unidosis (1 = SI, 0 = NO)','Tiene Fecha Caducidad (1 = SI, 0 = NO)','Controlado (1 = SI, 0 = NO)','Surfactante (1 = SI, 0 = NO)','Descontinuado (1 = SI, 0 = NO)','Descripción',
+                    'Clave','Causes (1 = SI, 0 = NO)',
+                    'Unidosis (1 = SI, 0 = NO)',
+                    'Tiene Fecha Caducidad (1 = SI, 0 = NO)',
+                    'Controlado (1 = SI, 0 = NO)',
+                    'Surfactante (1 = SI, 0 = NO)',
+                    'Descontinuado (1 = SI, 0 = NO)',
+                    'Atencion Médica (1 = SI, 0 = NO)',
+                    'Salud Pública (1 = SI, 0 = NO)',
+                    'Descripción',
                     'Presentación (CLAVE Pestaña: REF PRESENTACION)','Concentración','Contenido','Cantidad X Envase','Unidad de medida (CLAVE Pestaña: REF UNIDAD MEDIDA)', 'Vía de Administración(CLAVE Pestaña: REF VIA ADMON)','Dosis','Indicaciones'
                 ));
-                $sheet->cells("A1:P1", function($cells) {
+                $sheet->cells("A1:R1", function($cells) {
                     $cells->setAlignment('center');
                 });
                 $sheet->row(1, function($row) {
@@ -410,6 +418,8 @@ class InsumosMedicosController extends Controller
                     0,
                     0,
                     0,
+                    1,
+                    1,
                     "Descripción completa (EJEMPLO): ÁCIDO ACETILSALICÍLICO Tableta soluble o efervescente 300 mg 20 tabletas solubles o efervescentes",
                     11,                    
                     "300 mg",
@@ -421,16 +431,23 @@ class InsumosMedicosController extends Controller
                     "Artritis reumatoide. Osteoartritis. Espondilitis anquilosante. Fiebre reumática aguda. Dolor o fiebre."
                 )); 
 
-                $sheet->setAutoFilter('A1:P1');
+                $sheet->setAutoFilter('A1:R1');
             });
 
             $excel->sheet('Material de Curación', function($sheet) {
                 $sheet->setAutoSize(true);
                 $sheet->row(1, array(
-                    'Clave', 'Causes  (1 = SI, 0 = NO)','Unidosis  (1 = SI, 0 = NO)','Tiene Fecha Caducidad  (1 = SI, 0 = NO)','Descontinuado  (1 = SI, 0 = NO)','Descripción',
+                    'Clave', 
+                    'Causes  (1 = SI, 0 = NO)',
+                    'Unidosis  (1 = SI, 0 = NO)',
+                    'Tiene Fecha Caducidad  (1 = SI, 0 = NO)',
+                    'Descontinuado  (1 = SI, 0 = NO)',
+                    'Atencion Médica (1 = SI, 0 = NO)',
+                    'Salud Pública (1 = SI, 0 = NO)',
+                    'Descripción',
                     'Cantidad X Envase','Unidad de medida (CLAVE Pestaña: REF UNIDAD MEDIDA)'
                 ));
-                $sheet->cells("A1:H1", function($cells) {
+                $sheet->cells("A1:J1", function($cells) {
                     $cells->setAlignment('center');
                 });
                 $sheet->row(1, function($row) {
@@ -444,12 +461,14 @@ class InsumosMedicosController extends Controller
                     0,
                     0,
                     0,
+                    1,
+                    1,
                     "VENDA DE GASA DE ALGODÓN. LONGITUD 27 M. ANCHO 5 CM. PIEZA (EJEMPLO)",
                     1,
                     1,
                 )); 
                 
-                $sheet->setAutoFilter('A1:H1');
+                $sheet->setAutoFilter('A1:J1');
 
                 //$sheet->getComment('H2')->getText()->createTextRun('hola:');
                /* $sheet->getComment('H1')->setAuthor('Hugo Corzo');
@@ -559,5 +578,128 @@ class InsumosMedicosController extends Controller
 
 
          })->export('xls');
+    }
+
+    public function cargarExcel(Request $request){
+        ini_set('memory_limit', '-1');
+
+        try{
+            if ($request->hasFile('archivo')){
+				$file = $request->file('archivo');
+
+				if ($file->isValid()) {
+                    $path = $file->getRealPath();
+
+                    $medicamentos = [];
+                    $materiales_curacion = [];
+                
+                    Excel::load($file, function($reader) use (&$medicamentos, &$materiales_curacion) {
+                        $objExcel = $reader->getExcel();
+                        $sheet = $objExcel->getSheet(0);
+                        $highestRow = $sheet->getHighestRow();
+                        $highestColumn = $sheet->getHighestColumn();
+        
+                        //  Loop through each row of the worksheet in turn
+                        DB::beginTransaction();
+                        for ($row = 2; $row <= $highestRow; $row++)
+                        {
+                            //  Read a row of data into an array
+                            $rowData = $sheet->rangeToArray('A' . $row . ':' . $highestColumn . $row,
+                                NULL, TRUE, FALSE);
+                            $data =  $rowData[0];
+                            
+                            $insumo = new Insumo();
+                            $insumo->clave = $data[0];
+                            $insumo->tipo = "ME";
+                            $insumo->generico_id=  "1689";// Esto está así en la base de datos no se porque decidieron ponerle el mismo generico id a todo pero bueno :/;
+                            $insumo->atencion_medica = $data[7];
+                            $insumo->salud_publica = $data[8];
+                            $insumo->es_causes = $data[1];
+                            $insumo->es_unidosis = $data[2];
+                            $insumo->tiene_fecha_caducidad = $data[3];
+                            $insumo->descontinuado = $data[6];
+                            $insumo->descripcion = $data[9];
+
+                            $medicamento = new Medicamento();
+                            $medicamento->insumo_medico_clave = $data[0];
+                            $medicamento->presentacion_id = $data[10];
+                            $medicamento->es_controlado = $data[4];
+                            $medicamento->es_surfactante = $data[5];
+                            $medicamento->concentracion = $data[11];
+                            $medicamento->contenido = $data[12];
+                            $medicamento->cantidad_x_envase = $data[13];
+                            $medicamento->unidad_medida_id = $data[14];
+                            $medicamento->via_administracion_id = $data[15];
+                            $medicamento->dosis = $data[16];
+                            $medicamento->indicaciones = $data[17];
+
+                            try{
+                                $insumo->save();
+                                $insumo->medicamento()->save($medicamento);
+                                $insumo->save();
+                                $insumo->medicamento;
+                            } catch(\Exception $e){
+                                $insumo->medicamento = $medicamento;
+                                $insumo->error = $e->getMessage();
+                            }
+                            $medicamentos[] = $insumo;
+                        }
+                        
+                        $sheet = $objExcel->getSheet(1);
+                        $highestRow = $sheet->getHighestRow();
+                        $highestColumn = $sheet->getHighestColumn();
+        
+                        //  Loop through each row of the worksheet in turn
+                        for ($row = 2; $row <= $highestRow; $row++)
+                        {
+                            //  Read a row of data into an array
+                            $rowData = $sheet->rangeToArray('A' . $row . ':' . $highestColumn . $row,
+                                NULL, TRUE, FALSE);
+                                $rowData = $sheet->rangeToArray('A' . $row . ':' . $highestColumn . $row,
+                                NULL, TRUE, FALSE);
+                            $data =  $rowData[0];                            
+                           
+                            $insumo = new Insumo();
+                            $insumo->clave = $data[0];
+                            $insumo->tipo = "MC";
+                            $insumo->generico_id=  "1689";// Esto está así en la base de datos no se porque decidieron ponerle el mismo generico id a todo pero bueno :/;
+                            $insumo->atencion_medica = $data[5];
+                            $insumo->salud_publica = $data[6];
+                            $insumo->es_causes = $data[1];
+                            $insumo->es_unidosis = $data[2];
+                            $insumo->tiene_fecha_caducidad = $data[3];
+                            $insumo->descontinuado = $data[4];
+                            $insumo->descripcion = $data[7];
+
+                            $material_curacion = new MaterialCuracion();
+                            $material_curacion->insumo_medico_clave = $data[0];
+                            $material_curacion->cantidad_x_envase = $data[8];
+                            $material_curacion->unidad_medida_id = $data[9];
+                            try{
+                                $insumo->save();
+                                $insumo->materialCuracion()->save($material_curacion);
+                                $insumo->save();
+                                $insumo->materialCuracion;
+                            } catch(\Exception $e){
+                                $insumo->materialCuracion = $material_curacion;
+                                $insumo->error = $e->getMessage();
+                            }
+                            $materiales_curacion[] = $insumo;
+                        }
+
+                        DB::rollback();
+                    });
+
+					return Response::json([ 'data' => ["medicamentos" => $medicamentos, "material_curacion"=>$materiales_curacion]],200);
+
+				} else {
+					throw new \Exception("Archivo inválido.");
+				}
+			} else {
+				throw new \Exception("No hay archivo.");
+			}
+        } catch(\Exception $e){
+
+        }
     }
 }
