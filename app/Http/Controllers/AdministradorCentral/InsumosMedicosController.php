@@ -681,7 +681,7 @@ class InsumosMedicosController extends Controller
                                 $insumo->save();
                                 $insumo->materialCuracion;
                             } catch(\Exception $e){
-                                $insumo->materialCuracion = $material_curacion;
+                                $insumo->material_curacion = $material_curacion;
                                 $insumo->error = $e->getMessage();
                             }
                             $materiales_curacion[] = $insumo;
