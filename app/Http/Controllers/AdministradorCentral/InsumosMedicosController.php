@@ -580,6 +580,17 @@ class InsumosMedicosController extends Controller
          })->export('xls');
     }
 
+    public function confirmarCarga(Request $request){
+        ini_set('memory_limit', '-1');
+        DB::beginTransaction();
+        try {
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
+
     public function cargarExcel(Request $request){
         ini_set('memory_limit', '-1');
 
@@ -637,10 +648,26 @@ class InsumosMedicosController extends Controller
                                 $insumo->save();
                                 $insumo->medicamento()->save($medicamento);
                                 $insumo->save();
-                                $insumo->medicamento;
+                                $med = $insumo->medicamento;
+                                $med->PresentacionMedicamento;
+                                $med->UnidadMedida;
+                                $med->ViaAdministracion;
+
                             } catch(\Exception $e){
                                 $insumo->medicamento = $medicamento;
+                                $med = $insumo->medicamento;
+                                $med->PresentacionMedicamento;
+                                $med->UnidadMedida;
+                                $med->ViaAdministracion;
                                 $insumo->error = $e->getMessage();
+                               
+                                if(strpos($insumo->error, "Integrity constraint violation: 1452") != false){
+                                    $insumo->error_detectado = "Uno o más de los valores de las columnas no es correcto por favor corrija e intente de nuevo.";                                    
+                                } else if(strpos($insumo->error, "Integrity constraint violation: 1062") != false){
+                                    $insumo->error_detectado = "La clave está repetida o ya existe en la base de datos.";
+                                } else {
+                                    $insumo->error_detectado = "No se pudo detectar el error, por favor revise que los valores sean correctos.";
+                                }
                             }
                             $medicamentos[] = $insumo;
                         }
@@ -679,10 +706,21 @@ class InsumosMedicosController extends Controller
                                 $insumo->save();
                                 $insumo->materialCuracion()->save($material_curacion);
                                 $insumo->save();
-                                $insumo->materialCuracion;
+                                $mc = $insumo->materialCuracion;
+                                $mc->UnidadMedida;
                             } catch(\Exception $e){
                                 $insumo->material_curacion = $material_curacion;
+                                $mc = $insumo->material_curacion;
+                                $mc->UnidadMedida;
                                 $insumo->error = $e->getMessage();
+                                if(strpos($insumo->error, "Integrity constraint violation: 1452") != false){
+                                    $insumo->error_detectado = "Uno o más de los valores de las columnas no es correcto por favor corrija e intente de nuevo.";
+                                } else if(strpos($insumo->error, "Integrity constraint violation: 1062") != false){
+                                    $insumo->error_detectado = "La clave está repetida o ya existe en la base de datos.";
+                                } else {
+                                    $insumo->error_detectado = "No se pudo detectar el error, por favor revise que los valores sean correctos.";
+                                }
+                                
                             }
                             $materiales_curacion[] = $insumo;
                         }
