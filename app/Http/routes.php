@@ -367,7 +367,8 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('actualizar-plataforma-git',         'ActualizarPlataformaController@git');
         Route::get('exportar-base-datos',               'BaseDatosController@exportar');
         Route::post('importar-base-datos',              'BaseDatosController@importar');
-        Route::post('obtener-datos-central',            'DatosServidorCentralController@exportar');
+        Route::get('obtener-datos-central',             'DatosServidorCentralController@exportar');
+        Route::post('cargar-datos-central',             'DatosServidorCentralController@importar');
     });
     // #SECCION: Parches
     Route::group(['prefix' => 'patches','namespace' => 'Patches'], function () {
