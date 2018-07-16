@@ -158,8 +158,8 @@ class CatalogoInsumoController extends Controller
      */
     public function show($id)
     {
-        $object = Insumo::conDescripciones()->with('informacionAmpliada')->find($id);
-        
+        $object = Insumo::conDescripciones()->find($id);
+        $object->load('informacionAmpliada');
 
         if(!$object){
             return Response::json(['error' => "No se encuentra el insumo que esta buscando."], HttpResponse::HTTP_NOT_FOUND);

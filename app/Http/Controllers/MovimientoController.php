@@ -732,6 +732,8 @@ class MovimientoController extends Controller
     public function show($id)
     {
 
+    try{
+
         $movimiento =  Movimiento::with('almacen','movimientoMetadato')->find($id);
 
         if(!$movimiento){
@@ -787,7 +789,8 @@ class MovimientoController extends Controller
                         }
                     }
 
-                    $insumo_detalles = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
+                    $insumo_detalles = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
+                    $insumo_detalles->load('informacionAmpliada');
 
                     $insumo_detalles_temp = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
 
@@ -863,7 +866,8 @@ class MovimientoController extends Controller
                         }
                     }
 
-                    $insumo_detalles = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
+                    $insumo_detalles = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
+                    $insumo_detalles->load('informacionAmpliada');
 
                     $insumo_detalles_temp = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
 
@@ -928,7 +932,9 @@ class MovimientoController extends Controller
                         }
                     }
 
-                    $insumo_detalles = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
+                    $insumo_detalles = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
+                    $insumo_detalles->load('informacionAmpliada');
+
                     $insumo_detalles_temp = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
 
                     $movimiento_detalle = MovimientoDetalle::where('movimiento_id',$movimiento->id)
@@ -966,7 +972,8 @@ class MovimientoController extends Controller
 
                 foreach($movimiento_detalle_negados as $negado)
                 {
-                    $insumo_detalles = Insumo::conDescripciones()->with('informacionAmpliada')->find($negado->clave_insumo_medico);
+                    $insumo_detalles = Insumo::conDescripciones()->find($negado->clave_insumo_medico);
+                    $insumo_detalles->load('informacionAmpliada');
 
                     $objeto_negado  = $insumo_detalles;
 
@@ -1057,7 +1064,8 @@ class MovimientoController extends Controller
                         }
                     }
 
-                     $insumo_detalles       = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
+                     $insumo_detalles       = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
+                     $insumo_detalles->load('informacionAmpliada');
                      //$nombre_temp           = $insumo_detalles_temp->informacionAmpliada->nombre;
 
                     $detalle = NULL;
@@ -1093,10 +1101,10 @@ class MovimientoController extends Controller
         }
 ///****************************************************************************************************************************************
 
-        
-
 			return Response::json(array("status" => 200,"messages" => "Operación realizada con exito","data" => $movimiento), 200);
-		 
+    }catch (\Exception $e) {
+        return Response::json(['error' => $e->getMessage(),'line'=>$e->getLine()], 500);
+    }
         
     }
 
