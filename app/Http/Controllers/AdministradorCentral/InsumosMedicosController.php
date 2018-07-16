@@ -12,7 +12,15 @@ use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
 
-use App\Models\Insumo, App\Models\Medicamento, App\Models\MaterialCuracion, App\Models\PresentacionesMedicamentos, App\Models\UnidadMedida, App\Models\ViasAdministracion;
+use App\Models\Insumo, 
+    App\Models\Medicamento, 
+    App\Models\MaterialCuracion, 
+    App\Models\PresentacionesMedicamentos, 
+    App\Models\UnidadMedida, 
+    App\Models\ViasAdministracion,
+    App\Models\HistorialInsumo,
+    App\Models\HistorialMedicamento,
+    App\Models\HistorialMaterialCuracion;
 
 class InsumosMedicosController extends Controller
 {
@@ -35,12 +43,60 @@ class InsumosMedicosController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request)
-    {   $parametros = Input::only('q','page','per_page');
-        if ($parametros['q']) {
-             $items =  Insumo::where('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('clave','LIKE',"%".$parametros['q']."%");
-        } else {
-             $items =  Insumo::select('*');
+    {   $parametros = Input::only('q','causes','unidosis','tipo','descontinuado','atencion_medica','salud_publica','page','per_page');
+        
+        $items =  Insumo::select('*');
+        
+        if ($parametros['tipo']) {
+            if ($parametros['tipo'] == "ME") {
+                $items = $items->where('tipo','ME');
+            }
+
+            if ($parametros['tipo'] == "MC") {
+                $items = $items->where('tipo','MC');
+            }
         }
+       
+       
+           
+        if ($parametros['causes'] == 1) {
+            $items = $items->where('es_causes',1);
+        } else if ($parametros['causes'] == 0) {
+            
+            $items = $items->where('es_causes',0);
+        }
+
+        if ($parametros['unidosis'] == 1) {
+            $items = $items->where('es_unidosis',1);
+        } else if ($parametros['unidosis'] == 0) {
+            
+            $items = $items->where('es_unidosis',0);
+        }
+
+        if ($parametros['descontinuado'] == 1) {
+            $items = $items->where('descontinuado',1);
+        } else if ($parametros['descontinuado'] == 0) {
+            
+            $items = $items->where('descontinuado',0);
+        }
+
+        if ($parametros['atencion_medica'] == 1) {
+            $items = $items->where('atencion_medica',1);
+        } else if ($parametros['atencion_medica'] == 0) {            
+            $items = $items->where('atencion_medica',0);
+        }
+
+        if ($parametros['salud_publica'] == 1) {
+            $items = $items->where('salud_publica',1);
+        } else if ($parametros['salud_publica'] == 0) {            
+            $items = $items->where('salud_publica',0);
+        }
+        
+
+        if ($parametros['q']) {
+            
+            $items = $items->where('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('clave','LIKE',"%".$parametros['q']."%");
+       }
 
         if(isset($parametros['page'])){
 
@@ -201,6 +257,8 @@ class InsumosMedicosController extends Controller
         DB::beginTransaction();
         try {
 
+
+            $historial_insumo = new HistorialInsumo();
             
             if($insumo->tipo == "ME"){
                 $medicamento = $insumo->medicamento();
@@ -208,8 +266,19 @@ class InsumosMedicosController extends Controller
  
                 $material_curacion = $insumo->materialCuracion();
             }
-            
 
+            $historial_insumo->clave = $insumo->clave;
+            $historial_insumo->tipo = $insumo->tipo;
+            $historial_insumo->generico_id = $insumo->generico_id;
+            $historial_insumo->es_causes = $insumo->es_causes;
+            $historial_insumo->es_unidosis =  $insumo->es_unidosis;
+            $historial_insumo->descontinuado = $insumo->descontinuado;
+            $historial_insumo->descripcion = $insumo->descripcion;
+            $historial_insumo->atencion_medica = $insumo->atencion_medica;
+            $historial_insumo->salud_publica = $insumo->salud_publica;
+            $historial_insumo->save();
+
+            
             $insumo->clave = $inputs['clave'];
             $insumo->tipo = $inputs['tipo'];
             $insumo->es_causes = !isset($inputs['es_causes'])? false : $inputs['es_causes'] ;
@@ -221,20 +290,88 @@ class InsumosMedicosController extends Controller
           
 
             if($inputs["tipo"]=="ME"){
-                if($medicamento){
-                   // $insumo->medicamento->update($inputs["medicamento"]);
+
+                $historial_medicamento = new HistorialMedicamento();
+
+                if($medicamento){                    
+                    //$historial_medicamento->historial_id = $historial_insumo->id;
+
+                    $alt = $medicamento->get();
+                    $historial_medicamento->insumo_medico_clave = $alt[0]->insumo_medico_clave;
+                    $historial_medicamento->forma_farmaceutica_id = $alt[0]->forma_farmaceutica_id;
+                    $historial_medicamento->presentacion_id = $alt[0]->presentacion_id;
+                    $historial_medicamento->es_controlado = $alt[0]->es_controlado;
+                    $historial_medicamento->es_surfactante = $alt[0]->es_surfactante;
+                    $historial_medicamento->concentracion = $alt[0]->concentracion;
+                    $historial_medicamento->contenido = $alt[0]->contenido;
+                    $historial_medicamento->cantidad_x_envase = $alt[0]->cantidad_x_envase;
+                    $historial_medicamento->unidad_medida_id = $alt[0]->unidad_medida_id;
+                    $historial_medicamento->indicaciones = $alt[0]->indicaciones;
+                    $historial_medicamento->via_administracion_id = $alt[0]->via_administracion_id;
+                    $historial_medicamento->dosis = $alt[0]->dosis;
+                    
+                    $historial_insumo->medicamento()->save($historial_medicamento);
+
+                    // $insumo->medicamento->update($inputs["medicamento"]);
+
                    $medicamento->update($inputs["medicamento"]);
                 } else {
+                    // Por si era material de curacion pero ahora es medicamento guardamos
+                    if($material_curacion){
+
+                        $alt = $material_curacion->get(); 
+                        $historial_material_curacion = new HistorialMaterialCuracion();
+                        $historial_material_curacion->insumo_medico_clave = $alt[0]->insumo_medico_clave;
+                        $historial_material_curacion->nombre_generico_especifico = $alt[0]->nombre_generico_especifico;
+                        $historial_material_curacion->cantidad_x_envase = $alt[0]->cantidad_x_envase;
+                        $historial_material_curacion->unidad_medida_id = $alt[0]->unidad_medida_id;
+                        $historial_material_curacion->funcion = $alt[0]->funcion;
+                        $historial_insumo->materialCuracion()->save($historial_material_curacion);
+
+                    }
+
                     $medicamento = new Medicamento($inputs["medicamento"]);
                     $insumo->medicamento()->save($medicamento);
                 }
+
+                
                 
             } else {
+                $historial_material_curacion = new HistorialMaterialCuracion();
+
                 if($material_curacion){
+
+                    $alt = $material_curacion->get(); 
+                    $historial_material_curacion->insumo_medico_clave = $alt[0]->insumo_medico_clave;
+                    $historial_material_curacion->nombre_generico_especifico = $alt[0]->nombre_generico_especifico;
+                    $historial_material_curacion->cantidad_x_envase = $alt[0]->cantidad_x_envase;
+                    $historial_material_curacion->unidad_medida_id = $alt[0]->unidad_medida_id;
+                    $historial_material_curacion->funcion = $alt[0]->funcion;
+                    $historial_insumo->materialCuracion()->save($historial_material_curacion);
+                    
                     $material_curacion->update($inputs["material_curacion"]);
                  } else {
-                     $material_curacion = new MaterialCuracion($inputs["material_curacion"]);
-                     $insumo->materialCuracion()->save($material_curacion);
+                     // Por si antes era medicamento
+                    if($medicamento){
+                        $alt = $medicamento->get();
+                        $historial_medicamento = new HistorialMedicamento();
+                        $historial_medicamento->insumo_medico_clave = $alt[0]->insumo_medico_clave;
+                        $historial_medicamento->forma_farmaceutica_id = $alt[0]->forma_farmaceutica_id;
+                        $historial_medicamento->presentacion_id = $alt[0]->presentacion_id;
+                        $historial_medicamento->es_controlado = $alt[0]->es_controlado;
+                        $historial_medicamento->es_surfactante = $alt[0]->es_surfactante;
+                        $historial_medicamento->concentracion = $alt[0]->concentracion;
+                        $historial_medicamento->contenido = $alt[0]->contenido;
+                        $historial_medicamento->cantidad_x_envase = $alt[0]->cantidad_x_envase;
+                        $historial_medicamento->unidad_medida_id = $alt[0]->unidad_medida_id;
+                        $historial_medicamento->indicaciones = $alt[0]->indicaciones;
+                        $historial_medicamento->via_administracion_id = $alt[0]->via_administracion_id;
+                        $historial_medicamento->dosis = $alt[0]->dosis;
+                        $historial_insumo->medicamento()->save($historial_medicamento);
+                    }
+                    
+                    $material_curacion = new MaterialCuracion($inputs["material_curacion"]);
+                    $insumo->materialCuracion()->save($material_curacion);
                  }
             }
             $insumo->save();
@@ -737,7 +874,337 @@ class InsumosMedicosController extends Controller
 				throw new \Exception("No hay archivo.");
 			}
         } catch(\Exception $e){
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        }
+    }   
 
+    public function confirmarCargaMasiva(Request $request){
+        ini_set('memory_limit', '-1');
+
+        try{
+            $medicamentos_procesados = [];
+            $materiales_curacion_procesados  = [];
+
+            $input = Input::only("medicamentos, material_curacion");
+            $medicamentos = Input::get("medicamentos");
+            $material_curacion = Input::get("material_curacion");
+            
+            $bandera_hay_errores = false;
+            
+            DB::beginTransaction();
+            if(isset($medicamentos)){
+                $medicamentos_a_cargar = [];
+                $medicamentos_correctos = [];
+                $medicamentos_por_validar = [];
+
+                if(isset($medicamentos["correctos"])){
+                    $medicamentos_correctos = $medicamentos["correctos"];
+                } 
+
+                if(isset($medicamentos["por_validar"])){
+                    $medicamentos_por_validar = $medicamentos["por_validar"];
+                } 
+
+                $medicamentos_a_cargar = array_merge($medicamentos_correctos, $medicamentos_por_validar);
+                
+                
+                $total = count($medicamentos_a_cargar);
+
+               
+                for ($i = 0; $i < $total; $i++)
+                {
+                    
+                    $data =  $medicamentos_a_cargar[$i];
+                    
+                    $insumo = new Insumo();
+                    $insumo->clave = $data['clave'];
+                    $insumo->tipo = $data['tipo'];
+                    $insumo->generico_id=  "1689";// Esto está así en la base de datos no se porque decidieron ponerle el mismo generico id a todo pero bueno :/;
+                    $insumo->atencion_medica = $data['atencion_medica'];
+                    $insumo->salud_publica = $data['salud_publica'];
+                    $insumo->es_causes = $data['es_causes'];
+                    $insumo->es_unidosis = $data['es_unidosis'];
+                    $insumo->tiene_fecha_caducidad = $data['tiene_fecha_caducidad'];
+                    $insumo->descontinuado = $data['descontinuado'];
+                    $insumo->descripcion = $data['descripcion'];
+
+                    $data_medicamento = $data["medicamento"];
+
+                    $medicamento = new Medicamento();
+                    $medicamento->insumo_medico_clave = $data['clave'];
+                    $medicamento->presentacion_id = $data_medicamento['presentacion_id'];
+                    $medicamento->es_controlado = $data_medicamento['es_controlado'];
+                    $medicamento->es_surfactante = $data_medicamento['es_surfactante'];
+                    $medicamento->concentracion = $data_medicamento['concentracion'];
+                    $medicamento->contenido = $data_medicamento['contenido'];
+                    $medicamento->cantidad_x_envase = $data_medicamento['cantidad_x_envase'];
+                    $medicamento->unidad_medida_id = $data_medicamento['unidad_medida_id'];
+                    $medicamento->via_administracion_id = $data_medicamento['via_administracion_id'];
+                    $medicamento->dosis = $data_medicamento['dosis'];
+                    $medicamento->indicaciones = $data_medicamento['indicaciones'];
+
+                    try{
+                        $insumo->save();
+                        $insumo->medicamento()->save($medicamento);
+                        $insumo->save();
+
+                        $med = $insumo->medicamento;
+                        $med->PresentacionMedicamento;
+                        $med->UnidadMedida;
+                        $med->ViaAdministracion;
+
+                    } catch(\Exception $e){
+                        $bandera_hay_errores = true;
+                        $insumo->medicamento = $medicamento;
+                        $med = $insumo->medicamento;
+                        $med->PresentacionMedicamento;
+                        $med->UnidadMedida;
+                        $med->ViaAdministracion;
+                        $insumo->error = $e->getMessage();
+                        
+                        if(strpos($insumo->error, "Integrity constraint violation: 1452") != false){
+                            $insumo->error_detectado = "Uno o más de los valores de las columnas no es correcto por favor corrija e intente de nuevo.";                                    
+                        } else if(strpos($insumo->error, "Integrity constraint violation: 1062") != false){
+                            $insumo->error_detectado = "La clave está repetida o ya existe en la base de datos.";
+                        } else {
+                            $insumo->error_detectado = "No se pudo detectar el error, por favor revise que los valores sean correctos.";
+                        }
+                    }
+
+                    $medicamentos_procesados[] = $insumo;
+                }
+                
+            } 
+
+            if(isset($material_curacion)){
+                $material_curacion_a_cargar = [];
+                $material_curacion_correctos = [];
+                $material_curacion_por_validar = [];
+
+                if(isset($material_curacion["correctos"])){
+                    $material_curacion_correctos = $material_curacion["correctos"];
+                } 
+
+                if(isset($material_curacion["por_validar"])){
+                    $material_curacion_por_validar = $material_curacion["por_validar"];
+                } 
+
+                $material_curacion_a_cargar = array_merge($material_curacion_correctos, $material_curacion_por_validar);
+                
+                
+                $total = count($material_curacion_a_cargar);
+
+               
+                for ($i = 0; $i < $total; $i++)
+                {
+                    
+                    $data =  $material_curacion_a_cargar[$i];
+                    
+                    $insumo = new Insumo();
+                    $insumo->clave = $data['clave'];
+                    $insumo->tipo = $data['tipo'];
+                    $insumo->generico_id=  "1689";// Esto está así en la base de datos no se porque decidieron ponerle el mismo generico id a todo pero bueno :/;
+                    $insumo->atencion_medica = $data['atencion_medica'];
+                    $insumo->salud_publica = $data['salud_publica'];
+                    $insumo->es_causes = $data['es_causes'];
+                    $insumo->es_unidosis = $data['es_unidosis'];
+                    $insumo->tiene_fecha_caducidad = $data['tiene_fecha_caducidad'];
+                    $insumo->descontinuado = $data['descontinuado'];
+                    $insumo->descripcion = $data['descripcion'];
+
+                    $data_material_curacion = $data["material_curacion"];
+
+                    $material_curacion = new MaterialCuracion();
+                    $material_curacion->insumo_medico_clave =  $data['clave'];
+                    $material_curacion->cantidad_x_envase = $data_material_curacion['cantidad_x_envase'];
+                    $material_curacion->unidad_medida_id =  $data_material_curacion['unidad_medida_id'];
+
+
+                    try{
+                        $insumo->save();
+                        $insumo->materialCuracion()->save($material_curacion);
+                        $insumo->save();
+                        $mc = $insumo->materialCuracion;
+                        $mc->UnidadMedida;
+                    } catch(\Exception $e){
+                        $bandera_hay_errores = true;
+                        $insumo->material_curacion = $material_curacion;
+                        $mc = $insumo->material_curacion;
+                        $mc->UnidadMedida;
+                        $insumo->error = $e->getMessage();
+                        if(strpos($insumo->error, "Integrity constraint violation: 1452") != false){
+                            $insumo->error_detectado = "Uno o más de los valores de las columnas no es correcto por favor corrija e intente de nuevo.";
+                        } else if(strpos($insumo->error, "Integrity constraint violation: 1062") != false){
+                            $insumo->error_detectado = "La clave está repetida o ya existe en la base de datos.";
+                        } else {
+                            $insumo->error_detectado = "No se pudo detectar el error, por favor revise que los valores sean correctos.";
+                        }
+                        
+                    }
+
+                    $materiales_curacion_procesados[] = $insumo;
+                }
+                
+            } 
+
+            
+
+          
+
+            if($bandera_hay_errores){
+                DB::rollback();
+                return Response::json([ 'data' => ["error"=>true,"medicamentos" => $medicamentos_procesados, "material_curacion"=>$materiales_curacion_procesados]],200);
+            } else{
+                //DB::rollback();
+                DB::commit();
+                return Response::json([ 'data' => ["error"=>false,"medicamentos" => $medicamentos_procesados, "material_curacion"=>$materiales_curacion_procesados]],200);
+            }
+            /*
+            if ($request->hasFile('archivo')){
+				$file = $request->file('archivo');
+
+				if ($file->isValid()) {
+                    $path = $file->getRealPath();
+
+                    $medicamentos = [];
+                    $materiales_curacion = [];
+                
+                    Excel::load($file, function($reader) use (&$medicamentos, &$materiales_curacion) {
+                        $objExcel = $reader->getExcel();
+                        $sheet = $objExcel->getSheet(0);
+                        $highestRow = $sheet->getHighestRow();
+                        $highestColumn = $sheet->getHighestColumn();
+        
+                        //  Loop through each row of the worksheet in turn
+                        DB::beginTransaction();
+                        for ($row = 2; $row <= $highestRow; $row++)
+                        {
+                            //  Read a row of data into an array
+                            $rowData = $sheet->rangeToArray('A' . $row . ':' . $highestColumn . $row,
+                                NULL, TRUE, FALSE);
+                            $data =  $rowData[0];
+                            
+                            $insumo = new Insumo();
+                            $insumo->clave = $data[0];
+                            $insumo->tipo = "ME";
+                            $insumo->generico_id=  "1689";// Esto está así en la base de datos no se porque decidieron ponerle el mismo generico id a todo pero bueno :/;
+                            $insumo->atencion_medica = $data[7];
+                            $insumo->salud_publica = $data[8];
+                            $insumo->es_causes = $data[1];
+                            $insumo->es_unidosis = $data[2];
+                            $insumo->tiene_fecha_caducidad = $data[3];
+                            $insumo->descontinuado = $data[6];
+                            $insumo->descripcion = $data[9];
+
+                            $medicamento = new Medicamento();
+                            $medicamento->insumo_medico_clave = $data[0];
+                            $medicamento->presentacion_id = $data[10];
+                            $medicamento->es_controlado = $data[4];
+                            $medicamento->es_surfactante = $data[5];
+                            $medicamento->concentracion = $data[11];
+                            $medicamento->contenido = $data[12];
+                            $medicamento->cantidad_x_envase = $data[13];
+                            $medicamento->unidad_medida_id = $data[14];
+                            $medicamento->via_administracion_id = $data[15];
+                            $medicamento->dosis = $data[16];
+                            $medicamento->indicaciones = $data[17];
+
+                            try{
+                                $insumo->save();
+                                $insumo->medicamento()->save($medicamento);
+                                $insumo->save();
+                                $med = $insumo->medicamento;
+                                $med->PresentacionMedicamento;
+                                $med->UnidadMedida;
+                                $med->ViaAdministracion;
+
+                            } catch(\Exception $e){
+                                $insumo->medicamento = $medicamento;
+                                $med = $insumo->medicamento;
+                                $med->PresentacionMedicamento;
+                                $med->UnidadMedida;
+                                $med->ViaAdministracion;
+                                $insumo->error = $e->getMessage();
+                               
+                                if(strpos($insumo->error, "Integrity constraint violation: 1452") != false){
+                                    $insumo->error_detectado = "Uno o más de los valores de las columnas no es correcto por favor corrija e intente de nuevo.";                                    
+                                } else if(strpos($insumo->error, "Integrity constraint violation: 1062") != false){
+                                    $insumo->error_detectado = "La clave está repetida o ya existe en la base de datos.";
+                                } else {
+                                    $insumo->error_detectado = "No se pudo detectar el error, por favor revise que los valores sean correctos.";
+                                }
+                            }
+                            $medicamentos[] = $insumo;
+                        }
+                        
+                        $sheet = $objExcel->getSheet(1);
+                        $highestRow = $sheet->getHighestRow();
+                        $highestColumn = $sheet->getHighestColumn();
+        
+                        //  Loop through each row of the worksheet in turn
+                        for ($row = 2; $row <= $highestRow; $row++)
+                        {
+                            //  Read a row of data into an array
+                            $rowData = $sheet->rangeToArray('A' . $row . ':' . $highestColumn . $row,
+                                NULL, TRUE, FALSE);
+                                $rowData = $sheet->rangeToArray('A' . $row . ':' . $highestColumn . $row,
+                                NULL, TRUE, FALSE);
+                            $data =  $rowData[0];                            
+                           
+                            $insumo = new Insumo();
+                            $insumo->clave = $data[0];
+                            $insumo->tipo = "MC";
+                            $insumo->generico_id=  "1689";// Esto está así en la base de datos no se porque decidieron ponerle el mismo generico id a todo pero bueno :/;
+                            $insumo->atencion_medica = $data[5];
+                            $insumo->salud_publica = $data[6];
+                            $insumo->es_causes = $data[1];
+                            $insumo->es_unidosis = $data[2];
+                            $insumo->tiene_fecha_caducidad = $data[3];
+                            $insumo->descontinuado = $data[4];
+                            $insumo->descripcion = $data[7];
+
+                            $material_curacion = new MaterialCuracion();
+                            $material_curacion->insumo_medico_clave = $data[0];
+                            $material_curacion->cantidad_x_envase = $data[8];
+                            $material_curacion->unidad_medida_id = $data[9];
+                            try{
+                                $insumo->save();
+                                $insumo->materialCuracion()->save($material_curacion);
+                                $insumo->save();
+                                $mc = $insumo->materialCuracion;
+                                $mc->UnidadMedida;
+                            } catch(\Exception $e){
+                                $insumo->material_curacion = $material_curacion;
+                                $mc = $insumo->material_curacion;
+                                $mc->UnidadMedida;
+                                $insumo->error = $e->getMessage();
+                                if(strpos($insumo->error, "Integrity constraint violation: 1452") != false){
+                                    $insumo->error_detectado = "Uno o más de los valores de las columnas no es correcto por favor corrija e intente de nuevo.";
+                                } else if(strpos($insumo->error, "Integrity constraint violation: 1062") != false){
+                                    $insumo->error_detectado = "La clave está repetida o ya existe en la base de datos.";
+                                } else {
+                                    $insumo->error_detectado = "No se pudo detectar el error, por favor revise que los valores sean correctos.";
+                                }
+                                
+                            }
+                            $materiales_curacion[] = $insumo;
+                        }
+
+                        DB::rollback();
+                    });
+
+					return Response::json([ 'data' => ["medicamentos" => $medicamentos, "material_curacion"=>$materiales_curacion]],200);
+
+				} else {
+					throw new \Exception("Archivo inválido.");
+				}
+			} else {
+				throw new \Exception("No hay archivo.");
+			}*/
+        } catch(\Exception $e){
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         }
     }
 }

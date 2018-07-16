@@ -159,6 +159,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('insumos-medicos-excel',                 'InsumosMedicosController@exportarExcel');
         Route::get('formato-insumos-medicos-excel',         'InsumosMedicosController@descargarFormato');
         Route::post('cargar-insumos-excel',                 'InsumosMedicosController@cargarExcel');
+        Route::post('confirmar-carga-masiva-insumos',       'InsumosMedicosController@confirmarCargaMasiva');
     });
     // # FIN SECCION
 
