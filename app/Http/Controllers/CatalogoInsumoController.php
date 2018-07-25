@@ -55,6 +55,14 @@ class CatalogoInsumoController extends Controller
             $insumos = $insumos->where('descontinuado',0);
         }
 
+        if(Input::get('disponible_pedidos') != null){
+            if(Input::get('disponible_pedidos') == true){
+                $insumos = $insumos->where('no_disponible_pedidos',0);
+            }else{
+                $insumos = $insumos->where('no_disponible_pedidos',1);
+            }
+        }
+
         //return Response::json([ 'data' => []],200);
         //return Response::json(['error' => ""], HttpResponse::HTTP_UNAUTHORIZED);
 
