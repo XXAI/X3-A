@@ -11,7 +11,7 @@ class Contrato extends BaseModel{
     protected $generarID = false;
     protected $guardarIDServidor = false;
     //protected $guardarIDUsuario = false;
-    //public $incrementing = false;
+    public $incrementing = true;
     
     protected $table = 'contratos';  
     //protected $primaryKey = 'clave';
@@ -23,5 +23,9 @@ class Contrato extends BaseModel{
 
     public function unidadesMedicas(){
         return $this->belongsToMany('App\Models\UnidadMedica', 'contrato_clues', 'contrato_id', 'clues');
+    }
+
+    public function precios(){
+        return $this->hasMany('App\Models\ContratoPrecio','contrato_id','id');
     }
 }

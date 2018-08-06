@@ -160,6 +160,12 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('formato-insumos-medicos-excel',         'InsumosMedicosController@descargarFormato');
         Route::post('cargar-insumos-excel',                 'InsumosMedicosController@cargarExcel');
         Route::post('confirmar-carga-masiva-insumos',       'InsumosMedicosController@confirmarCargaMasiva');
+
+        // Contratos
+        Route::get('proveedores',           'ContratosController@proveedores');
+        Route::resource('contratos',                  'ContratosController',['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::put('contratos/activar/{id}',          'ContratosController@activar');
+        
     });
     // # FIN SECCION
 
