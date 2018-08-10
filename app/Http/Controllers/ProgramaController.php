@@ -31,12 +31,12 @@ class ProgramaController extends Controller
                  ->orWhere('clave','LIKE',"%".$parametros['q']."%");
              });
         } else {
-                 $data =  Programa::where('id','>',0);
-               }
+            $data =  Programa::where('id','>',0);
+        }
         
+        $data = $data->orderBy('nombre');
 
         if(isset($parametros['page'])){
-
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
             $data = $data->paginate($resultadosPorPagina);
         } else {
