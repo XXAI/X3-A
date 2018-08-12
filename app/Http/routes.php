@@ -162,9 +162,11 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::post('confirmar-carga-masiva-insumos',       'InsumosMedicosController@confirmarCargaMasiva');
 
         // Contratos
-        Route::get('proveedores',           'ContratosController@proveedores');
-        Route::resource('contratos',                  'ContratosController',['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::put('contratos/activar/{id}',          'ContratosController@activar');
+        Route::get('proveedores',                           'ContratosController@proveedores');
+        Route::resource('contratos',                        'ContratosController',['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::put('contratos/activar/{id}',                'ContratosController@activar');
+        Route::get('formato-contrato-lista-precios-excel',  'ContratosController@descargarFormato');
+        Route::post('cargar-lista-precios-excel',           'ContratosController@cargarExcel');
         
     });
     // # FIN SECCION
