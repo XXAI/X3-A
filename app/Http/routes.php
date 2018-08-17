@@ -156,6 +156,21 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('presentaciones',                        'InsumosMedicosController@presentaciones');     
         Route::get('unidades-medida',                       'InsumosMedicosController@unidadesMedida');     
         Route::get('vias-administracion',                   'InsumosMedicosController@viasAdministracion');     
+<<<<<<< HEAD
+=======
+        Route::get('insumos-medicos-excel',                 'InsumosMedicosController@exportarExcel');
+        Route::get('formato-insumos-medicos-excel',         'InsumosMedicosController@descargarFormato');
+        Route::post('cargar-insumos-excel',                 'InsumosMedicosController@cargarExcel');
+        Route::post('confirmar-carga-masiva-insumos',       'InsumosMedicosController@confirmarCargaMasiva');
+
+        // Contratos
+        Route::get('proveedores',                           'ContratosController@proveedores');
+        Route::resource('contratos',                        'ContratosController',['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::put('contratos/activar/{id}',                'ContratosController@activar');
+        Route::get('formato-contrato-lista-precios-excel',  'ContratosController@descargarFormato');
+        Route::post('cargar-lista-precios-excel',           'ContratosController@cargarExcel');
+        
+>>>>>>> 90ee6c22f4e7366ac12aa673485ae6b6def09f72
     });
     // # FIN SECCION
 
@@ -364,7 +379,8 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('actualizar-plataforma-git',         'ActualizarPlataformaController@git');
         Route::get('exportar-base-datos',               'BaseDatosController@exportar');
         Route::post('importar-base-datos',              'BaseDatosController@importar');
-        Route::post('obtener-datos-central',            'DatosServidorCentralController@exportar');
+        Route::get('obtener-datos-central',             'DatosServidorCentralController@exportar');
+        Route::post('cargar-datos-central',             'DatosServidorCentralController@importar');
     });
     // #SECCION: Parches
     Route::group(['prefix' => 'patches','namespace' => 'Patches'], function () {

@@ -41,7 +41,7 @@ class DatosServidorCentralController extends Controller{
         
         // Creamos o reseteamos archivo de respaldo
         Storage::put('datos-central/header.sync',"ID=".$servidor_id);
-        Storage::put('datos-central/header.sync',"CLUES=".$clues);
+        Storage::append('datos-central/header.sync',"CLUES=".$clues);
         Storage::append('datos-central/header.sync',"SECRET_KEY=".$servidor->sercret_key);
         Storage::append('datos-central/header.sync',"VERSION=".Config::get("sync.api_version"));
         Storage::append('datos-central/header.sync',"FECHA_DESCARGA=".Carbon::now());
@@ -50,10 +50,7 @@ class DatosServidorCentralController extends Controller{
         //Storage::append('datos-central/datos.sync', "INSERT INTO sincronizaciones (servidor_id,fecha_generacion) VALUES ('".$servidor_id."','".$fecha_generacion."'); \n");
         
         try {
-
             // Generamos archivo de sincronización de registros actualizados o creados a la fecha de corte
-         
-            
             $tablas_datos = [
                     'pedidos',
                     'pedidos_insumos',
@@ -188,12 +185,350 @@ class DatosServidorCentralController extends Controller{
 	}
 	
 	public function importar(Request $request){
-		// Abrá que implementar algún tipo de seguridad para que no suban otro script que por ejemplo borre toda la bases de datos		
-		ini_set('memory_limit', '-1');
-        try{
-            //return Response::json([ 'data' => $output],200);
-        } catch (\Exception $e) {
-            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        ini_set('memory_limit', '-1');
+        $conexion_local = DB::connection('mysql');
+        $conexion_local->beginTransaction();
+        $clues_que_hace_sync = '';
+
+        try {
+            Storage::makeDirectory("importar-datos");
+            //echo php_ini_loaded_file();
+            //var_dump($request);
+            if ($request->hasFile('datos-central')){
+                
+                $file = $request->file('datos-central');
+                if ($file->isValid()) {
+                     
+                    Storage::put(
+                        "importar-datos/".$file->getClientOriginalName(),
+                        file_get_contents($file->getRealPath())
+                    );
+
+                    $nombreArray = explode(".",$file->getClientOriginalName());
+
+                    $servidor_id = $nombreArray[1];                    
+                    $servidor = Servidor::find($servidor_id);                    
+                    
+                    if($servidor){
+                        $storage_path = storage_path();
+                        $zip = new ZipArchive();
+                        $zippath = $storage_path."/app/importar-datos/";
+                        $zipname = "datos-central.".$servidor_id.".zip";
+
+                        $zip_status = $zip->open($zippath.$zipname) ;
+
+                        if ($zip_status === true) {
+
+                            if ($zip->setPassword($servidor->secret_key)){
+                                Storage::makeDirectory("importar-datos/".$servidor->id);
+                                if ($zip->extractTo($zippath."/".$servidor->id)){
+                                    $zip->close();
+
+                                    //Borramos el ZIP y nos quedamos con los archivos extraidos
+                                    Storage::delete("importar-datos/".$file->getClientOriginalName());
+
+                                    //Storage::makeDirectory("importar-datos/".$servidor->id."/confirmacion");
+                                    
+                                    //Obtenemos información del servidor que está sincronizando
+                                    $contents_header = Storage::get("importar-datos/".$servidor->id."/header.sync");
+                                    $header_vars = ArchivoSync::parseVars($contents_header);
+                                    $clues_que_hace_sync = $header_vars['CLUES'];
+                                    // Obtenemos las fechas de actualizacion de sus catálogos
+                                    //$contents_catalogos = Storage::get("importar-datos/".$servidor->id."/catalogos.sync");
+                                    //$catalogos_vars = ArchivoSync::parseVars($contents_catalogos);
+                                
+                                    /*
+                                    // Verificamos que esta actualiacion no se haya aplicado antes                     
+                                    if(Sincronizacion::where('servidor_id',$servidor->id)->where('fecha_generacion',$header_vars['FECHA_SYNC'])->count() > 0){
+                                        //Storage::deleteDirectory("importar-datos/".$servidor->id);
+                                        throw new \Exception("No se puede importar más de una vez el mismo archivo de sincronización. La fecha del archivo indica que ya fue cargado previamente.");
+                                    }                                   
+                                    */
+
+                                    /*
+                                    $actualizar_catalogos = "false";
+                                    Storage::put("importar-datos/".$servidor->id."/confirmacion/catalogos.sync","");
+                                    foreach ($catalogos_vars as $key => $cat_ultima_actualizacion) {
+                                       
+                                        $principal_ultima_actualizacion = $conexion_local->table($key)->max("updated_at"); 
+                                       
+                                        if ($principal_ultima_actualizacion) {
+                                           
+                                            if ($principal_ultima_actualizacion != $cat_ultima_actualizacion) {
+                                                
+                                                $actualizar_catalogos = "true";
+                                               
+                                                $rows = $conexion_local->table($key)->whereBetween('updated_at',[$cat_ultima_actualizacion,$principal_ultima_actualizacion])->get();                                               
+                                                 
+                                                if($rows){
+                                                    $query = "";
+                                                    $rows_chunks = array_chunk($rows, 50);    
+                                                    $columnas = $conexion_local->getSchemaBuilder()->getColumnListing($key);
+
+                                                    foreach($rows_chunks as $row_chunk){
+                                                        //Storage::append("importar-datos/".$servidor->id."/confirmacion/catalogos.sync", "REPLACE INTO ".$key." VALUES ");
+                                                        $query .= "REPLACE INTO ".$key." VALUES ";
+                                                        
+                                                        $index_replace = 0;
+                                                        foreach($row_chunk as $row){
+                                                            if ($index_replace!=0){
+                                                                $item = ", (";
+                                                            } else {
+                                                                $item = "(";
+                                                            }
+                                                            
+                                                            $index_items = 0;
+                                                            foreach($columnas as $nombre){
+                                                                if ($index_items!=0){
+                                                                    $item .= ",";
+                                                                }
+
+                                                                $tipo  = gettype($row->$nombre);
+                                                                
+                                                                switch($tipo){
+                                                                    case "string": $item .= "\"".addslashes($row->$nombre)."\""; break;
+                                                                    case "NULL": $item .= "NULL"; break;
+                                                                    default: $item .= addslashes($row->$nombre);
+                                                                }
+                                                                
+                                                                $index_items += 1;
+                                                            }
+                                                            $item .= ") ";
+                                                            $index_replace += 1;                                                            
+                                                            
+                                                            $query .= $item;
+                                                        }
+                                                        $query .= "; \n";
+                                                        
+                                                    }
+
+                                                    Storage::append("importar-datos/".$servidor->id."/confirmacion/catalogos.sync", $query);                                                    
+                                                } 
+
+                                            }
+                                        }
+                                    }
+                                    */
+                                   
+                                    // Registramos la version del servidor y si los catálogos estan actualizados
+                                    $servidor->version = $header_vars['VERSION'];
+                                    /*if ($actualizar_catalogos == "true") {
+                                        $servidor->catalogos_actualizados = false;
+                                    } else {
+                                        $servidor->catalogos_actualizados = true;
+                                    }*/
+                                    //$servidor->ultima_sincronizacion = $header_vars['FECHA_SYNC'];
+                                    $servidor->save();
+
+                                    // Comparamos la version del servidor principal y si es diferente le indicamos que tiene que actualizar
+                                    if($servidor->version != Config::get("sync.api_version")) {
+                                        $actualizar_software = "true";
+                                    } else {
+                                        $actualizar_software = "false";
+                                    }
+                                   
+                                    // Se ejecuta la sincronización
+                                    $contents = Storage::get("importar-datos/".$servidor->id."/sumami.sync");
+                                    $conexion_local->statement('SET FOREIGN_KEY_CHECKS=0');
+                                    $conexion_local->getpdo()->exec($contents);
+                                    $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
+
+                                    /*
+                                    // Agregamos las tablas pivote al archivo de confirmación para su descarga en offline
+                                    Storage::put("importar-datos/".$servidor->id."/confirmacion/pivotes.sync","");
+                                    foreach(Config::get("sync.pivotes") as $tabla => $parametrosTabla){                                    
+                                        
+                                        // Pero antes  ejecutamos las funciones de cálculo de las tablas pivotes
+                                        // para actualizar campos de ser necesario en el servidor princiapl
+                                        
+                                        $calculoSubidaFunction = $parametrosTabla['calculo_subida'];
+                                        if($calculoSubidaFunction != ''){
+                                            if(!call_user_func($calculoSubidaFunction,$conexion_local)){
+                                                throw new \Exception("No se pudo hacer uno de los calculos de subida");
+                                            }
+                                        }
+
+                                        // Buscamos las tablas pivotes para que los offline actualicen
+                                        $rows =$conexion_local->table($tabla);
+                                        
+                                        if($parametrosTabla['condicion_bajada'] != ''){
+
+                                            // Aqui vamos a hacer esto en el caso de que alguien haya puesto la palbra clave: {CLUES_QUE_SINCRONIZA} en la condicion
+                                            $condicion = str_replace("{CLUES_QUE_SINCRONIZA}", $clues_que_hace_sync, $parametrosTabla['condicion_bajada']);
+                                            $rows = $rows->whereRaw($condicion);
+                                        }
+
+                                        $rows = $rows->whereBetween('updated_at',[$servidor->ultima_sincronizacion,date('Y-m-d H:i:s')])->get();
+                                    
+                                        if($rows){
+                                            $query = "";
+                                            
+                                            $columnas = $conexion_local->getSchemaBuilder()->getColumnListing($tabla);
+
+                                            foreach($rows as $row){
+                        
+                                                $query .= "INSERT INTO ".$tabla."  VALUES (";
+                                                $update = "";
+                                                
+                                                $index_items = 0;
+                                                $index_items_update = 0;
+                                                
+                                                foreach($columnas as $nombre){
+                                                    // Solo los campos de bajada
+                                                    $up_flag = in_array($nombre,$parametrosTabla['campos_bajada']);
+                                                    
+                                                    if ($index_items!=0){
+                                                        $query .= ",";
+                                                    }
+                        
+                                                    if ($index_items_update!=0 && $up_flag){
+                                                        $update .= ",";
+                                                    }
+                                                    if($up_flag){
+                                                        $update .= $nombre.'=';
+                                                    }
+                                                    $tipo  = gettype($row->$nombre);
+                                                    
+                                                    switch($tipo){
+                                                        case "string": 
+                                                            $text = "\"".addslashes($row->$nombre)."\""; 
+                                                            $query .= $text;
+                                                            if($up_flag){
+                                                                $update .= $text;
+                                                            } 
+                                                            break;
+                                                        case "NULL": 
+                                                            $query .= "NULL"; 
+                                                            if($up_flag){
+                                                                $update .= "NULL"; 
+                                                            }
+                                                            break;
+                                                        default: 
+                                                            $text = addslashes($row->$nombre);
+                                                            $query .= $text;
+                                                            if($up_flag){
+                                                                $update .= $text;
+                                                            }
+                                                    }                                
+                                                    $index_items += 1;
+                                                    if($up_flag){
+                                                        $index_items_update += 1;
+                                                    }
+                                                    
+                                                }
+                                                $query .= ") ON DUPLICATE KEY UPDATE ".$update."; \n";
+                                                
+                                                                      
+                                                   
+                                            }
+                                            Storage::append("importar-datos/".$servidor->id."/confirmacion/pivotes.sync", $query);
+                                        }
+                                    }
+                                    */
+
+                                    // Registramos la sincronización en la base de datos. 
+                                    /*
+                                    $sincronizacion = new Sincronizacion;
+                                    $sincronizacion->servidor_id = $servidor->id;
+                                    $sincronizacion->fecha_generacion = $header_vars['FECHA_SYNC'];
+                                    $sincronizacion->save();
+                                    */
+
+                                    /*
+                                    $confirmacion_file = "importar-datos/".$servidor->id."/confirmacion/confirmacion.sync";
+                                    Storage::put($confirmacion_file,"ID=".$servidor->id);
+                                    Storage::append($confirmacion_file,"FECHA_SYNC=".$header_vars['FECHA_SYNC']);                                   
+                                    Storage::append($confirmacion_file,"ACTUALIZAR_SOFTWARE=".$actualizar_software);
+                                    Storage::append($confirmacion_file,"VERSION_ACTUAL_SOFTWARE=".Config::get("sync.api_version"));
+                                    Storage::append($confirmacion_file,"ACTUALIZAR_CATALOGOS=".$actualizar_catalogos);
+                                    $storage_path = storage_path();
+                                    
+                                    $zip = new ZipArchive();
+                                    $zippath = $storage_path."/app/";
+                                    $zipname = "sync.confirmacion.".$servidor->id.".zip";                                   
+
+                                    exec("zip -P ".$servidor->secret_key." -j -r ".$zippath.$zipname." \"".$zippath."/importar-datos/".$servidor->id."/confirmacion\"");
+                                    //exec("zip  -j -r ".$zippath.$zipname." \"".$zippath."/importar/".$servidor->id."/confirmacion\"");
+                                    $zip_status = $zip->open($zippath.$zipname);
+                                    */
+
+                                    $conexion_local->commit();
+
+                                    LogSync::create([
+                                        "clues" => $clues_que_hace_sync,
+                                        "descripcion" => "Importó archivo de datos del servidor central."
+                                    ]);
+                                    exit();
+
+                                    /*
+                                    if ($zip_status === true) {
+
+                                        $zip->close();  
+
+                                        ///Then download the zipped file.
+                                        header('Content-Type: application/zip');
+                                        header('Content-disposition: attachment; filename='.$zipname);
+                                        header('Content-Length: ' . filesize($zippath.$zipname));
+                                        readfile($zippath.$zipname);
+                                        Storage::delete($zipname);
+                                        Storage::deleteDirectory("importar-datos/".$servidor->id);
+
+                                        $conexion_local->commit();
+
+                                        LogSync::create([
+                                            "clues" => $clues_que_hace_sync,
+                                            "descripcion" => "Importó archivo de sincronización manual."
+                                        ]);
+                                        exit();
+                                    } else {            
+                                        Storage::deleteDirectory("importar-datos/".$servidor->id);    
+                                        throw new \Exception("No se pudo crear el archivo");
+                                    }
+                                    */
+
+                                } else {
+                                    Storage::delete("importar-datos/".$file->getClientOriginalName());
+                                    Storage::deleteDirectory("importar-datos/".$servidor->id);
+                                    throw new \Exception("No se pudo desencriptar el archivo, es posible que la llave de descriptación sea incorrecta, o que el nombre del archivo no corresponda al servidor correcto."); 
+                                }
+
+                            } else {
+                                $zip->close();
+                                Storage::delete("importar-datos/".$file->getClientOriginalName());
+                                throw new \Exception("Ocurrió un error al desencriptar el archivo");
+                            }                            
+                            exit;
+                        } else {   
+                            Storage::delete("importar-datos/".$file->getClientOriginalName());             
+                            throw new \Exception("No se pudo leer el archivo");
+                        }
+
+                    } else{
+                        Storage::delete("importar-datos/".$file->getClientOriginalName());
+                        throw new \Exception("Archivo inválido, es posible que el nombre haya sido alterado o el servidor que desea sincronizar no se encuentra registrado.");
+                    }
+                }
+            } else {
+                throw new \Exception("No hay archivo.");
+            }
+        } catch (\Illuminate\Database\QueryException $e){            
+            //echo " Sync Importación Excepción: ".$e->getMessage();
+            Storage::append('log.sync', $fecha_generacion." Sync Importación Excepción: ".$e->getMessage());
+            $conexion_local->rollback();
+            
+            LogSync::create([
+                "clues" => $clues_que_hace_sync,
+                "descripcion" => "Intentó importar archivo de datos del servidor central pero hubo un error."
+            ]);
+            
+            return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+        catch(\Exception $e ){
+            LogSync::create([
+                "clues" => $clues_que_hace_sync,
+                "descripcion" => "Intentó importar archivo de datos del servidor central pero hubo un error."
+            ]);
+            return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
     }
 }

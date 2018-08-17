@@ -1263,19 +1263,19 @@ class PedidoController extends Controller{
                     );
 
                     $sheet->mergeCells('A1:D1');
-                    $sheet->mergeCells('E1:I1');
+                    $sheet->mergeCells('E1:J1');
                     if($pedido->status != 'EX-CA'){
                         $sheet->row(1, array('FOLIO DEL PEDIDO: '.$pedido->folio,'','','','PEDIDO '.$pedido->status_descripcion));
                     }else{
                         $sheet->row(1, array('FOLIO DEL PEDIDO: '.$pedido->folio,'','','','FECHA DE CANCELACIÓN: '.$pedido->fecha_cancelacion));
                     }
-                    $sheet->cells("E1:I1", function($cells) {
+                    $sheet->cells("E1:J1", function($cells) {
                         $cells->setAlignment('right');
                     });
 
                     if($pedido->status == 'EX-CA'){
                         $sheet->mergeCells('A2:D2');
-                        $sheet->mergeCells('E2:I2');
+                        $sheet->mergeCells('E2:J2');
                         //$sheet->row(2, array('ENTREGAR A: '.$pedido->almacenSolicitante->nombre,'','','','FECHA DE CANCELACIÓN: '.$pedido->fecha_cancelacion));
                         $sheet->row(2, array('UNIDAD MEDICA: '.$pedido->almacenSolicitante->unidadMedica->nombre,'','','','FECHA DE EXPIRACIÓN: '.$pedido->fecha_expiracion));
 
@@ -1283,17 +1283,17 @@ class PedidoController extends Controller{
                         $sheet->getStyle('E2')->applyFromArray($estilo_cancelado);
 
                         $sheet->mergeCells('A3:D3');
-                        $sheet->mergeCells('E3:I3');
+                        $sheet->mergeCells('E3:J3');
                         $sheet->row(3, array('PROVEEDOR: '.$pedido->proveedor->nombre,'','','','FECHA DE NOTIFICACIÓN: '.$pedido->fecha_concluido));
 
-                        $sheet->mergeCells('A5:I5'); 
+                        $sheet->mergeCells('A5:J5'); 
                         $sheet->row(5, array('Reporte de penas convencionales por incumplimientio al pedido ordinario del mes de ABRIL de la unidad Nombre Iunidad'));
 
-                        $sheet->cells("E1:I3", function($cells) {
+                        $sheet->cells("E1:J3", function($cells) {
                             $cells->setAlignment('right');
                         });
 
-                        $sheet->cells("A5:I5", function($cells) {
+                        $sheet->cells("A5:J5", function($cells) {
                             $cells->setAlignment('center');
                         });
 
@@ -1340,7 +1340,7 @@ class PedidoController extends Controller{
                     });
 
                     $sheet->row(8, array(
-                        'NO.', 'TIPO', 'CLAVE','DESCRIPCIÓN','CANTIDAD FALTANTE','PRECIO UNITARIO','MONTO', '% DE PENALIZACIÓN', 'MONTO PENALIZACIÓN'
+                        'NO.', 'TIPO', 'CLAVE','DESCRIPCIÓN','CANTIDAD FALTANTE','PRECIO UNITARIO','MONTO C/IVA', '% DE PENALIZACIÓN', 'DIAS DE PENALIZACIÓN', 'MONTO PENALIZACIÓN'
                     ));
 
                     $sheet->cells("A8:I8", function($cells) {
@@ -1394,7 +1394,14 @@ class PedidoController extends Controller{
                     foreach($insumos_no_surtidos as $tipo => $insumos){
                         foreach($insumos as $insumo){
                             $contador_filas++;
-                            $subtotal_monto = $insumo->precio_unitario * ($insumo->cantidad_solicitada - ($insumo->cantidad_recibida | 0));
+                            if($insumo->insumosConDescripcion->tipo == 'MC'){
+                                $subtotal_monto = $insumo->precio_unitario * ($insumo->cantidad_solicitada - ($insumo->cantidad_recibida | 0));
+                                //$subtotal_monto *= 1.16;
+                                $iva = $subtotal_monto*16/100;
+                                $subtotal_monto += $iva;
+                            }else{
+                                $subtotal_monto = $insumo->precio_unitario * ($insumo->cantidad_solicitada - ($insumo->cantidad_recibida | 0));
+                            }
                             $sheet->appendRow(array(
                                 ($contador_filas-8),
                                 $insumo->tipoInsumo->nombre, 
@@ -1403,8 +1410,9 @@ class PedidoController extends Controller{
                                 $insumo->cantidad_solicitada - ($insumo->cantidad_recibida | 0),
                                 $insumo->precio_unitario,
                                 $subtotal_monto,
-                                0.05,
-                                (0.05 * $subtotal_monto * 30)
+                                0.005,
+                                30,
+                                '=PRODUCT(G'.$contador_filas.':I'.$contador_filas.')'
                             ));
 
                             if($insumo->insumosConDescripcion->tipo == 'MC'){
@@ -1413,13 +1421,13 @@ class PedidoController extends Controller{
                         }
                     }
 
-                    $sheet->cells("A9:I".$contador_filas, function($cells) {
+                    $sheet->cells("A9:J".$contador_filas, function($cells) {
                         $cells->setValignment('center');
                     });
 
                     $iva_solicitado = $iva_solicitado*16/100;
                     
-                    $sheet->setBorder("A1:I$contador_filas", 'thin');
+                    $sheet->setBorder("A1:J$contador_filas", 'thin');
 
                     $sheet->appendRow(array(
                             '', 
@@ -1427,12 +1435,13 @@ class PedidoController extends Controller{
                             '',
                             '',
                             '=SUM(E9:E'.($contador_filas).')',
-                            'SUBTOTAL',
+                            'TOTAL',
                             '=SUM(G9:G'.($contador_filas).')',
                             '',
-                            '=SUM(I9:I'.($contador_filas).')',
+                            '',
+                            '=SUM(J9:J'.($contador_filas).')',
                         ));
-                    $sheet->appendRow(array(
+                    /*$sheet->appendRow(array(
                             '', 
                             '',
                             '',
@@ -1441,9 +1450,10 @@ class PedidoController extends Controller{
                             'IVA',
                             $iva_solicitado,
                             '',
-                            ($iva_solicitado * 0.05 *30)
-                        ));
-                    $sheet->appendRow(array(
+                            '',
+                            ($iva_solicitado * 0.005 *30)
+                        ));*/
+                    /*$sheet->appendRow(array(
                             '', 
                             '',
                             '',
@@ -1452,8 +1462,9 @@ class PedidoController extends Controller{
                             'TOTAL',
                             '=SUM(G'.($contador_filas+1).':G'.($contador_filas+2).')',
                             '',
-                            '=SUM(I'.($contador_filas+1).':I'.($contador_filas+2).')'
-                        ));
+                            '',
+                            '=SUM(J'.($contador_filas+1).':J'.($contador_filas+2).')'
+                        ));*/
                     $contador_filas += 3;
 
                     /*$phpColor = new \PHPExcel_Style_Color();
@@ -1463,7 +1474,7 @@ class PedidoController extends Controller{
                     $sheet->setColumnFormat(array(
                         "E9:E$contador_filas" => '#,##0',
                         "F9:G$contador_filas" => '"$" #,##0.00_-',
-                        "I9:I$contador_filas" => '"$" #,##0.00_-'
+                        "J9:J$contador_filas" => '"$" #,##0.00_-'
                     ));
 
                     $sheet->getStyle('D9:D'.$contador_filas)->getAlignment()->setWrapText(true);
@@ -1511,6 +1522,8 @@ class PedidoController extends Controller{
                 $excel->getActiveSheet()->getColumnDimension('H')->setWidth(21);
                 $excel->getActiveSheet()->getColumnDimension('I')->setAutoSize(false);
                 $excel->getActiveSheet()->getColumnDimension('I')->setWidth(21);
+                $excel->getActiveSheet()->getColumnDimension('J')->setAutoSize(false);
+                $excel->getActiveSheet()->getColumnDimension('J')->setWidth(21);
 
 
                 $excel->getActiveSheet()->getPageSetup()->setPaperSize(\PHPExcel_Worksheet_PageSetup::PAPERSIZE_LEGAL);

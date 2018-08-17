@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 
 use App\Http\Requests;
-use App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto,  App\Models\TransferenciaPresupuesto, App\Models\Pedido, App\Models\Almacen, App\Models\LogPedidoCancelado, App\Models\LogTransferenciaCancelada, App\Models\Servidor, App\Models\AjustePresupuestoPedidoCancelado;
+use App\Models\Presupuesto, App\Models\UnidadMedicaPresupuesto,  App\Models\TransferenciaPresupuesto, App\Models\Pedido, App\Models\Almacen, App\Models\LogPedidoCancelado, App\Models\LogTransferenciaCancelada, App\Models\Servidor, App\Models\AjustePresupuestoPedidoCancelado, App\Models\Usuario;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -26,6 +26,25 @@ class CancelarPedidosController extends Controller
         $servidor = Servidor::find(env('SERVIDOR_ID'));
 
         $pedido = Pedido::with("insumos.insumoDetalle","recepciones.entrada")->find($id);
+
+        $usuario = Usuario::find($request->get('usuario_id'));
+        $usuario->load('roles.permisos');
+        
+        $tiene_permiso_cancelar_pedido = false;
+        if(count($usuario->roles)){
+            foreach($usuario->roles as $rol){
+                foreach ($rol->permisos as $permiso) {
+                    if($permiso->id == 'pVJrPewkPFwidvmECcgg8BqVXn7FtH7E'){
+                        $tiene_permiso_cancelar_pedido = true;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        if(!$tiene_permiso_cancelar_pedido){
+            return Response::json([ 'data' => $pedido, 'error' => 'No tiene permiso para cancelar este pedido.' ],500);
+        }
 
         $presupuesto = Presupuesto::find($pedido->presupuesto_id);
         if(!$presupuesto->activo){

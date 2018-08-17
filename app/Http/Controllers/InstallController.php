@@ -78,6 +78,8 @@ class InstallController extends Controller
             "CSSSAHIBERR" => "H. B. C. BERRIOZABAL",
             "CSSSAOXCHUC" => "H. B. C. OXCHUC ",
             "CSSSASIMOJO" => "H. B. C. DE SIMOJOVEL",
+            //Harima: Se agrega almacen estatal
+            "CSSSA017324" => "ALMACÉN ESTATAL (TUXTLA GUTIÉRREZ)",
         ];
 
         return view('install',['clues'=>$base_clues]);
@@ -143,13 +145,15 @@ class InstallController extends Controller
             "CSSSA017300" => [ 'id' => "0061",   'clues' => "CSSSA017300",   'secret' => "1043177405",  'proveedor' => 3,   'almacen' => "000129",   'nombre' => "OFICINA JURISDICCIONAL (OCOSINGO)"],
             "CSSSA017312" => [ 'id' => "0062",   'clues' => "CSSSA017312",   'secret' => "9005130614",  'proveedor' => 2,   'almacen' => "000147",   'nombre' => "OFICINA JURISDICCIONAL (MOTOZINTLA)"],
             //Nuevos Mario
-            "CSSSAHICCOR" => [ 'id' => "0046",   'clues' => "CSSSAHICCOR",   'secret' => "4985136749",  'proveedor' => 1,   'almacen' => "00017",   'nombre' => "H. B. C. CHIAPA DE CORZO"],
-            "CSSSA009162" => [ 'id' => "0047",   'clues' => "CSSSA009162",   'secret' => "3154796318",  'proveedor' => 1,   'almacen' => "000120",   'nombre' => "USM SAN AGUSTIN"],
-            "CSSSAHIROSA" => [ 'id' => "0048",   'clues' => "CSSSAHIROSA",   'secret' => "5219746318",  'proveedor' => 1,   'almacen' => "000113",   'nombre' => "H. B. C. LAS ROSAS"],
-            "CSSSAHGREFO" => [ 'id' => "0049",   'clues' => "CSSSAHGREFO",   'secret' => "3482167945",  'proveedor' => 1,   'almacen' => "000146",   'nombre' => "HOSPITAL GENERAL REFORMA"],
-            "CSSSAHIBERR" => [ 'id' => "0050",   'clues' => "CSSSAHIBERR",   'secret' => "2497615487",  'proveedor' => 1,   'almacen' => "00014",   'nombre' => "H. B. C. BERRIOZABAL"],
+            "CSSSAHICCOR" => [ 'id' => "0046",   'clues' => "CSSSAHICCOR",   'secret' => "4985136749",  'proveedor' => 1,   'almacen' => "00017",     'nombre' => "H. B. C. CHIAPA DE CORZO"],
+            "CSSSA009162" => [ 'id' => "0047",   'clues' => "CSSSA009162",   'secret' => "3154796318",  'proveedor' => 1,   'almacen' => "000120",    'nombre' => "USM SAN AGUSTIN"],
+            "CSSSAHIROSA" => [ 'id' => "0048",   'clues' => "CSSSAHIROSA",   'secret' => "5219746318",  'proveedor' => 1,   'almacen' => "000113",    'nombre' => "H. B. C. LAS ROSAS"],
+            "CSSSAHGREFO" => [ 'id' => "0049",   'clues' => "CSSSAHGREFO",   'secret' => "3482167945",  'proveedor' => 1,   'almacen' => "000146",    'nombre' => "HOSPITAL GENERAL REFORMA"],
+            "CSSSAHIBERR" => [ 'id' => "0050",   'clues' => "CSSSAHIBERR",   'secret' => "2497615487",  'proveedor' => 1,   'almacen' => "00014",     'nombre' => "H. B. C. BERRIOZABAL"],
             "CSSSAOXCHUC" => [ 'id' => "0051",   'clues' => "CSSSAOXCHUC",   'secret' => "3415798462",  'proveedor' => 1,   'almacen' => "0001282",   'nombre' => "H. B. C. OXCHUC"],
-            "CSSSASIMOJO" => [ 'id' => "0052",   'clues' => "CSSSASIMOJO",   'secret' => "3486197469",  'proveedor' => 1,   'almacen' => "0001283",   'nombre' => "H. B. C. DE SIMOJOVEL"]
+            "CSSSASIMOJO" => [ 'id' => "0052",   'clues' => "CSSSASIMOJO",   'secret' => "3486197469",  'proveedor' => 1,   'almacen' => "0001283",   'nombre' => "H. B. C. DE SIMOJOVEL"],
+            //Harima: Se agrega almacen estatal
+            "CSSSA017324" => [ 'id' => "0063",   'clues' => "CSSSA017324",   'secret' => "5586997806",  'proveedor' => 5,   'almacen' => "0001175",   'nombre' => "ALMACÉN ESTATAL (TUXTLA GUTIÉRREZ)"],
         ];
         
         $lista_personal_clues = [
@@ -348,7 +352,7 @@ class InstallController extends Controller
         ]);
 
         if($config['almacen']){
-            DB::insert('insert into almacenes (id, incremento, servidor_id, nivel_almacen, tipo_almacen, clues, proveedor_id, subrogado, unidosis, nombre, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?)', [$config['almacen'],1,$config['id'],1,'ALMPAL',$config['clues'],$config['proveedor'],0,0,'ALMACEN PRINCIPAL',$config['id'].":root",Carbon::now(),Carbon::now()]);
+            DB::insert('insert into almacenes (id, incremento, servidor_id, nivel_almacen, tipo_almacen, clues, proveedor_id, subrogado, externo, unidosis, nombre, usuario_id, created_at, updated_at) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [$config['almacen'],1,$config['id'],1,'ALMPAL',$config['clues'],$config['proveedor'],0,0,0,'ALMACEN PRINCIPAL',$config['id'].":root",Carbon::now(),Carbon::now()]);
         }
         
         $almacen = Almacen::where('clues',$config['clues'])->where('tipo_almacen','ALMPAL')->first();

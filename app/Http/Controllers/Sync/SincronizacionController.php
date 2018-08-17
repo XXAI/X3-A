@@ -85,6 +85,8 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         $ultima_sincronizacion =  Sincronizacion::select('fecha_generacion')->where("servidor_id",env("SERVIDOR_ID"))->orderBy('fecha_generacion','desc')->first();
         $fecha_generacion = date('Y-m-d H:i:s');
 
+        $clues_que_hace_sync = env('CLUES');
+
         Storage::delete("sync.".env('SERVIDOR_ID').".zip");
         Storage::makeDirectory("sync");
         

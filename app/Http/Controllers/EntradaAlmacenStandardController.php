@@ -570,7 +570,8 @@ class EntradaAlmacenStandardController extends Controller
                         }
                     }
 
-                    $insumo_detalles      = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
+                    $insumo_detalles      = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
+                    $insumo_detalles->load('informacionAmpliada');
 
                     $insumo_detalles_temp = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
 

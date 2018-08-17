@@ -109,8 +109,9 @@ class AutenticacionController extends Controller
                         $query->select('clues_perteneciente')->from('almacenes')->where('externo',1);
                     });
 
-                    $ums = UnidadMedica::has('almacenes')->orderBy('unidades_medicas.nombre')
+                    $ums = UnidadMedica::has('almacenes')
                         ->union($ums_ext)
+                        ->orderBy('nombre')
                         ->get();
 
                     foreach($ums as $um){

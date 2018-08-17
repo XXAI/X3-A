@@ -515,7 +515,8 @@ class EntradaLaboratorioController extends Controller
 
                     //$insumo_detalles      = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
 
-                    $insumo_detalles_temp = Insumo::with('informacionAmpliadaSustancia')->find($insumo->clave_insumo_medico);
+                    $insumo_detalles_temp = Insumo::find($insumo->clave_insumo_medico);
+                    $insumo_detalles_temp->load('informacionAmpliadaSustancia');
 
                     //var_dump($insumo_detalles_temp); 
 

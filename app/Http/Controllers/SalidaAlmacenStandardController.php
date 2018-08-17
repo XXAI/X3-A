@@ -414,7 +414,8 @@ class SalidaAlmacenStandardController extends Controller
                         }
                     }
 
-                    $insumo_detalles = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
+                    $insumo_detalles = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
+                    $insumo_detalles->load('informacionAmpliada');
 
                     $insumo_detalles_temp = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
 
@@ -505,7 +506,9 @@ class SalidaAlmacenStandardController extends Controller
                         }
                     }
 
-                    $insumo_detalles = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
+                    $insumo_detalles = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
+                    $insumo_detalles->load('informacionAmpliada');
+
                     $insumo_detalles_temp = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
 
                     $movimiento_detalle = MovimientoDetalle::where('movimiento_id',$movimiento->id)
@@ -545,7 +548,8 @@ class SalidaAlmacenStandardController extends Controller
 
                 foreach($movimiento_detalle_negados as $negado)
                 {
-                    $insumo_detalles = Insumo::conDescripciones()->with('informacionAmpliada')->find($negado->clave_insumo_medico);
+                    $insumo_detalles = Insumo::conDescripciones()->find($negado->clave_insumo_medico);
+                    $insumo_detalles->load('informacionAmpliada');
 
                     $objeto_negado  = $insumo_detalles;
 
