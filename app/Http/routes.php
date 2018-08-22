@@ -156,8 +156,6 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('presentaciones',                        'InsumosMedicosController@presentaciones');     
         Route::get('unidades-medida',                       'InsumosMedicosController@unidadesMedida');     
         Route::get('vias-administracion',                   'InsumosMedicosController@viasAdministracion');     
-<<<<<<< HEAD
-=======
         Route::get('insumos-medicos-excel',                 'InsumosMedicosController@exportarExcel');
         Route::get('formato-insumos-medicos-excel',         'InsumosMedicosController@descargarFormato');
         Route::post('cargar-insumos-excel',                 'InsumosMedicosController@cargarExcel');
@@ -170,7 +168,6 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('formato-contrato-lista-precios-excel',  'ContratosController@descargarFormato');
         Route::post('cargar-lista-precios-excel',           'ContratosController@cargarExcel');
         
->>>>>>> 90ee6c22f4e7366ac12aa673485ae6b6def09f72
     });
     // # FIN SECCION
 
