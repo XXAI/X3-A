@@ -75,6 +75,10 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('proveedor',                 'ProveedorController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('personal-puesto',           'PersonalPuestoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('personal',                  'PersonalController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('reporte-salida',            'ReporteSalidaController',    ['only' => ['index']]);
+    Route::get('reporte-salida/catalogos',       'ReporteSalidaController@catalogos');
+    Route::get('reporte-salida-reporte-excel',   'ReporteSalidaController@reporteExcel');
+    
 
 
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
@@ -302,7 +306,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('medicamentos',                         'MedicamentoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('unidad-medica',                        'UnidadMedicaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
     Route::resource('forma-farmaceutica',                   'FormaFarmaceuticaController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('condicion-articulo',                   'CondicionArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    //Route::resource('condicion-articulo',                   'CondicionArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
     
     // catalogos  
