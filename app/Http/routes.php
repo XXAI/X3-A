@@ -171,6 +171,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::put('contratos/activar/{id}',                'ContratosController@activar');
         Route::get('formato-contrato-lista-precios-excel',  'ContratosController@descargarFormato');
         Route::post('cargar-lista-precios-excel',           'ContratosController@cargarExcel');
+        Route::get('exportar-contrato-lista-precios-excel/{id}',  'ContratosController@exportarExcel');
         
     });
     // # FIN SECCION
