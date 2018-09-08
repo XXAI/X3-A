@@ -172,6 +172,11 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('formato-contrato-lista-precios-excel',  'ContratosController@descargarFormato');
         Route::post('cargar-lista-precios-excel',           'ContratosController@cargarExcel');
         Route::get('exportar-contrato-lista-precios-excel/{id}',  'ContratosController@exportarExcel');
+
+        // Presupuesto
+        Route::get('presupuesto/ejercicios',                            'PresupuestoController@ejercicios');
+        Route::get('presupuesto/presupuesto-unidades-medicas/{id}',     'PresupuestoController@presupuestoUnidadesMedicas');
+        Route::get('presupuesto/excel/{id}',                            'PresupuestoController@exportarExcel');
         
     });
     // # FIN SECCION
