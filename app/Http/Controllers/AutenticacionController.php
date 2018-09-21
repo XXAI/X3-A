@@ -7,7 +7,7 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 use Illuminate\Http\Request, DB;
 use \Hash, \Config, Carbon\Carbon;
-use App\Models\Usuario, App\Models\Permiso, App\Models\Almacen, App\Models\UnidadMedica, App\Models\Proveedor, App\Models\LogInicioSesion, App\Models\Servidor;
+use App\Models\Usuario, App\Models\Permiso, App\Models\Almacen, App\Models\AlmacenGeneral\ConfiguracionGeneral, App\Models\UnidadMedica, App\Models\Proveedor, App\Models\LogInicioSesion, App\Models\Servidor;
 
 class AutenticacionController extends Controller
 {
@@ -146,7 +146,23 @@ class AutenticacionController extends Controller
 
                 $payload = JWTFactory::make($claims);
                 $token = JWTAuth::encode($payload);
-                return response()->json(['token' => $token->get(), 'usuario'=>$usuario_data, 'server_info'=> $server_info], 200);
+
+
+                // CONFIGURACIÓN GENERAL
+                $variable = ConfiguracionGeneral::get();
+                $configuracion = [];
+
+                foreach ($variable as $key => $value) {			
+                    if($value->clave == 'fondo' || $value->clave == 'logo')
+                        $configuracion[$value->clave] = $value->valor;
+                    else
+                        $configuracion[$value->clave] = json_decode($value->valor);
+                }
+                // CONFIGURACIÓN GENERAL
+                
+
+                $data_configuracion =  ["iva"=>16];
+                return response()->json(['token' => $token->get(), 'configuracion_general'=>$configuracion, 'usuario'=>$usuario_data, 'server_info'=> $server_info], 200);
             } else {
                 $log_usuario->login_status = 'ERR_PSW';
                 $log_usuario->save();

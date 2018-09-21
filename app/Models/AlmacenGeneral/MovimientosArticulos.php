@@ -29,6 +29,10 @@ class MovimientosArticulos extends BaseModel {
 		return $this->belongsTo('App\Models\AlmacenGeneral\Movimientos','movimiento_id','id');
     }
 
+    public function MovimientoAI(){
+		return $this->hasOne('App\Models\AlmacenGeneral\MovimientoArticulosInventario','id');
+    }
+
     public function Articulos(){
 		return $this->belongsTo('App\Models\Articulos','articulo_id','id');
     }
