@@ -426,8 +426,9 @@ if($input_data->estatus=="INICIALIZADO")
                                ->orderBy('id','asc')->get();
                 foreach ($iids_claves as $key => $iid_clave)
                 {
-                    $clave_temp = Insumo::conDescripciones()->with('informacionAmpliada')
-                                                            ->find($iid_clave->clave_insumo_medico);
+                    $clave_temp = Insumo::conDescripciones()->find($iid_clave->clave_insumo_medico);
+                    $clave_temp->load('informacionAmpliada');
+                    
                     $clave_temp->clave_insumo_medico = $clave_temp->clave;
 
                 ///****************************************************************************************************************************

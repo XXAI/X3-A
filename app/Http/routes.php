@@ -68,6 +68,8 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('unidades-medicas',          'UnidadesMedicasController',    ['only' => ['index']]);
     Route::resource('proveedores',               'ProveedoresController',    ['only' => ['index']]);
 
+    Route::resource('presupuestos',               'PresupuestoController',    ['only' => ['index']]);
+
     //Route::resource('unidades-medicas', 'UnidadesMedicasController',    ['only' => ['index']]);
     Route::resource('almacenes',                 'AlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('proveedor',                 'ProveedorController',    ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -94,9 +96,19 @@ Route::group(['middleware' => 'jwt'], function () {
         
         Route::get('presupuesto-pedidos',               'PedidosController@presupuesto');
         Route::get('pedidos',                           'PedidosController@lista');
+        Route::get('mes-disponible',                    'PedidosController@mesDisponible');
         Route::get('pedidos-excel',                     'PedidosController@excel');
         Route::get('pedidos-archivos-proveedor/{id}',   'PedidosController@listaArchivosProveedor');
         
+        // PENAS CONVENCIONALES
+        Route::get('meses',                                 'PenasConvencionalesController@meses');
+        Route::get('periodos',                              'PenasConvencionalesController@periodos');
+        Route::get('penas-convencionales-resumen',          'PenasConvencionalesController@resumen');
+        Route::get('penas-convencionales-detalle',          'PenasConvencionalesController@detalle');
+        Route::get('penas-convencionales-excel-individual/{id}', 'PenasConvencionalesController@excel');
+        Route::get('penas-convencionales-excel-resumen',    'PenasConvencionalesController@excelResumen');
+
+
         // TRANSFERENCIAS DE PRESUPUESTO
         Route::get('unidades-medicas-con-presupuesto',  'TransferenciasPresupuestosController@unidadesMedicasConPresupuesto');
         Route::get('meses-presupuesto-actual',          'TransferenciasPresupuestosController@mesesPresupuestoActual');
@@ -137,6 +149,25 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-alternos/{id}',                 'PedidosAlternosController@ver');      
         Route::put('pedidos-alternos/validacion/{id}',      'PedidosAlternosController@validar');
         Route::put('pedidos-alternos/proveedor/{id}',       'PedidosAlternosController@asignarProveedor');
+
+
+        // Insumos médicos
+        Route::resource('insumos-medicos',                  'InsumosMedicosController',['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::get('presentaciones',                        'InsumosMedicosController@presentaciones');     
+        Route::get('unidades-medida',                       'InsumosMedicosController@unidadesMedida');     
+        Route::get('vias-administracion',                   'InsumosMedicosController@viasAdministracion');     
+        Route::get('insumos-medicos-excel',                 'InsumosMedicosController@exportarExcel');
+        Route::get('formato-insumos-medicos-excel',         'InsumosMedicosController@descargarFormato');
+        Route::post('cargar-insumos-excel',                 'InsumosMedicosController@cargarExcel');
+        Route::post('confirmar-carga-masiva-insumos',       'InsumosMedicosController@confirmarCargaMasiva');
+
+        // Contratos
+        Route::get('proveedores',                           'ContratosController@proveedores');
+        Route::resource('contratos',                        'ContratosController',['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::put('contratos/activar/{id}',                'ContratosController@activar');
+        Route::get('formato-contrato-lista-precios-excel',  'ContratosController@descargarFormato');
+        Route::post('cargar-lista-precios-excel',           'ContratosController@cargarExcel');
+        
     });
     // # FIN SECCION
 
@@ -340,10 +371,13 @@ Route::group(['middleware' => 'jwt'], function () {
 
     // # SECCION: Opciones avanzadas 
     Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
-
+        Route::get('fecha-hora-servidor',               'FechaHoraServidorController@get');
+        Route::post('fecha-hora-servidor/actualizar',    'FechaHoraServidorController@update');
         Route::get('actualizar-plataforma-git',         'ActualizarPlataformaController@git');
         Route::get('exportar-base-datos',               'BaseDatosController@exportar');
         Route::post('importar-base-datos',              'BaseDatosController@importar');
+        Route::get('obtener-datos-central',             'DatosServidorCentralController@exportar');
+        Route::post('cargar-datos-central',             'DatosServidorCentralController@importar');
     });
     // #SECCION: Parches
     Route::group(['prefix' => 'patches','namespace' => 'Patches'], function () {

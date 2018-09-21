@@ -245,7 +245,8 @@ class AjusteMasInventarioController extends Controller
             $insumo = (object) $insumo;
 
             $array_lotes = array();
-            $objeto_insumo = Insumo::conDescripciones()->with('informacionAmpliada')->find($insumo->clave_insumo_medico);
+            $objeto_insumo = Insumo::conDescripciones()->find($insumo->clave_insumo_medico);
+            $objeto_insumo->load('informacionAmpliada');
 
             $lotes_ajustados = MovimientoAjuste::where('movimiento_id',$movimiento->id)->where('clave_insumo_medico',$insumo->clave_insumo_medico)->get();
             foreach ($lotes_ajustados as $key => $lote_ajustado)

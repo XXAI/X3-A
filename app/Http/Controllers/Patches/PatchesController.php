@@ -56,7 +56,8 @@ class PatchesController extends \App\Http\Controllers\Controller
 			foreach(Config::get("patches") as $item){
 				if($item['nombre'] == $parametros['nombre']){
 					if($item['ejecutar'] != ''){
-						$o = call_user_func($item['ejecutar']);
+						//$o = call_user_func($item['ejecutar']);
+						$o = call_user_func_array($item['ejecutar'],array($item['nombre']));
 						if($o == false){
 							throw new \Exception("No se pudieron ejecutar las instrucciones del parche, debido a un error en la función configurada.", 1);
 						}
@@ -128,6 +129,10 @@ class PatchesController extends \App\Http\Controllers\Controller
 							throw new PatchException($output);
 						} else {
 							$output .= "\n¡Parche ejecutado correctamente!";
+
+							$parche_log = LogEjecucionParche::create(['clues'=>env('CLUES'),'nombre_parche'=>$filename,'tipo_parche'=>'cliente','fecha_liberacion'=>Carbon::now()]);
+							$parche_log->fecha_ejecucion = Carbon::now();
+							$parche_log->save();
 						}
 						
 					
@@ -156,8 +161,8 @@ class PatchesController extends \App\Http\Controllers\Controller
 						foreach(Config::get("patches") as $item){
 							if($item['nombre'] == $filename){
 								if($item['ejecutar'] != ''){
-									
-									$o = call_user_func($item['ejecutar']);
+									//$o = call_user_func($item['ejecutar']);
+									$o = call_user_func_array($item['ejecutar'],array($filename));
 									if($o == false){
 										$output .= "\nEl parche se aplicó, pero no se pudieron ejecutar las instrucciones posteriores, debido a un error en la función configurada.";
 									} 
@@ -170,7 +175,7 @@ class PatchesController extends \App\Http\Controllers\Controller
 						$output .= "\n¡Parche ejecutado correctamente!";
 					}
 					
-					return Response::json([ 'data' => $output],200);
+					return Response::json([ 'data' => $output, 'parche'=>$filename],200);
 
 				} else {
 					throw new \Exception("Archivo inválido.");
@@ -181,12 +186,12 @@ class PatchesController extends \App\Http\Controllers\Controller
 
 		} 
 		catch (PatchException $e) {
-            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+            return Response::json(['error' => $e->getMessage(), 'parche'=>$filename], HttpResponse::HTTP_CONFLICT);
         }
 		catch (\Exception $e) {
-            return Response::json(['error' => $e->getMessage()], 500);
+            return Response::json(['error' => $e->getMessage(), 'parche'=>$filename], 500);
         } catch (\FatalErrorException $e) {
-            return Response::json(['error' => $e->getMessage()], 500);
+            return Response::json(['error' => $e->getMessage(), 'parche'=>$filename], 500);
         } 
     }
 	

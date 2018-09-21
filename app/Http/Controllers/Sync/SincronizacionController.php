@@ -8,7 +8,7 @@ use Illuminate\Http\Response as HttpResponse;
 use App\Http\Requests;
 use \DB, \Storage, \ZipArchive, \Hash, \Response, \Config;
 use Illuminate\Support\Facades\Input;
-use App\Models\Sincronizacion, App\Models\Servidor, App\Models\LogSync; 
+use App\Models\Sincronizacion, App\Models\Servidor, App\Models\LogSync, App\Models\Usuario; 
 use App\Librerias\Sync\ArchivoSync;
 use Carbon\Carbon;
 
@@ -19,14 +19,16 @@ class SincronizacionController extends \App\Http\Controllers\Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function lista()
+    public function lista(Request $request)
     {
+        $usuario = Usuario::find($request->get('usuario_id'));
 
         $parametros = Input::only('page','per_page','q');
         $items = Sincronizacion::select('sincronizaciones.*', 'servidores.nombre as servidor_nombre')->leftjoin("servidores","servidores.id","=","sincronizaciones.servidor_id")->orderBy('created_at','desc');
         
-        
-        
+        if(!$usuario->su){
+            $servidores = $items->where('servidor_id',$usuario->servidor_id);
+        }
         
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
@@ -82,6 +84,8 @@ class SincronizacionController extends \App\Http\Controllers\Controller
 
         $ultima_sincronizacion =  Sincronizacion::select('fecha_generacion')->where("servidor_id",env("SERVIDOR_ID"))->orderBy('fecha_generacion','desc')->first();
         $fecha_generacion = date('Y-m-d H:i:s');
+
+        $clues_que_hace_sync = env('CLUES');
 
         Storage::delete("sync.".env('SERVIDOR_ID').".zip");
         Storage::makeDirectory("sync");
@@ -168,7 +172,10 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                 }
 
                 if($parametrosTabla['condicion_subida'] != ''){
-                    $rows = $rows->whereRaw($parametrosTabla['condicion_subida']);
+
+                    // Aqui vamos a hacer esto en el caso de que alguien haya puesto la palbra clave: {CLUES_QUE_SINCRONIZA} en la condicion
+                    $condicion = str_replace("{CLUES_QUE_SINCRONIZA}", $clues_que_hace_sync, $parametrosTabla['condicion_subida']);
+                    $rows = $rows->whereRaw($condicion);
                     
                         
                 }
@@ -475,7 +482,10 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                         $rows =$conexion_local->table($tabla);
                                         
                                         if($parametrosTabla['condicion_bajada'] != ''){
-                                            $rows = $rows->whereRaw($parametrosTabla['condicion_bajada']);
+
+                                            // Aqui vamos a hacer esto en el caso de que alguien haya puesto la palbra clave: {CLUES_QUE_SINCRONIZA} en la condicion
+                                            $condicion = str_replace("{CLUES_QUE_SINCRONIZA}", $clues_que_hace_sync, $parametrosTabla['condicion_bajada']);
+                                            $rows = $rows->whereRaw($condicion);
                                         }
 
                                         $rows = $rows->whereBetween('updated_at',[$servidor->ultima_sincronizacion,date('Y-m-d H:i:s')])->get();
@@ -978,7 +988,13 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                 }
 
                 if($parametrosTabla['condicion_subida'] != ''){
-                    $rows = $rows->whereRaw($parametrosTabla['condicion_subida']);
+
+                    // Aqui vamos a hacer esto en el caso de que alguien haya puesto la palbra clave: {CLUES_QUE_SINCRONIZA} en la condicion
+                    $condicion = str_replace("{CLUES_QUE_SINCRONIZA}", env("CLUES"), $parametrosTabla['condicion_subida']);
+                    $rows = $rows->whereRaw($condicion);
+
+
+                    //$rows = $rows->whereRaw($parametrosTabla['condicion_subida']);
                 }
                 $rows = $rows->get();
                
@@ -1068,7 +1084,11 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                 }
 
                 if($parametrosTabla['condicion_bajada'] != ''){
-                    $rows = $rows->whereRaw($parametrosTabla['condicion_bajada']);
+
+                    // Aqui vamos a hacer esto en el caso de que alguien haya puesto la palbra clave: {CLUES_QUE_SINCRONIZA} en la condicion
+                    $condicion = str_replace("{CLUES_QUE_SINCRONIZA}", env("CLUES"), $parametrosTabla['condicion_bajada']);
+                    $rows = $rows->whereRaw($condicion);
+                    //$rows = $rows->whereRaw($parametrosTabla['condicion_bajada']);
                 }
                 $rows = $rows->get();
             

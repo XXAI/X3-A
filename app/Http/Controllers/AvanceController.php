@@ -25,7 +25,7 @@ class AvanceController extends Controller
         $usuario = Usuario::find($request->get('usuario_id'));
 
         $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
-                $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+                $permisos->where('permisos.id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
             }])->find($request->get('usuario_id'));
         $general    = false;
         $normal     = false;
@@ -48,7 +48,7 @@ class AvanceController extends Controller
             
             
             $usuario_normal = Usuario::with(['roles.permisos'=>function($permisos){
-                    $permisos->where('id','f0CT1EvFcj4hqK1rNEpsSXhAlhdE9duM');
+                    $permisos->where('permisos.id','f0CT1EvFcj4hqK1rNEpsSXhAlhdE9duM');
                 }])->find($request->get('usuario_id'));
                 $permisos_normal = [];
                 foreach ($usuario->roles as $index => $rol) {
@@ -94,7 +94,8 @@ class AvanceController extends Controller
         }
 
         if(isset($parametros['page'])){
-            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
+            //$resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
+            $resultadosPorPagina = isset($parametros["per_page"])? 100 : 25;
             $avance = $avance->paginate($resultadosPorPagina);
         } else {
             $avance = $avance->get();
@@ -305,7 +306,7 @@ class AvanceController extends Controller
             $usuario = Usuario::find($request->get('usuario_id'));
 
             $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
-                    $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+                    $permisos->where('permisos.id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
                 }])->find($request->get('usuario_id'));
             $general    = false;
             $normal     = false;

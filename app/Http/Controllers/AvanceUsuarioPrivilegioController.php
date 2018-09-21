@@ -34,7 +34,7 @@ class AvanceUsuarioPrivilegioController extends Controller
         $general = false;
         $permisos = [];
         $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
-            $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+            $permisos->where('permisos.id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
         }])->find($request->get('usuario_id'));
 
         foreach ($usuario_general->roles as $index => $rol) {
@@ -77,7 +77,7 @@ class AvanceUsuarioPrivilegioController extends Controller
             $general = false;
             $permisos = [];
             $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
-                $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+                $permisos->where('permisos.id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
             }])->find($request->get('usuario_id'));
 
             foreach ($usuario_general->roles as $index => $rol) {
@@ -120,7 +120,7 @@ class AvanceUsuarioPrivilegioController extends Controller
             $general = false;
             $permisos = [];
             $usuario_general = Usuario::with(['roles.permisos'=>function($permisos){
-                $permisos->where('id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
+                $permisos->where('permisos.id','79B3qKuUbuEiR2qKS0CFgHy2zRWfmO4r');
             }])->find($request->get('usuario_id'));
 
             foreach ($usuario_general->roles as $index => $rol) {
