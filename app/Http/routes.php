@@ -177,6 +177,14 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('presupuesto/ejercicios',                            'PresupuestoController@ejercicios');
         Route::get('presupuesto/presupuesto-unidades-medicas/{id}',     'PresupuestoController@presupuestoUnidadesMedicas');
         Route::get('presupuesto/excel/{id}',                            'PresupuestoController@exportarExcel');
+        Route::get('presupuesto/ultimo',                                'PresupuestoController@ultimoPresupuesto');
+        Route::get('presupuesto/tipos-unidad-medica',                   'PresupuestoController@tiposUnidadMedica');
+        Route::get('presupuesto/jurisdicciones',                        'PresupuestoController@jurisdicciones');
+        Route::get('presupuesto/unidades-medicas',                      'PresupuestoController@unidadesMedicas');        
+        Route::get('presupuesto/formato-carga-presupuesto-excel',       'PresupuestoController@descargarFormato');
+        Route::post('presupuesto/procesar-presupuesto-excel',           'PresupuestoController@cargarExcel');
+        Route::post('presupuesto',                                      'PresupuestoController@store');
+
         
     });
     // # FIN SECCION

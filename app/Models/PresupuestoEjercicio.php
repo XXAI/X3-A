@@ -12,6 +12,8 @@ class PresupuestoEjercicio extends BaseModel
     protected $generarID = false;
     protected $guardarIDServidor = false;
     protected $guardarIDUsuario = true;
+    public $incrementing = true;
+     
     protected $fillable = [ "ejercicio", "causes", "no_causes", "activo", "factor_meses"];
     protected $casts = [
         "ejercicio"=>"integer",
@@ -21,4 +23,9 @@ class PresupuestoEjercicio extends BaseModel
         "no_causes"=>"double",
     ];
     protected $table = 'presupuesto_ejercicio';
+
+    public function presupuestoUnidadesMedicas(){
+        return $this->hasMany('App\Models\PresupuestoUnidadMedica','presupuesto_id');
+    }
+    
 }
