@@ -17,11 +17,11 @@ class AlterTablaInicializacionInventarioNullableFechas extends Migration
         });
 
         Schema::table('inicializacion_inventario_detalles', function (Blueprint $table) {
-            $table->boolean('exclusivo')->after('marca_id');;
+            $table->boolean('exclusivo')->after('marca_id');
         });
 
         Schema::table('stock', function (Blueprint $table) {
-            $table->boolean('exclusivo')->after('marca_id');;
+            $table->boolean('exclusivo')->after('marca_id');
         });
 
     }

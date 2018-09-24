@@ -1,7 +1,10 @@
 <?php 
 namespace App\Models\AlmacenGeneral;
 
-use Illuminate\Database\Eloquent\Model;
+//use Illuminate\Database\Eloquent\Model;
+//use Illuminate\Database\Eloquent\SoftDeletes;
+
+use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -15,7 +18,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 * Modelo `AlmacenConfiguracion`: Configuracion general del sistema
 *
 */
-class MovimientoArticuloInventario extends Model {	
+class MovimientoArticulosInventario extends BaseModel {	
+
+    use SoftDeletes;
+    protected $generarID = true;
+    protected $guardarIDServidor = true;
+    protected $guardarIDUsuario = true;
+
 	protected $table = 'inventario_movimiento_articulos';
 
 	public function Inventarios(){

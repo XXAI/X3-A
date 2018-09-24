@@ -34,8 +34,8 @@ class CrearTablaMetadatosPedidoCompraConsolidada extends Migration
 		
 		    $table->timestamps();
             $table->softDeletes();
-
             $table->primary('id');
+            
             $table->foreign('pedido_id')->references('id')->on('pedidos');
             $table->foreign('programa_id')->references('id')->on('programas');
 		

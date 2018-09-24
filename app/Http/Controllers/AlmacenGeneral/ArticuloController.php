@@ -1,14 +1,16 @@
 <?php
 namespace App\Http\Controllers\AlmacenGeneral;
 
+use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Support\Facades\Input;
-use Request;
 use Response;
 use DB; 
-use App\Models\Articulos;
+use App\Models\Almacen;
+use App\Models\AlmacenGeneral\Articulos;
+use App\Models\AlmacenGeneral\ArticulosMetadatos;
 
 /**
 * Controlador Articulos
@@ -49,7 +51,7 @@ class ArticuloController extends Controller {
 	 * <code> Respuesta Error json(array("status": 404, "messages": "No hay resultados"),status) </code>
 	 */
 	public function index(){
-		$datos = Request::all();
+		$datos = \Request::all();
 		
 		// Si existe el paarametro pagina en la url devolver las filas según sea el caso
 		// si no existe parametros en la url devolver todos las filas de la tabla correspondiente
@@ -78,7 +80,7 @@ class ArticuloController extends Controller {
 			if(array_key_exists("buscar", $datos)){
 				$columna = $datos["columna"];
 				$valor   = $datos["valor"];
-				$data = Articulos::with("Inventario", "Categoria", "Padre", "Hijos")->orderBy($order, $orden);
+				$data = Articulos::with("Categoria", "Padre", "Hijos")->orderBy($order, $orden);
 				
 				$search = trim($valor);
 				$keyword = $search;
@@ -90,13 +92,13 @@ class ArticuloController extends Controller {
 				$data = $data->skip($pagina-1)->take($datos["limite"])->get();
 			}
 			else{
-				$data = Articulos::with("Inventario", "Categoria", "Padre", "Hijos")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
+				$data = Articulos::with("Categoria", "Padre", "Hijos")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
 				$total =  Articulos::all();
 			}
 			
 		}
 		else{
-			$data = Articulos::with("Inventario", "Categoria", "Padre", "Hijos")->get();
+			$data = Articulos::with("Categoria", "Padre", "Hijos")->get();
 			$total = $data;
 		}
 
@@ -188,13 +190,57 @@ class ArticuloController extends Controller {
 	public function campos($datos, $data){
 		$success = false;
 
-		$data->categoria_id	= $datos->categoria_id != '' 			 ? $datos->categoria_id : null;	
-		$data->articulo_id	= $datos->articulo_id != '' 			 ? $datos->articulo_id  : null;	
-        $data->nombre 		= property_exists($datos, "nombre")		 ? $datos->nombre 		: $data->nombre;	
-        $data->descripcion 	= property_exists($datos, "descripcion") ? $datos->descripcion 	: $data->descripcion;	
+		$data->categoria_id			= $datos->categoria_id != '' 			 		? $datos->categoria_id 			: null;	
+		$data->articulo_id			= $datos->articulo_id != '' 			 		? $datos->articulo_id  			: null;	
+        $data->nombre 				= property_exists($datos, "nombre")		 		? $datos->nombre 				: $data->nombre;	
+		$data->descripcion 			= property_exists($datos, "descripcion")		? $datos->descripcion 			: $data->descripcion;
+		$data->es_activo_fijo 		= property_exists($datos, "es_activo_fijo") 		? $datos->es_activo_fijo 		: $data->es_activo_fijo;
+		$data->vida_util 			= property_exists($datos, "vida_util") 			? $datos->vida_util 			: $data->vida_util;
+		$data->precio_referencia 	= property_exists($datos, "precio_referencia") 	? $datos->precio_referencia 	: $data->precio_referencia;
+		$data->tiene_caducidad 		= property_exists($datos, "tiene_caducidad") 	? $datos->tiene_caducidad 		: $data->tiene_caducidad;	
         
         if ($data->save()) { 
-      	
+			//verificar si existe contacto, en caso de que exista proceder a guardarlo
+            if(property_exists($datos, "articulos_metadatos")){
+                
+                //limpiar el arreglo de posibles nullos
+                $articulos_metadatos = array_filter($datos->articulos_metadatos, function($v){return $v !== null;});
+
+                //borrar los datos previos de articulo para no duplicar información
+                ArticulosMetadatos::where("articulo_id", $data->id)->delete();
+
+                //recorrer cada elemento del arreglo
+                foreach ($articulos_metadatos as $key => $value) {
+                    //validar que el valor no sea null
+                    if($value != null){
+                        //comprobar si el value es un array, si es convertirlo a object mas facil para manejar.
+                        if(is_array($value))
+                            $value = (object) $value;
+
+                        //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
+                        DB::update("update articulos_metadatos set deleted_at = null where articulo_id = ".$data->id." and campo = '".$value->campo."'");
+                        
+                        //si existe el elemento actualizar
+                        $item = ArticulosMetadatos::where("articulo_id", $data->id)->where("campo", $value->campo)->first();
+                        //si no existe crear
+                        if(!$item)
+                            $item = new ArticulosMetadatos;
+
+                        //llenar el modelo con los datos
+
+                        
+                        $item->articulo_id   		= $data->id; 
+                        $item->campo          		= $value->campo; 
+                        $item->valor    			= $value->valor; 
+                        $item->tipo    				= $value->tipo; 
+                        $item->longitud    			= $value->longitud; 
+                        // $item->requerido    		= $value->requerido; 
+                        $item->requerido_inventario = $value->requerido_inventario;
+
+                        $item->save();         
+                    }
+                }
+            } 
 			$success = true;
 		}  
 		return $success;     						
@@ -208,13 +254,52 @@ class ArticuloController extends Controller {
 	 * <code style="color:green"> Respuesta Ok json(array("status": 200, "messages": "Operación realizada con exito", "data": array(resultado)),status) </code>
 	 * <code> Respuesta Error json(array("status": 404, "messages": "No hay resultados"),status) </code>
 	 */
-	public function show($id){
-		$data = Articulos::with("Inventario", "Categoria", "Padre", "Hijos")->find($id);			
+	public function show(Request $request, $id)
+	{
+		$data = Articulos::with("ArticulosMetadatos", "Categoria", "Inventarios", "Padre", "Hijos")->find($id);			
 		
 		if(!$data){
 			return Response::json(array("status"=> 404,"messages" => "No hay resultados"),404);
 		} 
 		else {				
+			return Response::json(array("status" => 200, "messages" => "Operación realizada con exito", "data" => $data), 200);
+		}
+	}
+
+	/**
+	 * Devuelve la información del registro especificado.
+	 *
+	 * @param  int  $id que corresponde al identificador del recurso a mostrar
+	 *
+	 * @return Response
+	 * <code style="color:green"> Respuesta Ok json(array("status": 200, "messages": "Operación realizada con exito", "data": array(resultado)),status) </code>
+	 * <code> Respuesta Error json(array("status": 404, "messages": "No hay resultados"),status) </code>
+	 */
+	public function inventarioArticulo(Request $request, $id)
+	{
+		// $almacen = Almacen::find($request->get('almacen_id'));
+		if(!$request->get('almacen_id')){
+			return Response::json(array("status" => 409,"messages" => "Debe especificar un almacen X."), 200);
+		}  
+		$data = Articulos::with("ArticulosMetadatos", "Categoria", "Inventarios", "Padre", "Hijos")
+		->select('articulos.*')
+        ->leftJoin('inventario', function($join) {
+            $join->on('articulos.id', '=', 'inventario.articulo_id');
+		})
+		->where('inventario.almacen_id', $request->get('almacen_id'))
+		->find($id);			
+		
+		if(!$data){
+			return Response::json(array("status"=> 404,"messages" => "No hay resultados"),404);
+		} 
+		else {	
+			$r = collect();
+			foreach ($data->Inventarios as $key => $value) {
+				if ($value->articulo_id==$id) 
+					$r->push($value);
+			}	
+			unset($data['inventarios']);
+			$data->inventarios = $r;	
 			return Response::json(array("status" => 200, "messages" => "Operación realizada con exito", "data" => $data), 200);
 		}
 	}
@@ -263,7 +348,7 @@ class ArticuloController extends Controller {
 			"nombre" => "required|min:3",
 			"categoria_id" => "required"
 		];
-		$v = \Validator::make(Request::json()->all(), $rules );
+		$v = \Validator::make(\Request::json()->all(), $rules );
 
 		if ($v->fails()){
 			return Response::json($v->errors());

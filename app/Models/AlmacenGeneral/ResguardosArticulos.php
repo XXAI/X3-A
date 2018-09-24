@@ -23,14 +23,18 @@ class ResguardosArticulos extends BaseModel {
     protected $guardarIDServidor = true;
     protected $guardarIDUsuario = true;
 
-    protected $table = 'resguardos_articulos';
+    protected $table = 'resguardo_articulos';
 
     public function Resguardos(){
-		return $this->belongsTo('App\Models\AlmacenGeneral\Resguardos','movimiento_id','id');
+		return $this->belongsTo('App\Models\AlmacenGeneral\Resguardos','resguardos_id','id');
     }
 
-    public function Articulos(){
-		return $this->belongsTo('App\Models\Articulos','articulo_id','id');
+    public function Inventarios(){
+		return $this->belongsTo('App\Models\AlmacenGeneral\Inventario','inventario_id','id')->with("Articulo","MovimientoArticulo");
+    }
+
+    public function InventarioMetadatoUnico(){
+        return $this->hasmany('App\Models\AlmacenGeneral\InventarioMetadato','inventario_id','id');
     }
 
     public function CondicionesArticulos(){

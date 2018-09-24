@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CrearTablaPreciosBase extends Migration
+class CrearTablaDocumentosSistemaV1 extends Migration
 {
     /**
      * Run the migrations.
@@ -12,17 +12,16 @@ class CrearTablaPreciosBase extends Migration
      */
     public function up()
     {
-        Schema::create('precios_base', function(Blueprint $table) {
-            $table->engine = 'InnoDB';
-        
+        Schema::create('documentos_sistema', function (Blueprint $table) {
+            
             $table->increments('id');
-            $table->string('anio', 255);
-            $table->boolean('activo');
-            $table->string('usuario_id', 255);
-                  
+            $table->string('nombre',255);
+            $table->string('tipo_almacen',10);
+
+            $table->string('usuario_id',255);
             $table->timestamps();
             $table->softDeletes();
-            $table->primary('id');
+ 
         });
     }
 
@@ -33,6 +32,6 @@ class CrearTablaPreciosBase extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('precios_base');
+      
     }
 }
