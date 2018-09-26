@@ -23,6 +23,8 @@ class MovimientoArticulos extends BaseModel {
     protected $guardarIDServidor = true;
     protected $guardarIDUsuario = true;
 
+    protected $primaryKey = 'id';
+
     protected $table = 'movimiento_articulos';
 
     public function Movimiento(){
@@ -34,6 +36,6 @@ class MovimientoArticulos extends BaseModel {
     }
 
     public function Inventarios(){
-        return $this->belongsToMany('App\Models\AlmacenGeneral\InventarioArticulo', 'inventario_movimiento_articulos', 'movimiento_articulos_id', 'inventario_id')->with("InventarioMetadato");
+        return $this->belongsToMany('App\Models\AlmacenGeneral\InventarioArticulo', 'inventario_movimiento_articulos', 'movimiento_articulos_id', 'inventario_id')->with("InventarioMetadato", "Programa", "ResguardosArticulos", "InventarioMetadatoUnico");
     }
 }

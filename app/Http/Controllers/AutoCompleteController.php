@@ -8,6 +8,8 @@ use Illuminate\Http\Response as HttpResponse;
 use App\Http\Requests;
 use App\Models\Permiso;
 use App\Models\UnidadMedica;
+use App\Models\Articulos;
+use App\Models\ArticulosMetadatos;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response;
@@ -76,12 +78,34 @@ class AutoCompleteController extends Controller
     {
         $parametros = Input::only('term', 'clues', 'almacen');
         
-        $data =  Articulos::with("Categoria", "Padre", "Hijos", "Inventario")        
+        $data =  Articulos::with("Categoria", "Padre", "Hijos", "ArticulosMetadatos", "Inventarios")        
                        
         ->where(function($query) use ($parametros) {
             $query->where('articulos.descripcion','LIKE',"%".$parametros['term']."%")
             ->orWhere('articulos.nombre','LIKE',"%".$parametros['term']."%");
         });
+        
+        $data = $data->get();
+
+        return Response::json([ 'data' => $data],200);
+    }
+
+    public function articulos_inventarios() {
+        $parametros = Input::only('term', 'clues', 'almacen');
+        // dd($parametros);  die;
+        $data =  Articulos::with("Categoria", "ArticulosMetadatos")        
+                       
+        ->where(function($query) use ($parametros) {
+            $query->where('articulos.descripcion','LIKE',"%".$parametros['term']."%")
+            ->orWhere('articulos.nombre','LIKE',"%".$parametros['term']."%");
+        });
+
+        $data = $data->leftJoin('inventario', function($join) {
+            $join->on('articulos.id', '=', 'inventario.articulo_id');
+          })
+        ->where('inventario.baja', 0)
+        ->where('inventario.almacen_id', $parametros['almacen'])
+        ->where('inventario.existencia', '>', 0)->take(1);
         
         $data = $data->get();
 

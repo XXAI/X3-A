@@ -188,10 +188,6 @@ class PenasConvencionalesController extends Controller {
 			$clues_where = " AND (unidades_medicas.clues LIKE '%".$parametros['clues']."%' OR unidades_medicas.nombre  LIKE '%".$parametros['clues']."%')";
 		}
 
-
-	
-
-
 		$query = "
 		
 			SELECT
@@ -206,7 +202,7 @@ class PenasConvencionalesController extends Controller {
 			".$anio_select.",
 			IFNULL(pedidos_incumplidos.total_monto_solicitado,0.00) as total_monto_solicitado,
 			IFNULL(pedidos_incumplidos.total_monto_recibido,0.00) as total_monto_recibido,
-			(IFNULL(pedidos_incumplidos.total_monto_solicitado,0.00) - IFNULL(pedidos_incumplidos.total_monto_recibido,0.00)) * 0.05 * 30 as monto_pena_convencional
+			(IFNULL(pedidos_incumplidos.total_monto_solicitado,0.00) - IFNULL(pedidos_incumplidos.total_monto_recibido,0.00)) * 0.005 * 30 as monto_pena_convencional
 
 			FROM
 			(
@@ -276,20 +272,24 @@ class PenasConvencionalesController extends Controller {
 		$unidad_medica =  $pedido->unidadMedica;
 		$proveedor =  $pedido->proveedor;
 		
+		/*
+		((pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) * pedidos_insumos.precio_unitario  * IF(insumos_medicos.tipo = 'MC', 1.16, 1)) as monto,
+			((pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) * pedidos_insumos.precio_unitario  * IF(insumos_medicos.tipo = 'MC', 1.16, 1)) * 0.005 * 30 as pena_convencional
+		*/
+
 		$query = "
 		SELECT
 			pedidos_insumos.insumo_medico_clave as clave,
 			insumos_medicos.descripcion,
 			tipos_insumos.nombre as tipo_insumo,
 			insumos_medicos.tipo as tipo,
-			(pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) as cantidad_faltante,
-			
-			pedidos_insumos.precio_unitario,
-			
-			((pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) * pedidos_insumos.precio_unitario  * IF(insumos_medicos.tipo = 'MC', 1.16, 1)) as monto,
-			((pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) * pedidos_insumos.precio_unitario  * IF(insumos_medicos.tipo = 'MC', 1.16, 1)) * 0.05 * 30 as pena_convencional
+			((pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) * pedidos_insumos.precio_unitario) as monto,
+			(((pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) * pedidos_insumos.precio_unitario) * IF(insumos_medicos.tipo = 'MC', 0.16, 0)) as iva,
 
-		FROM pedidos_insumos, pedidos, insumos_medicos,tipos_insumos, unidades_medicas 
+			pedidos_insumos.precio_unitario,
+			(pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) as cantidad_faltante		
+			
+			FROM pedidos_insumos, pedidos, insumos_medicos,tipos_insumos, unidades_medicas 
 
 		WHERE	
 			pedidos_insumos.pedido_id = pedidos.id 
@@ -307,10 +307,10 @@ class PenasConvencionalesController extends Controller {
 			$excel->sheet('Reporte de penas convencionales', function($sheet) use($items,$pedido,  $unidad_medica, $proveedor) {
 				$sheet->setAutoSize(true);
 				
-				$sheet->mergeCells('B1:I1');
-				$sheet->mergeCells('B2:I2');
-				$sheet->mergeCells('B3:I3');
-				$sheet->mergeCells('B4:I4');
+				$sheet->mergeCells('B1:K1');
+				$sheet->mergeCells('B2:K2');
+				$sheet->mergeCells('B3:K3');
+				$sheet->mergeCells('B4:K4');
 
 				//($item->folio)?$item->folio:'S/F'
 
@@ -328,7 +328,7 @@ class PenasConvencionalesController extends Controller {
 				));
 				
 				$sheet->row(5, array(
-					'Clave','Descripcion', 'Tipo', 'Cantidad','Precio unitario','Monto (iva incluido)',	'% Pena Convencional', 'Días Pena Convencional','Pena convencional'
+					'Clave','Descripcion', 'Tipo', 'Cantidad','Precio unitario','Monto', 'IVA', 'Monto (con IVA)',	'% Pena Convencional', 'Días Pena Convencional','Pena convencional'
 				));
 				$sheet->setColumnFormat(array(
 					"B4:G4" => 'dd/MM/yyyy'
@@ -368,9 +368,11 @@ class PenasConvencionalesController extends Controller {
 						$item->cantidad_faltante,
 						$item->precio_unitario,
 						$item->monto,
+						$item->iva,
+						'=SUM(F'.$contador_filas.':G'.$contador_filas.')',
 						0.005,
 						30,
-						'=PRODUCT(F'.$contador_filas.':H'.$contador_filas.')'
+						'=PRODUCT(H'.$contador_filas.':J'.$contador_filas.')'
 						//$item->pena_convencional
 					)); 
 				}
@@ -383,11 +385,13 @@ class PenasConvencionalesController extends Controller {
 					'TOTAL',
 					"=SUM(F3:F$contador_filas)",
 					'',
-					'',
-			       "=SUM(I3:I$contador_filas)"
+				   "=SUM(H3:H$contador_filas)",
+				   '',
+				   '',
+				   "=SUM(K3:K$contador_filas)"
 				));
 
-				$sheet->setBorder("A1:I$contador_filas", 'thin');
+				$sheet->setBorder("A1:K$contador_filas", 'thin');
 
 				$contador_filas += 1;
 
@@ -404,8 +408,11 @@ class PenasConvencionalesController extends Controller {
 					));
 
 				$sheet->setColumnFormat(array(
-					"I6:I$contador_filas" => '"$" #,##0.00_-',
-				));	
+					"H6:H$contador_filas" => '"$" #,##0.00_-',
+				));
+				$sheet->setColumnFormat(array(
+					"K6:K$contador_filas" => '"$" #,##0.00_-',
+				));
 			});
 			})->export('xls');
 	}
@@ -451,8 +458,8 @@ class PenasConvencionalesController extends Controller {
 			insumos_medicos.tipo as tipo,
 			SUM(pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) as cantidad_faltante,			
 			pedidos_insumos.precio_unitario,			
-			SUM((pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) * pedidos_insumos.precio_unitario  * IF(insumos_medicos.tipo = 'MC', 1.16, 1)) as monto,
-			SUM((pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) * pedidos_insumos.precio_unitario  * IF(insumos_medicos.tipo = 'MC', 1.16, 1)) * 0.05 * 30 as pena_convencional
+			SUM((pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) * pedidos_insumos.precio_unitario  * IF(insumos_medicos.tipo != 'MC', 1.16, 1)) as monto,
+			SUM((pedidos_insumos.cantidad_solicitada - IFNULL(pedidos_insumos.cantidad_recibida,0)) * pedidos_insumos.precio_unitario  * IF(insumos_medicos.tipo != 'MC', 1.16, 1)) * 0.05 * 30 as pena_convencional
 
 		FROM pedidos_insumos, pedidos, insumos_medicos,tipos_insumos, unidades_medicas 
 

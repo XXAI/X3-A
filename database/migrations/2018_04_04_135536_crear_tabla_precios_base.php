@@ -22,6 +22,7 @@ class CrearTablaPreciosBase extends Migration
                   
             $table->timestamps();
             $table->softDeletes();
+            $table->primary('id');
         });
     }
 

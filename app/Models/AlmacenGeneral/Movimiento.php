@@ -42,4 +42,16 @@ class Movimiento extends BaseModel {
     public function Almacen(){
         return $this->belongsTo('App\Models\Almacen','almacen_id','id');
     }
+
+    public function MovimientoEntradaMetadatosAG(){
+		return $this->belongsTo('App\Models\AlmacenGeneral\MovimientoEntradaMetadatosAG','id','movimiento_id')->with('Movimiento', 'Proveedor');
+    }
+
+    public function Programa(){
+        return $this->belongsTo('App\Models\Programa','programa_id','id');
+    }
+
+    public function MovimientoSalidaMetadatosAG(){
+		return $this->belongsTo('App\Models\AlmacenGeneral\MovimientoSalidaMetadatosAG','id','movimiento_id')->with('UnidadMedica','Movimiento');
+    }
 }

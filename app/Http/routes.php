@@ -75,6 +75,10 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('proveedor',                 'ProveedorController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('personal-puesto',           'PersonalPuestoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('personal',                  'PersonalController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    Route::resource('reporte-salida',            'ReporteSalidaController',    ['only' => ['index']]);
+    Route::get('reporte-salida/catalogos',       'ReporteSalidaController@catalogos');
+    Route::get('reporte-salida-reporte-excel',   'ReporteSalidaController@reporteExcel');
+    
 
 
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
@@ -162,9 +166,25 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::post('confirmar-carga-masiva-insumos',       'InsumosMedicosController@confirmarCargaMasiva');
 
         // Contratos
-        Route::get('proveedores',           'ContratosController@proveedores');
-        Route::resource('contratos',                  'ContratosController',['only' => ['index', 'show', 'store','update','destroy']]);
-        Route::put('contratos/activar/{id}',          'ContratosController@activar');
+        Route::get('proveedores',                           'ContratosController@proveedores');
+        Route::resource('contratos',                        'ContratosController',['only' => ['index', 'show', 'store','update','destroy']]);
+        Route::put('contratos/activar/{id}',                'ContratosController@activar');
+        Route::get('formato-contrato-lista-precios-excel',  'ContratosController@descargarFormato');
+        Route::post('cargar-lista-precios-excel',           'ContratosController@cargarExcel');
+        Route::get('exportar-contrato-lista-precios-excel/{id}',  'ContratosController@exportarExcel');
+
+        // Presupuesto
+        Route::get('presupuesto/ejercicios',                            'PresupuestoController@ejercicios');
+        Route::get('presupuesto/presupuesto-unidades-medicas/{id}',     'PresupuestoController@presupuestoUnidadesMedicas');
+        Route::get('presupuesto/excel/{id}',                            'PresupuestoController@exportarExcel');
+        Route::get('presupuesto/ultimo',                                'PresupuestoController@ultimoPresupuesto');
+        Route::get('presupuesto/tipos-unidad-medica',                   'PresupuestoController@tiposUnidadMedica');
+        Route::get('presupuesto/jurisdicciones',                        'PresupuestoController@jurisdicciones');
+        Route::get('presupuesto/unidades-medicas',                      'PresupuestoController@unidadesMedicas');        
+        Route::get('presupuesto/formato-carga-presupuesto-excel',       'PresupuestoController@descargarFormato');
+        Route::post('presupuesto/procesar-presupuesto-excel',           'PresupuestoController@cargarExcel');
+        Route::post('presupuesto',                                      'PresupuestoController@store');
+
         
     });
     // # FIN SECCION
@@ -300,7 +320,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('medicamentos',                         'MedicamentoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('unidad-medica',                        'UnidadMedicaController',    ['only' => ['index', 'show', 'store','update','destroy']]);  
     Route::resource('forma-farmaceutica',                   'FormaFarmaceuticaController',    ['only' => ['index', 'show', 'store','update','destroy']]);
-    Route::resource('condicion-articulo',                   'CondicionArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);
+    //Route::resource('condicion-articulo',                   'CondicionArticuloController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     
     
     // catalogos  

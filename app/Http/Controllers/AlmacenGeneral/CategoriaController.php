@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Input;
 use Request;
 use Response;
 use DB; 
-use App\Models\Categorias;
-use App\Models\CategoriasMetadatos;
+use App\Models\AlmacenGeneral\Categorias;
+use App\Models\AlmacenGeneral\CategoriasMetadatos;
 
 /**
 * Controlador Categorias
@@ -79,7 +79,7 @@ class CategoriaController extends Controller {
 			if(array_key_exists("buscar", $datos)){
 				$columna = $datos["columna"];
 				$valor   = $datos["valor"];
-				$data = Categorias::with("CategoriasMetadatos")->orderBy($order, $orden);
+				$data = Categorias::with("Padre","hijos")->orderBy($order, $orden);
 				
 				$search = trim($valor);
 				$keyword = $search;
@@ -91,13 +91,13 @@ class CategoriaController extends Controller {
 				$data = $data->skip($pagina-1)->take($datos["limite"])->get();
 			}
 			else{
-				$data = Categorias::with("CategoriasMetadatos")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
+				$data = Categorias::with("Padre","hijos")->skip($pagina-1)->take($datos["limite"])->orderBy($order, $orden)->get();
 				$total =  Categorias::all();
 			}
 			
 		}
 		else{
-			$data = Categorias::with("CategoriasMetadatos")->get();
+			$data = Categorias::with("Padre","hijos")->get();
 			$total = $data;
 		}
 
@@ -199,47 +199,47 @@ class CategoriaController extends Controller {
         
         if ($data->save()) { 
 
-        	//verificar si existe contacto, en caso de que exista proceder a guardarlo
-            if(property_exists($datos, "categorias_metadatos")){
+        	// //verificar si existe contacto, en caso de que exista proceder a guardarlo
+            // if(property_exists($datos, "categorias_metadatos")){
                 
-                //limpiar el arreglo de posibles nullos
-                $categorias_metadatos = array_filter($datos->categorias_metadatos, function($v){return $v !== null;});
+            //     //limpiar el arreglo de posibles nullos
+            //     $categorias_metadatos = array_filter($datos->categorias_metadatos, function($v){return $v !== null;});
 
-                //borrar los datos previos de articulo para no duplicar información
-                CategoriasMetadatos::where("categoria_id", $data->id)->delete();
+            //     //borrar los datos previos de articulo para no duplicar información
+            //     CategoriasMetadatos::where("categoria_id", $data->id)->delete();
 
-                //recorrer cada elemento del arreglo
-                foreach ($categorias_metadatos as $key => $value) {
-                    //validar que el valor no sea null
-                    if($value != null){
-                        //comprobar si el value es un array, si es convertirlo a object mas facil para manejar.
-                        if(is_array($value))
-                            $value = (object) $value;
+            //     //recorrer cada elemento del arreglo
+            //     foreach ($categorias_metadatos as $key => $value) {
+            //         //validar que el valor no sea null
+            //         if($value != null){
+            //             //comprobar si el value es un array, si es convertirlo a object mas facil para manejar.
+            //             if(is_array($value))
+            //                 $value = (object) $value;
 
-                        //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
-                        DB::update("update categorias_metadatos set deleted_at = null where categoria_id = ".$data->id." and campo = '".$value->campo."'");
+            //             //comprobar que el dato que se envio no exista o este borrado, si existe y esta borrado poner en activo nuevamente
+            //             DB::update("update categorias_metadatos set deleted_at = null where categoria_id = ".$data->id." and campo = '".$value->campo."'");
                         
-                        //si existe el elemento actualizar
-                        $item = CategoriasMetadatos::where("categoria_id", $data->id)->where("campo", $value->campo)->first();
-                        //si no existe crear
-                        if(!$item)
-                            $item = new CategoriasMetadatos;
+            //             //si existe el elemento actualizar
+            //             $item = CategoriasMetadatos::where("categoria_id", $data->id)->where("campo", $value->campo)->first();
+            //             //si no existe crear
+            //             if(!$item)
+            //                 $item = new CategoriasMetadatos;
 
-                        //llenar el modelo con los datos
+            //             //llenar el modelo con los datos
 
                         
-                        $item->categoria_id   		= $data->id; 
-                        $item->campo          		= $value->campo; 
-                        $item->descripcion    		= $value->descripcion; 
-                        $item->tipo    				= $value->tipo; 
-                        $item->longitud    			= $value->longitud; 
-                        $item->requerido    		= $value->requerido; 
-                        $item->requerido_inventario = $value->requerido_inventario;
+            //             $item->categoria_id   		= $data->id; 
+            //             $item->campo          		= $value->campo; 
+            //             $item->descripcion    		= $value->descripcion; 
+            //             $item->tipo    				= $value->tipo; 
+            //             $item->longitud    			= $value->longitud; 
+            //             $item->requerido    		= $value->requerido; 
+            //             $item->requerido_inventario = $value->requerido_inventario;
 
-                        $item->save();         
-                    }
-                }
-            }       	
+            //             $item->save();         
+            //         }
+            //     }
+            // }       	
 			$success = true;
 		}  
 		return $success;     						
@@ -254,7 +254,7 @@ class CategoriaController extends Controller {
 	 * <code> Respuesta Error json(array("status": 404, "messages": "No hay resultados"),status) </code>
 	 */
 	public function show($id){
-		$data = Categorias::with("CategoriasMetadatos")->find($id);			
+		$data = Categorias::with("Padre","hijos")->find($id);			
 		
 		if(!$data){
 			return Response::json(array("status"=> 404,"messages" => "No hay resultados"),404);

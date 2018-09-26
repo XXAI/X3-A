@@ -166,6 +166,8 @@ return [
     | del método que se encuentra en namespace App\Librerias\Sync, ahí se pueden
     | agregar los métodos necerios por si hay que hacer algún calculo en la subida
     | o bajada y especificarlos en la propiedad: calculo_bajada y calculo_subida
+    | En las condiciones de subida o bajada, puedes usar la clave: {CLUES_QUE_SINCRONIZA}
+    | para que al sincronizar se compare con la clues de quien sincroniza.
     |
     */
     'pivotes' => [
@@ -804,8 +806,8 @@ return [
                 'updated_at',
                 'deleted_at'
             ],
-            'condicion_subida' => 'tipo_pedido_id = "PJS"', // Pedidos jurisdiccionales aunque bien podríamos quitar el PJS, por si alguien hace un pedido diferente a esto
-            'condicion_bajada' => 'tipo_pedido_id = "PJS" AND (clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1) OR servidor_id= "'.env('SERVIDOR_ID').'")', // Aplicados en remoto
+            'condicion_subida' => '(clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1))',
+            'condicion_bajada' => '(clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1 AND clues = "{CLUES_QUE_SINCRONIZA}") OR servidor_id= "'.env('SERVIDOR_ID').'")', // Esto funciona muy bien en sync online, pero offline me va abajar todo
             'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local                
         ],
@@ -848,8 +850,8 @@ return [
                 'updated_at',
                 'deleted_at'
             ],
-            'condicion_subida' => 'pedido_id in (select id from pedidos where tipo_pedido_id = "PJS")', 
-            'condicion_bajada' => 'pedido_id in (select id from pedidos where tipo_pedido_id = "PJS" AND (clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1) OR servidor_id= "'.env('SERVIDOR_ID').'"))', 
+            'condicion_subida' => '(pedido_id in (select id from pedidos where clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1)))', // Deberia considerar si dejo vacio los campos de subida o bajada que pasa, total arriba se sincronizan
+            'condicion_bajada' => '(pedido_id in (select id from pedidos where (clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1 AND clues = "{CLUES_QUE_SINCRONIZA}")) OR servidor_id= "'.env('SERVIDOR_ID').'"))', 
             'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '',  // Esta funcion se ejecuta justo despues de haber bajado a local    
         ],
@@ -878,8 +880,8 @@ return [
                 'updated_at',
                 'deleted_at'
             ],
-            'condicion_subida' => 'pedido_insumo_id in ( select id from pedidos_insumos where pedido_id in (select id from pedidos where tipo_pedido_id = "PJS"))', 
-            'condicion_bajada' => 'pedido_insumo_id in ( select id from pedidos_insumos where pedido_id in (select id from pedidos where tipo_pedido_id = "PJS" AND (clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1) OR servidor_id= "'.env('SERVIDOR_ID').'")))', 
+            'condicion_subida' => '(pedido_insumo_id in ( select id from pedidos_insumos where pedido_id in (select id from pedidos where clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1))))', 
+            'condicion_bajada' => '(pedido_insumo_id in ( select id from pedidos_insumos where pedido_id in (select id from pedidos where (clues in (SELECT clues_perteneciente FROM almacenes WHERE externo = 1 AND clues = "{CLUES_QUE_SINCRONIZA}")) OR servidor_id= "'.env('SERVIDOR_ID').'")))', 
             'calculo_subida' => '', // Esta funcion se ejecuta despues de subir y antes de bajar
             'calculo_bajada' => '', // Esta funcion se ejecuta justo despues de haber bajado a local    
         ],

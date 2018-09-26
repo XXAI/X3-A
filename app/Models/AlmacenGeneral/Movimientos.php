@@ -30,7 +30,10 @@ class Movimientos extends BaseModel {
         ->with("Articulos");
     }
 
-
+    public function Programa(){
+        return $this->belongsTo('App\Models\Programa','programa_id','id');
+    }
+    
     public function TiposMovimientos(){
 		return $this->belongsTo('App\Models\TiposMovimientos','tipo_movimiento_id','id');
     }
