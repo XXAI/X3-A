@@ -147,6 +147,8 @@ class UsuarioController extends Controller
     {
         $servidor = Servidor::find(env('SERVIDOR_ID'));
 
+        $usuario_edita = Usuario::find($request->get('usuario_id'));
+
         $mensajes = [
             
             'required'      => "required",
@@ -167,8 +169,14 @@ class UsuarioController extends Controller
             return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
         }
 
-        if($object->servidor_id != $servidor->id){
-            return Response::json(['error' => "No se puede editar este usuario, ya que fue creado en un servidor diferente al actual."], 500);
+        if($servidor->id == '0001'){
+            if($object->servidor_id != $servidor->id && !$usuario_edita->su){
+                return Response::json(['error' => "No se puede editar este usuario, ya que fue creado en un servidor diferente al actual."], 500);
+            }
+        }else{
+            if($object->servidor_id != $servidor->id){
+                return Response::json(['error' => "No se puede editar este usuario, ya que fue creado en un servidor diferente al actual."], 500);
+            }
         }
 
         $inputs = Input::only('id','servidor_id','password','nombre', 'apellidos','avatar','roles','cambiarPassword','unidades_medicas','almacenes','medico_id','proveedor_id',"pregunta_secreta","respuesta");

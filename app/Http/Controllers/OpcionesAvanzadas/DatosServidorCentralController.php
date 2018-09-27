@@ -9,7 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB, \Storage, \Artisan, \Config, \ZipArchive;
-use App\Models\Usuario, App\Models\UnidadMedica, App\Models\Servidor;
+use App\Models\Usuario, App\Models\UnidadMedica, App\Models\Servidor, App\Models\LogSync;
+use App\Librerias\Sync\ArchivoSync;
 use Carbon\Carbon;
 
 class DatosServidorCentralController extends Controller{
@@ -19,20 +20,30 @@ class DatosServidorCentralController extends Controller{
         // 1. Debemos generar el link de descarga en una carpeta con una cadena aleatoria
         // 2. Cuando generemos el link en el controlador debe existir un middleware que al descargar el archivo lo borre del sistema
 
-        $usuario = Usuario::find($request->get('usuario_id'));
-        $servidor = Servidor::find($usuario->servidor_id);
-        $unidad_medica = UnidadMedica::where('clues',$servidor->clues)->first();
+        $params = Input::all();
 
-        if($servidor->id == '0001'){
-            return Response::json(['error' => 'Opción no valida para uusarios del servidor central'], HttpResponse::HTTP_CONFLICT);
+        $usuario = Usuario::find($request->get('usuario_id'));
+
+        if($usuario->su){
+            //$almacen_id = Request::header('X-Almacen-Id');
+            $clues = $params['clues'];
+            $servidor = Servidor::where('clues',$clues)->first();
+            $unidad_medica = UnidadMedica::where('clues',$clues)->first();
+        }else{
+            $servidor = Servidor::find($usuario->servidor_id);
+            $unidad_medica = UnidadMedica::where('clues',$servidor->clues)->first();
+            $clues = $servidor->clues;
+        }
+        
+        if($servidor->id == '0001' && !$usuario->su){
+            return Response::json(['error' => 'Opción no valida para usarios del servidor central'], HttpResponse::HTTP_CONFLICT);
         }
 
         if(!$unidad_medica->es_offline){
             return Response::json(['error' => 'La unidad medica no esta configurada como offline'], HttpResponse::HTTP_CONFLICT);
         }
 
-        $servidor_id = $usuario->servidor_id;
-        $clues = $servidor->clues;
+        $servidor_id = $servidor->id;
 
         Storage::deleteDirectory("datos-central");
 
@@ -52,37 +63,70 @@ class DatosServidorCentralController extends Controller{
         try {
             // Generamos archivo de sincronización de registros actualizados o creados a la fecha de corte
             $tablas_datos = [
+                    'actas',
+                    'ajuste_presupuesto_pedidos_cancelados',
+                    'almacenes_servicios',
+                    'almacen_tipos_movimientos',
                     'pedidos',
                     'pedidos_insumos',
-                    /*
-                    'actas',
-                    'pedido_metadatos_sincronizaciones',
-                    'pedido_proveedor_insumos',
-                    'pedidos_alternos',
-                    'pedidos_insumos_clues',
+                    'clues_claves',
+                    'clues_servicios',
+                    'clues_turnos',
                     'consumos_promedios',
                     'cuadros_distribucion',
+                    'firmas_organismos',
+                    'historial_movimientos_transferencias',
+                    'inicializacion_inventario',
+                    'inicializacion_inventario_detalle',
                     'insumos_maximos_minimos',
-                    */
-                    'movimientos',
-                    'movimiento_insumos',
-                    'movimiento_insumos_borrador',
-                    'movimiento_ajustes',
-                    'movimiento_detalles',
-                    'movimiento_metadatos',
-                    'movimiento_pedido',
+                    'inventarios',
+                    'inventarios_detalles',
+                    'log_ejecucion_parches',
+                    'log_inicio_sesion',
+                    'log_pedidos_cancelados',
                     'log_pedido_borrador',
                     'log_recepcion_borrador',
+                    'log_repositorio',
+                    'log_sync',
                     'log_transferencias_canceladas',
-                    'historial_movimientos_transferencias',
+                    'movimientos',
+                    'movimiento_ajustes',
+                    'movimiento_articulos',
+                    'movimiento_detalles',
+                    'movimiento_insumos',
+                    'movimiento_insumos_borrador',
+                    'movimiento_metadatos',
+                    'movimiento_pedido',
                     'negaciones_insumos',
+                    'pacientes',
+                    'pacientes_admision',
+                    'pacientes_area_responsable',
+                    'pacientes_responsable',
+                    'pedidos',
+                    'pedidos_alternos',
+                    'pedidos_insumos',
+                    'pedidos_insumos_clues',
+                    'pedido_cc_clues',
+                    'pedido_metadatos_cc',
+                    'pedido_metadatos_sincronizaciones',
+                    'pedido_proveedor_insumos',
+                    'personal_clues',
+                    'personal_clues_metadatos',
+                    'personal_clues_puesto',
+                    'puestos',
                     'recetas',
-                    //'recetas_digitales',
+                    'recetas_digitales',
                     'receta_detalles',
-                    //'receta_digital_detalles',
-                    //'receta_movimientos',
+                    'receta_digital_detalles',
+                    'receta_movimientos',
+                    'repositorio',
+                    'resguardos',
+                    'sincronizaciones',
+                    'sincronizaciones_proveedores',
+                    'sincronizacion_movimientos',
                     'stock',
-                    'stock_borrador'
+                    'stock_borrador',
+                    'usuarios'
                 ];
             
                 $pedidos_ids = [];
@@ -135,7 +179,7 @@ class DatosServidorCentralController extends Controller{
                     }
                     Storage::append('datos-central/datos.sync', $query);
                 }else{
-                    Storage::append('datos-central/datos.sync', 'sin rows');
+                    //Storage::append('datos-central/datos.sync', 'sin rows');
                 }
             }
             //return \Response::json(['message' => 'exito'], 200);   
@@ -188,15 +232,20 @@ class DatosServidorCentralController extends Controller{
         ini_set('memory_limit', '-1');
         $conexion_local = DB::connection('mysql');
         $conexion_local->beginTransaction();
-        $clues_que_hace_sync = '';
+        $clues_que_hace_sync = env('CLUES');
+        $servidor_id = env('SERVIDOR_ID');
 
         try {
             Storage::makeDirectory("importar-datos");
             //echo php_ini_loaded_file();
             //var_dump($request);
-            if ($request->hasFile('datos-central')){
+            if($servidor_id == '0001'){
+                throw new \Exception("No se puede importar este archivo en el servidor central.");
+            }
+
+            if ($request->hasFile('zip')){
                 
-                $file = $request->file('datos-central');
+                $file = $request->file('zip');
                 if ($file->isValid()) {
                      
                     Storage::put(
@@ -208,7 +257,7 @@ class DatosServidorCentralController extends Controller{
 
                     $servidor_id = $nombreArray[1];                    
                     $servidor = Servidor::find($servidor_id);                    
-                    
+
                     if($servidor){
                         $storage_path = storage_path();
                         $zip = new ZipArchive();
@@ -328,7 +377,7 @@ class DatosServidorCentralController extends Controller{
                                     }
                                    
                                     // Se ejecuta la sincronización
-                                    $contents = Storage::get("importar-datos/".$servidor->id."/sumami.sync");
+                                    $contents = Storage::get("importar-datos/".$servidor->id."/datos.sync");
                                     $conexion_local->statement('SET FOREIGN_KEY_CHECKS=0');
                                     $conexion_local->getpdo()->exec($contents);
                                     $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
@@ -509,7 +558,7 @@ class DatosServidorCentralController extends Controller{
                     }
                 }
             } else {
-                throw new \Exception("No hay archivo.");
+                throw new \Exception("No hay archivo.  datos-central.".$servidor_id.".zip");
             }
         } catch (\Illuminate\Database\QueryException $e){            
             //echo " Sync Importación Excepción: ".$e->getMessage();
