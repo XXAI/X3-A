@@ -24,7 +24,6 @@ class CrearTablaPreciosBaseDetalles extends Migration
                   
             $table->timestamps();
             $table->softDeletes();
-            $table->primary('id');
 
             $table->foreign('precio_base_id')->references('id')->on('precios_base');
             $table->foreign('insumo_medico_clave')->references('clave')->on('insumos_medicos');
