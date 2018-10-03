@@ -184,6 +184,10 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('presupuesto/formato-carga-presupuesto-excel',       'PresupuestoController@descargarFormato');
         Route::post('presupuesto/procesar-presupuesto-excel',           'PresupuestoController@cargarExcel');
         Route::post('presupuesto',                                      'PresupuestoController@store');
+        Route::get('presupuesto/{id}',                                  'PresupuestoController@show');
+        Route::get('presupuesto/saldos/{id}',                           'PresupuestoController@saldos');
+        Route::put('presupuesto/ajuste/{id}',                           'PresupuestoController@ajuste');
+        
 
         
     });
