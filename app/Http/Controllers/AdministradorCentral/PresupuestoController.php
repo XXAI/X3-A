@@ -8,6 +8,7 @@ use Illuminate\Http\Response as HttpResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests;
 use App\Models\PresupuestoEjercicio, App\Models\PresupuestoUnidadMedica,  App\Models\UnidadMedica, App\Models\Jurisdiccion;
+use App\Models\PresupuestoMovimientoEjercicio, App\Models\PresupuestoMovimientoUnidadMedica;
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
 use \Excel;
@@ -92,6 +93,185 @@ class PresupuestoController extends Controller
 
         return Response::json([ 'data' => $items],200);
 
+    }
+
+
+    public function saldos(Request $request, $id){
+        $input = Input::only(["clues"]);
+        $clues = explode(',',$input['clues']);  
+        $items = [];
+        if(count($clues)>0){
+            $items = PresupuestoUnidadMedica::where('presupuesto_id',$id)->whereIn('clues',$clues)->orderBy('clues','asc')->get();
+        }
+
+        return Response::json([ 'data' => $items],200);
+    }
+
+    public function show(Request $request, $id){
+
+        $presupuesto = PresupuestoEjercicio::find($id);
+
+        if(!$presupuesto){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+        $presupuesto_unidades_medicas = $presupuesto->presupuestoUnidadesMedicas;
+        $causes_disponible = 0;
+        $no_causes_disponible = 0;
+        foreach($presupuesto_unidades_medicas as $item){
+            $causes_disponible += $item->causes_disponible;
+            $no_causes_disponible += $item->no_causes_disponible;
+        }
+
+        $presupuesto->causes_disponible = $causes_disponible;
+        $presupuesto->no_causes_disponible = $no_causes_disponible;
+
+        unset($presupuesto->presupuestoUnidadesMedicas);
+
+        return Response::json([ 'data' => $presupuesto],200);
+    }
+
+
+    public function ajuste(Request $request, $id){
+
+        $presupuesto = PresupuestoEjercicio::find($id);
+
+        if(!$presupuesto){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+
+        $mensajes = [            
+            'required'      => "required",
+            'numeric'       => "numeric",
+            'min'           => "min"
+        ];
+
+        $reglas = [
+            //'id'            => 'required|unique:usuarios,id,'.$id,
+            'tipo'              =>'required',
+            'causes'           => 'required|numeric|min:0',
+            'no_causes'        => 'required|numeric|min:0',
+            'unidades_medicas' => 'array',
+            'unidades_medicas.*.causes' => 'required|numeric|min:0',
+            'unidades_medicas.*.no_causes' => 'required|numeric|min:0'
+        ];
+
+        $input = Input::only('tipo','causes',"no_causes","unidades_medicas");
+
+        $v = Validator::make($input, $reglas, $mensajes);
+
+        if ($v->fails()) {
+            $errors =  $v->errors();           
+            return Response::json(['error' =>$errors], HttpResponse::HTTP_CONFLICT);
+        }
+
+        DB::beginTransaction();
+        try{
+
+            $nuevo_causes = $input["tipo"] == "D" ? ($presupuesto->causes - $input['causes']) : ($presupuesto->causes + $input['causes']);
+            $nuevo_no_causes = $input["tipo"] == "D" ? ($presupuesto->no_causes - $input['no_causes']) : ($presupuesto->no_causes + $input['no_causes']);
+            $movimiento = [
+                "presupuesto_id"=>$id,
+                "causes_saldo_anterior"=>$presupuesto->causes,
+                "causes_cargo"=>$input["tipo"] == "D" ? $input['causes'] : 0.0,
+                "causes_abono"=>$input["tipo"] == "I" ? $input['causes'] : 0.0,
+                "causes_saldo"=>$nuevo_causes,
+                "no_causes_saldo_anterior"=>$presupuesto->no_causes,
+                "no_causes_cargo"=>$input["tipo"] == "D" ? $input['no_causes'] : 0.0,
+                "no_causes_abono"=>$input["tipo"] == "I" ? $input['no_causes'] : 0.0,
+                "no_causes_saldo"=>$nuevo_no_causes,
+            ];
+
+            $movimiento_ejercicio = PresupuestoMovimientoEjercicio::create($movimiento);
+            $presupuesto->causes = $nuevo_causes;
+            $presupuesto->no_causes = $nuevo_no_causes; 
+            $presupuesto->save();
+
+          //  $presupuesto_items = [];
+            foreach($input["unidades_medicas"] as $item){
+                $presupuesto_unidad_medica = PresupuestoUnidadMedica::where("clues",$item["clues"])->where("presupuesto_id", $id)->first();
+
+                if(!$presupuesto_unidad_medica){
+                    $presupuesto_unidad_medica = PresupuestoUnidadMedica::create([
+                        "presupuesto_id" => $id, 
+                        "clues" =>$item["clues"],
+                        "causes_autorizado" => $item["causes"],
+                        "causes_modificado" => $item["causes"],
+                        "causes_disponible" => $item["causes"],
+                        "causes_comprometido" => 0,
+                        "causes_devengado" => 0,
+                        "no_causes_autorizado" => $item["no_causes"],
+                        "no_causes_modificado" => $item["no_causes"],
+                        "no_causes_disponible" => $item["no_causes"],
+                        "no_causes_comprometido" => 0,
+                        "no_causes_devengado" => 0,
+                    ]);
+                    
+                    $disponible_causes = $nuevo_causes = $item["causes"];                    
+                    $disponible_no_causes = $nuevo_no_causes = $item["no_causes"];
+
+                    // si hay un decremento en una unidad que no tenia presupuesto no deberia de ser
+                    // pero el cliente no lo envia asi que no debería haber problema
+
+                } else{
+                    
+
+                    if( $input["tipo"] == "D"){
+                        $nuevo_causes =  $presupuesto_unidad_medica->causes_modificado - $item['causes'];
+                        $nuevo_no_causes = $presupuesto_unidad_medica->no_causes_modificado - $item['no_causes'];
+                        $disponible_causes  =  $presupuesto_unidad_medica->causes_disponible - $item['causes'];
+                        $disponible_no_causes  =  $presupuesto_unidad_medica->no_causes_disponible - $item['no_causes'];
+                    } else {
+                        $nuevo_causes = $presupuesto_unidad_medica->causes_modificado + $item['causes'];
+                        $nuevo_no_causes = $presupuesto_unidad_medica->no_causes_modificado + $item['no_causes'];
+                        $disponible_causes  =  $presupuesto_unidad_medica->causes_disponible + $item['causes'];
+                        $disponible_no_causes  =  $presupuesto_unidad_medica->no_causes_disponible + $item['no_causes'];
+                    }
+                    
+                    
+                    
+                    
+                }
+
+
+                
+
+
+                $movimiento_unidad_medica = [
+                    "presupuesto_unidad_medica_id"=>$presupuesto_unidad_medica->id,
+                    "causes_saldo_anterior"=>$presupuesto_unidad_medica->causes_modificado,
+                    "causes_cargo"=>$input["tipo"] == "D" ? $item['causes'] : 0.0,
+                    "causes_abono"=>$input["tipo"] == "I" ? $item['causes'] : 0.0,
+                    "causes_saldo"=>$nuevo_causes,
+                    "no_causes_saldo_anterior"=>$presupuesto_unidad_medica->no_causes_modificado,
+                    "no_causes_cargo"=>$input["tipo"] == "D" ? $item['no_causes'] : 0.0,
+                    "no_causes_abono"=>$input["tipo"] == "I" ? $item['no_causes'] : 0.0,
+                    "no_causes_saldo"=>$nuevo_no_causes,
+                ];
+
+                PresupuestoMovimientoUnidadMedica::create($movimiento_unidad_medica);
+                
+
+                $presupuesto_unidad_medica->causes_modificado = $nuevo_causes;
+                $presupuesto_unidad_medica->no_causes_modificado = $nuevo_no_causes;
+                $presupuesto_unidad_medica->causes_disponible =  $disponible_causes;
+                $presupuesto_unidad_medica->no_causes_disponible =  $disponible_no_causes;
+
+                $presupuesto_unidad_medica->save();
+
+                //$presupuesto_items[] = $presupuesto_unidad_medica;
+
+            }
+
+            DB::commit();
+            return Response::json([ 'data' => $presupuesto],200);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        }
+
+        
     }
 
      /**

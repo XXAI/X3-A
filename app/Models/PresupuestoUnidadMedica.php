@@ -12,6 +12,7 @@ class PresupuestoUnidadMedica extends BaseModel
     protected $generarID = false;
     protected $guardarIDServidor = false;
     protected $guardarIDUsuario = true;
+    public $incrementing = true;
     protected $fillable = [ 
         "presupuesto_id",
         "clues", 
