@@ -77,7 +77,7 @@ class DatosServidorCentralController extends Controller{
                     'firmas_organismos',
                     'historial_movimientos_transferencias',
                     'inicializacion_inventario',
-                    'inicializacion_inventario_detalle',
+                    'inicializacion_inventario_detalles',
                     'insumos_maximos_minimos',
                     'inventarios',
                     'inventarios_detalles',
