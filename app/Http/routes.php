@@ -176,19 +176,24 @@ Route::group(['middleware' => 'jwt'], function () {
         // Presupuesto
         Route::get('presupuesto/ejercicios',                            'PresupuestoController@ejercicios');
         Route::get('presupuesto/presupuesto-unidades-medicas/{id}',     'PresupuestoController@presupuestoUnidadesMedicas');
+        Route::get('presupuesto/excel/historial',                       'PresupuestoController@historialExcel');
         Route::get('presupuesto/excel/{id}',                            'PresupuestoController@exportarExcel');
         Route::get('presupuesto/ultimo',                                'PresupuestoController@ultimoPresupuesto');
+        Route::get('presupuesto/historial',                             'PresupuestoController@historial');
         Route::get('presupuesto/tipos-unidad-medica',                   'PresupuestoController@tiposUnidadMedica');
         Route::get('presupuesto/jurisdicciones',                        'PresupuestoController@jurisdicciones');
         Route::get('presupuesto/unidades-medicas',                      'PresupuestoController@unidadesMedicas');        
         Route::get('presupuesto/formato-carga-presupuesto-excel',       'PresupuestoController@descargarFormato');
         Route::post('presupuesto/procesar-presupuesto-excel',           'PresupuestoController@cargarExcel');
+
         Route::post('presupuesto',                                      'PresupuestoController@store');
         Route::get('presupuesto/{id}',                                  'PresupuestoController@show');
         Route::get('presupuesto/saldos/{id}',                           'PresupuestoController@saldos');
         Route::put('presupuesto/ajuste/{id}',                           'PresupuestoController@ajuste');
-        
 
+        // Hacer bien el metodo
+        Route::get('presupuesto/historial/ajustes',                     'PresupuestoController@historial');
+       
         
     });
     // # FIN SECCION
