@@ -12,20 +12,39 @@ use \Validator,\Hash, \Response, DB;
 
 use App\Models\Turno,
     App\Models\Servicio,
-    App\Models\UnidadMedica;
+    App\Models\UnidadMedica,
+    App\Models\Usuario;
+    
 
 use \Excel;
+
+use JWTAuth, JWTFactory;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 
 
 class ReporteSalidaController extends Controller
 {
     public function index(Request $request)
     {
-
-       
-
         $parametros = Input::only('desde','hasta','clues', 'orden');
+        
         $clues = "";
+        $obj =  JWTAuth::parseToken()->getPayload();
+        $usuario = Usuario::where("id", $obj->get('id'))->with("usuariounidad")->first();
+        
+        $total    = false;
+        if($usuario->su == 1)
+            $total = true;
+        
+        if(!$total)
+            if($usuario->usuariounidad->clues)
+            {
+                $clues = $usuario->usuariounidad->clues;  
+                $parametros['clues'] = $clues;
+            }
+        
+        //$clues = "";
         $reporte_salida = DB::table("reporte_salidas")
                             ->join('insumos_medicos', 'insumos_medicos.clave', '=', 'reporte_salidas.clave')
                             ->join('unidades_medicas', 'unidades_medicas.clues', '=', 'reporte_salidas.clues')
@@ -130,8 +149,8 @@ class ReporteSalidaController extends Controller
         $reporte_salida_turno = $reporte_salida_turno->get();
         $reporte_salida_servicio = $reporte_salida_servicio->get();
 
-
-        return Response::json(array("data" => array("salidas"=>$reporte_salida, "turnos"=>$reporte_salida_turno, "servicios"=>$reporte_salida_servicio, "clues"=>$clues) ), 200);                                    
+        
+        return Response::json(array("data" => array("salidas"=>$reporte_salida, "turnos"=>$reporte_salida_turno, "servicios"=>$reporte_salida_servicio, "clues"=> $clues, "usuario"=> $usuario->su ) ), 200);                                    
                                             
     }
 
@@ -147,6 +166,21 @@ class ReporteSalidaController extends Controller
     {
     $parametros;
     $parametros = Input::only('desde','hasta','clues', 'orden');
+
+    $obj =  JWTAuth::parseToken()->getPayload();
+    $usuario = Usuario::where("id", $obj->get('id'))->with("usuariounidad")->first();
+        
+    $total    = false;
+    if($usuario->su == 1)
+        $total = true;
+    
+    if(!$total)
+        if($usuario->usuariounidad->clues)
+        {
+            $clues = $usuario->usuariounidad->clues;  
+            $parametros['clues'] = $clues;
+        }
+        
 
     $reporte_salida;
     $unidades = "";
