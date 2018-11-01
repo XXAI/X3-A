@@ -76,10 +76,11 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::resource('personal-puesto',           'PersonalPuestoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('personal',                  'PersonalController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('reporte-salida',            'ReporteSalidaController',    ['only' => ['index']]);
+    
     Route::get('reporte-salida/catalogos',       'ReporteSalidaController@catalogos');
     Route::get('reporte-salida-reporte-excel',   'ReporteSalidaController@reporteExcel');
+    Route::post('cargar-inventario-inicial-excel', 'InicializarInventarioMedicamentosController@cargarExcel');
     
-
 
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
     // Harima: Se colaron en algun merge que hicieron, los tomo como cambios en el commit, probablemente marco conflicto y lo arreglaron dejando estas lineas, los comento, si no hay problemas los elimino en el proximo commit
@@ -373,7 +374,7 @@ Route::group(['middleware' => 'jwt'], function () {
     
     
 
-    // Akira: Esto nose que onda a que módulo pertenece
+    // Akira: Esto nose que onda a que módulo pertenece Mario Villatoro: Cree un modulo de receta, antes que te pidiera a ti que lo crearas, me parece sin uso, verificar para borrar 
     Route::resource('receta',           'RecetaController',             ['only' => ['index', 'show', 'store','update','destroy']]);
 
     //Modulo de Avances

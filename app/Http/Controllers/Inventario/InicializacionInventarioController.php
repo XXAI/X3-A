@@ -169,4 +169,6 @@ class InicializacionInventarioController extends Controller{
             return array('status'=>HttpResponse::HTTP_CONFLICT, 'error'=>$e->getMessage());
         }
     }
+
+    
 }
