@@ -12,6 +12,8 @@ use \Validator;
 use App\Models\Sincronizacion, App\Models\Servidor; 
 use App\Models\Rol, App\Models\Usuario;
 
+use \Excel;
+
 class ServidoresController extends \App\Http\Controllers\Controller
 {
     /**
@@ -21,11 +23,77 @@ class ServidoresController extends \App\Http\Controllers\Controller
      */
     public function index(Request $request){
         $usuario = Usuario::find($request->get('usuario_id'));
-		//return Response::json([ 'data' => []],200);
-		//return Response::json(['error' => "NO EXSITE LA BASE"], 500);
 		$parametros = Input::only('q','page','per_page','estatus');
-		if ($parametros['q']) {
-			$servidores =  Servidor::where('nombre','LIKE',"%".$parametros['q']."%")->orWhere('clues','LIKE',"%".$parametros['q']."%");
+		$servidores = self::lista($parametros, $usuario);
+		
+		return Response::json([ 'data' => $servidores],200);
+    }
+
+    public function excel(Request $request){
+        $usuario = Usuario::find($request->get('usuario_id'));
+        //$parametros = Input::only('q','page','per_page','estatus');
+        $parametros = [ "estatus"=>true];
+        $servidores = self::lista($parametros, $usuario);
+        
+        Excel::create("Estatus de servidores - Generado el ".date('Y-m-d'), function($excel) use($servidores) {
+
+            $excel->sheet("Servidores", function($sheet) use($servidores) {
+                $sheet->setAutoSize(true);
+                $sheet->row(1, array(
+                    'ID', 
+                    'CLUES',
+                    'Nombre',
+                    'Internet',
+                    'Catálogos actualizados',
+                    'Version',
+                    'Periodo',
+                    'Última sincronización',
+                    'Tiempo desde la última sincronización'
+                ));
+                $sheet->cells("A1:I1", function($cells) {
+                    $cells->setAlignment('center');
+                });
+                $sheet->row(1, function($row) {
+                    $row->setBackground('#DDDDDD');
+                    $row->setFontWeight('bold');
+                });
+                $contador = 1;
+                foreach($servidores as $servidor){
+                    $sheet->appendRow(array(
+                        $servidor->id, 
+                        $servidor->clues, 
+                        $servidor->nombre,
+                        $servidor->internet? "Si":"No",
+                        $servidor->catalogos_actualizados? "Si":"No",
+                        $servidor->version,
+                        $servidor->periodo_sincronizacion. " hrs",
+                        $servidor->ultima_sincronizacion,
+                        $servidor->tiempo_desde_ultima_sync
+                    ));
+                    $contador++;
+                }
+                $sheet->setAutoFilter('A1:I1');
+                $sheet->setBorder("A1:I$contador", 'thin');
+            });
+        })->export('xls');
+    }
+
+    public function lista($parametros, $usuario){
+        if (isset($parametros['q'])) {
+            if(isset($parametros['estatus'])){
+				$servidores =  Servidor::select('*', 
+					DB::raw(
+						'ABS(TIMESTAMPDIFF(HOUR,NOW(),ultima_sincronizacion)) as horas_sin_sincronizar'
+					),
+					DB::raw(
+						'IF((ABS(TIMESTAMPDIFF(HOUR,NOW(),ultima_sincronizacion)) > periodo_sincronizacion OR  ultima_sincronizacion is NULL) AND principal != 1 , 1, 0) as alerta_retraso'
+					)
+				)->orderBy( 'horas_sin_sincronizar', 'desc');
+			} else{
+				$servidores =  Servidor::select('*');
+            }
+            
+			$servidores = $servidores->where('nombre','LIKE',"%".$parametros['q']."%")->orWhere('clues','LIKE',"%".$parametros['q']."%");
 		} else {
 			if(isset($parametros['estatus'])){
 				$servidores =  Servidor::select('*', 
@@ -35,7 +103,7 @@ class ServidoresController extends \App\Http\Controllers\Controller
 					DB::raw(
 						'IF((ABS(TIMESTAMPDIFF(HOUR,NOW(),ultima_sincronizacion)) > periodo_sincronizacion OR  ultima_sincronizacion is NULL) AND principal != 1 , 1, 0) as alerta_retraso'
 					)
-				)->orderBy('alerta_retraso','desc');
+				)->orderBy( 'horas_sin_sincronizar', 'desc');
 			} else{
 				$servidores =  Servidor::select('*');
 			}
@@ -51,9 +119,52 @@ class ServidoresController extends \App\Http\Controllers\Controller
 			$servidores = $servidores->paginate($resultadosPorPagina);
 		} else {
 			$servidores = $servidores->get();
-		}
-		
-		return Response::json([ 'data' => $servidores],200);
+        }
+        
+        foreach($servidores as $item){
+            
+            if($item->ultima_sincronizacion != null){
+
+                $posted = new \DateTime(date("Y-m-d H:i:s", strtotime(str_replace('-','/', $item->ultima_sincronizacion))));
+                $now = new \DateTime("now");
+                 $diff = $posted->diff($now);
+
+                $tiempo = "";        
+                $tiempo = [];
+
+                if($diff->y >0){
+                    $tiempo[] = $diff->y." año".($diff->y > 1? "s":"" );
+                } 
+                if($diff->m >0){
+                    $tiempo[] = $diff->m." ".($diff->m > 1? "meses":"mes" );
+                } 
+                if($diff->d >0){
+                    $tiempo[] = $diff->d. " ".($diff->d > 1? "días":"día" );
+                } 
+
+                if($diff->h >0){
+                    $tiempo[] = $diff->h." ".($diff->h > 1? "horas":"hora" );
+                } 
+
+                if($diff->m >0){
+                    $tiempo[]  = $diff->m." ".($diff->h > 1? "minutos":"minuto" );
+                } 
+
+                $tiempo_str = "";
+                for($i = 0; $i < count($tiempo); $i++){
+                    if($i > 0 ){
+                        if($i < count($tiempo)-1){
+                            $tiempo_str .= ", ";
+                        } else {
+                            $tiempo_str .= " y ";
+                        }
+                    }
+                    $tiempo_str .= $tiempo[$i];
+                }                
+                $item->tiempo_desde_ultima_sync = $tiempo_str;
+            }           
+        }
+        return $servidores;
     }
 
     /**

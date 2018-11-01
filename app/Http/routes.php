@@ -393,6 +393,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('auto',                                  'SincronizacionController@auto');
         Route::post('importar',                             'SincronizacionController@importarSync');
         Route::post('confirmar',                            'SincronizacionController@confirmarSync');
+        Route::get('servidores/excel',                      'ServidoresController@excel');
         Route::resource('servidores',                       'ServidoresController',['only' => ['index', 'show', 'store','update','destroy']]);
     });
 
