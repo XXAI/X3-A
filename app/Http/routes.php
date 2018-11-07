@@ -52,6 +52,7 @@ Route::resource('personal-medico',              'PersonalMedicoController',    [
 Route::get('grafica-entregas',                  'ReportePedidoController@graficaEntregas');
 Route::get('estatus-pedidos',                   'ReportePedidoController@estatusEntregaPedidos');
 
+
 // Akira: tuve que agregar esto aqui porque no me iba a poner a batallar para interceptar la peticion de conchita
 // con su auto complete, y no se puede refrescar el token con la libreria del cliente
 Route::group(['prefix' => 'medicos','namespace' => 'Medicos'], function () {
@@ -80,6 +81,10 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('reporte-salida/catalogos',       'ReporteSalidaController@catalogos');
     Route::get('reporte-salida-reporte-excel',   'ReporteSalidaController@reporteExcel');
     Route::post('cargar-inventario-inicial-excel', 'InicializarInventarioMedicamentosController@cargarExcel');
+    Route::get('descargar-formato-inventario-inicial-excel', 'InicializarInventarioMedicamentosController@descargarFormato');
+    Route::get('descargar-insumos-sin-clave-excel',     'InicializarInventarioMedicamentosController@descargarInsumosSinClave');
+    
+    Route::post('programa-inventario',                 'ProgramaController@nuevoProgramaInventario');
     
 
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :

@@ -227,4 +227,76 @@ class ProgramaController extends Controller
 		   return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
 		}
     }
+
+    public function nuevoProgramaInventario(Request $request)
+    {
+        $errors = array(); 
+
+        $mensajes = [
+                        'required'      => "required",
+                        'unique'        => "unique"
+                    ];
+
+        $reglas = [
+                        'nombre'        => 'required',
+                  ];
+
+        $inputs = Input::only( 'nombre', 'clave', 'estatus','multiprograma','programas');
+        $datos = (object) Input::json()->all();
+
+        
+        if(isset($datos->programas))
+        {
+            foreach ($datos->programas as $key => $value) {
+                $verificador_programa = Programa::where('nombre', "=", $value['nombre'])->first();
+                if(!$verificador_programa){
+                    $programa = new Programa;
+                    $programa->nombre        = $value['nombre'];
+                    $programa->status        = $value['estatus'];
+                    try {
+                        $programa->save();
+                        $buscar_programa = Programa::where("nombre", "=", $programa->nombre)->first();
+                        $actualizar_clave = Programa::where("nombre", "=", $programa->nombre);
+                        $actualizar_clave->update(['clave' => str_pad($buscar_programa->id, 4, "0", STR_PAD_LEFT)]);
+                    
+                    } catch (\Exception $e) {
+                        return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+                    }
+                }
+            }
+            return Response::json([ 'data' => Programa::all()],200);
+        }else{
+            if(property_exists($datos,'nombre'))
+            {}else{
+                array_push($errors, array(array('Nombre' => array('Ingrese el nombre'))));
+            }
+            if(property_exists($datos,'estatus'))
+            {}else{
+                    array_push($errors, array(array('Status' => array('Ingrese el status'))));
+                }
+
+            if( count($errors) > 0 )
+                    {
+                        return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+                    } 
+
+
+            $programa = new Programa;
+            $programa->nombre        = $datos->nombre;
+            $programa->status        = $datos->estatus;
+            
+            
+            try {
+                    $programa->save();
+                    $buscar_programa = Programa::where("nombre", "=", $programa->nombre)->first();
+                    $actualizar_clave = Programa::where("nombre", "=", $programa->nombre);
+                    $actualizar_clave->update(['clave' => str_pad($buscar_programa->id, 4, "0", STR_PAD_LEFT)]);
+                    
+                return Response::json([ 'data' => Programa::all(), "id_programa"=>$buscar_programa->id],200);
+
+            } catch (\Exception $e) {
+                return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+            }
+        } 
+    }
 }

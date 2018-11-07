@@ -927,7 +927,7 @@ private function validarLote($request)
         {
             return Response::json([ 'data' => "Ocurrio un error al leer el formato del archivo, favor de verificarlo y volverlo a intentar"],500); 
         }
-       
+        //return Response::json([ 'data' => $arreglo],500);
         $parametros = Input::only('term', 'clues', 'almacen');
         $data1 =  DB::table("insumos_medicos AS im")// Obtenemos todos los insumos para poder obtener información adicional, como el precio, tipo causes etc
         ->select(DB::raw("pbd.precio as precio_unitario_base"),DB::raw("pbd.precio as precio_unitario"),"im.clave", "im.tipo", "g.nombre",DB::raw("um.nombre AS unidad_medida"), "m.cantidad_x_envase", "im.es_causes", "im.es_unidosis", "im.descripcion", DB::raw("'' AS codigo_barras"),"pm.nombre AS presentacion_nombre")        
@@ -985,29 +985,77 @@ private function validarLote($request)
         $exportacion = [];
         $sin_programa = [];
         $linea = 1;
+        
 
         $arreglo_programa = [];
+        
         try{
             foreach ($arreglo as $key => $value) {//Este proceso se clasificara los insumos por programa, insumo (clave) y por lote
-                if (array_key_exists($value[1], $insumos)) {//Se verifica que exista el insumo en nuestro catalogo
+                
+                
+                if($value[0] == "")
+                    $value[0] = "Inicializacion Inventario";
+
+                $insumo = null;
+                $insumo = new \stdClass();
+                $insumo->precio_unitario = 0;
+                $insumo->clave_insumo_medico = $value[1];
+                $insumo->tipo = "";
+                $insumo->nombre = "";
+                $insumo->unidad_medida = "";
+                $insumo->cantidad_x_envase = 0;
+                $insumo->es_causes = 0;
+                $insumo->es_unidosis = 0;
+                $insumo->descripcion = $value[2];
+                if($value[1] !="")
+                    if (array_key_exists((string)$value[1], $insumos)) {//Se verifica que exista el insumo en nuestro catalogo
+                        $insumo->precio_unitario =$insumos[$value[1]]->precio_unitario;
+                        $insumo->clave_insumo_medico =$insumos[$value[1]]->clave;
+                        $insumo->tipo =$insumos[$value[1]]->tipo;
+                        $insumo->nombre =$insumos[$value[1]]->nombre;
+                        $insumo->unidad_medida =$insumos[$value[1]]->unidad_medida;
+                        $insumo->cantidad_x_envase =$insumos[$value[1]]->cantidad_x_envase;
+                        $insumo->es_causes =$insumos[$value[1]]->es_causes;
+                        $insumo->es_unidosis =$insumos[$value[1]]->es_unidosis;
+                        $insumo->descripcion =$insumos[$value[1]]->descripcion;
+                    }else{
+                        $insumo->clave_insumo_medico = null;
+                    }/*else
+                {
+                    //$insumo->precio_unitario_base = 0;
+                   
+                    //$insumo->codigo_barras = "";
+                    //$insumo->presentacion_nombre = "";
+                }*/
+                $date_now = new \DateTime("now");
+                try{
+                    $lotes = null;
+                    $lotes = new \stdClass();
+                    $lotes->no_lote = $value[3];
+                    $date = new \DateTime(str_replace('/','-',$value[4]));
                     
-                    try{
-                        $lotes = null;
-                        $lotes = new \stdClass();
-                        $lotes->no_lote = $value[3];
-                        $date = new \DateTime(str_replace('/','-',$value[4]));
-                        $lotes->fecha = $date->format('Y-m-d');
-                        $lotes->cantidad = $value[5];
-                    }catch(\Exception $e)
+                    $lotes->fecha = $date->format('Y-m-d');
+                    $lotes->cantidad = $value[5];
+
+                    /*if($date < $date_now)
                     {
                         $detalle_error .= "Error en Fecha <br>Artículo = ".$linea."<br>Programa:".$value[0]."<br>Clave Insumo: ".$value[1]."<br>Insumo: ".$value[2]."<br>Fecha: ".$value[4];
                         return Response::json([ 'data' => $detalle_error],500);
-                    }
+                    }*/
+                }catch(\Exception $e)
+                {
+                    $detalle_error .= "Error en Fecha <br>Artículo = ".$linea."<br>Programa:".$value[0]."<br>Clave Insumo: ".$value[1]."<br>Insumo: ".$value[2]."<br>Fecha: ".$value[4];
+                    return Response::json([ 'data' => $detalle_error],500);
+                }
+
+                /*if (array_key_exists($value[1], $insumos)) {//Se verifica que exista el insumo en nuestro catalogo
+                    
+                    
                 }else{
                     $error++;
                     $detalle_error .= "Error insumo no existe<br>Línea: ".$linea."<br>programa:".$value[0]."<br>clave: ".$value[1]."<br>insumo: ".$value[2];
                     return Response::json([ 'data' => $detalle_error],500);
-                }
+                }*/
                 $index_programa = 0;
                 $bandera_programa = 0;
                 $index_catalogo_programa = 0;
@@ -1035,7 +1083,7 @@ private function validarLote($request)
                             $index_duplicado = 0;
                             foreach($exportacion[$key_exportacion]['programa']['insumos'] as $key_validar => $value_validar)//Verifica si existe el programa dentro de nuestro arreglo para evitar duplicarlo
                             {
-                                if($value_validar->clave == $value[1])
+                                if($value_validar->clave_insumo_medico == $value[1] && $value_validar->descripcion == $value[2])
                                 {
                                     $bandera_duplicado = 1;
                                     $index_duplicado = $key_validar;
@@ -1063,7 +1111,7 @@ private function validarLote($request)
                                 
                             }else//En caso que no exista se crea con la estructura antes mencionada
                             {
-                                $nuevo_insumo = null;
+                                /*$nuevo_insumo = null;
                                 $nuevo_insumo = new \stdClass();
                                 $nuevo_insumo->precio_unitario_base =$insumos[$value[1]]->precio_unitario_base;
                                 $nuevo_insumo->precio_unitario =$insumos[$value[1]]->precio_unitario;
@@ -1077,8 +1125,9 @@ private function validarLote($request)
                                 $nuevo_insumo->descripcion =$insumos[$value[1]]->descripcion;
                                 $nuevo_insumo->codigo_barras =$insumos[$value[1]]->codigo_barras;
                                 $nuevo_insumo->presentacion_nombre =$insumos[$value[1]]->presentacion_nombre;
-                                $nuevo_insumo->lote[] = $lotes;
-                                $exportacion[$key_exportacion]['programa']['insumos'][] = $nuevo_insumo;
+                                $nuevo_insumo->lote[] = $lotes;*/
+                                $insumo->lote[] = $lotes;
+                                $exportacion[$key_exportacion]['programa']['insumos'][] = $insumo;
                             }
                                 
                                 
@@ -1097,7 +1146,7 @@ private function validarLote($request)
                         
                         $exportacion[$index_nuevo]['programa']['nombre'] = $programa[$index_catalogo_programa]->nombre;
                         
-                        $nuevo_insumo = null;
+                        /*$nuevo_insumo = null;
                         $nuevo_insumo = new \stdClass();
                         $nuevo_insumo->precio_unitario_base =$insumos[$value[1]]->precio_unitario_base;
                         $nuevo_insumo->precio_unitario =$insumos[$value[1]]->precio_unitario;
@@ -1111,9 +1160,10 @@ private function validarLote($request)
                         $nuevo_insumo->descripcion =$insumos[$value[1]]->descripcion;
                         $nuevo_insumo->codigo_barras =$insumos[$value[1]]->codigo_barras;
                         $nuevo_insumo->presentacion_nombre =$insumos[$value[1]]->presentacion_nombre;
-                        $nuevo_insumo->lote[] = $lotes;
+                        $nuevo_insumo->lote[] = $lotes;*/
+                        $insumo->lote[] = $lotes;
                         
-                        $exportacion[$index_nuevo]['programa']['insumos'][] = $nuevo_insumo;
+                        $exportacion[$index_nuevo]['programa']['insumos'][] = $insumo;
                         
                     }
                     
@@ -1130,7 +1180,8 @@ private function validarLote($request)
                             $index_duplicado = 0;
                             foreach($sin_programa[$key_sin_programa]['programa']['insumos'] as $key_validar => $value_validar)//Verificamos si existe el insumo
                             {
-                                if($value_validar->clave == $value[1])
+                               
+                                if($value_validar->clave_insumo_medico == $value[1]  && $value_validar->descripcion == $value[2])
                                 {
                                     $bandera_duplicado = 1;
                                     $index_duplicado = $key_validar;
@@ -1159,11 +1210,11 @@ private function validarLote($request)
                             
                             }else//Si no se encuentra el programa se crea el programa en el arreglo
                             {
-                                $nuevo_insumo = null;
+                                /*$nuevo_insumo = null;
                                 $nuevo_insumo = new \stdClass();
-                                $nuevo_insumo->precio_unitario_base =$insumos[$value[1]]->precio_unitario_base;
+                                //$nuevo_insumo->precio_unitario_base =$insumos[$value[1]]->precio_unitario_base;
                                 $nuevo_insumo->precio_unitario =$insumos[$value[1]]->precio_unitario;
-                                $nuevo_insumo->clave =$insumos[$value[1]]->clave;
+                                $nuevo_insumo->clave_insumo_medico =$insumos[$value[1]]->clave;
                                 $nuevo_insumo->tipo =$insumos[$value[1]]->tipo;
                                 $nuevo_insumo->nombre =$insumos[$value[1]]->nombre;
                                 $nuevo_insumo->unidad_medida =$insumos[$value[1]]->unidad_medida;
@@ -1171,10 +1222,12 @@ private function validarLote($request)
                                 $nuevo_insumo->es_causes =$insumos[$value[1]]->es_causes;
                                 $nuevo_insumo->es_unidosis =$insumos[$value[1]]->es_unidosis;
                                 $nuevo_insumo->descripcion =$insumos[$value[1]]->descripcion;
-                                $nuevo_insumo->codigo_barras =$insumos[$value[1]]->codigo_barras;
-                                $nuevo_insumo->presentacion_nombre =$insumos[$value[1]]->presentacion_nombre;
-                                $nuevo_insumo->lote[] = $lotes;
-                                $sin_programa[$key_sin_programa]['programa']['insumos'][] = $nuevo_insumo;
+                                $nuevo_insumo->subtotal = '';
+                                //$nuevo_insumo->codigo_barras =$insumos[$value[1]]->codigo_barras;
+                                //$nuevo_insumo->presentacion_nombre =$insumos[$value[1]]->presentacion_nombre;
+                                $nuevo_insumo->lote[] = $lotes;*/
+                                $insumo->lote[] = $lotes;
+                                $sin_programa[$key_sin_programa]['programa']['insumos'][] = $insumo;
                             }
                                 
                             
@@ -1188,11 +1241,11 @@ private function validarLote($request)
                         $sin_programa[$nuevo]['programa']['id'] = 0;
                         $sin_programa[$nuevo]['programa']['nombre'] = $value[0];
                         $sin_programa[$nuevo]['programa']['clave'] = "";
-                        $nuevo_insumo = null;
+                        /*$nuevo_insumo = null;
                         $nuevo_insumo = new \stdClass();
-                        $nuevo_insumo->precio_unitario_base =$insumos[$value[1]]->precio_unitario_base;
+                        //$nuevo_insumo->precio_unitario_base =$insumos[$value[1]]->precio_unitario_base;
                         $nuevo_insumo->precio_unitario =$insumos[$value[1]]->precio_unitario;
-                        $nuevo_insumo->clave =$insumos[$value[1]]->clave;
+                        $nuevo_insumo->clave_insumo_medico =$insumos[$value[1]]->clave;
                         $nuevo_insumo->tipo =$insumos[$value[1]]->tipo;
                         $nuevo_insumo->nombre =$insumos[$value[1]]->nombre;
                         $nuevo_insumo->unidad_medida =$insumos[$value[1]]->unidad_medida;
@@ -1200,11 +1253,13 @@ private function validarLote($request)
                         $nuevo_insumo->es_causes =$insumos[$value[1]]->es_causes;
                         $nuevo_insumo->es_unidosis =$insumos[$value[1]]->es_unidosis;
                         $nuevo_insumo->descripcion =$insumos[$value[1]]->descripcion;
-                        $nuevo_insumo->codigo_barras =$insumos[$value[1]]->codigo_barras;
-                        $nuevo_insumo->presentacion_nombre =$insumos[$value[1]]->presentacion_nombre;
-                        $nuevo_insumo->lote[] = $lotes;
+                        $nuevo_insumo->subtotal = "";
+                        //$nuevo_insumo->codigo_barras =$insumos[$value[1]]->codigo_barras;
+                        //$nuevo_insumo->presentacion_nombre =$insumos[$value[1]]->presentacion_nombre;
+                        $nuevo_insumo->lote[] = $lotes;*/
+                        $insumo->lote[] = $lotes;
 
-                        $sin_programa[$nuevo]['programa']['insumos'][] = $nuevo_insumo;
+                        $sin_programa[$nuevo]['programa']['insumos'][] = $insumo;
                         //$sin_programa[$nuevo]['programa']['insumos'][0]->lote[] = $lotes;
                     }
                 
@@ -1216,7 +1271,7 @@ private function validarLote($request)
             $detalle_error .= "Error ". $e;
             return Response::json([ 'data' => $detalle_error],500);
         }
-        if(count($sin_programa) > 0)
+        /*if(count($sin_programa) > 0)
         {
             $lista_programas = "";
             foreach($sin_programa as $key_programa => $value_programa)
@@ -1224,10 +1279,92 @@ private function validarLote($request)
                 $lista_programas .= $sin_programa[$key_programa]['programa']['nombre']."<br>";
             }
             return Response::json([ 'data' => "Error, programas no registrados: <br>".$lista_programas],500);
-        }
+        }*/
         
-        return Response::json([ 'data' => ["insumos"=>$exportacion, "sin_programa"=>$sin_programa]],200);
+        return Response::json([ 'data' => ["insumos"=>$exportacion, "sin_programa"=>$sin_programa, "programas"=>$programa, "insumos_medicamentos"=>$insumos]],200);
         
+    }
+
+    public function descargarFormato(Request $request){
+
+        Excel::create("Formato de carga de Inventario Inicial SIAL", function($excel) {
+
+
+            $excel->sheet('Med. y Mat. de Curacion', function($sheet)  {
+                $sheet->setAutoSize(true);
+                $sheet->row(1, array(
+                    'Programa',
+                    'Clave',
+                    'Descripcion',
+                    'Lote',
+                    'Fecha Caducidad',
+                    'Cantidad'
+                ));
+                $sheet->cells("A1:F1", function($cells) {
+                    $cells->setAlignment('center');
+                });
+                $sheet->row(1, function($row) {
+                    $row->setBackground('#DDDDDD');
+                    $row->setFontWeight('bold');
+                });
+
+                $sheet->appendRow(array(
+                    'Inicializacion Inventario',
+                    "010.000.0104.00 (EJEMPLO)",
+                    'PARACETAMOL Tableta 500 mg 10 tabletas',
+                    'L201801',
+                    '01/01/2020',
+                    '10'
+                )); 
+
+                //$sheet->setAutoFilter('A1:F1');
+            });
+
+            $excel->setActiveSheetIndex(0);
+         })->export('xls');
+    }
+
+    public function descargarInsumosSinClave()
+    {
+        $parametros = Input::only('insumos');
+        $objeto = json_decode($parametros['insumos']);
+        //return Response::json([ 'data' => $objeto->insumos],500);
+        Excel::create("Insumos S/Clave Inventario Inicial SIAL", function($excel) use($objeto){
+
+
+            $excel->sheet('Insumos', function($sheet) use ($objeto)  {
+                $sheet->setAutoSize(true);
+                $sheet->row(1, array(
+                    'Programa',
+                    'Clave',
+                    'Descripcion',
+                    'Lote',
+                    'Fecha Caducidad',
+                    'Cantidad'
+                ));
+                $sheet->cells("A1:F1", function($cells) {
+                    $cells->setAlignment('center');
+                });
+                $sheet->row(1, function($row) {
+                    $row->setBackground('#DDDDDD');
+                    $row->setFontWeight('bold');
+                });
+
+                foreach ($objeto->insumos as $key => $item) {
+                    $sheet->appendRow(array(
+                        $item->programa,
+                        $item->clave_insumo_medico,
+                        $item->descripcion,
+                        $item->lote,
+                        $item->fecha,
+                        $item->cantidad                  
+                    )); 
+                }
+                
+            });
+
+            $excel->setActiveSheetIndex(0);
+         })->export('xls');
     }
 
 ////**************************************************************************************************************************************************
