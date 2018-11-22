@@ -90,7 +90,7 @@ class VerificarJWT
         //return $next($request);
         $response = $next($request);
         
-        $response->header('Api-Version','1.0');
+        $response->headers->set('Api-Version','1.0');
 
         return $response;
     }

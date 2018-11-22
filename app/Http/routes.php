@@ -82,6 +82,7 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('reporte-salida-reporte-excel',   'ReporteSalidaController@reporteExcel');
     Route::post('cargar-inventario-inicial-excel', 'InicializarInventarioMedicamentosController@cargarExcel');
     Route::get('descargar-formato-inventario-inicial-excel', 'InicializarInventarioMedicamentosController@descargarFormato');
+    Route::post('crear-insumos-sin-clave-excel',     'InicializarInventarioMedicamentosController@crearInsumosSinClave');
     Route::get('descargar-insumos-sin-clave-excel',     'InicializarInventarioMedicamentosController@descargarInsumosSinClave');
     
     Route::post('programa-inventario',                 'ProgramaController@nuevoProgramaInventario');
