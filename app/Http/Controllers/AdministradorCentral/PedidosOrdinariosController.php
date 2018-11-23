@@ -27,14 +27,11 @@ class PedidosOrdinariosController extends Controller
     {   $parametros = Input::only('q','page','per_page');
         
         $items =  PedidoOrdinario::select('pedidos_ordinarios.*');
-                    //->leftJoin('proveedores','contratos.proveedor_id','=','proveedores.id');
-        
-        
-        
+                    //->leftJoin('proveedores','contratos.proveedor_id','=','proveedores.id');        
 
         if ($parametros['q']) {
             
-            $items = $items->where('pedidos_ordinarios.nombre','LIKE',"%".$parametros['q']."%")->orWhere('pedidos_ordinarios.id','LIKE',"%".$parametros['q']."%");
+            $items = $items->where('pedidos_ordinarios.descripcion','LIKE',"%".$parametros['q']."%")->orWhere('pedidos_ordinarios.id','LIKE',"%".$parametros['q']."%");
        }
 
         if(isset($parametros['page'])){
