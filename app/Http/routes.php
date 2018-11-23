@@ -198,6 +198,9 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('presupuesto/saldos/{id}',                           'PresupuestoController@saldos');
         Route::put('presupuesto/ajuste/{id}',                           'PresupuestoController@ajuste');
 
+        // Pedidos ordinarios
+        Route::resource('pedidos-ordinarios',                        'PedidosOrdinariosController',['only' => ['index', 'show', 'store','update','destroy']]);
+
         // Hacer bien el metodo
         Route::get('presupuesto/historial/ajustes',                     'PresupuestoController@historial');
        

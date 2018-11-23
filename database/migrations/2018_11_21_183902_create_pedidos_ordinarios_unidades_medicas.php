@@ -22,6 +22,7 @@ class CreatePedidosOrdinariosUnidadesMedicas extends Migration
             $table->decimal('no_causes_autorizado',15,2)->default(0);
             $table->decimal('no_causes_modificado',15,2)->default(0);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('pedido_ordinario_id')->references('id')->on('pedidos_ordinarios');
             $table->foreign('pedido_id')->references('id')->on('pedidos');
