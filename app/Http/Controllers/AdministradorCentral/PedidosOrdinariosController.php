@@ -43,6 +43,18 @@ class PedidosOrdinariosController extends Controller
         }
        
         return Response::json([ 'data' => $items],200);
+    }
 
+    public function presupuesto(Request $request){
+        $presupuesto = PresupuestoEjercicio::where('activo',1)->first();
+                
+
+        if($presupuesto){            
+            $presupuesto->presupuesto_unidades_medicas = PresupuestoUnidadMedica::where('presupuesto_id',$presupuesto->id)->with('unidadMedica')->orderBy('clues','asc')->get();
+        } else {
+            $presupuesto = [];
+        }
+        
+        return Response::json([ 'data' => $presupuesto],200);
     }
 }
