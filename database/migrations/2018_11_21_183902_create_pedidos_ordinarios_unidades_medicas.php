@@ -21,6 +21,8 @@ class CreatePedidosOrdinariosUnidadesMedicas extends Migration
             $table->decimal('causes_modificado',15,2)->default(0);
             $table->decimal('no_causes_autorizado',15,2)->default(0);
             $table->decimal('no_causes_modificado',15,2)->default(0);
+
+            $table->string('usuario_id', 255);    
             $table->timestamps();
             $table->softDeletes();
 

@@ -11,12 +11,16 @@ class PedidoOrdinario extends BaseModel
     protected $generarID = false;
     protected $guardarIDServidor = false;
     protected $guardarIDUsuario = true;
-    public $increment = true;
+    public $incrementing = true;
 
     protected $table = 'pedidos_ordinarios';
     
     protected $fillable = [ 'descripcion', 'fecha', 'fecha_expiracion'];
     protected $casts = ["descripcion"=>"string","fecha"=>"date", "fecha_expiracion"=>"datetime"];
+
+    public function pedidoOrdinarioUnidadesMedicas(){
+        return $this->hasMany('App\Models\PedidoOrdinarioUnidadMedica','pedido_ordinario_id');
+    }
     /*
     
     public function insumos(){
