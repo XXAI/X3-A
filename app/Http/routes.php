@@ -199,9 +199,11 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::put('presupuesto/ajuste/{id}',                           'PresupuestoController@ajuste');
 
         // Pedidos ordinarios
-        Route::get('pedidos-ordinarios/presupuesto',                    'PedidosOrdinariosController@presupuesto');
-        Route::resource('pedidos-ordinarios',                           'PedidosOrdinariosController',['only' => ['index', 'show', 'store','update','destroy']]);
-
+        Route::post('pedidos-ordinarios/procesar-excel',                        'PedidosOrdinariosController@cargarExcel');
+        Route::get('pedidos-ordinarios/formato-carga-pedido-ordinario-excel',   'PedidosOrdinariosController@descargarFormato');
+        Route::get('pedidos-ordinarios/presupuesto',                            'PedidosOrdinariosController@presupuesto');
+        Route::resource('pedidos-ordinarios',                                   'PedidosOrdinariosController',['only' => ['index', 'show', 'store','update','destroy']]);
+        
         // Hacer bien el metodo
         Route::get('presupuesto/historial/ajustes',                     'PresupuestoController@historial');
        

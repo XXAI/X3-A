@@ -158,4 +158,247 @@ class PedidosOrdinariosController extends Controller
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
     }
+
+    public function descargarFormato(Request $request){
+
+        $presupuesto = PresupuestoEjercicio::where('activo',1)->first();
+                
+
+        if($presupuesto){            
+            $presupuesto->presupuesto_unidades_medicas = PresupuestoUnidadMedica::where('presupuesto_id',$presupuesto->id)->with('unidadMedica')->orderBy('clues','asc')->get();
+        } else {
+            return Response::json(['error' => "No hay presupuesto"], HttpResponse::HTTP_CONFLICT);
+        }
+        
+      //  $unidades_medicas = UnidadMedica::where('activa',1)->orderBy('jurisdiccion_id','asc','clues','asc')->get();
+
+
+        
+        Excel::create("Formato de carga de pedidos ordinarios", function($excel) use($presupuesto) {
+
+
+            $excel->sheet('Presupuesto '.$presupuesto->ejercicio, function($sheet) use($presupuesto)  {
+                $sheet->setAutoSize(true);
+                $sheet->row(1, array(
+                    'Clues',
+                    'Tipo',
+                    'Nombre',
+                    'Jurisdicción',
+                    '$ CAUSES',
+                    '$ CAUSES Disponible',
+                    '$ NO CAUSES',                    
+                    '$ NO CAUSES Disponible'
+                ));
+                $sheet->cells("A1:F1", function($cells) {
+                    $cells->setAlignment('center');
+                });
+                $sheet->row(1, function($row) {
+                    $row->setBackground('#DDDDDD');
+                    $row->setFontWeight('bold');
+                });
+
+                $factor_meses = $presupuesto->factor_meses | 0;
+                $c = 0;
+                foreach($presupuesto->presupuesto_unidades_medicas as $item){
+                    $unidad_medica = $item->unidadMedica;
+                    $causes=  $item->causes_modificado / $factor_meses;
+                    if($causes > $item->causes_disponible){
+                      $causes =  $item->causes_disponible;
+                    }
+        
+                    $no_causes  = $item->no_causes_modificado / $factor_meses;
+                    if($no_causes > $item->no_causes_disponible){
+                      $no_causes =   $item->no_causes_disponible;
+                    }
+
+                    if($no_causes > 0 || $causes > 0){
+                        $unidad_medica->jurisdiccion;
+                        $sheet->appendRow(array(
+                            $item->clues,
+                            $unidad_medica->tipo,
+                            $unidad_medica->nombre,
+                            $unidad_medica->jurisdiccion? $unidad_medica->jurisdiccion->numero." - ".$unidad_medica->jurisdiccion->nombre :  "",
+                            number_format($causes,2),                            
+                            $item->causes_disponible,
+                            number_format($no_causes,2),
+                            $item->no_causes_disponible
+                        )); 
+                        $c++;
+                    }
+
+                    
+                }
+                
+                if($c > 0){
+                    $c++;
+                    $sheet->setColumnFormat(array(
+                        "E2:H$c" => '"$" #,##0.00_-',
+                    ));
+                }
+                
+                //$sheet->getProtection()->setSheet(true);
+                //$sheet->getStyle("A1:E$c")->getProtection()->setLocked(\PHPExcel_Style_Protection::PROTECTION_UNPROTECTED);
+                //$sheet->getStyle("G1:G$c")->getProtection()->setLocked(\PHPExcel_Style_Protection::PROTECTION_UNPROTECTED);
+                $sheet->setAutoFilter('A1:H1');
+                    $sheet->protectCells("F2:F$c", 'PHPExcel');
+                    $sheet->protectCells("H2:H$c", 'PHPExcel');
+                
+                $sheet->cells("F1:F$c", function($cells) {
+                   $cells->setBackground('#DDDDDD');
+                });
+
+                $sheet->cells("H1:H$c", function($cells) {
+                    $cells->setBackground('#DDDDDD');
+                });
+
+                
+            });
+            
+
+
+           
+
+
+         })->export('xls');
+    }
+
+    public function cargarExcel(Request $request){
+        ini_set('memory_limit', '-1');
+
+        try{
+            if ($request->hasFile('archivo')){
+				$file = $request->file('archivo');
+
+				if ($file->isValid()) {
+                    $path = $file->getRealPath();
+
+                    $presupuesto = PresupuestoEjercicio::where('activo',1)->first();
+                
+                    $unidades_medicas_con_presupuesto = [];
+
+                    if($presupuesto){            
+                        $unidades_medicas_con_presupuesto = PresupuestoUnidadMedica::where('presupuesto_id',$presupuesto->id)->with('unidadMedica')->orderBy('clues','asc')->get();
+                    } else {
+                        return Response::json(['error' => "No hay presupuesto"], HttpResponse::HTTP_CONFLICT);
+                    }
+
+                    $unidades_medicas = [];
+                    $total_causes = 0;
+                    $total_no_causes = 0;
+                    $con_errores = false;
+                    Excel::load($file, function($reader) use (&$unidades_medicas,&$unidades_medicas_con_presupuesto, &$total_causes, &$total_no_causes, &$con_errores) {
+                        $objExcel = $reader->getExcel();
+                        $sheet = $objExcel->getSheet(0);
+                        $highestRow = $sheet->getHighestRow();
+                        $highestColumn = $sheet->getHighestColumn();
+        
+                        //  Loop through each row of the worksheet in turn
+                        DB::beginTransaction();
+                       
+                        for ($row = 2; $row <= $highestRow; $row++)
+                        {
+                            //  Read a row of data into an array
+                            $rowData = $sheet->rangeToArray('A' . $row . ':' . $highestColumn . $row,
+                                NULL, TRUE, FALSE);
+                            $data =  $rowData[0];
+                            
+
+
+                            /*
+                                0 'CLUES',
+                                1 'TIPO',
+                                2 'NOMBRE',
+                                3 'JURISDICCION'
+                                4 'CAUSES'
+                                5 'CAUSES Disponible'
+                                6 'NO CAUSES'
+                                7 'NO CAUSES Disponible'
+                            */
+                            
+                            $unidad_medica = null;
+                            $causes_disponible = 0;
+                            $no_causes_disponible = 0;
+                            for($i = 0; $i < count($unidades_medicas_con_presupuesto);$i++){
+                                $presupuesto_um = $unidades_medicas_con_presupuesto[$i];
+                                if($presupuesto_um['clues'] == $data[0]){
+                                    $unidad_medica = UnidadMedica::find($data[0]);
+                                    $causes_disponible = $presupuesto_um['causes_disponible'];
+                                    $no_causes_disponible = $presupuesto_um['no_causes_disponible'];
+                                    break;
+                                }
+                            }
+                            
+
+                            if($unidad_medica){
+                                $causes = floatval($data[4]);
+                                $total_causes += $causes;
+
+                                $no_causes = floatval($data[6]);
+                                $total_no_causes += $no_causes;
+
+                                $um = array(
+                                    'clues'=>$data[0],
+                                    'unidad_medica' => $unidad_medica,
+                                    'causes_autorizado' => $causes,
+                                    'causes_disponible' => $causes_disponible,
+                                    'no_causes_autorizado' => $no_causes,
+                                    'no_causes_disponible' => $no_causes_disponible
+                                );
+                                if($causes > $causes_disponible){
+                                    $um['error'] = true;
+                                    $um['error_causes'] = true;
+                                }
+                                if($no_causes > $no_causes_disponible){
+                                    $um['error'] = true;
+                                    $um['error_no_causes'] = true;
+                                }
+                                $unidades_medicas[] = $um;
+                            } else {
+                                
+                                $fake_unidad_medica =  new UnidadMedica();
+                                $fake_unidad_medica->clues = $data[0];
+                                $fake_unidad_medica->tipo = $data[1];
+                                $fake_unidad_medica->nombre = $data[2];
+                                $fake_unidad_medica->jurisdiccion = null;
+                                $unidades_medicas[] = array(
+                                    'clues'=>$data[0],
+                                    'unidad_medica' => $fake_unidad_medica,
+                                    'causes_autorizado' => floatval($data[4]),
+                                    'causes_disponible' => 0,
+                                    'no_causes_autorizado' => floatval($data[5]),
+                                    'no_causes_disponible' => 0,
+                                    'error' => true,
+                                    'no_existe' => true
+                                );
+                                $con_errores = true;
+                            }
+                            
+                        }
+                        
+                       
+
+                        DB::rollback();
+                    });
+
+                    $presupuesto = array(
+                        'causes' => $total_causes,
+                        'no_causes' => $total_no_causes,
+                        'pedidos_ordinarios_unidades_medicas' => $unidades_medicas,
+                        'con_errores' => $con_errores
+
+                    );
+
+					return Response::json([ 'data' => $presupuesto],200);
+
+				} else {
+					throw new \Exception("Archivo inválido.");
+				}
+			} else {
+				throw new \Exception("No hay archivo.");
+			}
+        } catch(\Exception $e){
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        }
+    } 
 }
