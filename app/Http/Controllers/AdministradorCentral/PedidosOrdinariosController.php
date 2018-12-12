@@ -91,7 +91,9 @@ class PedidosOrdinariosController extends Controller
             $presupuesto = PresupuestoEjercicio::where('activo',1)->first();
 
             if($presupuesto){
+                
                 $inputs['fecha_expiracion'] =  date("Y-m-d H:i:s", strtotime("2017-01-10T18:00:00.000Z"));
+                $inputs['presupuesto_ejercicio_id'] = $presupuesto->id;
                 $pedido_ordinario = PedidoOrdinario::create($inputs);
                 $items = [];
     
@@ -401,4 +403,4 @@ class PedidosOrdinariosController extends Controller
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         }
     } 
-}
+ }

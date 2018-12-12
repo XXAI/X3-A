@@ -15,7 +15,7 @@ class PedidoOrdinario extends BaseModel
 
     protected $table = 'pedidos_ordinarios';
     
-    protected $fillable = [ 'descripcion', 'fecha', 'fecha_expiracion'];
+    protected $fillable = ['presupuesto_ejercicio_id', 'descripcion', 'fecha', 'fecha_expiracion'];
     protected $casts = ["descripcion"=>"string","fecha"=>"date", "fecha_expiracion"=>"datetime"];
 
     public function pedidoOrdinarioUnidadesMedicas(){

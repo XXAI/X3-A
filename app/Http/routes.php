@@ -277,6 +277,12 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::put('cancelar-pedido-transferir/{id}',   'CancelarPedidosController@cancelarYTransferir');
         Route::put('cancelar-transferencia/{id}',       'CancelarPedidosController@cancelarTransferencia');
 
+
+        Route::get('pedidos-stats/pedido-ordinario',                    'PedidosStatsController@pedidoOrdinarioUnidadMedica');
+        Route::get('pedidos-stats/pedidos-ordinarios',                  'PedidosStatsController@pedidosOrdinariosUnidadMedica');
+        Route::get('pedidos-stats/stats',                               'PedidosStatsController@stats');
+        Route::get('pedidos-stats/presupuestos',                        'PedidosStatsController@presupuestos');
+        Route::get('pedidos-stats/presupuesto-ejercicio-unidad-medica', 'PedidosStatsController@presupuestoEjercicioUnidadMedica');
         
         // Actas
         Route::put('generar-pedido-alterno/{id}',       'PedidoController@generarAlterno');

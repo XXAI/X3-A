@@ -24,6 +24,7 @@ use App\Models\MovimientoInsumos;
 use App\Models\Stock;
 use App\Models\UnidadMedicaPresupuesto;
 use App\Models\HistorialMovimientoTransferencia;
+use App\Models\PresupuestoEjercicio, App\Models\PresupuestoUnidadMedica;
 use \Excel;
 use Carbon\Carbon;
 
@@ -161,7 +162,7 @@ class PedidoController extends Controller{
     public function index(Request $request){
         $almacen = Almacen::find($request->get('almacen_id'));
         
-        $parametros = Input::only('tipo','status','q','page','per_page','presupuesto');
+        $parametros = Input::only('tipo','status','q','page','per_page','presupuesto','nueva_version');
 
         //$pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
         $pedidos = Pedido::getModel();
@@ -204,11 +205,21 @@ class PedidoController extends Controller{
         
         if(isset($parametros['presupuesto'])){
             if($parametros['presupuesto']){
-                $pedidos = $pedidos->where('presupuesto_id',$parametros['presupuesto']);
+                if(isset($parametros['nueva_version']) && $parametros['nueva_version'] == true){
+                    $pedidos = $pedidos->where('presupuesto_ejercicio_id',$parametros['presupuesto']);
+                } else {
+                    $pedidos = $pedidos->where('presupuesto_id',$parametros['presupuesto']);
+                }
             }
         }else{
-            $presupuesto = Presupuesto::where('activo',1)->first();
-            $pedidos = $pedidos->where('presupuesto_id',$presupuesto->id);
+            if(isset($parametros['nueva_version']) && $parametros['nueva_version'] == true){
+                $presupuesto = PresupuestoEjercicio::where('activo',1)->first();
+                $pedidos = $pedidos->where('presupuesto_ejercicio_id',$presupuesto->id);
+            } else {
+                $presupuesto = Presupuesto::where('activo',1)->first();
+                $pedidos = $pedidos->where('presupuesto_id',$presupuesto->id);
+            }
+            
         }
 
         $pedidos = $pedidos->with("director", "encargadoAlmacen"); // Villa: Obtenggo los datos de los firmantes para el modulo de configuracion
