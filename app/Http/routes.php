@@ -283,6 +283,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-stats/stats',                               'PedidosStatsController@stats');
         Route::get('pedidos-stats/presupuestos',                        'PedidosStatsController@presupuestos');
         Route::get('pedidos-stats/presupuesto-ejercicio-unidad-medica', 'PedidosStatsController@presupuestoEjercicioUnidadMedica');
+        Route::get('pedidos-stats/pedido-ordinario-unidad-medica/{id}', 'PedidosStatsController@presupuestoPedidoOrdinarioUnidadMedica');
         
         // Actas
         Route::put('generar-pedido-alterno/{id}',       'PedidoController@generarAlterno');

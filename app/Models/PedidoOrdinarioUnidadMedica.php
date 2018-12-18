@@ -24,7 +24,7 @@ class PedidoOrdinarioUnidadMedica extends BaseModel
     ];
     
     protected $casts = [
-        "pedido_id"=>"integer",
+        "pedido_id"=>"string",
         "pedido_ordinario_id"=>"integer",
         "clues"=>"string",        
         "causes_autorizado"=>"double",
@@ -38,5 +38,9 @@ class PedidoOrdinarioUnidadMedica extends BaseModel
 
     public function unidadMedica(){
         return $this->belongsTo('App\Models\UnidadMedica','clues','clues');
+    }
+
+    public function pedidoOrdinario(){
+        return $this->belongsTo('App\Models\PedidoOrdinario','pedido_ordinario_id','id');
     }
 }

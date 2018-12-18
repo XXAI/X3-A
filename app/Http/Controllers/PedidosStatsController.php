@@ -206,6 +206,28 @@ class PedidosStatsController extends Controller{
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
     }
+    public function presupuestoPedidoOrdinarioUnidadMedica(Request $request, $id){
+        try{
+
+            $pedido_ordinario = PedidoOrdinarioUnidadMedica::find($id);
+            
+
+            if($pedido_ordinario){
+                $clues = $request->get('clues');
+                if($pedido_ordinario->clues == $clues ){
+                    $pedido_ordinario->pedidoOrdinario;
+                    return Response::json([ 'data' => $pedido_ordinario],200);
+                } else {
+                    throw new Exception("Pedido no existe");
+                }
+            } else {
+              throw new Exception("Pedido no existe");
+            }
+
+        } catch (\Exception $e) {
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
 
     public function pedidosOrdinariosUnidadMedica(Request $request){
         try{

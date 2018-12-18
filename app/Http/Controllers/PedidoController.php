@@ -25,6 +25,7 @@ use App\Models\Stock;
 use App\Models\UnidadMedicaPresupuesto;
 use App\Models\HistorialMovimientoTransferencia;
 use App\Models\PresupuestoEjercicio, App\Models\PresupuestoUnidadMedica;
+use App\Models\PedidoOrdinario, App\Models\PedidoOrdinarioUnidadMedica;
 use \Excel;
 use Carbon\Carbon;
 
@@ -205,14 +206,14 @@ class PedidoController extends Controller{
         
         if(isset($parametros['presupuesto'])){
             if($parametros['presupuesto']){
-                if(isset($parametros['nueva_version']) && $parametros['nueva_version'] == true){
+                if(isset($parametros['nueva_version']) && $parametros['nueva_version'] == "true"){
                     $pedidos = $pedidos->where('presupuesto_ejercicio_id',$parametros['presupuesto']);
                 } else {
                     $pedidos = $pedidos->where('presupuesto_id',$parametros['presupuesto']);
                 }
             }
         }else{
-            if(isset($parametros['nueva_version']) && $parametros['nueva_version'] == true){
+            if(isset($parametros['nueva_version']) && $parametros['nueva_version'] == "true"){
                 $presupuesto = PresupuestoEjercicio::where('activo',1)->first();
                 $pedidos = $pedidos->where('presupuesto_ejercicio_id',$presupuesto->id);
             } else {
@@ -311,7 +312,19 @@ class PedidoController extends Controller{
         $clues_real = $almacen->externo == 1 ? $almacen->clues_perteneciente : $almacen->clues;
         
         $um = UnidadMedica::find($clues_real);
-        $presupuesto = Presupuesto::where('activo',1)->first();
+        if(isset($parametros['datos']['pedido_ordinario_unidad_medica_id'])){
+            $pedido_ordinario_unidad_medica = PedidoOrdinarioUnidadMedica::find($parametros['datos']['pedido_ordinario_unidad_medica_id']);
+            if(!$pedido_ordinario_unidad_medica){
+                return Response::json(['error' => 'La clave del pedido ordinario es incorrecta.'], 500);
+            }
+            if($pedido_ordinario_unidad_medica->pedido_id != null){
+                return Response::json(['error' => 'El pedido ordinario que intenta crear, ya existe.'], 500);
+            }
+            $pedido_ordinario_unidad_medica->pedidoOrdinario;
+        } else {
+            $presupuesto = Presupuesto::where('activo',1)->first();
+        }
+        
 
         if($almacen->subrogado && $almacen->tipo_almacen == 'FARSBR'){
             return Response::json(['error' => 'El almacen seleccionado no puede crear pedidos'], 500);
@@ -332,19 +345,25 @@ class PedidoController extends Controller{
                 return Response::json(['error' => 'No puedes hacer pedidos en un almacen externo que pertenece a otra unidad médica.'], 500);
             }
 
-            if($um->tipo == 'OA' && $almacen_solicitante->subrogado == 0 && $almacen_solicitante->nivel_almacen == 1){  // ######### PEDIDOS JURISDICCIONALES #########
-                $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales, solo cuando el almacen solictante no sea subrogado, sea de nivel 1 y la clues sea Oficina Administrativa
-            }else{ // ############################################
-                if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
-                    $tipo_pedido = 'PFS';
-                }else if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL'){
-                    $tipo_pedido = 'PA';
-                }else if($almacen_solicitante->nivel_almacen == 2){
-                    $tipo_pedido = 'PEA'; //Pedidos entre almacenes
-                }else{
-                    return Response::json(['error' => 'No fue posible generar el tipo de pedido'], 500);
+            if(isset($parametros['datos']['pedido_ordinario_unidad_medica_id'])){
+                $tipo_pedido = 'PO';
+            } else {
+                if($um->tipo == 'OA' && $almacen_solicitante->subrogado == 0 && $almacen_solicitante->nivel_almacen == 1){  // ######### PEDIDOS JURISDICCIONALES #########
+                    $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales, solo cuando el almacen solictante no sea subrogado, sea de nivel 1 y la clues sea Oficina Administrativa
+                }else{ // ############################################
+                    if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
+                        $tipo_pedido = 'PFS';
+                    }else if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL'){
+                        $tipo_pedido = 'PA';
+                    }else if($almacen_solicitante->nivel_almacen == 2){
+                        $tipo_pedido = 'PEA'; //Pedidos entre almacenes
+                    }else{
+                        return Response::json(['error' => 'No fue posible generar el tipo de pedido'], 500);
+                    }
                 }
             }
+
+            
         }else{
             return Response::json(['error' => 'No se encontró el almacen solicitante'], 500);
         }
@@ -353,7 +372,12 @@ class PedidoController extends Controller{
         $parametros['datos']['clues'] = $almacen->externo == 1 ? $almacen->clues_perteneciente : $almacen->clues;
         $parametros['datos']['status'] = 'BR'; //estatus de borrador
         $parametros['datos']['tipo_pedido_id'] = $tipo_pedido; //tipo de pedido Pedido de Abastecimiento
-        $parametros['datos']['presupuesto_id'] = $presupuesto->id; //Harima: Al crear el pedido, lo creamos sobre el presupuesto activo
+        if(isset($parametros['datos']['pedido_ordinario_unidad_medica_id'])){
+            $parametros['datos']['presupuesto_ejercicio_id'] = $pedido_ordinario_unidad_medica->pedidoOrdinario->presupuesto_ejercicio_id;
+        } else {
+            $parametros['datos']['presupuesto_id'] = $presupuesto->id; //Harima: Al crear el pedido, lo creamos sobre el presupuesto activo
+        }
+        
 
         //$fecha = date($parametros['datos']['fecha']);
         //$fecha_expiracion = strtotime("+20 days", strtotime($fecha));
@@ -443,7 +467,13 @@ class PedidoController extends Controller{
             $pedido->total_monto_solicitado = $total_monto;
             $pedido->save();
 
+            if(isset($parametros['datos']['pedido_ordinario_unidad_medica_id'])){
+                $pedido_ordinario_unidad_medica->pedido_id = $pedido->id;
+                $pedido_ordinario_unidad_medica->save();
+            }
+
             DB::commit();
+            //DB::rollback();
             return Response::json([ 'data' => $pedido ],200);
 
         } catch (\Exception $e) {
