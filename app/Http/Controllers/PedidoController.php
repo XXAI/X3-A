@@ -289,7 +289,9 @@ class PedidoController extends Controller{
             }
         }
         // ############################################
-        
+        if($pedido->tipo_pedido_id == 'PO'){
+            $pedido->pedidoOrdinarioUnidadMedica;
+        }
         return Response::json([ 'data' => $pedido],200);
     }
 
@@ -534,6 +536,8 @@ class PedidoController extends Controller{
         }else{
             return Response::json(['error' => 'No se encontró el almacen seleccionado'], 500);
         }
+
+      
         $parametros['datos']['tipo_pedido_id'] = $tipo_pedido;
         //$parametros['datos']['tipo_pedido_id'] = 1;
 
@@ -596,6 +600,14 @@ class PedidoController extends Controller{
             }
 
             DB::beginTransaction();
+
+            //Akira: Hack para no alterar todos los ifs de arriba
+            // porque estos cambian el tipo de pedido en la edición
+            // y un pedido ordinario no se debe cambiar de tipo
+            if($pedido->tipo_pedido_id == "PO"){
+                $parametros['datos']['tipo_pedido_id'] = "PO";
+                $tipo_pedido= "PO";
+            }
 
             $pedido->update($parametros['datos']);
 
@@ -729,9 +741,7 @@ class PedidoController extends Controller{
                 $fecha = explode('-',$pedido->fecha);
 
                 //$presupuesto = Presupuesto::where('activo',1)->first();
-                //$presupuesto = Presupuesto::find($pedido->presupuesto_id);
-
-                
+                //$presupuesto = Presupuesto::find($pedido->presupuesto_id);                
 
                 $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$pedido->presupuesto_id)
                                            // ->where('clues',$almacen->clues)
@@ -843,9 +853,71 @@ class PedidoController extends Controller{
                 ];
 
                 $historial = HistorialMovimientoTransferencia::create($historial_datos);
+            } else if($pedido->status != 'BR' && $pedido->tipo_pedido_id == 'PO'){
+
+                if($pedido->total_monto_solicitado == $pedido->total_monto_recibido){
+                    $pedido->status = 'FI';
+                    $pedido->save();
+                }
+
+                //Akira: No tengo idea que es esto pero lo dejo porque no lo quiero echar a perder
+                if($pedido->presupuestoApartado){
+                    $presupuesto_apartado = $pedido->presupuestoApartado;
+                    $total_monto['causes'] -= ($presupuesto_apartado->causes_comprometido + $presupuesto_apartado->causes_devengado);
+                    $total_monto['no_causes'] -= ($presupuesto_apartado->no_causes_comprometido + $presupuesto_apartado->no_causes_devengado);
+                    $total_monto['material_curacion'] -= ($presupuesto_apartado->material_curacion_comprometido + $presupuesto_apartado->material_curacion_devengado);
+                    $pedido->presupuestoApartado->delete();
+                }
+
+                // aqui hay que modificar todos los presupeustos pero del pedido ordinario
+
+                $pedido_ordinario_unidad_medica = PedidoOrdinarioUnidadMedica::where('pedido_id',$pedido->id)->first();
+                /*$presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$pedido->presupuesto_id)
+                                           // ->where('clues',$almacen->clues)
+                                           // Akira:
+                                           //->where('clues',$clues_real)
+                                           //Harima:
+                                           ->where('clues',$almacen_solicitante->clues)
+                                            ->where('almacen_id',$almacen_solicitante->id)
+                                            ->where('mes',$fecha[1])
+                                            ->where('anio',$fecha[0])
+                                            ->first();*/
+                if(!$pedido_ordinario_unidad_medica){
+                    DB::rollBack();
+                    return Response::json(['error' => 'No existe el pedido ordinario y no se pueden modificar saldos'], 500);
+                }
+                
+                $pedido_ordinario_unidad_medica->causes_comprometido = $pedido_ordinario_unidad_medica->causes_comprometido + round($total_monto['causes'] + $total_monto['material_curacion'],2);
+                $pedido_ordinario_unidad_medica->causes_disponible = $pedido_ordinario_unidad_medica->causes_disponible - round($total_monto['causes'] + $total_monto['material_curacion'],2);
+
+                $pedido_ordinario_unidad_medica->no_causes_comprometido = $pedido_ordinario_unidad_medica->no_causes_comprometido + round($total_monto['no_causes'],2);
+                $pedido_ordinario_unidad_medica->no_causes_disponible = $pedido_ordinario_unidad_medica->no_causes_disponible - round($total_monto['no_causes'],2);
+
+                //$presupuesto_unidad->causes_comprometido = $presupuesto_unidad->causes_comprometido + round($total_monto['causes'],2);
+                //---$presupuesto_unidad->causes_disponible = $presupuesto_unidad->causes_disponible - round($total_monto['causes'],2);
+
+                //$presupuesto_unidad->material_curacion_comprometido = $presupuesto_unidad->material_curacion_comprometido + round($total_monto['material_curacion'],2);
+                //---$presupuesto_unidad->material_curacion_disponible = $presupuesto_unidad->material_curacion_disponible - round($total_monto['material_curacion'],2);
+
+                //$presupuesto_unidad->insumos_comprometido = $presupuesto_unidad->insumos_comprometido + round($total_monto['causes'] + $total_monto['material_curacion'],2);
+                //$presupuesto_unidad->insumos_disponible = $presupuesto_unidad->insumos_disponible - round($total_monto['causes'] + $total_monto['material_curacion'],2);
+
+                //$presupuesto_unidad->no_causes_comprometido = $presupuesto_unidad->no_causes_comprometido + round($total_monto['no_causes'],2);
+                //$presupuesto_unidad->no_causes_disponible = $presupuesto_unidad->no_causes_disponible - round($total_monto['no_causes'],2);
+
+                //if($presupuesto_unidad->causes_disponible < 0 || $presupuesto_unidad->no_causes_disponible < 0 || $presupuesto_unidad->material_curacion_disponible < 0){
+                //if(($presupuesto_unidad->causes_disponible + $presupuesto_unidad->material_curacion_disponible) < 0 || $presupuesto_unidad->no_causes_disponible < 0){
+                if($pedido_ordinario_unidad_medica->causes_disponible < 0 || $pedido_ordinario_unidad_medica->no_causes_disponible < 0){
+                    DB::rollBack();
+                    return Response::json(['error' => 'El presupuesto es insuficiente para este pedido, los cambios no se guardaron.', 'data'=>[$pedido_ordinario_unidad_medica,$total_monto]], 500);
+                }else{
+                    $pedido_ordinario_unidad_medica->save();
+                }
             }
-             
-             DB::commit(); 
+            
+
+            //DB::rollback();
+            DB::commit(); 
 
             return Response::json([ 'data' => $pedido ],200);
 

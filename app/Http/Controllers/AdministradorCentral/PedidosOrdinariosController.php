@@ -92,7 +92,7 @@ class PedidosOrdinariosController extends Controller
 
             if($presupuesto){
                 
-                $inputs['fecha_expiracion'] =  date("Y-m-d H:i:s", strtotime("2017-01-10T18:00:00.000Z"));
+                $inputs['fecha_expiracion'] =  date("Y-m-d H:i:s", strtotime($inputs["fecha_expiracion"]));
                 $inputs['presupuesto_ejercicio_id'] = $presupuesto->id;
                 $pedido_ordinario = PedidoOrdinario::create($inputs);
                 $items = [];
@@ -108,8 +108,10 @@ class PedidosOrdinariosController extends Controller
                         "clues" =>$item["clues"],
                         "causes_autorizado" => $item["causes_autorizado"],
                         "causes_modificado" => $item["causes_autorizado"],
+                        "causes_disponible" => $item["causes_autorizado"],
                         "no_causes_autorizado" => $item["no_causes_autorizado"],
-                        "no_causes_modificado" => $item["no_causes_autorizado"]
+                        "no_causes_modificado" => $item["no_causes_autorizado"],
+                        "no_causes_disponible" => $item["causes_autorizado"],
                     ]);
                     $presupuesto_unidad_medica = PresupuestoUnidadMedica::where('presupuesto_id',$presupuesto->id)->where("clues",$item["clues"])->first();
 

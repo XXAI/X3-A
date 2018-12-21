@@ -14,6 +14,10 @@ class Pedido extends BaseModel
     protected $table = 'pedidos';
     protected $fillable = [ 'tipo_insumo_id', 'tipo_pedido_id', 'clues','pedido_padre', 'folio', 'fecha', 'fecha_concluido', 'fecha_expiracion','descripcion','observaciones', 'almacen_solicitante', 'almacen_proveedor', 'organismo_dirigido', 'acta_id', 'recepcion_permitida','status', 'usuario_validacion', 'proveedor_id', 'presupuesto_id','presupuesto_ejercicio_id','clues_destino', "created_at","updated_at"];
     
+    public function pedidoOrdinarioUnidadMedica(){
+        return $this->hasOne('App\Models\PedidoOrdinarioUnidadMedica','pedido_id','id')->with('pedidoOrdinario');
+    }
+
     public function insumos(){
         return $this->hasMany('App\Models\PedidoInsumo','pedido_id','id')->with('infoInsumo');
     }
