@@ -218,10 +218,10 @@ class PedidosStatsController extends Controller{
                     $pedido_ordinario->pedidoOrdinario;
                     return Response::json([ 'data' => $pedido_ordinario],200);
                 } else {
-                    throw new Exception("Pedido no existe");
+                    throw new \Exception("Pedido no existe");
                 }
             } else {
-              throw new Exception("Pedido no existe");
+              throw new \Exception("Pedido no existe");
             }
 
         } catch (\Exception $e) {
@@ -249,11 +249,20 @@ class PedidosStatsController extends Controller{
                 'pedidos_ordinarios.descripcion',
                 'pedidos_ordinarios.fecha',
                 'pedidos_ordinarios.fecha_expiracion',
-                DB::raw('datediff(pedidos_ordinarios.fecha_expiracion,current_date()) as expira_en_dias'))
+                DB::raw('timestampdiff(DAY, current_timestamp(), pedidos_ordinarios.fecha_expiracion) as expira_en_dias'),
+                DB::raw('IF(timestampdiff(DAY, current_timestamp(), pedidos_ordinarios.fecha_expiracion) = 0, 
+                        timestampdiff(HOUR, current_timestamp(), pedidos_ordinarios.fecha_expiracion) ,
+                        IF(current_date() = date( pedidos_ordinarios.fecha_expiracion),
+                            timestampdiff(HOUR, current_timestamp(), pedidos_ordinarios.fecha_expiracion) - timestampdiff(HOUR, current_timestamp(), date(pedidos_ordinarios.fecha_expiracion)),
+                            timestampdiff(HOUR, current_timestamp(), pedidos_ordinarios.fecha_expiracion) - (24 * timestampdiff(DAY, current_timestamp(), pedidos_ordinarios.fecha_expiracion))
+                        )
+                    ) as expira_en_horas'),
+                DB::raw('timestampdiff(MINUTE, current_timestamp(), pedidos_ordinarios.fecha_expiracion) as expira_en_minutos')
+                    )
             ->leftJoin('pedidos_ordinarios','pedidos_ordinarios_unidades_medicas.pedido_ordinario_id','=','pedidos_ordinarios.id')
             ->where('pedidos_ordinarios_unidades_medicas.clues',$clues)
             ->whereNull('pedidos_ordinarios_unidades_medicas.pedido_id')
-            ->where('pedidos_ordinarios.presupuesto_ejercicio_id',$presupuesto_id)->get();
+            ->where('pedidos_ordinarios.presupuesto_ejercicio_id',$presupuesto_id)->orderBy('fecha', 'desc')->orderBy('id','desc')->get();
            // $almacen = Almacen::find($request->get('almacen_id'));
 
             /*

@@ -1170,10 +1170,24 @@ class PedidosController extends Controller
     {
         $meses = array("ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE");
         $mes = [];
-        for($month = 1; $month <= Carbon::now()->month; $month++)
-        {
-            $mes[] = array('id'=>$month, 'descripcion' => $meses[$month-1]." ".Carbon::now()->year);
+
+        $presupuesto = Presupuesto::where('activo',1)->first();
+        if($presupuesto){
+            $months = UnidadMedicaPresupuesto::select('mes','anio')->where('presupuesto_id',$presupuesto['id'])->groupBy('anio','mes')->orderBy('anio','desc')->orderBy('mes','desc')->get();
+            foreach($months as $month){
+                $m = $month->mes;
+                $y = $month->anio;
+                $mes[] = array('id'=>$m, 'descripcion' => $meses[$m-1]." ".$y);
+            }
+        } else {
+            for($month = 1; $month <= Carbon::now()->month; $month++)
+            {
+                $mes[] = array('id'=>$month, 'descripcion' => $meses[$month-1]." ".Carbon::now()->year);
+            }
         }
+        
+        
+        
         
         return Response::json([ 'data' => $mes],200);
     }

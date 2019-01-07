@@ -18,7 +18,7 @@ class PedidoOrdinario extends BaseModel
     protected $fillable = ['presupuesto_ejercicio_id', 'descripcion', 'fecha', 'fecha_expiracion'];
     protected $casts = ["descripcion"=>"string","fecha"=>"date", "fecha_expiracion"=>"datetime"];
 
-    public function pedidoOrdinarioUnidadesMedicas(){
+    public function pedidosOrdinariosUnidadesMedicas(){
         return $this->hasMany('App\Models\PedidoOrdinarioUnidadMedica','pedido_ordinario_id');
     }
     /*

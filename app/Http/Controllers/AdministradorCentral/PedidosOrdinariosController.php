@@ -26,7 +26,7 @@ class PedidosOrdinariosController extends Controller
     public function index(Request $request)
     {   $parametros = Input::only('q','page','per_page');
         
-        $items =  PedidoOrdinario::select('pedidos_ordinarios.*');
+        $items =  PedidoOrdinario::select('pedidos_ordinarios.*')->orderBy('id','desc');
                     //->leftJoin('proveedores','contratos.proveedor_id','=','proveedores.id');        
 
         if ($parametros['q']) {
@@ -56,6 +56,27 @@ class PedidosOrdinariosController extends Controller
         }
         
         return Response::json([ 'data' => $presupuesto],200);
+    }
+
+    public function show(Request $request, $id)
+    {
+        $object = PedidoOrdinario::find($id);
+
+        if(!$object){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+       
+       /* $precios = $object->precios;
+        foreach($precios as $precio){
+            $precio->tipo;
+            $precio->insumo;
+        }*/
+       
+        
+        $object =  $object->load("pedidosOrdinariosUnidadesMedicas.unidadMedica");
+
+        return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
     }
 
     public function store(Request $request){
@@ -92,12 +113,14 @@ class PedidosOrdinariosController extends Controller
 
             if($presupuesto){
                 
+                
                 $inputs['fecha_expiracion'] =  date("Y-m-d H:i:s", strtotime($inputs["fecha_expiracion"]));
+               
                 $inputs['presupuesto_ejercicio_id'] = $presupuesto->id;
                 $pedido_ordinario = PedidoOrdinario::create($inputs);
+
                 $items = [];
     
-                $chuchi = [];
                 $error = false;
                 $errors = [];
                 $i = 0;
@@ -127,7 +150,6 @@ class PedidosOrdinariosController extends Controller
                             $presupuesto_unidad_medica->no_causes_comprometido = $presupuesto_unidad_medica->no_causes_comprometido + $item["no_causes_autorizado"];
                         }
                         $presupuesto_unidad_medica->save();
-                        $chuchi[] = $presupuesto_unidad_medica;
                     } else {
                         
                         $errors["pedidos_ordinarios_unidades_medicas.".$i.".causes_autorizado"] = ["budget"];
@@ -140,11 +162,11 @@ class PedidosOrdinariosController extends Controller
                 }
 
                 if(!$error){
-                    $pedido_ordinario->pedidoOrdinarioUnidadesMedicas()->saveMany($items);
-                    $pedido_ordinario->pedidoOrdinarioUnidadesMedicas;
+                    $pedido_ordinario->pedidosOrdinariosUnidadesMedicas()->saveMany($items);
+                    $pedido_ordinario->pedidosOrdinariosUnidadesMedicas;
                     //DB::rollback();
                     DB::commit();
-                    return Response::json([ 'data' => $pedido_ordinario,'chuchi'=>$chuchi],200);
+                    return Response::json([ 'data' => $pedido_ordinario],200);
                 }   else {
                     DB::rollback();
                     return Response::json(['error' =>$errors], HttpResponse::HTTP_CONFLICT);
