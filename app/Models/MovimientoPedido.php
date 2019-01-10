@@ -57,7 +57,7 @@ class MovimientoPedido extends BaseModel{
     }
     
     public function insumos(){
-        return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id','movimiento_id')->with('stock');
+        return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id','movimiento_id')->with('detalles', 'stock');
     }
 
 }

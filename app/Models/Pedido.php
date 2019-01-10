@@ -56,7 +56,11 @@ class Pedido extends BaseModel
 
     public function unidadMedica(){
         return $this->belongsTo('App\Models\UnidadMedica','clues','clues');
-      }
+    }
+
+    public function unidadMedicaDestino(){
+        return $this->belongsTo('App\Models\UnidadMedica','clues_destino','clues');
+    }
 
     public function tipoInsumo(){
         return $this->belongsTo('App\Models\TipoInsumo','tipo_insumo_id','id');        

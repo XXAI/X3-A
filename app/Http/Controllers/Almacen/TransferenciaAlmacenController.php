@@ -236,12 +236,23 @@ class TransferenciaAlmacenController extends Controller{
             ];
             $movimiento = Movimiento::create($datos_movimiento);
             
+            $recibe = "sin asignar";
+            $entrega = "sin asignar";
+            if(isset($parametros['recibe']))
+            {
+                   $recibe =  ($parametros['recibe'])?$parametros['recibe']:'sin asignar';
+                   $entrega =  ($parametros['entrega'])?$parametros['entrega']:'sin asignar';
+            }
+
             $datos_movimiento_pedido = [
                 'movimiento_id' => $movimiento->id,
                 'pedido_id' => $pedido->id,
-                'recibe' =>  ($almacen_solicitante->encargado)?$almacen_solicitante->encargado->nombre:'sin asignar',
-                'entrega' => ($almacen->encargado)?$almacen->encargado->nombre:'sin asignar' // O podríamos usar el nombre del usuario
+                'recibe' => $recibe,
+                'entrega' => $entrega
+                //'recibe' =>  ($almacen_solicitante->encargado)?$almacen_solicitante->encargado->nombre:'sin asignar',
+                //'entrega' => ($almacen->encargado)?$almacen->encargado->nombre:'sin asignar' // O podríamos usar el nombre del usuario
             ];
+            //atarraya de aca se saca
             $movimiento_pedido = MovimientoPedido::create($datos_movimiento_pedido);
             
           
@@ -1141,5 +1152,23 @@ class TransferenciaAlmacenController extends Controller{
             DB::rollBack();
             return Response::json(['error' => $e->getMessage(), 'line'=>$e->getLine()], HttpResponse::HTTP_CONFLICT);
         }
+    }
+
+    public function responsables(Request $request){
+        $parametros = Input::all();
+        $almacen_solicitante = Almacen::with('unidadMedica','encargado')->find($parametros['almacen_solicitante']);
+        $recibe = ($almacen_solicitante->encargado)?$almacen_solicitante->encargado->nombre:'sin asignar';
+        $almacen = Almacen::with('unidadMedica','encargado')->find($request->get('almacen_id'));
+        $entrega = ($almacen->encargado)?$almacen->encargado->nombre:'sin asignar';
+
+        $arreglo_responsables = Array("entrega"=> $entrega, "recibe"=> $recibe);
+        return Response::json(['data'=>$arreglo_responsables],200);
+    }
+
+    public function reporte_acuse(Request $request){
+        $parametros = Input::all();
+        $fecha_completa = date("Y-m-d H:i:s");
+        $pedido = pedido::where("id", "=", $parametros['pedido_id'])->with("unidadMedica", "unidadMedicaDestino", "movimientosTransferenciasCompleto")->first();
+        return Response::json(['data'=>[ 'pedido'=>$pedido, 'fecha_completa'=> $fecha_completa]],200);
     }
 }
