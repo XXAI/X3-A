@@ -20,6 +20,7 @@ use App\Models\PedidoInsumo;
 use App\Models\Presupuesto;
 use App\Models\UnidadMedicaPresupuesto;
 use App\Models\HistorialMovimientoTransferencia;
+use App\Models\PedidoOrdinarioUnidadMedica;
 
 use App\Models\Usuario;
 
@@ -151,7 +152,8 @@ class RecepcionPedidoController extends Controller
         	$array_datos['caducidad'] 			= $value['tiene_fecha_caducidad'];
         	$array_datos['cantidad_unidosis'] 	= $value['cantidad_x_envase'];
         	$lista_insumos[$value['clave']] 	= $array_datos;
-        }
+		}
+		
 		/**/
 		DB::beginTransaction();
 
@@ -346,7 +348,8 @@ class RecepcionPedidoController extends Controller
                 $total_max_insumos = count($parametros['stock']);
             }
 
-	        /*Variable para ir sumando lo devengado y actualizar la tabla de unidad presupuesto*/
+			/*Variable para ir sumando lo devengado y actualizar la tabla de unidad presupuesto*/
+			//Akira: o la de pedidos ordinarios dependiendo el caso;
 	        $causes_unidad_presupuesto 				= 0;
 	        $no_causes_unidad_presupuesto 			= 0;
 	        $material_curacion_unidad_presupuesto 	= 0;
@@ -600,23 +603,41 @@ class RecepcionPedidoController extends Controller
 				}else{
 					/*Calculo de unidad presupuesto*/
 					$fecha = explode('-',$pedido->fecha);
-					$unidad_presupuesto = $this->obtenerDatosPresupuesto($almacen->clues,$pedido->presupuesto_id,$fecha[1],$fecha[0],$almacen->id);
-	
-					$unidad_presupuesto->causes_comprometido 				-= $causes_unidad_presupuesto;
-					$unidad_presupuesto->causes_devengado 					+= $causes_unidad_presupuesto;
-					$unidad_presupuesto->material_curacion_comprometido 	-= $material_curacion_unidad_presupuesto;
-					$unidad_presupuesto->material_curacion_devengado 		+= $material_curacion_unidad_presupuesto;
 
-					$unidad_presupuesto->insumos_comprometido 				-= ($causes_unidad_presupuesto + $material_curacion_unidad_presupuesto);
-					$unidad_presupuesto->insumos_devengado 					+= ($causes_unidad_presupuesto + $material_curacion_unidad_presupuesto);
+					// Akira: modificar saldos en pedidos_ordinarios_unidad_medica si el pedido es ordinario
+					if($pedido->tipo_pedido_id == "PO"){
+						$pedido_ordinario_unidad_medica = PedidoOrdinarioUnidadMedica::where('pedido_id',$pedido->id)->first();
+						if($pedido_ordinario_unidad_medica){					
+
+							$pedido_ordinario_unidad_medica->causes_comprometido 				-= ($causes_unidad_presupuesto + $material_curacion_unidad_presupuesto);
+							$pedido_ordinario_unidad_medica->causes_devengado 					+= ($causes_unidad_presupuesto + $material_curacion_unidad_presupuesto);
+							
+							$pedido_ordinario_unidad_medica->no_causes_comprometido 			-= $no_causes_unidad_presupuesto;
+							$pedido_ordinario_unidad_medica->no_causes_devengado 				+= $no_causes_unidad_presupuesto;
+
+							$pedido_ordinario_unidad_medica->save();
+						}
+					} else {
+						$unidad_presupuesto = $this->obtenerDatosPresupuesto($almacen->clues,$pedido->presupuesto_id,$fecha[1],$fecha[0],$almacen->id);
+	
+						$unidad_presupuesto->causes_comprometido 				-= $causes_unidad_presupuesto;
+						$unidad_presupuesto->causes_devengado 					+= $causes_unidad_presupuesto;
+						$unidad_presupuesto->material_curacion_comprometido 	-= $material_curacion_unidad_presupuesto;
+						$unidad_presupuesto->material_curacion_devengado 		+= $material_curacion_unidad_presupuesto;
+
+						$unidad_presupuesto->insumos_comprometido 				-= ($causes_unidad_presupuesto + $material_curacion_unidad_presupuesto);
+						$unidad_presupuesto->insumos_devengado 					+= ($causes_unidad_presupuesto + $material_curacion_unidad_presupuesto);
+						
+						$unidad_presupuesto->no_causes_comprometido 			-= $no_causes_unidad_presupuesto;
+						$unidad_presupuesto->no_causes_devengado 				+= $no_causes_unidad_presupuesto;
+						
+						$unidad_presupuesto->update();
+					}
 					
-					$unidad_presupuesto->no_causes_comprometido 			-= $no_causes_unidad_presupuesto;
-					$unidad_presupuesto->no_causes_devengado 				+= $no_causes_unidad_presupuesto;
-					
-					$unidad_presupuesto->update();
 					/*Fin calculo de unidad presupuesto*/
 				}
-	        }
+			}
+			//DB::rollback();
 	        DB::commit();
 	        return Response::json([ 'data' => $movimiento ],200);
 

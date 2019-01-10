@@ -5,19 +5,24 @@ namespace App\Models;
 use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Pedido extends BaseModel
+class PedidoOrdinario extends BaseModel
 {
     use SoftDeletes;
-    protected $generarID = true;
-    protected $guardarIDServidor = true;
+    protected $generarID = false;
+    protected $guardarIDServidor = false;
     protected $guardarIDUsuario = true;
-    protected $table = 'pedidos';
-    protected $fillable = [ 'tipo_insumo_id', 'tipo_pedido_id', 'clues','pedido_padre', 'folio', 'fecha', 'fecha_concluido', 'fecha_expiracion','descripcion','observaciones', 'almacen_solicitante', 'almacen_proveedor', 'organismo_dirigido', 'acta_id', 'recepcion_permitida','status', 'usuario_validacion', 'proveedor_id', 'presupuesto_id','presupuesto_ejercicio_id','clues_destino', "created_at","updated_at"];
-    
-    public function pedidoOrdinarioUnidadMedica(){
-        return $this->hasOne('App\Models\PedidoOrdinarioUnidadMedica','pedido_id','id')->with('pedidoOrdinario');
-    }
+    public $incrementing = true;
 
+    protected $table = 'pedidos_ordinarios';
+    
+    protected $fillable = ['presupuesto_ejercicio_id', 'descripcion', 'fecha', 'fecha_expiracion'];
+    protected $casts = ["descripcion"=>"string","fecha"=>"date", "fecha_expiracion"=>"datetime"];
+
+    public function pedidosOrdinariosUnidadesMedicas(){
+        return $this->hasMany('App\Models\PedidoOrdinarioUnidadMedica','pedido_ordinario_id');
+    }
+    /*
+    
     public function insumos(){
         return $this->hasMany('App\Models\PedidoInsumo','pedido_id','id')->with('infoInsumo');
     }
@@ -60,11 +65,7 @@ class Pedido extends BaseModel
 
     public function unidadMedica(){
         return $this->belongsTo('App\Models\UnidadMedica','clues','clues');
-    }
-
-    public function unidadMedicaDestino(){
-        return $this->belongsTo('App\Models\UnidadMedica','clues_destino','clues');
-    }
+      }
 
     public function tipoInsumo(){
         return $this->belongsTo('App\Models\TipoInsumo','tipo_insumo_id','id');        
@@ -108,5 +109,5 @@ class Pedido extends BaseModel
     // para apertura de pedidos desde DAM de compra consolidada
     public function unidadesMedicas(){
         return $this->hasMany('App\Models\PedidoCcClues','pedido_id')->with('unidadMedica');
-    }
+    }*/
 }

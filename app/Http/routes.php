@@ -198,6 +198,12 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('presupuesto/saldos/{id}',                           'PresupuestoController@saldos');
         Route::put('presupuesto/ajuste/{id}',                           'PresupuestoController@ajuste');
 
+        // Pedidos ordinarios
+        Route::post('pedidos-ordinarios/procesar-excel',                        'PedidosOrdinariosController@cargarExcel');
+        Route::get('pedidos-ordinarios/formato-carga-pedido-ordinario-excel',   'PedidosOrdinariosController@descargarFormato');
+        Route::get('pedidos-ordinarios/presupuesto',                            'PedidosOrdinariosController@presupuesto');
+        Route::resource('pedidos-ordinarios',                                   'PedidosOrdinariosController',['only' => ['index', 'show', 'store','update','destroy']]);
+        
         // Hacer bien el metodo
         Route::get('presupuesto/historial/ajustes',                     'PresupuestoController@historial');
        
@@ -273,6 +279,13 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::put('cancelar-pedido-transferir/{id}',   'CancelarPedidosController@cancelarYTransferir');
         Route::put('cancelar-transferencia/{id}',       'CancelarPedidosController@cancelarTransferencia');
 
+
+        Route::get('pedidos-stats/pedido-ordinario',                    'PedidosStatsController@pedidoOrdinarioUnidadMedica');
+        Route::get('pedidos-stats/pedidos-ordinarios',                  'PedidosStatsController@pedidosOrdinariosUnidadMedica');
+        Route::get('pedidos-stats/stats',                               'PedidosStatsController@stats');
+        Route::get('pedidos-stats/presupuestos',                        'PedidosStatsController@presupuestos');
+        Route::get('pedidos-stats/presupuesto-ejercicio-unidad-medica', 'PedidosStatsController@presupuestoEjercicioUnidadMedica');
+        Route::get('pedidos-stats/pedido-ordinario-unidad-medica/{id}', 'PedidosStatsController@presupuestoPedidoOrdinarioUnidadMedica');
         
         // Actas
         Route::put('generar-pedido-alterno/{id}',       'PedidoController@generarAlterno');

@@ -16,9 +16,10 @@ class CreatePedidosOrdinarios extends Migration
             $table->increments('id');
             $table->string('descripcion', 255);
 			$table->date('fecha');
-            $table->date('fecha_expiracion');
+            $table->datetime('fecha_expiracion');
             $table->string('usuario_id', 255);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

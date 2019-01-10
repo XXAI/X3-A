@@ -29,5 +29,7 @@ class IdentificarPedidosExpirados extends Command
      */
     public function handle(){
         DB::statement("UPDATE pedidos SET status = 'EX', recepcion_permitida = 0 WHERE deleted_at is null AND status = 'PS' AND datediff(fecha_expiracion,current_date())  < 0");
+
+        // Akira incluir pedidos ordinarios
     }
 }

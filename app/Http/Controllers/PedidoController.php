@@ -24,6 +24,8 @@ use App\Models\MovimientoInsumos;
 use App\Models\Stock;
 use App\Models\UnidadMedicaPresupuesto;
 use App\Models\HistorialMovimientoTransferencia;
+use App\Models\PresupuestoEjercicio, App\Models\PresupuestoUnidadMedica;
+use App\Models\PedidoOrdinario, App\Models\PedidoOrdinarioUnidadMedica;
 use \Excel;
 use Carbon\Carbon;
 
@@ -161,7 +163,7 @@ class PedidoController extends Controller{
     public function index(Request $request){
         $almacen = Almacen::find($request->get('almacen_id'));
         
-        $parametros = Input::only('tipo','status','q','page','per_page','presupuesto');
+        $parametros = Input::only('tipo','status','q','page','per_page','presupuesto','nueva_version');
 
         //$pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
         $pedidos = Pedido::getModel();
@@ -204,11 +206,21 @@ class PedidoController extends Controller{
         
         if(isset($parametros['presupuesto'])){
             if($parametros['presupuesto']){
-                $pedidos = $pedidos->where('presupuesto_id',$parametros['presupuesto']);
+                if(isset($parametros['nueva_version']) && $parametros['nueva_version'] == "true"){
+                    $pedidos = $pedidos->where('presupuesto_ejercicio_id',$parametros['presupuesto']);
+                } else {
+                    $pedidos = $pedidos->where('presupuesto_id',$parametros['presupuesto']);
+                }
             }
         }else{
-            $presupuesto = Presupuesto::where('activo',1)->first();
-            $pedidos = $pedidos->where('presupuesto_id',$presupuesto->id);
+            if(isset($parametros['nueva_version']) && $parametros['nueva_version'] == "true"){
+                $presupuesto = PresupuestoEjercicio::where('activo',1)->first();
+                $pedidos = $pedidos->where('presupuesto_ejercicio_id',$presupuesto->id);
+            } else {
+                $presupuesto = Presupuesto::where('activo',1)->first();
+                $pedidos = $pedidos->where('presupuesto_id',$presupuesto->id);
+            }
+            
         }
 
         $pedidos = $pedidos->with("director", "encargadoAlmacen"); // Villa: Obtenggo los datos de los firmantes para el modulo de configuracion
@@ -277,7 +289,9 @@ class PedidoController extends Controller{
             }
         }
         // ############################################
-        
+        if($pedido->tipo_pedido_id == 'PO'){
+            $pedido->pedidoOrdinarioUnidadMedica;
+        }
         return Response::json([ 'data' => $pedido],200);
     }
 
@@ -300,7 +314,19 @@ class PedidoController extends Controller{
         $clues_real = $almacen->externo == 1 ? $almacen->clues_perteneciente : $almacen->clues;
         
         $um = UnidadMedica::find($clues_real);
-        $presupuesto = Presupuesto::where('activo',1)->first();
+        if(isset($parametros['datos']['pedido_ordinario_unidad_medica_id'])){
+            $pedido_ordinario_unidad_medica = PedidoOrdinarioUnidadMedica::find($parametros['datos']['pedido_ordinario_unidad_medica_id']);
+            if(!$pedido_ordinario_unidad_medica){
+                return Response::json(['error' => 'La clave del pedido ordinario es incorrecta.'], 500);
+            }
+            if($pedido_ordinario_unidad_medica->pedido_id != null){
+                return Response::json(['error' => 'El pedido ordinario que intenta crear, ya existe.'], 500);
+            }
+            $pedido_ordinario_unidad_medica->pedidoOrdinario;
+        } else {
+            $presupuesto = Presupuesto::where('activo',1)->first();
+        }
+        
 
         if($almacen->subrogado && $almacen->tipo_almacen == 'FARSBR'){
             return Response::json(['error' => 'El almacen seleccionado no puede crear pedidos'], 500);
@@ -321,19 +347,25 @@ class PedidoController extends Controller{
                 return Response::json(['error' => 'No puedes hacer pedidos en un almacen externo que pertenece a otra unidad médica.'], 500);
             }
 
-            if($um->tipo == 'OA' && $almacen_solicitante->subrogado == 0 && $almacen_solicitante->nivel_almacen == 1){  // ######### PEDIDOS JURISDICCIONALES #########
-                $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales, solo cuando el almacen solictante no sea subrogado, sea de nivel 1 y la clues sea Oficina Administrativa
-            }else{ // ############################################
-                if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
-                    $tipo_pedido = 'PFS';
-                }else if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL'){
-                    $tipo_pedido = 'PA';
-                }else if($almacen_solicitante->nivel_almacen == 2){
-                    $tipo_pedido = 'PEA'; //Pedidos entre almacenes
-                }else{
-                    return Response::json(['error' => 'No fue posible generar el tipo de pedido'], 500);
+            if(isset($parametros['datos']['pedido_ordinario_unidad_medica_id'])){
+                $tipo_pedido = 'PO';
+            } else {
+                if($um->tipo == 'OA' && $almacen_solicitante->subrogado == 0 && $almacen_solicitante->nivel_almacen == 1){  // ######### PEDIDOS JURISDICCIONALES #########
+                    $tipo_pedido = 'PJS'; // Pedidos jurisdiccionales, solo cuando el almacen solictante no sea subrogado, sea de nivel 1 y la clues sea Oficina Administrativa
+                }else{ // ############################################
+                    if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'FARSBR' && $almacen_solicitante->subrogado == 1){
+                        $tipo_pedido = 'PFS';
+                    }else if($almacen_solicitante->nivel_almacen == 1 && $almacen_solicitante->tipo_almacen == 'ALMPAL'){
+                        $tipo_pedido = 'PA';
+                    }else if($almacen_solicitante->nivel_almacen == 2){
+                        $tipo_pedido = 'PEA'; //Pedidos entre almacenes
+                    }else{
+                        return Response::json(['error' => 'No fue posible generar el tipo de pedido'], 500);
+                    }
                 }
             }
+
+            
         }else{
             return Response::json(['error' => 'No se encontró el almacen solicitante'], 500);
         }
@@ -342,7 +374,12 @@ class PedidoController extends Controller{
         $parametros['datos']['clues'] = $almacen->externo == 1 ? $almacen->clues_perteneciente : $almacen->clues;
         $parametros['datos']['status'] = 'BR'; //estatus de borrador
         $parametros['datos']['tipo_pedido_id'] = $tipo_pedido; //tipo de pedido Pedido de Abastecimiento
-        $parametros['datos']['presupuesto_id'] = $presupuesto->id; //Harima: Al crear el pedido, lo creamos sobre el presupuesto activo
+        if(isset($parametros['datos']['pedido_ordinario_unidad_medica_id'])){
+            $parametros['datos']['presupuesto_ejercicio_id'] = $pedido_ordinario_unidad_medica->pedidoOrdinario->presupuesto_ejercicio_id;
+        } else {
+            $parametros['datos']['presupuesto_id'] = $presupuesto->id; //Harima: Al crear el pedido, lo creamos sobre el presupuesto activo
+        }
+        
 
         //$fecha = date($parametros['datos']['fecha']);
         //$fecha_expiracion = strtotime("+20 days", strtotime($fecha));
@@ -432,7 +469,16 @@ class PedidoController extends Controller{
             $pedido->total_monto_solicitado = $total_monto;
             $pedido->save();
 
+            if(isset($parametros['datos']['pedido_ordinario_unidad_medica_id'])){
+                $pedido_ordinario_unidad_medica->pedido_id = $pedido->id;
+                $pedido_ordinario_unidad_medica->status = "EP";
+                $pedido_ordinario_unidad_medica->causes_capturado =  $parametros['datos']['monto_causes_capturado'];
+                $pedido_ordinario_unidad_medica->no_causes_capturado =  $parametros['datos']['monto_no_causes_capturado'];
+                $pedido_ordinario_unidad_medica->save();
+            }
+
             DB::commit();
+            //DB::rollback();
             return Response::json([ 'data' => $pedido ],200);
 
         } catch (\Exception $e) {
@@ -493,6 +539,8 @@ class PedidoController extends Controller{
         }else{
             return Response::json(['error' => 'No se encontró el almacen seleccionado'], 500);
         }
+
+      
         $parametros['datos']['tipo_pedido_id'] = $tipo_pedido;
         //$parametros['datos']['tipo_pedido_id'] = 1;
 
@@ -522,7 +570,9 @@ class PedidoController extends Controller{
 
         try {
             $pedido = Pedido::find($id);
-
+            if($pedido->tipo_pedido_id == 'PO'){
+                $parametros['datos']['tipo_pedido_id'] = 'PO';
+            }
             if($pedido->status != 'BR'){
                 return Response::json(['error' => 'El pedido ya no puede editarse.'], 500);
             }
@@ -555,6 +605,21 @@ class PedidoController extends Controller{
             }
 
             DB::beginTransaction();
+
+            //Akira: Hack para no alterar todos los ifs de arriba
+            // porque estos cambian el tipo de pedido en la edición
+            // y un pedido ordinario no se debe cambiar de tipo
+            $pedido_ordinario_unidad_medica ;
+            if($pedido->tipo_pedido_id == "PO"){
+                $parametros['datos']['tipo_pedido_id'] = "PO";
+                $tipo_pedido= "PO";
+
+                $pedido_ordinario_unidad_medica = PedidoOrdinarioUnidadMedica::where('pedido_id',$pedido->id)->first();
+                if(!$pedido_ordinario_unidad_medica){
+                    DB::rollBack();
+                    return Response::json(['error' => 'No existe el pedido ordinario y no se pueden modificar saldos'], 500);
+                }
+            }
 
             $pedido->update($parametros['datos']);
 
@@ -666,6 +731,13 @@ class PedidoController extends Controller{
             $pedido->total_monto_solicitado = round($total_monto['causes'],2) + round($total_monto['no_causes'],2) + round($total_monto['material_curacion'],2);
             $pedido->save();
 
+            if($tipo_pedido == "PO"){
+                $pedido_ordinario_unidad_medica->causes_capturado =  round($total_monto['causes'],2) + round($total_monto['material_curacion'],2);
+                $pedido_ordinario_unidad_medica->no_causes_capturado =  round($total_monto['no_causes'],2);
+                $pedido_ordinario_unidad_medica->save();
+            }
+
+
             //Harima: Ajustamos el presupuesto, colocamos los totales en comprometido
             //if($pedido->status == 'PS' || $pedido->status == 'ET'){ //OJO falta checar si cambian almacen y mes
             if($pedido->status != 'BR' && ($pedido->tipo_pedido_id == 'PA' || $pedido->tipo_pedido_id == 'PFS' || $pedido->tipo_pedido_id == 'PJS')){
@@ -688,9 +760,7 @@ class PedidoController extends Controller{
                 $fecha = explode('-',$pedido->fecha);
 
                 //$presupuesto = Presupuesto::where('activo',1)->first();
-                //$presupuesto = Presupuesto::find($pedido->presupuesto_id);
-
-                
+                //$presupuesto = Presupuesto::find($pedido->presupuesto_id);                
 
                 $presupuesto_unidad = UnidadMedicaPresupuesto::where('presupuesto_id',$pedido->presupuesto_id)
                                            // ->where('clues',$almacen->clues)
@@ -802,9 +872,44 @@ class PedidoController extends Controller{
                 ];
 
                 $historial = HistorialMovimientoTransferencia::create($historial_datos);
+            } else if($pedido->status != 'BR' && $pedido->tipo_pedido_id == 'PO'){
+
+                if($pedido->total_monto_solicitado == $pedido->total_monto_recibido){
+                    $pedido->status = 'FI';
+                    $pedido->save();
+                }
+
+                //Akira: No tengo idea que es esto pero lo dejo porque no lo quiero echar a perder
+                if($pedido->presupuestoApartado){
+                    $presupuesto_apartado = $pedido->presupuestoApartado;
+                    $total_monto['causes'] -= ($presupuesto_apartado->causes_comprometido + $presupuesto_apartado->causes_devengado);
+                    $total_monto['no_causes'] -= ($presupuesto_apartado->no_causes_comprometido + $presupuesto_apartado->no_causes_devengado);
+                    $total_monto['material_curacion'] -= ($presupuesto_apartado->material_curacion_comprometido + $presupuesto_apartado->material_curacion_devengado);
+                    $pedido->presupuestoApartado->delete();
+                }
+
+                // aqui hay que modificar todos los presupeustos pero del pedido ordinario
+
+              
+                
+                $pedido_ordinario_unidad_medica->causes_comprometido = $pedido_ordinario_unidad_medica->causes_comprometido + round($total_monto['causes'] + $total_monto['material_curacion'],2);
+                $pedido_ordinario_unidad_medica->causes_disponible = $pedido_ordinario_unidad_medica->causes_disponible - round($total_monto['causes'] + $total_monto['material_curacion'],2);
+
+                $pedido_ordinario_unidad_medica->no_causes_comprometido = $pedido_ordinario_unidad_medica->no_causes_comprometido + round($total_monto['no_causes'],2);
+                $pedido_ordinario_unidad_medica->no_causes_disponible = $pedido_ordinario_unidad_medica->no_causes_disponible - round($total_monto['no_causes'],2);
+
+                
+                if($pedido_ordinario_unidad_medica->causes_disponible < 0 || $pedido_ordinario_unidad_medica->no_causes_disponible < 0){
+                    DB::rollBack();
+                    return Response::json(['error' => 'El presupuesto es insuficiente para este pedido, los cambios no se guardaron.', 'data'=>[$pedido_ordinario_unidad_medica,$total_monto]], 500);
+                }else{
+                    $pedido_ordinario_unidad_medica->save();
+                }
             }
-             
-             DB::commit(); 
+            
+
+            //DB::rollback();
+            DB::commit(); 
 
             return Response::json([ 'data' => $pedido ],200);
 
@@ -817,21 +922,34 @@ class PedidoController extends Controller{
     function destroy(Request $request, $id){
         try {
             //$object = Pedido::destroy($id);
+            DB::beginTransaction();
             $almacen = Almacen::find($request->get('almacen_id'));
             $pedido = Pedido::where('clues',$almacen->clues)->where('id',$id)->first();
             if($pedido){
                 if($pedido->status == 'BR' && $pedido->total_cantidad_recibida <= 0){
+                    if($pedido->tipo_pedido_id == 'PO'){
+                        $pedido_ordinario_unidad_medica = PedidoOrdinarioUnidadMedica::where('pedido_id',$pedido->id)->first();
+                        if($pedido_ordinario_unidad_medica){
+                           $pedido_ordinario_unidad_medica->pedido_id = null;
+                           $pedido_ordinario_unidad_medica->save(); 
+                        }                        
+                    }
                     $pedido->insumos()->delete();
                     $pedido->delete();
                 }else{
+                    DB::rollback();
                     return Response::json(['error' => 'Este pedido ya no puede eliminarse'], 500);
                 }
             }else{
+                DB::rollback();
                 return Response::json(['error' => 'No tiene permiso para eliminar este recurso'], 401);
             }
+            DB::commit(); 
+            //DB::rollback();
             //$object = Pedido::where('almacen_proveedor',$request->get('almacen_id'))->where('id',$id)->delete();
             return Response::json(['data'=>$pedido],200);
         } catch (Exception $e) {
+            DB::rollback();
            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         }
 

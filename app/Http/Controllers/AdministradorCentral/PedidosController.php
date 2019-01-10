@@ -67,7 +67,7 @@ class PedidosController extends Controller
                     $items = $items->whereIn('jurisdiccion_id',$jurisdicciones);
                 }              
             }
-
+/*
             if(isset($parametros['meses']) && $parametros['meses'] != ""){
                 $mes_filtro = explode(',',$parametros['meses']);  
                      
@@ -80,6 +80,23 @@ class PedidosController extends Controller
                     $fecha_fin = $fecha_mes->year."-".$mes_filtro[0]."-".$dia_fin_mes;  
 
                     $items = $items->whereBetween('fecha', array($fecha_inicio, $fecha_fin));
+                }              
+            }*/
+            if(isset($parametros['meses']) && $parametros['meses'] != ""){
+                $mes_filtro = explode(',',$parametros['meses']);  
+                     
+                if(count($mes_filtro)>0){
+                    $mes_desglosado = explode('-',$mes_filtro[0]);
+    
+                    $fecha_mes = Carbon::createFromDate($mes_desglosado[1], $mes_desglosado[0],01);
+                    $fecha_mes->timezone('America/Mexico_City');
+                    
+                    $dia_fin_mes = $fecha_mes->daysInMonth;
+                    $fecha_inicio = $mes_desglosado[1]."-".$mes_desglosado[0]."-01";
+                    $fecha_fin = $mes_desglosado[1]."-".$mes_desglosado[0]."-".$dia_fin_mes;  
+    
+                    $items = $items->whereBetween('fecha', array($fecha_inicio, $fecha_fin));
+    
                 }              
             }
 
@@ -749,7 +766,7 @@ class PedidosController extends Controller
         return $texto_mes;
     }
     public function excel(){
-        $parametros = Input::only('q','status','proveedores','jurisdicciones', 'fecha_desde','fecha_hasta', 'ordenar_causes','ordenar_no_causes','ordenar_material_curacion');
+        $parametros = Input::only('q','status','proveedores','jurisdicciones', 'fecha_desde','fecha_hasta', 'ordenar_causes','ordenar_no_causes','ordenar_material_curacion','meses','statusRecepcion');
 
         $items = self::getItemsQuery($parametros);
         $items = $items->get();
@@ -1062,16 +1079,38 @@ class PedidosController extends Controller
             });
         } 
 
+
+        /*
         if(isset($parametros['meses']) && $parametros['meses'] != ""){
             $mes_filtro = explode(',',$parametros['meses']);  
                  
             if(count($mes_filtro)>0){
+                $mes_desglosado = explode('-',$mes_)
+
                 $fecha_mes = Carbon::createFromDate(null, $mes_filtro[0],01);
                 $fecha_mes->timezone('America/Mexico_City');
                 
                 $dia_fin_mes = $fecha_mes->daysInMonth;
                 $fecha_inicio = $fecha_mes->year."-".$mes_filtro[0]."-01";
                 $fecha_fin = $fecha_mes->year."-".$mes_filtro[0]."-".$dia_fin_mes;  
+
+                $items = $items->whereBetween('fecha', array($fecha_inicio, $fecha_fin));
+
+            }              
+        }*/
+
+        if(isset($parametros['meses']) && $parametros['meses'] != ""){
+            $mes_filtro = explode(',',$parametros['meses']);  
+                 
+            if(count($mes_filtro)>0){
+                $mes_desglosado = explode('-',$mes_filtro[0]);
+
+                $fecha_mes = Carbon::createFromDate($mes_desglosado[1], $mes_desglosado[0],01);
+                $fecha_mes->timezone('America/Mexico_City');
+                
+                $dia_fin_mes = $fecha_mes->daysInMonth;
+                $fecha_inicio = $mes_desglosado[1]."-".$mes_desglosado[0]."-01";
+                $fecha_fin = $mes_desglosado[1]."-".$mes_desglosado[0]."-".$dia_fin_mes;  
 
                 $items = $items->whereBetween('fecha', array($fecha_inicio, $fecha_fin));
 
@@ -1170,10 +1209,26 @@ class PedidosController extends Controller
     {
         $meses = array("ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE");
         $mes = [];
-        for($month = 1; $month <= Carbon::now()->month; $month++)
-        {
-            $mes[] = array('id'=>$month, 'descripcion' => $meses[$month-1]." ".Carbon::now()->year);
+
+        $presupuesto = Presupuesto::where('activo',1)->first();
+        if($presupuesto){
+            //SELECT MONTH(fecha) as mes, YEAR(fecha) as anio FROM sial.pedidos group by anio, mes order by anio desc, mes desc;
+            $months = Pedido::select(DB::raw(' MONTH(fecha) as mes'), DB::raw(' YEAR(fecha) as anio'))->where('presupuesto_id',$presupuesto['id'])->groupBy(DB::raw('anio'), DB::raw('mes'))->orderBy(DB::raw('anio'), 'desc')->orderBy(DB::raw('mes'), 'desc')->get();
+            //$months = UnidadMedicaPresupuesto::select('mes','anio')->where('presupuesto_id',$presupuesto['id'])->groupBy('anio','mes')->orderBy('anio','desc')->orderBy('mes','desc')->get();
+            foreach($months as $month){
+                $m = $month->mes;
+                $y = $month->anio;
+                $mes[] = array('id'=>$m."-".$y, 'descripcion' => $meses[$m-1]." ".$y);
+            }
+        } else {
+            for($month = 1; $month <= Carbon::now()->month; $month++)
+            {
+                $mes[] = array('id'=>$month."-".Carbon::now()->year, 'descripcion' => $meses[$month-1]." ".Carbon::now()->year);
+            }
         }
+        
+        
+        
         
         return Response::json([ 'data' => $mes],200);
     }
