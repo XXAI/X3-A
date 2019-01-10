@@ -308,11 +308,20 @@ if($input_data->estatus=="INICIALIZADO")
 
         if($inicializacion->estatus == "INICIALIZADO")
         {
-            Stock::where("almacen_id", $almacen_id)->delete();
+            //Stock::where("almacen_id", $almacen_id)->delete();
+            Stock::where("almacen_id", $almacen_id)->update(['existencia'=>0,'existencia_unidosis'=>0]);
+
+            $stock_existente = Stock::where('almacen_id',$almacen_id)->selectRaw('concat_ws("-",clave_insumo_medico,programa_id,exclusivo,lote,fecha_caducidad,codigo_barras) as insumo, id')->get();
+            $stock_existente = $stock_existente->lists('id','insumo');
+
+            //DB::rollback();
+            //return Response::json(array("status" => 409,"messages" => "Conflicto", "data"=>$stock_existente), 500);            
             
-            $inis = InicializacionInventarioDetalle::where('almacen_id',$almacen_id)
+            $inis = InicializacionInventarioDetalle::selectRaw('*, concat_ws("-",clave_insumo_medico,programa_id,exclusivo,lote,fecha_caducidad,codigo_barras) as llave_insumo')
+                                                    ->where('almacen_id',$almacen_id)
                                                    ->where('inicializacion_inventario_id',$inicializacion->id)
                                                    ->get();
+            
             $movimiento = new Movimiento;
             $movimiento->tipo_movimiento_id  = 19;
             $movimiento->almacen_id          = $almacen_id;
@@ -321,9 +330,14 @@ if($input_data->estatus=="INICIALIZADO")
             $movimiento->observaciones       = $input_data->observaciones;
             $movimiento->save();
             
-            foreach ($inis as $key => $ini)
-            {           
-                $new_stock = new Stock;
+            foreach ($inis as $key => $ini){
+                if(isset($stock_existente[$ini->llave_insumo])){
+                    $new_stock = Stock::find($stock_existente[$ini->llave_insumo]);
+                }else{
+                    $new_stock = new Stock;
+                } 
+
+                //$new_stock = new Stock;
                 $new_stock->almacen_id           = $almacen_id;
                 $new_stock->clave_insumo_medico  = $ini->clave_insumo_medico;
                 $new_stock->programa_id          = $ini->programa_id;
@@ -723,9 +737,18 @@ if($input_data->estatus=="INICIALIZADO")
 
         if($inicializacion->estatus == "INICIALIZADO")
         {
-            Stock::where("almacen_id", $almacen_id)->delete();
+
+            //Stock::where("almacen_id", $almacen_id)->delete();
+            Stock::where("almacen_id", $almacen_id)->update(['existencia'=>0,'existencia_unidosis'=>0]);
+
+            $stock_existente = Stock::where('almacen_id',$almacen_id)->selectRaw('concat_ws("-",clave_insumo_medico,programa_id,exclusivo,lote,fecha_caducidad,codigo_barras) as insumo, id')->get();
+            $stock_existente = $stock_existente->lists('id','insumo');
+
+            //DB::rollback();
+            //return Response::json(array("status" => 409,"messages" => "Conflicto", "data"=>$stock_existente), 500);            
             
-            $inis = InicializacionInventarioDetalle::where('almacen_id',$almacen_id)
+            $inis = InicializacionInventarioDetalle::selectRaw('*, concat_ws("-",clave_insumo_medico,programa_id,exclusivo,lote,fecha_caducidad,codigo_barras) as llave_insumo')
+                                                    ->where('almacen_id',$almacen_id)
                                                    ->where('inicializacion_inventario_id',$inicializacion->id)
                                                    ->get();
             $movimiento = new Movimiento;
@@ -736,9 +759,14 @@ if($input_data->estatus=="INICIALIZADO")
             $movimiento->observaciones       = $input_data->observaciones;
             $movimiento->save();
             
-            foreach ($inis as $key => $ini)
-            {           
-                $new_stock = new Stock;
+            foreach ($inis as $key => $ini){
+                if(isset($stock_existente[$ini->llave_insumo])){
+                    $new_stock = Stock::find($stock_existente[$ini->llave_insumo]);
+                }else{
+                    $new_stock = new Stock;
+                }
+
+                //$new_stock = new Stock;
                 $new_stock->almacen_id           = $almacen_id;
                 $new_stock->clave_insumo_medico  = $ini->clave_insumo_medico;
                 $new_stock->programa_id          = $ini->programa_id;

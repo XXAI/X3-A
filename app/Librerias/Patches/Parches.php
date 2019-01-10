@@ -89,4 +89,49 @@ class Parches {
             return false;
         }
     }
+
+    public static function ejecutarParche5($nombre_parche = null){
+        try{
+            \Artisan::call('migrate');
+
+            //En recetas_detalles cambiar los valores de cantidad a cantidad_recetada
+            DB::statement('UPDATE receta_detalles SET cantidad_recetada = cantidad, updated_at = current_timestamp() WHERE incremento > 0 ');
+
+            //$base_path = base_path();	
+            //crontab -l | { cat; echo "0 0 0 0 0 some entry"; } | crontab -
+            //$script = $base_path."/app/Scripts/AgregarCronJob.sh";
+            //$preout = shell_exec($script);
+            
+            $parches = Config::get("patches");
+
+            $fecha_parche = '';
+
+            if(!$nombre_parche){
+                $ultimo_parche = $parches[0];
+                $nombre_parche = $ultimo_parche['nombre'];
+                $fecha_parche = $ultimo_parche['fecha'];
+            }else{
+                foreach($parches as $parche){
+                    if($parche['nombre'] == $nombre_parche){
+                        $fecha_parche = $parche['fecha'];
+                        break;
+                    }
+                }
+            }
+
+            $parche_log = LogEjecucionParche::where('nombre_parche',$nombre_parche)->first();
+
+            if(!$parche_log){
+                $parche_log = LogEjecucionParche::create(['clues'=>env('CLUES'),'nombre_parche'=>$nombre_parche,'tipo_parche'=>'api','fecha_liberacion'=>$fecha_parche]);
+            }
+
+            $parche_log->fecha_ejecucion = Carbon::now();
+            $parche_log->save();
+            
+            return "Parche Ejecutado: ".$nombre_parche;
+       } catch(\Exception $e){
+            echo "shit";
+            return false;
+       }
+    }
 }

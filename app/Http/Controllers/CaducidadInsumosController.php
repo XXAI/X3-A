@@ -170,7 +170,7 @@ class CaducidadInsumosController extends Controller
                   
 
             
-        $claves = $claves->get();
+        $claves = $claves->whereNull('stock.deleted_at')->get();
         $data   = $claves;
         $data2  = null;
 

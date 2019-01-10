@@ -9,6 +9,7 @@
 
 
 return [
+	[ "nombre" => "4CEFB01C04535B29725CE972450D93ED.sial.api.5.patch", "fecha" => "2018-12-25", "ejecutar" =>  "\App\Librerias\Patches\Parches::ejecutarParche5"],
 	[ "nombre" => "25C6083F763EB4F414EC55FC3283F7B7.sial.api.4.patch", "fecha" => "2018-08-10", "ejecutar" =>  "\App\Librerias\Patches\Parches::ejecutarParche4"],
 	[ "nombre" => "35915E24B6C820FB9EB4847E05A4AC6F.sial.api.3.patch", "fecha" => "2018-06-15", "ejecutar" =>  "\App\Librerias\Patches\Parches::ejecutar"],
 	[ "nombre" => "B8DD2113084EC4D3B2E97F081BD081E4.sial.api.2.patch", "fecha" => "2018-03-16", "ejecutar" =>  "\App\Librerias\Patches\Parches::ejecutar"],

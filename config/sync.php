@@ -60,7 +60,7 @@ return [
         'presentaciones_medicamentos',
         'presentaciones_sustancias',
         'categorias',
-        'categorias_metadatos',
+        'articulos_metadatos',
         'organismos',
         //'unidades_medicas',
         //'areas', #no esta en migrations
