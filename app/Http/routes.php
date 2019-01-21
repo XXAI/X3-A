@@ -61,6 +61,12 @@ Route::group(['prefix' => 'medicos','namespace' => 'Medicos'], function () {
     Route::resource('pacientes',         'PacientesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 });
 
+Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
+    Route::put('migrar-servidor/{id}', 'MigracionServidorOfflineController@migrar');
+});
+
+
+
 Route::group(['middleware' => 'jwt'], function () {
     Route::put('editar-perfil/{id}',               'EditarPerfilController@editar');
     Route::resource('usuarios',                 'UsuarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
@@ -88,6 +94,8 @@ Route::group(['middleware' => 'jwt'], function () {
     Route::get('descargar-insumos-sin-clave-excel',     'InicializarInventarioMedicamentosController@descargarInsumosSinClave');
     
     Route::post('programa-inventario',                 'ProgramaController@nuevoProgramaInventario');
+    
+
     
 
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
