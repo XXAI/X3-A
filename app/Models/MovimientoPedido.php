@@ -20,6 +20,14 @@ class MovimientoPedido extends BaseModel{
             ->leftjoin('movimientos','movimientos.id','=','movimiento_pedido.movimiento_id');
     }
 
+    public function scopeMovimientoCompletoEntrada($query){
+        $query->select('movimiento_pedido.*','movimientos.almacen_id','movimientos.tipo_movimiento_id','movimientos.status','movimientos.fecha_movimiento','movimientos.observaciones')
+            
+            ->leftjoin('movimientos','movimientos.id','=','movimiento_pedido.movimiento_id')
+            ->join('tipos_movimientos','tipos_movimientos.id','=','movimientos.tipo_movimiento_id')
+            ->where("tipos_movimientos.tipo", "E");
+    }
+
     public function movimiento(){
         return $this->belongsTo('App\Models\Movimiento','movimiento_id');
     }
@@ -59,5 +67,9 @@ class MovimientoPedido extends BaseModel{
     public function insumos(){
         return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id','movimiento_id')->with('detalles', 'stock');
     }
+
+    /*public function recepcionMovimiento(){
+        return $this->belongsTo('App\Models\Movimiento','movimiento_id')->whereIn("tipo_movimiento_id", [4,9])->where('status','FI');;
+    }*/
 
 }

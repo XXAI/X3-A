@@ -1168,7 +1168,7 @@ class TransferenciaAlmacenController extends Controller{
     public function reporte_acuse(Request $request){
         $parametros = Input::all();
         $fecha_completa = date("Y-m-d H:i:s");
-        $pedido = pedido::where("id", "=", $parametros['pedido_id'])->with("unidadMedica", "unidadMedicaDestino", "movimientosTransferenciasCompleto")->first();
+        $pedido = pedido::where("id", "=", $parametros['pedido_id'])->with("unidadMedica", "unidadMedicaDestino", "movimientosTransferenciasCompleto", "Usuario")->first();
         return Response::json(['data'=>[ 'pedido'=>$pedido, 'fecha_completa'=> $fecha_completa]],200);
     }
 }

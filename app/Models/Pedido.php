@@ -42,6 +42,10 @@ class Pedido extends BaseModel
         return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id')->movimientoCompleto()->whereIn('tipo_movimiento_id',[3,9,1,7])->with('insumos');
     }
 
+    public function movimientosRecepcionCompleto(){
+        return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id')->MovimientoCompletoEntrada()->where('status','FI')->with('insumos');
+    }
+
     public function recepcionesBorrados(){
         return $this->hasMany('App\Models\MovimientoPedido','pedido_id','id')->withTrashed()->orderBy("created_at");
     }
@@ -108,5 +112,9 @@ class Pedido extends BaseModel
     // para apertura de pedidos desde DAM de compra consolidada
     public function unidadesMedicas(){
         return $this->hasMany('App\Models\PedidoCcClues','pedido_id')->with('unidadMedica');
+    }
+
+    public function usuario(){
+        return $this->hasOne('App\Models\Usuario', "id", "usuario_id");
     }
 }

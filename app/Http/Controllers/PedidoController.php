@@ -124,8 +124,11 @@ class PedidoController extends Controller{
                 ) as alternos,
                 (
                     select count(id) from actas where clues = "'.$clues.'"
-                ) as actas
-    
+                ) as actas,
+                count(
+                    null
+                ) as recepcion
+                    
                 '
             //))->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues)->first();
             ))->where('clues',$clues); //->first();
@@ -226,7 +229,9 @@ class PedidoController extends Controller{
         $pedidos = $pedidos->with("director", "encargadoAlmacen"); // Villa: Obtenggo los datos de los firmantes para el modulo de configuracion
 
         //Harima: Esto es para agregar las transferencias a la lista de pedidos
+        
         if(!isset($parametros['status'])){
+            
             $pedidos = $pedidos->orWhere(function($query)use($almacen){
                 $query->where('almacen_solicitante',$almacen->id)->where('clues_destino',$almacen->clues)->where('tipo_pedido_id','PEA')->where('status','!=','BR');
             });
@@ -250,6 +255,7 @@ class PedidoController extends Controller{
         } else {
             $pedidos = $pedidos->get();
         }
+
         
         return Response::json([ 'data' => $pedidos],200);
     }
@@ -2468,4 +2474,20 @@ class PedidoController extends Controller{
         }
         return Response::json([ 'data' => $pedido_original],200);
     }
+
+    public function ReporteRecepcionPedido(Request $request){
+        $parametros = Input::all();
+        $fecha_completa = date("Y-m-d H:i:s");
+        $pedido = pedido::where("id", "=", $parametros['pedido_id'])->with("unidadMedica", "unidadMedicaDestino", "movimientosTransferenciasCompleto", "usuario")->first();
+        return Response::json(["data"=>[ 'pedido'=>$pedido, 'fecha_completa'=> $fecha_completa]],200);
+    }
+
+    public function ReporteRecepcionPedidoDetalle(Request $request){
+        $parametros = Input::all();
+        $fecha_completa = date("Y-m-d H:i:s");
+        $pedido = pedido::where("id", "=", $parametros['pedido_id'])->with("unidadMedica", "usuario", "movimientosRecepcionCompleto")->first();
+        return Response::json(["data"=>[ 'pedido'=>$pedido, 'fecha_completa'=> $fecha_completa]],200);
+    }
+
+    
 }

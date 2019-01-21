@@ -53,6 +53,8 @@ Route::get('grafica-entregas',                  'ReportePedidoController@grafica
 Route::get('estatus-pedidos',                   'ReportePedidoController@estatusEntregaPedidos');
 
 
+
+
 // Akira: tuve que agregar esto aqui porque no me iba a poner a batallar para interceptar la peticion de conchita
 // con su auto complete, y no se puede refrescar el token con la libreria del cliente
 Route::group(['prefix' => 'medicos','namespace' => 'Medicos'], function () {
@@ -278,6 +280,9 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-presupuesto',               'PedidoController@obtenerDatosPresupuesto');
         Route::put('cancelar-pedido-transferir/{id}',   'CancelarPedidosController@cancelarYTransferir');
         Route::put('cancelar-transferencia/{id}',       'CancelarPedidosController@cancelarTransferencia');
+        Route::get('reporte-recepcion-pedido',          'PedidoController@ReporteRecepcionPedido');
+        Route::get('reporte-recepcion-pedido-detalle',  'PedidoController@ReporteRecepcionPedidoDetalle');
+        Route::resource('lista-recepcion-pedido',       'RecepcionPedidoController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 
 
         Route::get('pedidos-stats/pedido-ordinario',                    'PedidosStatsController@pedidoOrdinarioUnidadMedica');
@@ -286,6 +291,7 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-stats/presupuestos',                        'PedidosStatsController@presupuestos');
         Route::get('pedidos-stats/presupuesto-ejercicio-unidad-medica', 'PedidosStatsController@presupuestoEjercicioUnidadMedica');
         Route::get('pedidos-stats/pedido-ordinario-unidad-medica/{id}', 'PedidosStatsController@presupuestoPedidoOrdinarioUnidadMedica');
+        
         
         // Actas
         Route::put('generar-pedido-alterno/{id}',       'PedidoController@generarAlterno');
@@ -297,6 +303,7 @@ Route::group(['middleware' => 'jwt'], function () {
         //Route::get('pedidos-jurisdiccionales-presupuesto',  'PedidoJurisdiccionalController@obtenerDatosPresupuesto');
 
         Route::resource('recepcion-pedido',             'RecepcionPedidoController',    ['only' => ['show', 'update','destroy']]);
+        
 
         Route::resource('mis-almacenes',                'MiAlmacenController',    ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('mis-servicios',                'MisServiciosController',    ['only' => ['index', 'show', 'store','update','destroy']]);

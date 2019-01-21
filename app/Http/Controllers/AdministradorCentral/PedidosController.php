@@ -321,6 +321,9 @@ class PedidosController extends Controller
     
     public function regresarBorrador($id, Request $request){
         try{
+
+            $servidor = Servidor::find(env('SERVIDOR_ID'));
+
             $usuario = Usuario::with(['roles.permisos'=>function($permisos){
                 $permisos->where('id','pgDHA25rRlWvMxdb6aH38xG5p1HUFznS');
             }])->find($request->get('usuario_id'));
@@ -440,6 +443,9 @@ class PedidosController extends Controller
                 DB::commit();
                 return Response::json([ 'data' => $pedido],200);
             }
+
+            
+
             $almacen = Almacen::find($pedido->almacen_solicitante);
 
             if(!$almacen){
@@ -448,7 +454,10 @@ class PedidosController extends Controller
             
             $proveedor = Proveedor::with('contratoActivo')->find($almacen->proveedor_id);
 
+            
+
             $contrato_activo = $proveedor->contratoActivo;
+            
             $insumos = Insumo::conDescripcionesPrecios($contrato_activo->id, $proveedor->id)->select("precio", "clave", "insumos_medicos.tipo", "es_causes", "insumos_medicos.tiene_fecha_caducidad", "contratos_precios.tipo_insumo_id", "medicamentos.cantidad_x_envase")->withTrashed()->get();
             $lista_insumos = array();
             foreach ($insumos as $key => $value) {
@@ -463,6 +472,8 @@ class PedidosController extends Controller
                 $lista_insumos[$value['clave']]     = $array_datos;
             }
 
+           
+
             $pedido = $pedido->load("insumos");
 
             $total_causes               = 0;
@@ -470,6 +481,10 @@ class PedidosController extends Controller
             $total_material_curacion    = 0;
 
             foreach ($pedido->insumos as $key => $value) {
+
+                if(!isset($lista_insumos[$value['insumo_medico_clave']]))
+                    return Response::json(['error' =>"No se encuentra el proveedor o contrato vigente, por favor contacte a informática para mayor información"], 500);
+                
                 if($lista_insumos[$value['insumo_medico_clave']]['tipo'] == "ME")
                 {
                     if($lista_insumos[$value['insumo_medico_clave']]['es_causes']== 1)
@@ -494,9 +509,6 @@ class PedidosController extends Controller
                                                     ->where("proveedor_id", $proveedor->id)
                                                     ->first();
 
-            $servidor = Servidor::find(env('SERVIDOR_ID'));
-
-                                                    
             
                 $presupuesto->insumos_disponible                = ($presupuesto->insumos_disponible + $total_causes + $total_material_curacion);
                 //$presupuesto->causes_disponible                 = ($presupuesto->causes_disponible + $total_causes);
@@ -547,7 +559,7 @@ class PedidosController extends Controller
             DB::rollBack();
             return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
         } 
-    }
+    }//Hasta aca
 
       public function regresarBorradorCancelado($id, Request $request){
         try{

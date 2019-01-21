@@ -50,11 +50,96 @@ class RecepcionPedidoController extends Controller
         } 
     }
 
-    public function index(){
-		/*
-    	$pedidos = Movimiento::with("movimientoInsumos.stock")->get();
-    	return Response::json([ 'data' => $pedidos],200);
-		*/
+    public function index(Request $request){
+		
+    	$almacen = Almacen::find($request->get('almacen_id'));
+        
+        $parametros = Input::only('tipo','status','q','page','per_page','presupuesto','nueva_version', 'desde', 'hasta');
+
+        //$pedidos = Pedido::with("insumos", "acta", "tipoInsumo", "tipoPedido","almacenSolicitante","almacenProveedor");
+        $pedidos = Pedido::getModel();
+
+       if ($parametros['q']) {
+            $pedidos =  $pedidos->where(function($query) use ($parametros) {
+                 $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('folio','LIKE',"%".$parametros['q']."%");
+             });
+        }
+
+        //Harima: Filtro para diferentes tipos de almacenes, solo los almacenes principales pueden ver pedidos a farmcias subrogadas
+        if($almacen->tipo_almacen == 'ALMPAL'){
+            $almacenes = Almacen::where('subrogado',1)->where('nivel_almacen',1)->where('clues',$almacen->clues)->get();
+            $almacenes = $almacenes->lists('id');
+            $almacenes[] = $almacen->id;
+            $pedidos = $pedidos->whereIn('almacen_solicitante',$almacenes);
+        }else{
+            //Harima: Los demas almacenes solo veran los pedidos que ellos hayan hecho
+            $pedidos = $pedidos->where('almacen_solicitante',$almacen->id);
+        }
+
+        //$pedidos = $pedidos->where('almacen_solicitante',$almacen->id)->where('clues',$almacen->clues);
+        $pedidos = $pedidos->where('clues',$almacen->externo == 1 ? $almacen->clues_perteneciente : $almacen->clues);
+        
+        /*if(isset($parametros['status'])) {
+            $pedidos = $pedidos->where("pedidos.status",$parametros['status']);
+		}*/
+		$pedidos = $pedidos->where("pedidos.status","!=", "BR");
+
+        if(isset($parametros['tipo']) && $parametros['tipo'] != '') {
+            $pedidos = $pedidos->where("pedidos.tipo_pedido_id",$parametros['tipo']);
+        }
+
+        $pedidos = $pedidos->select('pedidos.*',DB::raw('datediff(fecha_expiracion,current_date()) as expira_en_dias'))->orderBy('updated_at','desc');        
+		
+		if(isset($parametros['desde']) && $parametros['desde'] != ""){
+			
+			if(isset($parametros['hasta']) && $parametros['hasta'] != "")
+				$pedidos = $pedidos->whereBetween("fecha", [$parametros['desde'], $parametros['hasta']]);
+			else
+				$pedidos = $pedidos->where("fecha", $parametros['desde']);
+		}
+        // Akira: dejo comentada esta instrucción por que las juris solo deberían ver este tipo de pedidos
+        // Peeeeeero como ya hay pedidos capturados en el sistema pues no se puede manejar así
+        //$pedidos = $pedidos->where("pedidos.tipo_pedido_id",'PJS');
+
+        //$pedido = Pedido::with("insumos", "acta", "TipoInsumo", "TipoPedido")->get();
+        
+        if(isset($parametros['presupuesto'])){
+            if($parametros['presupuesto']){
+                if(isset($parametros['nueva_version']) && $parametros['nueva_version'] == "true"){
+                    $pedidos = $pedidos->where('presupuesto_ejercicio_id',$parametros['presupuesto']);
+                } else {
+                    $pedidos = $pedidos->where('presupuesto_id',$parametros['presupuesto']);
+                }
+            }
+        }else{
+            if(isset($parametros['nueva_version']) && $parametros['nueva_version'] == "true"){
+                $presupuesto = PresupuestoEjercicio::where('activo',1)->first();
+                $pedidos = $pedidos->where('presupuesto_ejercicio_id',$presupuesto->id);
+            } else {
+                $presupuesto = Presupuesto::where('activo',1)->first();
+                $pedidos = $pedidos->where('presupuesto_id',$presupuesto->id);
+            }
+            
+        }
+
+        $pedidos = $pedidos->with("director", "encargadoAlmacen"); // Villa: Obtenggo los datos de los firmantes para el modulo de configuracion
+
+        //Harima: Esto es para agregar las transferencias a la lista de pedidos
+        
+		$pedidos = $pedidos->orWhere(function($query)use($almacen){
+			$query->where('almacen_solicitante',$almacen->id)->where('clues_destino',$almacen->clues)->where('tipo_pedido_id','PEA')->where('status','!=','BR');
+		});
+	
+        if(isset($parametros['page'])){
+            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
+            $pedidos = $pedidos->paginate($resultadosPorPagina);
+        } else {
+            $pedidos = $pedidos->get();
+        }
+
+        
+        return Response::json([ 'data' => $pedidos],200);
+		
     }
 
     public function show(Request $request, $id){
