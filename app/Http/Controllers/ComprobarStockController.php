@@ -37,7 +37,10 @@ class ComprobarStockController extends Controller
 
             $stocks = Stock::with('programa','movimientoInsumo')
                         ->where('clave_insumo_medico',$parametros['clave'])
-                        ->where('existencia','>',0)
+                        ->where(function ($query){
+                            $query->where('existencia','>',0)->orWhere('existencia_unidosis','>',0);
+                        })
+                        //->where('existencia','>',0)
                         ->where('almacen_id',$parametros['almacen'])
                         ->orderBy('fecha_caducidad','ASC')
                         ->get();
@@ -45,7 +48,10 @@ class ComprobarStockController extends Controller
         }else{
                 $stocks = Stock::with('programa','movimientoInsumo')
                         ->where('clave_insumo_medico',$parametros['clave'])
-                        ->where('existencia','>',0)
+                        ->where(function ($query){
+                            $query->where('existencia','>',0)->orWhere('existencia_unidosis','>',0);
+                        })
+                        //->where('existencia','>',0)
                         ->where('programa_id',$programa_id)
                         ->where('almacen_id',$parametros['almacen'])
                         ->orderBy('fecha_caducidad','ASC')
