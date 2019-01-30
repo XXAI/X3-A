@@ -61,13 +61,18 @@ Route::group(['prefix' => 'medicos','namespace' => 'Medicos'], function () {
     Route::resource('pacientes',         'PacientesController',    ['only' => ['index', 'show', 'store','update','destroy']]);
 });
 
-Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
-    Route::put('migrar-servidor/{id}', 'MigracionServidorOfflineController@migrar');
-});
 
 
 
 Route::group(['middleware' => 'jwt'], function () {
+
+    Route::group(['prefix' => 'opciones-avanzadas','namespace' => 'OpcionesAvanzadas'], function () {
+        Route::get('migrar-servidor/{id}', 'MigracionServidorOfflineController@migrar');
+    });
+    
+
+
+
     Route::put('editar-perfil/{id}',               'EditarPerfilController@editar');
     Route::resource('usuarios',                 'UsuarioController',    ['only' => ['index', 'show', 'store','update','destroy']]);
     Route::resource('roles',                    'RolController',           ['only' => ['index', 'show', 'store','update','destroy']]);
