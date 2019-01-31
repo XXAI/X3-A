@@ -98,7 +98,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         Storage::append('sync/header.sync',"FECHA_SYNC=".$fecha_generacion);
 
         Storage::put('sync/sumami.sync', "");        
-        Storage::append('sync/sumami.sync', "INSERT INTO sincronizaciones (servidor_id,fecha_generacion) VALUES ('".env('SERVIDOR_ID')."','".$fecha_generacion."'); \n");
+        Storage::append('sync/sumami.sync', "INSERT INTO sincronizaciones (servidor_id,fecha_generacion) VALUES ('".env('SERVIDOR_ID')."','".$fecha_generacion."');#EOL#\n");
         
         try {
 
@@ -152,7 +152,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                             //Storage::append('sync/sumami.sync', $item);                       
                             $query .= $item;
                         }
-                        $query .= "; \n";
+                        $query .= ";#EOL#\n";
                         //Storage::append('sync/sumami.sync', "; \n");
                     }
                     Storage::append('sync/sumami.sync', $query);
@@ -236,7 +236,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                             }
                             
                         }
-                        $query .= ") ON DUPLICATE KEY UPDATE ".$update."; \n";
+                        $query .= ") ON DUPLICATE KEY UPDATE ".$update.";#EOL#\n";
                     }
                   
                     Storage::append('sync/sumami.sync', $query);
@@ -319,6 +319,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
         $conexion_local = DB::connection('mysql');
         $conexion_local->beginTransaction();
         $clues_que_hace_sync = '';
+        $fecha_generacion = date('Y-m-d H:i:s');
 
         try {
              
@@ -429,7 +430,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                                             
                                                             $query .= $item;
                                                         }
-                                                        $query .= "; \n";
+                                                        $query .= ";#EOL#\n";
                                                         
                                                     }
 
@@ -460,8 +461,17 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                    
                                     // Se ejecuta la sincronización
                                     $contents = Storage::get("importar/".$servidor->id."/sumami.sync");
+                                    
                                     $conexion_local->statement('SET FOREIGN_KEY_CHECKS=0');
-                                    $conexion_local->getpdo()->exec($contents);
+                                    $content_array = explode("#EOL#".PHP_EOL,$contents);
+                                    foreach($content_array as $line){
+                                        if(trim($line)!=""){
+                                        $conexion_local->statement($line);
+                                        }
+                                        
+                                    }
+                                    //$conexion_local->getpdo()->exec($contents);
+
                                     $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
                                 
                                     // Agregamos las tablas pivote al archivo de confirmación para su descarga en offline
@@ -546,7 +556,7 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                                     }
                                                     
                                                 }
-                                                $query .= ") ON DUPLICATE KEY UPDATE ".$update."; \n";
+                                                $query .= ") ON DUPLICATE KEY UPDATE ".$update.";#EOL#\n";
                                                 
                                                                       
                                                    
@@ -639,14 +649,14 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                 "descripcion" => "Intentó importar archivo de sincronización manual pero hubo un error."
             ]);
             
-            return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+            return \Response::json(['error' => $e->getMessage(), 'line'=> $e->getLine()], HttpResponse::HTTP_CONFLICT);
         } 
         catch(\Exception $e ){
             LogSync::create([
                 "clues" => $clues_que_hace_sync,
                 "descripcion" => "Intentó importar archivo de sincronización manual pero hubo un error."
             ]);
-            return \Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+            return \Response::json(['error' => $e->getMessage(), 'line'=> $e->getLine()], HttpResponse::HTTP_CONFLICT);
         }
     }
 
@@ -721,7 +731,11 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     $contents = Storage::get("confirmacion/catalogos.sync");
                                     if($contents != ""){
                                         $conexion_local->statement('SET FOREIGN_KEY_CHECKS=0');
-                                        $conexion_local->getpdo()->exec($contents);
+                                        $content_array = explode("#EOL#".PHP_EOL,$contents);
+                                        foreach($content_array as $line){
+                                            $conexion_local->statement($line);
+                                        }
+                                        //$conexion_local->getpdo()->exec($contents);
                                         $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
                                     }
 
@@ -729,7 +743,11 @@ class SincronizacionController extends \App\Http\Controllers\Controller
                                     $contents = Storage::get("confirmacion/pivotes.sync");
                                     if($contents != ""){
                                         $conexion_local->statement('SET FOREIGN_KEY_CHECKS=0');
-                                        $conexion_local->getpdo()->exec($contents);
+                                        $content_array = explode("#EOL#".PHP_EOL,$contents);
+                                        foreach($content_array as $line){
+                                            $conexion_local->statement($line);
+                                        }
+                                        //$conexion_local->getpdo()->exec($contents);
                                         $conexion_local->statement('SET FOREIGN_KEY_CHECKS=1');
                                     }
 
