@@ -58,6 +58,52 @@ class PedidosOrdinariosController extends Controller
         return Response::json([ 'data' => $presupuesto],200);
     }
 
+    public function aumentarPresupuesto(Request $request, $id)
+    {
+        //AKIRA PENDIENTE
+        $pedidoOrdinario = PedidoOrdinario::find($id);
+
+        if(!$pedidoOrdinario){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+        $input = Input::all();
+
+        if(isset($input["pedido_ordinario_unidad_medica"])){
+            $pedidoOrdinarioUnidadMedica = PedidoOrdinarioUnidadMedica::find($input["pedido_ordinario_unidad_medica"]["id"]);
+
+            if(!$pedidoOrdinarioUnidadMedica){
+                return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+            }
+
+            
+
+            if($pedidoOrdinarioUnidadMedica->pedido_ordinario_id != $pedidoOrdinario->id){
+                return Response::json(['error' => "El pedido ordinario no corresponde al de la unidad médica."], HttpResponse::HTTP_NOT_FOUND);
+            }
+            // Aumentar presupuesto especifico
+            return Response::json(['data' => "presupeusto específico ajustado."], HttpResponse::HTTP_OK);
+        } else {
+            //Aumentar el presupuesto a todos
+            return Response::json(['data' => "Todos los presupuestos ezxcedidos ajustados."],HttpResponse::HTTP_OK);
+        }
+        
+
+
+
+       
+       /* $precios = $object->precios;
+        foreach($precios as $precio){
+            $precio->tipo;
+            $precio->insumo;
+        }*/
+       
+        
+        $object =  $object->load("pedidosOrdinariosUnidadesMedicas.unidadMedica");
+
+        return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
+    }
+
     public function show(Request $request, $id)
     {
         $object = PedidoOrdinario::find($id);
