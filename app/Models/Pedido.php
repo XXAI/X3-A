@@ -117,4 +117,18 @@ class Pedido extends BaseModel
     public function usuario(){
         return $this->hasOne('App\Models\Usuario', "id", "usuario_id");
     }
+
+    //Villa: Busqueda de insumos dentro del pedido
+    public function scopeBuscarInsumoPedido($query, $insumo = ""){
+        $query->join("movimiento_pedido", "movimiento_pedido.pedido_id", "=", "pedidos.id")
+                ->join("movimiento_insumos", "movimiento_insumos.movimiento_id", "=", "movimiento_pedido.movimiento_id")
+                ->join("insumos_medicos", "insumos_medicos.clave", "=", "movimiento_insumos.clave_insumo_medico")
+                ->groupBy("pedidos.id")
+                ->where(function($query) use ($insumo) {
+                    $query->where('movimiento_insumos.clave_insumo_medico','LIKE',"%".$insumo."%")->orWhere('insumos_medicos.descripcion','LIKE',"%".$insumo."%")
+                    ->orWhere('pedidos.id','LIKE',"%".$insumo."%")->orWhere('pedidos.descripcion','LIKE',"%".$insumo."%")->orWhere('pedidos.folio','LIKE',"%".$insumo."%");
+        });
+            
+    }
+
 }

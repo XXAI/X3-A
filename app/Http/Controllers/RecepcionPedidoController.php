@@ -60,9 +60,11 @@ class RecepcionPedidoController extends Controller
         $pedidos = Pedido::getModel();
 
        if ($parametros['q']) {
-            $pedidos =  $pedidos->where(function($query) use ($parametros) {
-                 $query->where('id','LIKE',"%".$parametros['q']."%")->orWhere('descripcion','LIKE',"%".$parametros['q']."%")->orWhere('folio','LIKE',"%".$parametros['q']."%");
-             });
+            /*$pedidos =  $pedidos->where(function($query) use ($parametros) {
+                 $query->orWhere('pedidos.id','LIKE',"%".$parametros['q']."%")->orWhere('pedidos.descripcion','LIKE',"%".$parametros['q']."%")->orWhere('pedidos.folio','LIKE',"%".$parametros['q']."%");
+			 });*/
+			 
+			 $pedidos = $pedidos->BuscarInsumoPedido($parametros['q']);
         }
 
         //Harima: Filtro para diferentes tipos de almacenes, solo los almacenes principales pueden ver pedidos a farmcias subrogadas
@@ -129,6 +131,8 @@ class RecepcionPedidoController extends Controller
 		$pedidos = $pedidos->orWhere(function($query)use($almacen){
 			$query->where('almacen_solicitante',$almacen->id)->where('clues_destino',$almacen->clues)->where('tipo_pedido_id','PEA')->where('status','!=','BR');
 		});
+
+		
 	
         if(isset($parametros['page'])){
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 25;
