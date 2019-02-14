@@ -323,6 +323,7 @@ class RecepcionPedidoController extends Controller
 			'tipo_movimiento_id' => $tipo_movimiento, //Recepcion de pedido
 			'fecha_movimiento' => $parametros['fecha_movimiento'],
 			'almacen_id' => $almacen->id,
+			'programa_id' => $pedido->programa_id,
 			'observaciones' => ($parametros['observaciones'])?$parametros['observaciones']:null
 		];
 
@@ -477,6 +478,7 @@ class RecepcionPedidoController extends Controller
 						$reglas_stock['fecha_caducidad'] = 'required';
 
 					$value['almacen_id'] = $almacen->id;
+					$value['programa_id'] = $pedido->programa_id;
 
 					$v = Validator::make($value, $reglas_stock, $mensajes);
 
@@ -498,9 +500,9 @@ class RecepcionPedidoController extends Controller
 						}
 					
 						if(isset($value['codigo_barras'])){
-							$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->first(); //Verifica si existe el medicamento en el stock
+							$insert_stock = Stock::where('codigo_barras',$value['codigo_barras'])->where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->where('programa_id',$pedido->programa_id)->first(); //Verifica si existe el medicamento en el stock
 						}else{
-							$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->Where(function ($query) {
+							$insert_stock = Stock::where('fecha_caducidad',$value['fecha_caducidad'])->where('lote',$value['lote'])->where('clave_insumo_medico',$value['clave_insumo_medico'])->where('almacen_id', $almacen->id)->where('programa_id',$pedido->programa_id)->Where(function ($query) {
 								$query->whereNull('codigo_barras')
 									->orWhere('codigo_barras', '');
 							})->first(); //Verifica si existe el medicamento en el stock

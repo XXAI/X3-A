@@ -67,8 +67,6 @@ class DatosServidorCentralController extends Controller{
                     'ajuste_presupuesto_pedidos_cancelados',
                     'almacenes_servicios',
                     'almacen_tipos_movimientos',
-                    'pedidos',
-                    'pedidos_insumos',
                     'clues_claves',
                     'clues_servicios',
                     'clues_turnos',

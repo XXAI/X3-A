@@ -117,12 +117,14 @@ class InventarioInsumosController extends Controller
         $clues   = $almacen->clues;
 
 
-            if($parametros['buscar_en'] == "MIS_CLAVES")
-            {
-                $claves = DB::table("clues_claves AS cc")->leftJoin('insumos_medicos AS im', 'im.clave', '=', 'cc.clave_insumo_medico')
+            if($parametros['buscar_en'] == "MIS_CLAVES"){
+                $claves = DB::table("clues_claves AS cc")
+                              ->leftJoin('insumos_medicos AS im', 'im.clave', '=', 'cc.clave_insumo_medico')
                               ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'cc.clave_insumo_medico')
                               ->select('cc.clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','es_unidosis')
-                              ->where('clues',$clues);
+                              ->where('clues',$clues)
+                              ->whereNull('cc.deleted_at')
+                              ->whereNull('im.deleted_at');
 
                 if($parametros['clave_insumo'] != "")
                 {
@@ -130,12 +132,11 @@ class InventarioInsumosController extends Controller
                         $query->where('cc.clave_insumo_medico','LIKE',"%".$parametros['clave_insumo']."%")->orWhere('im.descripcion','LIKE',"%".$parametros['clave_insumo']."%");
                     });
                 }
-            }
-            if($parametros['buscar_en'] == "TODAS_LAS_CLAVES")
-            {
+            }if($parametros['buscar_en'] == "TODAS_LAS_CLAVES"){
                 $claves = DB::table('insumos_medicos AS im')
                               ->leftJoin('medicamentos AS m', 'm.insumo_medico_clave', '=', 'im.clave')
-                              ->select('im.clave AS clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','im.es_unidosis');
+                              ->select('im.clave AS clave_insumo_medico','im.descripcion','im.tipo','im.es_causes','im.es_unidosis')
+                              ->whereNull('im.deleted_at');
                 if($parametros['clave_insumo'] != "")
                 {
                     $claves = $claves->where(function($query)use($parametros){

@@ -1409,18 +1409,24 @@ class MovimientoController extends Controller
             foreach($request['lotes'] as $i => $lote){
                 $lote = (object) $lote;
                 $lote_check =  Stock::where('clave_insumo_medico',$request['clave'])->find($lote->id);
+                $modo_salida = $request['modo'];
 
-                $v->after(function($v) use($lote,$lote_check,$i){
+                $v->after(function($v) use($lote,$lote_check,$i,$modo_salida){
                     if($lote_check){
                         if($lote->cantidad <= 0){
                             $v->errors()->add('lote_'.$lote->id.'_', 'cantidad_invalida');
                         }
                         /// validar cantidad solicitada en req contra lo del find
-                        if($lote->cantidad <= $lote_check->existencia){
-                            //
+                        if($modo_salida == 'N'){
+                            if($lote->cantidad > $lote_check->existencia){
+                                $v->errors()->add('lote_'.$lote->id.'_', 'lote_insuficiente');
+                            }
                         }else{
-                            $v->errors()->add('lote_'.$lote->id.'_', 'lote_insuficiente');
+                            if($lote->cantidad > $lote_check->existencia_unidosis){
+                                $v->errors()->add('lote_'.$lote->id.'_', 'lote_insuficiente');
+                            }
                         }
+                        
                     }else{
                         if($lote->cantidad <= 0){
                             $v->errors()->add('lote_'.$lote->id.'_', 'cantidad_invalida');
@@ -1594,8 +1600,7 @@ class MovimientoController extends Controller
 ///**************************************************************************************************************************
        
 
-    private function validarTransaccionSalida($datos, $movimiento_salida,$almacen_id)
-    {
+    private function validarTransaccionSalida($datos, $movimiento_salida,$almacen_id){
 		$success = false;
 
         //comprobar que el servidor id no me lo envian por parametro, si no poner el servidor por default de la configuracion local, si no seleccionar el servidor del parametro
@@ -1613,12 +1618,10 @@ class MovimientoController extends Controller
         $lotes_master = array();
 
         // si se guarda el movimiento tratar de guardar el detalle de insumos
-        if( $movimiento_salida->save() )
-        {
+        if( $movimiento_salida->save() ){
             $success = true;
 
-            if(property_exists($datos,"movimiento_metadato"))
-            {
+            if(property_exists($datos,"movimiento_metadato")){
                 $metadatos = new MovimientoMetadato;
                 $metadatos->movimiento_id  = $movimiento_salida->id;
                 $metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
@@ -1626,94 +1629,98 @@ class MovimientoController extends Controller
                 $metadatos->turno_id       = $datos->movimiento_metadato['turno_id'];
 
                 $metadatos->save();
-                
             }
 
-
-            if(property_exists($datos, "insumos"))
-            {
+            if(property_exists($datos, "insumos")){
                 $insumos = array_filter($datos->insumos, function($v){return $v !== NULL;});
 
                 $lotes_nuevos  = array();
                 $lotes_ajustar = array();
  
-        ///  PRIMER PASADA PARA IDENTIFICAR LOS LOTES NUEVOS A AJUSTAR / GENERAR ENTRADA 
-                 foreach ($insumos as $key => $insumo)
-                { 
-                     if($insumo != NULL)
-                     {
-                         if(is_array($insumo)){ $insumo = (object) $insumo; }
+                ///  PRIMER PASADA PARA IDENTIFICAR LOS LOTES NUEVOS A AJUSTAR / GENERAR ENTRADA 
+                foreach ($insumos as $key => $insumo){
+                    if($insumo != NULL){
+                        if(is_array($insumo)){ 
+                             $insumo = (object) $insumo; 
+                        }
 
                          $clave_insumo_medico = $insumo->clave;
                          
                          $precio = $this->conseguirPrecio($clave_insumo_medico);
 
-                                foreach($insumo->lotes as $index => $lote)
-                                {
-                                     if(is_array($lote)){ $lote = (object) $lote; }
+                        foreach($insumo->lotes as $index => $lote){
+                            if(is_array($lote)){ 
+                                    $lote = (object) $lote; 
+                            }
 
+                            ///REVISAR MODO NORMAL Ó MODO UNIDOSIS AQUI
 
-                                     ///REVISAR MODO NORMAL Ó MODO UNIDOSIS AQUI
+                            if($lote->nuevo == 1){
+                                $lote_temp = Stock::where('lote',$lote->lote)
+                                                ->where('fecha_caducidad',$lote->fecha_caducidad)
+                                                ->where('codigo_barras',$lote->codigo_barras)
+                                                ->where('clave_insumo_medico',$clave_insumo_medico)
+                                                ->where('almacen_id',$almacen_id)
+                                                ->orderBy('created_at','DESC')->first();
 
-                                    if($lote->nuevo == 1)
-                                    {
-                                         $lote_temp = Stock::where('lote',$lote->lote)
-                                                            ->where('fecha_caducidad',$lote->fecha_caducidad)
-                                                            ->where('codigo_barras',$lote->codigo_barras)
-                                                            ->where('clave_insumo_medico',$clave_insumo_medico)
-                                                            ->where('almacen_id',$almacen_id)
-                                                            ->orderBy('created_at','DESC')->first();
-
-                                        /// si ya existe un lote vacio con esos detalles : se agrega uno
-                                        if($lote_temp)
-                                          { 
-                                                // Se actualiza el stock y sus detalles
-                                                $lote_temp->existencia          = $lote_temp->existencia + $lote->existencia;
-                                                $lote_temp->existencia_unidosis = $lote_temp->existencia_unidosis + ($lote->existencia * $insumo->cantidad_x_envase);
-                                                
-                                                //$lote_temp->unidosis_sueltas    = 0;
-                                                //$lote_temp->existencia_unidosis = 0;
-                                                //aqui se calcula la exstencia unidosis parcial
-
-                                                $lote_temp->save();
-                                                // adicion del campo cantidad al objeto lote/stock
-                                                $lote_temp->cantidad    = property_exists($lote_temp, "cantidad") ? $lote_temp->cantidad : $lote->cantidad;
-                                                $lote_temp->modo_salida = property_exists($lote_temp, "modo_salida") ? $lote_temp->modo_salida : $lote->modo_salida;
-
-                                                array_push($lotes_nuevos,$lote_temp);
-                                                array_push($lotes_master,$lote_temp);
-                                          }else{
-                                                    $lote_insertar = new Stock;
-
-                                                    $lote_insertar->almacen_id             = $movimiento_salida->almacen_id;
-                                                    $lote_insertar->clave_insumo_medico    = $clave_insumo_medico;
-                                                    $lote_insertar->marca_id               = NULL;
-                                                    $lote_insertar->lote                   = $lote->lote;
-                                                    $lote_insertar->fecha_caducidad        = $lote->fecha_caducidad;
-                                                    $lote_insertar->codigo_barras          = $lote->codigo_barras;
-                                                    $lote_insertar->existencia             = $lote->existencia;
-                                                    $lote_insertar->existencia_unidosis    = ( $insumo->cantidad_x_envase * $lote->cantidad );
-
-                                                    $lote_insertar->unidosis_sueltas  = 0;
-                                                    $lote_insertar->envases_parciales = 0;
-
-                                                    $lote_insertar->save();
-                                                    //      adicion del campo cantidad al objeto lote/stock
-                                                    $lote_insertar->cantidad    = property_exists($lote_insertar, "cantidad") ? $lote_insertar->cantidad : $lote->cantidad;
-                                                    $lote_insertar->modo_salida = property_exists($lote_insertar, "modo_salida") ? $lote_insertar->modo_salida : $lote->modo_salida;
-
-                                                    array_push($lotes_nuevos,$lote_insertar);
-                                                    array_push($lotes_master,$lote_insertar);
-                                               }
-
+                                /// si ya existe un lote vacio con esos detalles : se agrega uno
+                                if($lote_temp){ 
+                                    // Se actualiza el stock y sus detalles
+                                    if($modo_salida == 'N'){
+                                        $lote_temp->existencia             += $lote->existencia;
+                                        $lote_temp->existencia_unidosis    += ($lote->existencia * $insumo->cantidad_x_envase);
                                     }else{
-                                            // aqui ya trae el campo cantidad el objeto lote/stock
-                                            array_push($lotes_master,$lote);
-                                         }
-                                /// *********************************************************************************************************************************************************************************************************
-                                /// *********************************************************************************************************************************************************************************************************
-                                                                    
-                                } /// FIN PRIMER FOREACH QUE RECORRE TODOS LOS INSUMOS PARA SALIR
+                                        $lote_temp->existencia             += 0;
+                                        $lote_temp->existencia_unidosis    += $lote->existencia_unidosis;
+                                        $lote_temp->unidosis_sueltas       += $lote->existencia_unidosis;
+                                        $lote_temp->envases_parciales      = 1;
+                                    }
+                                    //$lote_temp->unidosis_sueltas    = 0;
+                                    //$lote_temp->existencia_unidosis = 0;
+                                    //aqui se calcula la exstencia unidosis parcial
+
+                                    $lote_temp->save();
+                                    // adicion del campo cantidad al objeto lote/stock
+                                    $lote_temp->cantidad    = property_exists($lote_temp, "cantidad") ? $lote_temp->cantidad : $lote->cantidad;
+                                    $lote_temp->modo_salida = property_exists($lote_temp, "modo_salida") ? $lote_temp->modo_salida : $lote->modo_salida;
+
+                                    array_push($lotes_nuevos,$lote_temp);
+                                    array_push($lotes_master,$lote_temp);
+                                }else{
+                                    $lote_insertar = new Stock;
+
+                                    $lote_insertar->almacen_id             = $movimiento_salida->almacen_id;
+                                    $lote_insertar->clave_insumo_medico    = $clave_insumo_medico;
+                                    $lote_insertar->marca_id               = NULL;
+                                    $lote_insertar->lote                   = $lote->lote;
+                                    $lote_insertar->fecha_caducidad        = $lote->fecha_caducidad;
+                                    $lote_insertar->codigo_barras          = $lote->codigo_barras;
+
+                                    if($lote->modo_salida == 'N'){
+                                        $lote_insertar->existencia             = $lote->existencia;
+                                        $lote_insertar->existencia_unidosis    = ( $insumo->cantidad_x_envase * $lote->cantidad );
+                                    }else{
+                                        $lote_insertar->existencia             = 0;
+                                        $lote_insertar->existencia_unidosis    = $lote->existencia_unidosis;
+                                        $lote_insertar->unidosis_sueltas       = $lote->existencia_unidosis;
+                                        $lote_insertar->envases_parciales      = 1;
+                                    }
+
+                                    $lote_insertar->save();
+                                    //      adicion del campo cantidad al objeto lote/stock
+                                    $lote_insertar->cantidad    = property_exists($lote_insertar, "cantidad") ? $lote_insertar->cantidad : $lote->cantidad;
+                                    $lote_insertar->modo_salida = property_exists($lote_insertar, "modo_salida") ? $lote_insertar->modo_salida : $lote->modo_salida;
+
+                                    array_push($lotes_nuevos,$lote_insertar);
+                                    array_push($lotes_master,$lote_insertar);
+                                }
+                            }else{
+                                // aqui ya trae el campo cantidad el objeto lote/stock
+                                array_push($lotes_master,$lote);
+                            }
+                        /// *********************************************************************************************************************************************************************************************************
+                        /// *********************************************************************************************************************************************************************************************************
+                        } /// FIN PRIMER FOREACH QUE RECORRE TODOS LOS INSUMOS PARA SALIR
 
                         /// GUARDAR MOVIMIENTO_DETALLES DEL INSUMO RECORRIDO 
                        $stocks = Stock::where('clave_insumo_medico',$clave_insumo_medico)
@@ -1724,19 +1731,17 @@ class MovimientoController extends Controller
                         $existencia = 0;
                         $existencia_unidosis = 0;
  
-                        foreach($stocks as $stock)
-                        {   
+                        foreach($stocks as $stock){
                             $existencia          += $stock->existencia; 
                             $existencia_unidosis += $stock->existencia_unidosis; 
-                        }  
+                        }
 
-                        $movimiento_detalle = new MovimientoDetalle;
+                        $movimiento_detalle                      = new MovimientoDetalle;
                         $movimiento_detalle->movimiento_id       = $movimiento_salida->id;
                         $movimiento_detalle->clave_insumo_medico = $clave_insumo_medico;
                         $movimiento_detalle->modo_salida         = $insumo->modo_salida;
 
-                        if($insumo->modo_salida == 'N')
-                        {
+                        if($insumo->modo_salida == 'N'){
                             $movimiento_detalle->cantidad_solicitada          = $insumo->cantidad_solicitada;
                             $movimiento_detalle->cantidad_solicitada_unidosis = $insumo->cantidad_solicitada * $insumo->cantidad_x_envase;
 
@@ -1750,31 +1755,29 @@ class MovimientoController extends Controller
                             $movimiento_detalle->cantidad_negada_unidosis     = ( $insumo->cantidad_solicitada - $insumo->cantidad_surtida ) * ( $insumo->cantidad_x_envase ); 
 
                         }else{
-                                $movimiento_detalle->cantidad_solicitada          = $insumo->cantidad_solicitada / $insumo->cantidad_x_envase;
-                                $movimiento_detalle->cantidad_solicitada_unidosis = $insumo->cantidad_solicitada ;
+                            $movimiento_detalle->cantidad_solicitada          = $insumo->cantidad_solicitada / $insumo->cantidad_x_envase;
+                            $movimiento_detalle->cantidad_solicitada_unidosis = $insumo->cantidad_solicitada ;
 
-                                $movimiento_detalle->cantidad_existente           = $existencia;
-                                $movimiento_detalle->cantidad_existente_unidosis  = $existencia_unidosis;
+                            $movimiento_detalle->cantidad_existente           = $existencia;
+                            $movimiento_detalle->cantidad_existente_unidosis  = $existencia_unidosis;
 
-                                $movimiento_detalle->cantidad_surtida             = $insumo->cantidad_surtida / $insumo->cantidad_x_envase;
-                                $movimiento_detalle->cantidad_surtida_unidosis    = $insumo->cantidad_surtida ;
+                            $movimiento_detalle->cantidad_surtida             = $insumo->cantidad_surtida / $insumo->cantidad_x_envase;
+                            $movimiento_detalle->cantidad_surtida_unidosis    = $insumo->cantidad_surtida ;
 
-                                $movimiento_detalle->cantidad_negada              = ( $insumo->cantidad_solicitada - $insumo->cantidad_surtida ) / ( $insumo->cantidad_x_envase );
-                                $movimiento_detalle->cantidad_negada_unidosis     = ( $insumo->cantidad_solicitada - $insumo->cantidad_surtida ) ; 
+                            $movimiento_detalle->cantidad_negada              = ( $insumo->cantidad_solicitada - $insumo->cantidad_surtida ) / ( $insumo->cantidad_x_envase );
+                            $movimiento_detalle->cantidad_negada_unidosis     = ( $insumo->cantidad_solicitada - $insumo->cantidad_surtida ) ; 
 
-                             } 
+                        }
                         
                         $movimiento_detalle->save();
 
                         // AQUI  LA TABLA DE ESTADISTICAS PARA NEGACIONES
-                        if($movimiento_detalle->cantidad_negada > 0)
-                        {
+                        if($movimiento_detalle->cantidad_negada > 0){
                             $negacion_resusitada = 0;
                             $tipo_insumo_id = 0;
 
                             $contrato_precio = ContratoPrecio::where('insumo_medico_clave',$clave_insumo_medico)->first();
-                            if($contrato_precio)
-                            {
+                            if($contrato_precio){
                                 $tipo_insumo_id = $contrato_precio->tipo_insumo_id;
                             }
 
@@ -1782,20 +1785,19 @@ class MovimientoController extends Controller
                             $negacion = NegacionInsumo::where('almacen_id',$almacen_id)
                                                 ->where('clave_insumo_medico',$clave_insumo_medico)
                                                 ->first();
-                            if(!$negacion)
-                            {
-                                    // Busqueda de registro de negación a resusitar para el insumo negado
-                                    $negacion = DB::table('negaciones_insumos')
-                                                    ->where('clave_insumo_medico',$clave_insumo_medico)
-                                                    ->where('deleted_at','!=',NULL)
-                                                    ->first();
+                            if(!$negacion){
+                                // Busqueda de registro de negación a resusitar para el insumo negado
+                                $negacion = DB::table('negaciones_insumos')
+                                                ->where('clave_insumo_medico',$clave_insumo_medico)
+                                                ->where('almacen_id',$almacen_id)
+                                                ->where('deleted_at','!=',NULL)
+                                                ->first();
 
-                                    // Si existe registro muerto se resusita
-                                    if($negacion)
-                                    {
-                                        DB::update("update negaciones_insumos set deleted_at = null where id = '".$negacion->id."'");
-                                        $negacion_resusitada = 1;
-                                    } 
+                                // Si existe registro muerto se resusita
+                                if($negacion){
+                                    DB::update("update negaciones_insumos set deleted_at = null where id = '".$negacion->id."'");
+                                    $negacion_resusitada = 1;
+                                } 
                             }
 
                             $negacion_insumo = NULL;
@@ -1807,39 +1809,35 @@ class MovimientoController extends Controller
                             $cantidad_entrada                = 0;
                             $cantidad_entrada_unidosis       = 0;
 
-                                $ultima_entrada_insumo = DB::table('movimientos')
-                                            ->join('movimiento_insumos', 'movimientos.id', '=', 'movimiento_insumos.movimiento_id')
-                                            ->select('movimientos.*', 'movimiento_insumos.clave_insumo_medico', 'movimiento_insumos.cantidad', 'movimiento_insumos.cantidad_unidosis')
-                                            ->where('movimientos.almacen_id',$almacen_id)
-                                            ->where('movimiento_insumos.clave_insumo_medico',$clave_insumo_medico)
-                                            ->where('movimientos.tipo_movimiento_id',1)
-                                            ->where('movimiento_insumos.deleted_at',NULL)
-                                            ->orderBy('created_at','DESC')
-                                            ->first();
+                            $ultima_entrada_insumo = DB::table('movimientos')
+                                        ->join('movimiento_insumos', 'movimientos.id', '=', 'movimiento_insumos.movimiento_id')
+                                        ->select('movimientos.*', 'movimiento_insumos.clave_insumo_medico', 'movimiento_insumos.cantidad', 'movimiento_insumos.cantidad_unidosis')
+                                        ->where('movimientos.almacen_id',$almacen_id)
+                                        ->where('movimiento_insumos.clave_insumo_medico',$clave_insumo_medico)
+                                        ->where('movimientos.tipo_movimiento_id',1)
+                                        ->where('movimiento_insumos.deleted_at',NULL)
+                                        ->orderBy('created_at','DESC')
+                                        ->first();
 
-                                //var_dump($ultima_entrada_insumo); die();
+                            //var_dump($ultima_entrada_insumo); die();
 
 
-                                if($ultima_entrada_insumo)
-                                {
-                                    $ultima_entrada                = $ultima_entrada_insumo->created_at;
-                                    $cantidad_entrada              = $ultima_entrada_insumo->cantidad;
-                                    $cantidad_entrada_unidosis     = $ultima_entrada_insumo->cantidad_unidosis;
-                                }
-                             ///**************************************************************************************************************************
+                            if($ultima_entrada_insumo){
+                                $ultima_entrada                = $ultima_entrada_insumo->created_at;
+                                $cantidad_entrada              = $ultima_entrada_insumo->cantidad;
+                                $cantidad_entrada_unidosis     = $ultima_entrada_insumo->cantidad_unidosis;
+                            }
+                            ///**************************************************************************************************************************
                            
-                           $cantidad_negada          = $movimiento_detalle->cantidad_negada;
-                           $cantidad_negada_unidosis = $movimiento_detalle->cantidad_negada_unidosis;        
+                            $cantidad_negada          = $movimiento_detalle->cantidad_negada;
+                            $cantidad_negada_unidosis = $movimiento_detalle->cantidad_negada_unidosis;        
                            
                             // Si existe registro de negación de insumo ( activo ó resusitado )
-                            if($negacion)
-                            { 
+                            if($negacion){ 
                                 $negacion_insumo  = NegacionInsumo::find($negacion->id);
 
-                                if($negacion_resusitada == 1)
-                                {
+                                if($negacion_resusitada == 1){
                                     //$negacion_insumo                                = $negacion;
-
                                     $negacion_insumo->fecha_inicio                  = date("Y-m-d");
                                     $negacion_insumo->fecha_fin                     = date("Y-m-d");
                                     $negacion_insumo->cantidad_acumulada            = $cantidad_negada;
@@ -1847,192 +1845,175 @@ class MovimientoController extends Controller
                                     $negacion_insumo->ultima_entrada                = $ultima_entrada;
                                     $negacion_insumo->cantidad_entrada              = $cantidad_entrada;
                                     $negacion_insumo->cantidad_entrada_unidosis     = $cantidad_entrada_unidosis;
-
                                 }else{
-                                        //$negacion_insumo                                = $negacion;
-
-                                        $negacion_insumo->cantidad_acumulada            = $negacion_insumo->cantidad_acumulada + $cantidad_negada;
-                                        $negacion_insumo->cantidad_acumulada_unidosis   = $negacion_insumo->cantidad_acumulada_unidosis + $cantidad_negada_unidosis;
-                                        $negacion_insumo->fecha_fin                     = date("Y-m-d");
-                                        $negacion_insumo->ultima_entrada                = $ultima_entrada;
-                                        $negacion_insumo->cantidad_entrada              = $cantidad_entrada;
-                                        $negacion_insumo->cantidad_entrada_unidosis     = $cantidad_entrada_unidosis; 
-                                     }
-
-                                
-                                $negacion_insumo->save();     
-                                
-                            }else{
-                                    $negacion_insumo = new NegacionInsumo;
-
-                                   // var_dump(json_encode($negacion_insumo)); die();
-
-                                    $negacion_insumo->clave_insumo_medico           = $clave_insumo_medico;
-                                    $negacion_insumo->clues                         = $almacen->clues;
-                                    $negacion_insumo->almacen_id                    = $almacen_id;
-                                    $negacion_insumo->tipo_insumo                   = $tipo_insumo_id;
-                                    $negacion_insumo->fecha_inicio                  = date("Y-m-d");
+                                    //$negacion_insumo                                = $negacion;
+                                    $negacion_insumo->cantidad_acumulada            = $negacion_insumo->cantidad_acumulada + $cantidad_negada;
+                                    $negacion_insumo->cantidad_acumulada_unidosis   = $negacion_insumo->cantidad_acumulada_unidosis + $cantidad_negada_unidosis;
                                     $negacion_insumo->fecha_fin                     = date("Y-m-d");
-                                    $negacion_insumo->cantidad_acumulada            = $cantidad_negada;
-                                    $negacion_insumo->cantidad_acumulada_unidosis   = $cantidad_negada_unidosis;
                                     $negacion_insumo->ultima_entrada                = $ultima_entrada;
                                     $negacion_insumo->cantidad_entrada              = $cantidad_entrada;
-                                    $negacion_insumo->cantidad_entrada_unidosis     = $cantidad_entrada_unidosis;
-
-                                    //var_dump($negacion_insumo); die();
-
-                                    $negacion_insumo->save();
-                                 }
-                        }else{
-                                //*************************************************************************************
-                                //Verificar si esta en la lista de negados. 
-                                $negacion = NegacionInsumo::where('almacen_id',$almacen_id)
-                                                        ->where('clave_insumo_medico',$clave_insumo_medico)
-                                                        ->first();
-                                if($negacion)
-                                { /// Si esta dentro de los negados, se borra porque en ese momento se esta surtiendo y dejando de negar.
-                                    $negacion->delete();
+                                    $negacion_insumo->cantidad_entrada_unidosis     = $cantidad_entrada_unidosis; 
                                 }
-                                //*************************************************************************************
 
-                             }
-                 
+                                $negacion_insumo->save();
+                            }else{
+                                $negacion_insumo = new NegacionInsumo;
 
+                                // var_dump(json_encode($negacion_insumo)); die();
+
+                                $negacion_insumo->clave_insumo_medico           = $clave_insumo_medico;
+                                $negacion_insumo->clues                         = $almacen->clues;
+                                $negacion_insumo->almacen_id                    = $almacen_id;
+                                $negacion_insumo->tipo_insumo                   = $tipo_insumo_id;
+                                $negacion_insumo->fecha_inicio                  = date("Y-m-d");
+                                $negacion_insumo->fecha_fin                     = date("Y-m-d");
+                                $negacion_insumo->cantidad_acumulada            = $cantidad_negada;
+                                $negacion_insumo->cantidad_acumulada_unidosis   = $cantidad_negada_unidosis;
+                                $negacion_insumo->ultima_entrada                = $ultima_entrada;
+                                $negacion_insumo->cantidad_entrada              = $cantidad_entrada;
+                                $negacion_insumo->cantidad_entrada_unidosis     = $cantidad_entrada_unidosis;
+
+                                //var_dump($negacion_insumo); die();
+
+                                $negacion_insumo->save();
+                            }
+                        }else{
+                            //*************************************************************************************
+                            //Verificar si esta en la lista de negados. 
+                            $negacion = NegacionInsumo::where('almacen_id',$almacen_id)
+                                                    ->where('clave_insumo_medico',$clave_insumo_medico)
+                                                    ->first();
+                            if($negacion){ /// Si esta dentro de los negados, se borra porque en ese momento se esta surtiendo y dejando de negar.
+                                $negacion->delete();
+                            }
+                            //*************************************************************************************
+                        }
                     }///FIN IF INSUMO != NULL
                 }////   FIN FOREACH     I N S U M O S     -> PRIMERA PASADA
-///********************************************************************************************************************************************
-                                /// insertar el movimiento entrada de ajuste y ligar los detalles con su stock ya agregado en pasada anterior
-                                if(count($lotes_nuevos) > 0)
-                                {
-                                    /// insertar movimiento de entrada por ajuste ( tipo_movimiento_id = 6 )
-                                    $movimiento_ajuste = new Movimiento;
-                                    $movimiento_ajuste->almacen_id                   =  $almacen_id;
-                                    $movimiento_ajuste->tipo_movimiento_id           =  6;
-                                    $movimiento_ajuste->status                       =  "FI";  
-                                    $movimiento_ajuste->fecha_movimiento             =  date("Y-m-d");
-                                    $movimiento_ajuste->observaciones                =  "SE REALIZA ENTRADA POR AJUSTE";
-                                    $movimiento_ajuste->cancelado                    =  property_exists($datos, "cancelado")                 ? $datos->cancelado                 : '';
-                                    $movimiento_ajuste->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion") ? $datos->observaciones_cancelacion : '';
-                                
-                                    $movimiento_ajuste->save();
+                
+                ///********************************************************************************************************************************************
+                /// insertar el movimiento entrada de ajuste y ligar los detalles con su stock ya agregado en pasada anterior
+                if(count($lotes_nuevos) > 0){
+                    /// insertar movimiento de entrada por ajuste ( tipo_movimiento_id = 6 )
+                    $movimiento_ajuste = new Movimiento;
+                    $movimiento_ajuste->almacen_id                   =  $almacen_id;
+                    $movimiento_ajuste->tipo_movimiento_id           =  6;
+                    $movimiento_ajuste->status                       =  "FI";  
+                    $movimiento_ajuste->fecha_movimiento             =  date("Y-m-d");
+                    $movimiento_ajuste->observaciones                =  "SE REALIZA ENTRADA POR AJUSTE";
+                    $movimiento_ajuste->cancelado                    =  property_exists($datos, "cancelado")                 ? $datos->cancelado                 : '';
+                    $movimiento_ajuste->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion") ? $datos->observaciones_cancelacion : '';
+                
+                    $movimiento_ajuste->save();
 
-                                    foreach($lotes_nuevos as $lote_link)
-                                    {
-                                        $item_detalles = new MovimientoInsumos;
+                    foreach($lotes_nuevos as $lote_link){
+                        $item_detalles = new MovimientoInsumos;
 
-                                        ///var_dump(json_encode($lote_link));
+                        ///var_dump(json_encode($lote_link));
 
-                                        $item_detalles->movimiento_id           = $movimiento_ajuste->id; 
-                                        $item_detalles->stock_id                = $lote_link->id;
-                                        $item_detalles->clave_insumo_medico     = $clave_insumo_medico; 
+                        $item_detalles->movimiento_id           = $movimiento_ajuste->id; 
+                        $item_detalles->stock_id                = $lote_link->id;
+                        $item_detalles->clave_insumo_medico     = $clave_insumo_medico; 
 
+                        $item_detalles->cantidad                = $lote_link->cantidad;
 
-                                        $item_detalles->cantidad                = $lote_link->cantidad;
+                        ///AQUI METER LA CANTIDAD UNIDOSIS
 
-                                        ///AQUI METER LA CANTIDAD UNIDOSIS
+                        $item_detalles->precio_unitario         = $precio['precio_unitario'];
+                        $item_detalles->iva                     = $precio['iva']; 
 
-                                        $item_detalles->precio_unitario         = $precio['precio_unitario'];
-                                        $item_detalles->iva                     = $precio['iva']; 
-                                        $item_detalles->precio_total            = ( $precio['precio_unitario'] + $precio['iva'] ) * $lote_link->cantidad;
+                        //if()
+                        $item_detalles->precio_total            = ( $precio['precio_unitario'] + $precio['iva'] ) * $lote_link->cantidad;
 
-                                        $item_detalles->save();
-                                    }
-                                } /// FIN IF EXISTEN LOTES NUEVOS 
+                        $item_detalles->save();
+                    }
+                } /// FIN IF EXISTEN LOTES NUEVOS 
+                ////*************************************************************************************************************************
+                //FOREACH SEGUNDA PASADA A INSUMOS PARA ACTUALIZAR STOCK DE SALIDA
+                foreach($lotes_master as $index => $lote){
+                    $lote_stock          = Stock::find($lote->id);
+                    $insumo_temp         = Insumo::find($lote_stock->clave_insumo_medico);
+                    $precio              = $this->conseguirPrecio($lote_stock->clave_insumo_medico);
+                                                                                        
+                    $insumo              = Insumo::datosUnidosis()->where('clave',$lote_stock->clave_insumo_medico)->first();
 
-////*************************************************************************************************************************
-                            //FOREACH SEGUNDA PASADA A INSUMOS PARA ACTUALIZAR STOCK DE SALIDA
-                                foreach($lotes_master as $index => $lote)
-                                {
-                                    $lote_stock          = Stock::find($lote->id);
-                                    $insumo_temp         = Insumo::find($lote_stock->clave_insumo_medico);
-                                    $precio              = $this->conseguirPrecio($lote_stock->clave_insumo_medico);
-                                                                                                        
-                                    $insumo              = Insumo::datosUnidosis()->where('clave',$lote_stock->clave_insumo_medico)->first();
+                    $cantidad_x_envase   = $insumo->cantidad_x_envase; 
+                    
+                    /// INICIA CALCULO DEL NUEVO STOCK SEGUN EL MODO ELEGIDO
+                    if($lote->modo_salida == "N"){
+                        $lote_stock->existencia          = ($lote_stock->existencia - $lote->cantidad );
+                        $lote_stock->existencia_unidosis = ($lote_stock->existencia_unidosis - ( $lote->cantidad * $cantidad_x_envase) );
+                    }else{ 
+                        /// la variable cantidad se interpreta para existencia_unidosis
+                        $para_salir = ($lote->cantidad / $cantidad_x_envase);
+                        $enteros_salir = 0;
+                        if($lote->cantidad <= $lote_stock->unidosis_sueltas){
+                            $enteros_salir = 0;
+                        }else{
+                        //aqui el error
+                            if($para_salir > 0 && $para_salir <= 1){
+                                $enteros_salir = 1;
+                            }else{                                        
+                                if($para_salir != intval($para_salir)){ // es un decimal y tambien es mayor que uno
+                                    // valida si para surtir la unidosis solicitada es necesario abrir una caja nueva 
+                                    // ( aparte de la que ya esta abierta )
+                                    if( ( $lote_stock->unidosis_sueltas + (intval($para_salir)*$cantidad_x_envase)) >= $lote->cantidad ){
+                                        $enteros_salir = intval($para_salir);
+                                    }else{ $enteros_salir = intval($para_salir)+1; }
+                                }else{ // es un numero entero
+                                        $enteros_salir = intval($para_salir);
+                                }
+                            }
+                        }
 
-                                    $cantidad_x_envase   = $insumo->cantidad_x_envase; 
+                        $nueva_existencia            =  $lote_stock->existencia - $enteros_salir;
+                        $nueva_existencia_unidosis   =  $lote_stock->existencia_unidosis - $lote->cantidad;
 
-                                    
-                                    /// INICIA CALCULO DEL NUEVO STOCK SEGUN EL MODO ELEGIDO
-                                    if($lote->modo_salida == "N"){
-                                        $lote_stock->existencia          = ($lote_stock->existencia - $lote->cantidad );
-                                        $lote_stock->existencia_unidosis = ($lote_stock->existencia_unidosis - ( $lote->cantidad * $cantidad_x_envase) );
-                                    }else{ 
-                                        /// la variable cantidad se interpreta para existencia_unidosis
-                                        $para_salir = ($lote->cantidad / $cantidad_x_envase);
-                                        $enteros_salir = 0;
-                                        if($lote->cantidad <= $lote_stock->unidosis_sueltas){
-                                            $enteros_salir = 0;
-                                        }else{
-                                        //aqui el error
-                                            if($para_salir > 0 && $para_salir <= 1){
-                                                $enteros_salir = 1;
-                                            }else{                                        
-                                                if($para_salir != intval($para_salir)){ // es un decimal y tambien es mayor que uno
-                                                    // valida si para surtir la unidosis solicitada es necesario abrir una caja nueva 
-                                                    // ( aparte de la que ya esta abierta )
-                                                    if( ( $lote_stock->unidosis_sueltas + (intval($para_salir)*$cantidad_x_envase)) >= $lote->cantidad ){
-                                                        $enteros_salir = intval($para_salir);
-                                                    }else{ $enteros_salir = intval($para_salir)+1; }
-                                                }else{ // es un numero entero
-                                                        $enteros_salir = intval($para_salir);
-                                                }
-                                            }
-                                        }
+                        $unidosis_enteras  = ( $nueva_existencia * $cantidad_x_envase );
+                        $unidosis_sueltas  = $nueva_existencia_unidosis - $unidosis_enteras;
 
-                                        $nueva_existencia            =  $lote_stock->existencia - $enteros_salir;
-                                        $nueva_existencia_unidosis   =  $lote_stock->existencia_unidosis - $lote->cantidad;
+                        $lote_stock->existencia          = $nueva_existencia;
+                        $lote_stock->existencia_unidosis = $nueva_existencia_unidosis;
+                        $lote_stock->unidosis_sueltas    = $unidosis_sueltas;
 
-                                        $unidosis_enteras  = ( $nueva_existencia * $cantidad_x_envase );
-                                        $unidosis_sueltas  = $nueva_existencia_unidosis - $unidosis_enteras;
+                        if($unidosis_sueltas > 0){
+                            $lote_stock->envases_parciales   = 1;
+                        }else{
+                            $lote_stock->envases_parciales   = 0;
+                        }
+                    }// fin else ( si es salida unidosis )
 
-                                        $lote_stock->existencia          = $nueva_existencia;
-                                        $lote_stock->existencia_unidosis = $nueva_existencia_unidosis;
-                                        $lote_stock->unidosis_sueltas    = $unidosis_sueltas;
+                    $lote_stock->save();
 
-                                        if($unidosis_sueltas > 0){
-                                            $lote_stock->envases_parciales   = 1;
-                                        }else{
-                                            $lote_stock->envases_parciales   = 0;
-                                        }
-                                    }// fin else ( si es salida unidosis )
+                    $item_detalles = new MovimientoInsumos;
 
-                                    $lote_stock->save();
+                    $item_detalles->movimiento_id           = $movimiento_salida->id; 
+                    $item_detalles->stock_id                = $lote_stock->id;
+                    $item_detalles->clave_insumo_medico     = $lote_stock->clave_insumo_medico; /// CORRECCION ORIGEN DE CLAVE
 
-                                    $item_detalles = new MovimientoInsumos;
+                    // se agregan las cantidades correspondientes segun el modo de salida
+                    if($lote->modo_salida == "N"){
+                        $item_detalles->cantidad                = $lote->cantidad;
+                        $item_detalles->cantidad_unidosis       = $lote->cantidad * $insumo->cantidad_x_envase;
+                    }else{
+                        $item_detalles->cantidad               = $lote->cantidad/$insumo->cantidad_x_envase;
+                        $item_detalles->cantidad_unidosis      = $lote->cantidad;
+                    }
+                    
+                    $item_detalles->modo_salida             = $lote->modo_salida;
 
-                                    $item_detalles->movimiento_id           = $movimiento_salida->id; 
-                                    $item_detalles->stock_id                = $lote_stock->id;
-                                    $item_detalles->clave_insumo_medico     = $lote_stock->clave_insumo_medico; /// CORRECCION ORIGEN DE CLAVE
+                    $item_detalles->precio_unitario         = $precio['precio_unitario'];
+                    $item_detalles->iva                     = $precio['iva'];
 
-                                    // se agregan las cantidades correspondientes segun el modo de salida
-                                    if($lote->modo_salida == "N")
-                                    {
-                                        $item_detalles->cantidad                = $lote->cantidad;
-                                        $item_detalles->cantidad_unidosis       = $lote->cantidad * $insumo->cantidad_x_envase;
-                                    }else{
-                                            $item_detalles->cantidad               = $lote->cantidad/$insumo->cantidad_x_envase;
-                                            $item_detalles->cantidad_unidosis      = $lote->cantidad;
-                                         }
-                                    
-                                    $item_detalles->modo_salida             = $lote->modo_salida;
+                    $item_detalles->precio_total            = ( $precio['precio_unitario'] + $precio['iva'] ) * $item_detalles->cantidad;
 
-                                    $item_detalles->precio_unitario         = $precio['precio_unitario'];
-                                    $item_detalles->iva                     = $precio['iva'];
-
-                                    $item_detalles->precio_total            = ( $precio['precio_unitario'] + $precio['iva'] ) * $item_detalles->cantidad;
-
-                                    $item_detalles->save();
-                                
-                                }/// FIN FOREACH SEGUNDA PASADA A INSUMOS
-
+                    $item_detalles->save();
+                
+                }/// FIN FOREACH SEGUNDA PASADA A INSUMOS
             } /// FIN IF EXISTE INSUMOS           
         }
-        
         return $success;
     }
-
-
-
 
 ///**************************************************************************************************************************
 ///                  M O V I M I E N T O          S   A  L  I   D  A       R  E  C  E  T  A 
@@ -2064,7 +2045,7 @@ class MovimientoController extends Controller
             if(property_exists($datos,"receta")){
 
                 //Se agrega el personal en caso no exista
-                if(is_numeric($datos->receta['personal_clues_id'])){
+                if(isset($datos->receta['personal_clues_id']) && is_numeric($datos->receta['personal_clues_id'])){
                     $receta->personal_clues_id  = $datos->receta['personal_clues_id'];
                 }else{
                     $almacen = Almacen::find($almacen_id);
@@ -2144,6 +2125,7 @@ class MovimientoController extends Controller
                         $modo_salida = $insumo->modo;
 
                         if($insumo->cantidad_recetada > $insumo->cantidad_surtida){
+                            
                             $cantidad_negada = $insumo->cantidad_recetada - $insumo->cantidad_surtida;
                             //TODO:aqui
 
@@ -2202,16 +2184,27 @@ class MovimientoController extends Controller
                                 $lote = (object) $lote;
                             }
 
-                            if(property_exists($lote, "nuevo")){
+                            //if(property_exists($lote, "nuevo")){
+                            if($lote->nuevo){
                                 $lote_temp = Stock::where('lote',$lote->lote)
                                                     ->where('fecha_caducidad',$lote->fecha_caducidad)
                                                     ->where('codigo_barras',$lote->codigo_barras)
                                                     ->where('clave_insumo_medico',$insumo->clave)
+                                                    ->where('almacen_id',$movimiento_salida_receta->almacen_id)
                                                     ///Agregar programa
                                                     ->orderBy('created_at','DESC')->first();
 
                                 if($lote_temp){ /// si ya existe un lote vacio con esos detalles : se agrega un
-                                    $lote_temp->existencia = $lote->existencia;
+                                    if($modo_salida == 'N'){
+                                        $lote_temp->existencia             += $lote->existencia;
+                                        $lote_temp->existencia_unidosis    += $lote->existencia_unidosis;
+                                    }else{
+                                        $lote_temp->existencia             += 0;
+                                        $lote_temp->existencia_unidosis    += $lote->existencia_unidosis;
+                                        $lote_temp->unidosis_sueltas       += $lote->existencia_unidosis;
+                                        $lote_temp->envases_parciales      = 1;
+                                    }
+
                                     $lote_temp->save();
                                     // adicion del campo cantidad al objeto lote/stock
                                     $lote_temp->cantidad = property_exists($lote_temp, "cantidad") ? $lote_temp->cantidad : $lote->cantidad;
@@ -2231,8 +2224,18 @@ class MovimientoController extends Controller
                                     $lote_insertar->lote                   = $lote->lote;
                                     $lote_insertar->fecha_caducidad        = $lote->fecha_caducidad;
                                     $lote_insertar->codigo_barras          = $lote->codigo_barras;
-                                    $lote_insertar->existencia             = $lote->existencia;
-                                    $lote_insertar->existencia_unidosis    = ( $insumo->cantidad_x_envase * $lote->cantidad );
+
+                                    if($modo_salida == 'N'){
+                                        $lote_insertar->existencia             = $lote->existencia;
+                                        $lote_insertar->existencia_unidosis    = $lote->existencia_unidosis;
+                                    }else{
+                                        $lote_insertar->existencia             = 0;
+                                        $lote_insertar->existencia_unidosis    = $lote->existencia_unidosis;
+                                        $lote_insertar->unidosis_sueltas       = $lote->existencia_unidosis;
+                                        $lote_insertar->envases_parciales      = 1;
+                                    }
+                                       
+                                    //$lote_insertar->existencia_unidosis    = ( $insumo->cantidad_x_envase * $lote->cantidad );
 
                                     $lote_insertar->save();
                                     // adicion del campo cantidad al objeto lote/stock
@@ -2301,11 +2304,11 @@ class MovimientoController extends Controller
                 /// FOREACH SEGUNDA PASADA A INSUMOS PARA ACTUALIZAR STOCK DE SALIDA
                 foreach($lotes_master as $index => $lote){
                     //var_dump($lote); die();
-                    $precio_insumo              = $this->conseguirPrecio($lote->clave_insumo_medico);                                                                   
-                    $insumo_info                = Insumo::datosUnidosis()->where('clave',$lote->clave_insumo_medico)->first();
-                    $cantidad_x_envase_insumo   = $insumo_info->cantidad_x_envase; 
-
                     $lote_stock                 = Stock::find($lote->id);
+
+                    $precio_insumo              = $this->conseguirPrecio($lote_stock->clave_insumo_medico);                                                                   
+                    $insumo_info                = Insumo::datosUnidosis()->where('clave',$lote_stock->clave_insumo_medico)->first();
+                    $cantidad_x_envase_insumo   = $insumo_info->cantidad_x_envase; 
 
                     if($lote->modo_salida == 'N'){
                         $lote_stock->existencia          = ($lote_stock->existencia - $lote->cantidad );
@@ -2345,7 +2348,7 @@ class MovimientoController extends Controller
 
                     $item_detalles->movimiento_id           = $movimiento_salida_receta->id; 
                     $item_detalles->stock_id                = $lote_stock->id; 
-                    $item_detalles->clave_insumo_medico     = $lote->clave_insumo_medico;
+                    $item_detalles->clave_insumo_medico     = $lote_stock->clave_insumo_medico;
 
                     if($lote->modo_salida == 'N'){
                         $item_detalles->cantidad                = $lote->cantidad;

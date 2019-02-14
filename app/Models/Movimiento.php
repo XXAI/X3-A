@@ -14,7 +14,7 @@ class Movimiento extends BaseModel{
     protected $guardarIDUsuario = true;
 
     protected $table = 'movimientos';
-    protected $fillable = ['status','almacen_id','tipo_movimiento_id','fecha_movimiento','observaciones'];
+    protected $fillable = ['status','almacen_id','programa_id','tipo_movimiento_id','fecha_movimiento','observaciones'];
     
     public function insumos(){
         return $this->hasMany('App\Models\MovimientoInsumos','movimiento_id')->with('stock.marca');

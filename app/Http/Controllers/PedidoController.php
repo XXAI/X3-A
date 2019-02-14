@@ -469,7 +469,9 @@ class PedidoController extends Controller{
             $pedido->director_id = $almacen_solicitante->unidadMedica->director_id;
             $pedido->encargado_almacen_id = $almacen_solicitante->encargado_almacen_id;
 
-
+            //Harima: Agregando programa_i 18 al pedido correspondiente al programa de Compra Tercerizada
+            $pedido->programa_id = 18;
+            
             $pedido->total_claves_solicitadas = $total_claves;
             $pedido->total_cantidad_solicitada = $total_insumos;
             $pedido->total_monto_solicitado = $total_monto;

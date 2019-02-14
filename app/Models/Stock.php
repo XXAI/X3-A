@@ -13,11 +13,8 @@ class Stock extends BaseModel{
 
     protected $table = 'stock';
 
-    protected $fillable = ["almacen_id","clave_insumo_medico", "marca_id", "lote", "fecha_caducidad", "codigo_barras", "existencia", "existencia_unidosis"];
-
-   
-
-
+    protected $fillable = ["almacen_id","clave_insumo_medico", "marca_id", "programa_id", "lote", "fecha_caducidad", "codigo_barras", "existencia", "existencia_unidosis"];
+    
     public function insumo(){
         return $this->belongsTo('App\Models\Insumo','clave_insumo_medico','clave');        
     }

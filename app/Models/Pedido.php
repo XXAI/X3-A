@@ -12,7 +12,7 @@ class Pedido extends BaseModel
     protected $guardarIDServidor = true;
     protected $guardarIDUsuario = true;
     protected $table = 'pedidos';
-    protected $fillable = [ 'tipo_insumo_id', 'tipo_pedido_id', 'clues','pedido_padre', 'folio', 'fecha', 'fecha_concluido', 'fecha_expiracion','descripcion','observaciones', 'almacen_solicitante', 'almacen_proveedor', 'organismo_dirigido', 'acta_id', 'recepcion_permitida','status', 'usuario_validacion', 'proveedor_id', 'presupuesto_id','presupuesto_ejercicio_id','clues_destino', "created_at","updated_at"];
+    protected $fillable = [ 'tipo_insumo_id', 'tipo_pedido_id', 'clues','pedido_padre', 'folio', 'fecha', 'fecha_concluido', 'fecha_expiracion','descripcion','observaciones', 'almacen_solicitante', 'almacen_proveedor', 'organismo_dirigido', 'acta_id', 'recepcion_permitida','status', 'usuario_validacion', 'proveedor_id','programa_id', 'presupuesto_id','presupuesto_ejercicio_id','clues_destino', "created_at","updated_at"];
     
     public function pedidoOrdinarioUnidadMedica(){
         return $this->hasOne('App\Models\PedidoOrdinarioUnidadMedica','pedido_id','id')->with('pedidoOrdinario');
@@ -96,6 +96,10 @@ class Pedido extends BaseModel
 
     public function presupuestoApartado(){
       return $this->hasOne('App\Models\PedidoPresupuestoApartado','pedido_id');
+    }
+
+    public function programa(){
+        return $this->hasOne('App\Models\Programa','programa_id');
     }
 
     public function logPedidoCancelado()
