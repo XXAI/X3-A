@@ -48,6 +48,8 @@ class ReporteSalidaController extends Controller
         $diferencia = $fechainicial->diff($fechafinal);
         $meses_diferencia = ( $diferencia->y * 12 ) + $diferencia->m;
         //$clues = "";
+        if($meses_diferencia == 0)
+            $meses_diferencia = 1;
         $reporte_salida = DB::table("reporte_salidas")
                             ->join('insumos_medicos', 'insumos_medicos.clave', '=', 'reporte_salidas.clave')
                             ->join('unidades_medicas', 'unidades_medicas.clues', '=', 'reporte_salidas.clues')
@@ -337,6 +339,7 @@ class ReporteSalidaController extends Controller
         $fechafinal = new \DateTime($parametros['hasta']);
         $diferencia = $fechainicial->diff($fechafinal);
         $meses_diferencia = ( $diferencia->y * 12 ) + $diferencia->m;
+        
         //$clues = "";
         $reporte_salida = DB::table("reporte_salidas")
                             ->join('insumos_medicos', 'insumos_medicos.clave', '=', 'reporte_salidas.clave')

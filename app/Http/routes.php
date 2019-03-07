@@ -100,9 +100,6 @@ Route::group(['middleware' => 'jwt'], function () {
     
     Route::post('programa-inventario',                 'ProgramaController@nuevoProgramaInventario');
     
-
-    
-
     // Akira: Estos 3 recursos que hacen aca si estan abajo dentro del middleware almacen??? :
     // Harima: Se colaron en algun merge que hicieron, los tomo como cambios en el commit, probablemente marco conflicto y lo arreglaron dejando estas lineas, los comento, si no hay problemas los elimino en el proximo commit
     //Route::resource('pedidos',          'PedidoController',     ['only' => ['index', 'show', 'store','update','destroy']]);    
@@ -251,6 +248,7 @@ Route::group(['middleware' => 'jwt'], function () {
         // # SECCION: Inventario 
         Route::group(['prefix' => 'inventario','namespace' => 'Inventario'], function () {
             Route::resource('inicializacion-inventario',    'InicializacionInventarioController',  ['only' => ['index', 'show', 'store','update','destroy']]);
+            
         });
 
         // # SECCION: Almacen 
@@ -262,7 +260,6 @@ Route::group(['middleware' => 'jwt'], function () {
             Route::get('responsables',                              'TransferenciaAlmacenController@responsables');
             Route::get('reporte-acuse',                             'TransferenciaAlmacenController@reporte_acuse');
         });
-
 
         Route::resource('inicializar-inventario-me',    'InicializarInventarioMedicamentosController',  ['only' => ['index', 'show', 'store','update','destroy']]);
         Route::resource('almacenes',                    'AlmacenController',    ['only' => ['index']]);
@@ -331,6 +328,9 @@ Route::group(['middleware' => 'jwt'], function () {
 
         Route::get('unidades-medicas-dependientes',     'UnidadesMedicasController@unidadesMedicasDependientes');
         Route::get('stock-insumo-medico',               'StockController@stockInsumoMedico');
+
+        Route::resource('reporte-estrada-salida',           'ReporteEntradaSalidaController',    ['only' => ['index', "show"]]);//Villa
+        Route::get('reporte-estrada-salida/catalogos',      'ReporteEntradaSalidaController@catalogo');//Villa
     });
 
     

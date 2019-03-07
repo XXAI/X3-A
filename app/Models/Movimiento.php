@@ -52,6 +52,10 @@ class Movimiento extends BaseModel{
         return $this->hasOne('App\Models\Almacen','id','almacen_id');
     }
 
+    public function tipoMovimiento(){
+        return $this->hasOne('App\Models\TiposMovimientos','id','tipo_movimiento_id');
+    }
+
     public function movimientoAjuste(){
         return $this->hasMany('App\Models\MovimientoAjuste','movimiento_id')->with('movimientoAjusteInsumo');
     }

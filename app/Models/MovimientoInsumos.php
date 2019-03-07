@@ -19,6 +19,10 @@ class MovimientoInsumos extends BaseModel{
         return $this->hasOne('App\Models\Insumo','clave','clave_insumo_medico')->withTrashed();
     }
 
+    public function tipoInsumo(){
+        return $this->hasOne('App\Models\TipoInsumo','id','clave_insumo_medico');
+    }
+
     public function stock(){
         return $this->belongsTo('App\Models\Stock','stock_id');
     }
