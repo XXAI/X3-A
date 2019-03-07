@@ -417,13 +417,11 @@ class EntradaAlmacenController extends Controller
 	 *     }
 	 */
 
-    public function store(Request $request)
-    {
+    public function store(Request $request){
         $errors = array(); 
 
-        $almacen_id=$request->get('almacen_id');       
+        $almacen_id=$request->get('almacen_id');
 
-        
         $datos = (object) Input::json()->all();	
         $success = false;
 
@@ -434,167 +432,143 @@ class EntradaAlmacenController extends Controller
         if($tipo_movimiento)
             $tipo = $tipo_movimiento->tipo;
 
-///*************************************************************************************************************************************
-
-            if($datos->estatus == "BR")
-            {
+            ///*************************************************************************************************************************************
+            
+            if($datos->estatus == "BR"){
                 $success = false;
 
                 DB::beginTransaction();
                 try{
 
                     $movimiento_entrada_br = new Movimiento;
-                
-            
+
                     $servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
 
-                //agregar al modelo los datos
-                $movimiento_entrada_br->almacen_id                   =  $almacen_id;
-                $movimiento_entrada_br->tipo_movimiento_id           =  $datos->tipo_movimiento_id;
-                $movimiento_entrada_br->status                       =  $datos->estatus; 
-                $movimiento_entrada_br->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")               ? $datos->fecha_movimiento          : '';
-                $movimiento_entrada_br->programa_id                  =  $datos->programa_id;
-                $movimiento_entrada_br->observaciones                =  property_exists($datos, "observaciones")                  ? $datos->observaciones             : '';
-                $movimiento_entrada_br->cancelado                    =  property_exists($datos, "cancelado")                      ? $datos->cancelado                 : '';
-                $movimiento_entrada_br->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion")      ? $datos->observaciones_cancelacion : '';
+                    //agregar al modelo los datos
+                    $movimiento_entrada_br->almacen_id                   =  $almacen_id;
+                    $movimiento_entrada_br->tipo_movimiento_id           =  $datos->tipo_movimiento_id;
+                    $movimiento_entrada_br->status                       =  $datos->estatus; 
+                    $movimiento_entrada_br->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")               ? $datos->fecha_movimiento          : '';
+                    $movimiento_entrada_br->programa_id                  =  $datos->programa_id;
+                    $movimiento_entrada_br->observaciones                =  property_exists($datos, "observaciones")                  ? $datos->observaciones             : '';
+                    $movimiento_entrada_br->cancelado                    =  property_exists($datos, "cancelado")                      ? $datos->cancelado                 : '';
+                    $movimiento_entrada_br->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion")      ? $datos->observaciones_cancelacion : '';
 
-                $movimiento_entrada_br->save(); 
+                    $movimiento_entrada_br->save(); 
 
-                if(property_exists($datos,"movimiento_metadato"))
-                {
-                    $metadatos = new MovimientoMetadato;
-                    $metadatos->movimiento_id  = $movimiento_entrada_br->id;
-                    //$metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
-                    $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
+                    if(property_exists($datos,"movimiento_metadato")){
+                        $metadatos = new MovimientoMetadato;
+                        $metadatos->movimiento_id  = $movimiento_entrada_br->id;
+                        //$metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
+                        $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
+                        //dd($metadatos); die();
+                        $metadatos->save();   
+                    }
 
-                    //dd($metadatos); die();
-
-
-                    $metadatos->save();   
-                }
-
-                /////****************************************************************************************************************************
+                    /////****************************************************************************************************************************
                     //MovimientoInsumos::where("movimiento_id", $movimiento_entrada_br->id)->delete(); 
                     
                     $movimientos_insumos_grabados = array();
 
-                    if(property_exists($datos, "insumos"))
-                    {
-                        if(count($datos->insumos) > 0 )
-                        {
+                    if(property_exists($datos, "insumos")){
+                        if(count($datos->insumos) > 0 ){
                             $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
-                            foreach ($detalle as $key => $insumo)
-                                {
-                                    //$validacion_insumos = $this->ValidarInsumos($key, NULL, $insumo, $tipo);
-                                    $insumo = (object) $insumo;                                    
-                                    //if($validacion_insumos == "")
-                                       // {
-                                            //insertar avance stock y mov_insumos
-                                            $insumo_info         = Insumo::datosUnidosis()->where('clave',$insumo->clave)->first();
-                                            $cantidad_x_envase   = $insumo_info->cantidad_x_envase;
-                                            $precio_insumo       = $this->conseguirPrecio($insumo->clave);
+                            foreach ($detalle as $key => $insumo){
+                                //$validacion_insumos = $this->ValidarInsumos($key, NULL, $insumo, $tipo);
+                                $insumo = (object) $insumo;                                    
+                                //if($validacion_insumos == ""){
+                                //insertar avance stock y mov_insumos
+                                $insumo_info         = Insumo::datosUnidosis()->where('clave',$insumo->clave)->first();
+                                $cantidad_x_envase   = $insumo_info->cantidad_x_envase;
+                                $precio_insumo       = $this->conseguirPrecio($insumo->clave);
 
-                                            $stock_borrador = new StockBorrador;
-                                            $stock_borrador->almacen_id             = $almacen_id;
-                                            $stock_borrador->clave_insumo_medico    = $insumo->clave;
-                                            $stock_borrador->marca_id               = NULL;
-                                            $stock_borrador->lote                   = $insumo->lote;
-                                            $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
-                                            $stock_borrador->codigo_barras          = $insumo->codigo_barras;
-                                            $stock_borrador->existencia             = 0;
-                                            $stock_borrador->existencia_unidosis    = 0;
-                                            $stock_borrador->unidosis_sueltas       = 0;
-                                            $stock_borrador->envases_parciales      = 0;
-                                            $stock_borrador->save();
+                                $stock_borrador = new StockBorrador;
+                                $stock_borrador->almacen_id             = $almacen_id;
+                                $stock_borrador->clave_insumo_medico    = $insumo->clave;
+                                $stock_borrador->marca_id               = NULL;
+                                $stock_borrador->lote                   = $insumo->lote;
+                                $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
+                                $stock_borrador->codigo_barras          = $insumo->codigo_barras;
+                                $stock_borrador->existencia             = 0;
+                                $stock_borrador->existencia_unidosis    = 0;
+                                $stock_borrador->unidosis_sueltas       = 0;
+                                $stock_borrador->envases_parciales      = 0;
+                                $stock_borrador->save();
 
-                                            $movimiento_insumo_br = new MovimientoInsumosBorrador;
-                                            $movimiento_insumo_br->movimiento_id           = $movimiento_entrada_br->id; 
-                                            $movimiento_insumo_br->stock_id       = $stock_borrador->id;
-                                            $movimiento_insumo_br->clave_insumo_medico     = $insumo->clave;
-                                            $movimiento_insumo_br->modo_salida             = "N";
-                                            $movimiento_insumo_br->cantidad                = $insumo->cantidad;
-                                            $movimiento_insumo_br->cantidad_unidosis       = $insumo->cantidad * $insumo->cantidad_x_envase;
-                                            $movimiento_insumo_br->precio_unitario         = $precio_insumo['precio_unitario'];
-                                            $movimiento_insumo_br->iva                     = $precio_insumo['iva']; 
-                                            $movimiento_insumo_br->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $insumo->cantidad;
-                                            $movimiento_insumo_br->save();
+                                $movimiento_insumo_br = new MovimientoInsumosBorrador;
+                                $movimiento_insumo_br->movimiento_id           = $movimiento_entrada_br->id; 
+                                $movimiento_insumo_br->stock_id       = $stock_borrador->id;
+                                $movimiento_insumo_br->clave_insumo_medico     = $insumo->clave;
+                                $movimiento_insumo_br->modo_salida             = "N";
+                                $movimiento_insumo_br->cantidad                = $insumo->cantidad;
+                                $movimiento_insumo_br->cantidad_unidosis       = $insumo->cantidad * $insumo->cantidad_x_envase;
+                                $movimiento_insumo_br->precio_unitario         = $precio_insumo['precio_unitario'];
+                                $movimiento_insumo_br->iva                     = $precio_insumo['iva']; 
+                                $movimiento_insumo_br->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $insumo->cantidad;
+                                $movimiento_insumo_br->save();
 
-                                            array_push($movimientos_insumos_grabados,$movimiento_insumo_br);
-
-                                       // }
-                                }/// fin foreach de insumos 
+                                array_push($movimientos_insumos_grabados,$movimiento_insumo_br);
+                                // }
+                            }/// fin foreach de insumos 
                         }
                     }// if existe propiedad insumos 
                  
-                ////*****************************************************************************************************************************
-                $success = true;
+                    ////*****************************************************************************************************************************
+                    $success = true;
                 } catch (\Exception $e){
                     DB::rollback();
                     return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
                 } 
                 if ($success){
-                                DB::commit();
-                                return Response::json(array("status" => 201,"messages" => "Borrador creado","data" => $movimiento_entrada_br), 201);
-                             }else{
-                                    DB::rollback();
-                                    return Response::json(array("status" => 409,"messages" => "Conflicto al guardar borrador"), 409);
-                                  }
-
+                    DB::commit();
+                    return Response::json(array("status" => 201,"messages" => "Borrador creado","data" => $movimiento_entrada_br), 201);
+                }else{
+                    DB::rollback();
+                    return Response::json(array("status" => 409,"messages" => "Conflicto al guardar borrador"), 409);
+                }
             }  // fin if status = BR
 
-
             $validacion = $this->ValidarMovimiento("", NULL, Input::json()->all(),$almacen_id);
-            if(is_array($validacion))
-            {
+            if(is_array($validacion)){
                 return Response::json(['error' => $validacion], HttpResponse::HTTP_CONFLICT);
             }
 
-
-                if(property_exists($datos, "insumos"))
-                {
-                    if(count($datos->insumos) > 0 )
-                    {
-                        $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
-                        foreach ($detalle as $key => $value)
-                            {
-                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
-                                if($validacion_insumos != "")
-                                    {
-                                        array_push($errors, $validacion_insumos);
-                                    }
-                            }
-                    }else{
-                            array_push($errors, array(array('insumos' => array('no_items_insumos'))));
-                         }
-                    
+            if(property_exists($datos, "insumos")){
+                if(count($datos->insumos) > 0 ){
+                    $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
+                    foreach ($detalle as $key => $value){
+                        $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
+                        if($validacion_insumos != ""){
+                            array_push($errors, $validacion_insumos);
+                        }
+                    }
                 }else{
-                        array_push($errors, array(array('insumos' => array('no_existe_insumos'))));
-                     }
-
-                if( count($errors) > 0 )
-                {
-                    return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
-                } 
-
-                DB::beginTransaction();
-                try{
-                        $movimiento_entrada = new Movimiento;
-                        $success = $this->validarTransaccionEntrada($datos, $movimiento_entrada,$almacen_id);
-                } catch (\Exception $e) {
-                    DB::rollback();
-                    return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
-                } 
-                if ($success){
-                    DB::commit();
-                    return Response::json(array("status" => 201,"messages" => "Creado","refrescar"=>true,"data" => $movimiento_entrada), 201);
-                } 
-                else{
-                    DB::rollback();
-                    return Response::json(array("status" => 409,"messages" => "Conflicto"), 409);
+                    array_push($errors, array(array('insumos' => array('no_items_insumos'))));
                 }
-        
-///*************************************************************************************************************************************
+            }else{
+                array_push($errors, array(array('insumos' => array('no_existe_insumos'))));
+            }
 
+            if( count($errors) > 0 ){
+                return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+            } 
+
+            DB::beginTransaction();
+            try{
+                $movimiento_entrada = new Movimiento;
+                $success = $this->validarTransaccionEntrada($datos, $movimiento_entrada,$almacen_id);
+            } catch (\Exception $e) {
+                DB::rollback();
+                return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
+            } 
+            if ($success){
+                DB::commit();
+                return Response::json(array("status" => 201,"messages" => "Creado","refrescar"=>true,"data" => $movimiento_entrada), 201);
+            }else{
+                DB::rollback();
+                return Response::json(array("status" => 409,"messages" => "Conflicto"), 409);
+            }
+            ///*************************************************************************************************************************************
     }
 
 ///*************************************************************************************************************************************
@@ -852,9 +826,8 @@ class EntradaAlmacenController extends Controller
 ///*********************    F U N  C  T I O N        U  P  D  A  T  E      ************************************************************
 ///***************************************************************************************************************************
 ///***************************************************************************************************************************
-    public function update(Request $request, $id)
-    {
-////************************************************************************************************************************************        
+    public function update(Request $request, $id){
+        ////************************************************************************************************************************************        
         $errors = array(); 
 
         $almacen_id=$request->get('almacen_id');       
@@ -867,148 +840,129 @@ class EntradaAlmacenController extends Controller
         if($tipo_movimiento)
             $tipo = $tipo_movimiento->tipo;
 
-            if($datos->estatus == "BR")
-            {
+            if($datos->estatus == "BR"){
                 $success = false;
 
                 DB::beginTransaction();
                 try{
+                    $movimiento_entrada_br = Movimiento::find($id);
+                                    
+                    $servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
 
-                $movimiento_entrada_br = Movimiento::find($id);
-                                
-                $servidor_id = property_exists($datos, "servidor_id") ? $datos->servidor_id : env('SERVIDOR_ID');
+                    //agregar al modelo los datos
+                    $movimiento_entrada_br->almacen_id                   =  $almacen_id;
+                    $movimiento_entrada_br->tipo_movimiento_id           =  $datos->tipo_movimiento_id;
+                    $movimiento_entrada_br->status                       =  $datos->estatus; 
+                    $movimiento_entrada_br->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")               ? $datos->fecha_movimiento          : '';
+                    $movimiento_entrada_br->programa_id                  =  $datos->programa_id;
+                    $movimiento_entrada_br->observaciones                =  property_exists($datos, "observaciones")                  ? $datos->observaciones             : '';
+                    $movimiento_entrada_br->cancelado                    =  property_exists($datos, "cancelado")                      ? $datos->cancelado                 : '';
+                    $movimiento_entrada_br->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion")      ? $datos->observaciones_cancelacion : '';
 
-                //agregar al modelo los datos
-                $movimiento_entrada_br->almacen_id                   =  $almacen_id;
-                $movimiento_entrada_br->tipo_movimiento_id           =  $datos->tipo_movimiento_id;
-                $movimiento_entrada_br->status                       =  $datos->estatus; 
-                $movimiento_entrada_br->fecha_movimiento             =  property_exists($datos, "fecha_movimiento")               ? $datos->fecha_movimiento          : '';
-                $movimiento_entrada_br->programa_id                  =  $datos->programa_id;
-                $movimiento_entrada_br->observaciones                =  property_exists($datos, "observaciones")                  ? $datos->observaciones             : '';
-                $movimiento_entrada_br->cancelado                    =  property_exists($datos, "cancelado")                      ? $datos->cancelado                 : '';
-                $movimiento_entrada_br->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion")      ? $datos->observaciones_cancelacion : '';
+                    $movimiento_entrada_br->save(); 
+                    
+                    $metadatos = MovimientoMetadato::where("movimiento_id",$movimiento_entrada_br->id)->first();
 
-                $movimiento_entrada_br->save(); 
-
-                 
-                $metadatos = MovimientoMetadato::where("movimiento_id",$movimiento_entrada_br->id)->first();
-
-                $metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
-                $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe']; 
-
+                    $metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
+                    $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe']; 
                     //dd(json_encode($metadatos)); die(); 
-
-                $metadatos->save();   
-                 
-
+                    
+                    $metadatos->save();   
+                
                 /////****************************************************************************************************************************
                     $movimientos_insumos_grabados = array();
 
-                    if(property_exists($datos, "insumos"))
-                    {
-                        if(count($datos->insumos) > 0 )
-                        {
+                    if(property_exists($datos, "insumos")){
+                        if(count($datos->insumos) > 0 ){
                             $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
-                            foreach ($detalle as $key => $insumo)
-                                {
-                                    //$validacion_insumos = $this->ValidarInsumos($key, NULL, $insumo, $tipo);
-                                    $insumo = (object) $insumo;
-                                    //if($validacion_insumos == "")
-                                       // {
-                                            //insertar avance stock y mov_insumos
-                                            $insumo_info         = Insumo::datosUnidosis()->where('clave',$insumo->clave)->first();
-                                            $cantidad_x_envase   = $insumo_info->cantidad_x_envase;
-                                            $precio_insumo       = $this->conseguirPrecio($insumo->clave);
+                            foreach ($detalle as $key => $insumo){
+                                //$validacion_insumos = $this->ValidarInsumos($key, NULL, $insumo, $tipo);
+                                $insumo = (object) $insumo;
+                                //if($validacion_insumos == "")
+                                    // {
+                                //insertar avance stock y mov_insumos
+                                $insumo_info         = Insumo::datosUnidosis()->where('clave',$insumo->clave)->first();
+                                $cantidad_x_envase   = $insumo_info->cantidad_x_envase;
+                                $precio_insumo       = $this->conseguirPrecio($insumo->clave);
 
+                                ///****************************************************************************************************
+                                ///****************************************************************************************************
+                                ///****************************************************************************************************
+
+                                // si trae id de stock
+                                if($insumo->stock_id != NULL){
+                                    $stock_borrador = StockBorrador::find($insumo->stock_id);
+
+                                    $stock_borrador->almacen_id             = $almacen_id;
+                                    $stock_borrador->clave_insumo_medico    = $insumo->clave;
+                                    $stock_borrador->marca_id               = NULL;
+                                    $stock_borrador->lote                   = $insumo->lote;
+                                    $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
+                                    $stock_borrador->codigo_barras          = $insumo->codigo_barras;
+                                    $stock_borrador->existencia             = 0;
+                                    $stock_borrador->existencia_unidosis    = 0;
+                                    $stock_borrador->unidosis_sueltas       = 0;
+                                    $stock_borrador->envases_parciales      = 0;
+                                    $stock_borrador->save();
+
+                                    $movimiento_insumo_br = MovimientoInsumosBorrador::find($insumo->movimiento_insumo_id);
+
+                                    $movimiento_insumo_br->movimiento_id           = $movimiento_entrada_br->id; 
+                                    $movimiento_insumo_br->stock_id                = $stock_borrador->id;
+                                    $movimiento_insumo_br->clave_insumo_medico     = $insumo->clave;
+                                    $movimiento_insumo_br->modo_salida             = "N";
+                                    $movimiento_insumo_br->cantidad                = $insumo->cantidad;
+                                    $movimiento_insumo_br->cantidad_unidosis       = $insumo->cantidad * $insumo->cantidad_x_envase;
+                                    $movimiento_insumo_br->precio_unitario         = $precio_insumo['precio_unitario'];
+                                    $movimiento_insumo_br->iva                     = $precio_insumo['iva']; 
+                                    $movimiento_insumo_br->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $insumo->cantidad;
+                                    $movimiento_insumo_br->save();
+
+                                    array_push($movimientos_insumos_grabados,$movimiento_insumo_br);
+                                }else{
+                                    $stock_borrador = new StockBorrador;
+                                    $stock_borrador->almacen_id             = $almacen_id;
+                                    $stock_borrador->clave_insumo_medico    = $insumo->clave;
+                                    $stock_borrador->marca_id               = NULL;
+                                    $stock_borrador->lote                   = $insumo->lote;
+                                    $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
+                                    $stock_borrador->codigo_barras          = $insumo->codigo_barras;
+                                    $stock_borrador->existencia             = 0;
+                                    $stock_borrador->existencia_unidosis    = 0;
+                                    $stock_borrador->unidosis_sueltas       = 0;
+                                    $stock_borrador->envases_parciales      = 0;
+                                    $stock_borrador->save();
+
+                                    $movimiento_insumo_br = new MovimientoInsumosBorrador;
+                                    $movimiento_insumo_br->movimiento_id           = $movimiento_entrada_br->id; 
+                                    $movimiento_insumo_br->stock_id                = $stock_borrador->id;
+                                    $movimiento_insumo_br->clave_insumo_medico     = $insumo->clave;
+                                    $movimiento_insumo_br->modo_salida             = "N";
+                                    $movimiento_insumo_br->cantidad                = $insumo->cantidad;
+                                    $movimiento_insumo_br->cantidad_unidosis       = $insumo->cantidad * $insumo->cantidad_x_envase;
+                                    $movimiento_insumo_br->precio_unitario         = $precio_insumo['precio_unitario'];
+                                    $movimiento_insumo_br->iva                     = $precio_insumo['iva']; 
+                                    $movimiento_insumo_br->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $insumo->cantidad;
+                                    $movimiento_insumo_br->save();
+
+                                    array_push($movimientos_insumos_grabados,$movimiento_insumo_br);
+                                }/// si trae   id de stock borrador   
                                             ///****************************************************************************************************
                                             ///****************************************************************************************************
-                                            ///****************************************************************************************************
-
-                                            // si trae id de stock
-                                            if($insumo->stock_id != NULL)
-                                            {
-                                                $stock_borrador = StockBorrador::find($insumo->stock_id);
-
-                                                $stock_borrador->almacen_id             = $almacen_id;
-                                                $stock_borrador->clave_insumo_medico    = $insumo->clave;
-                                                $stock_borrador->marca_id               = NULL;
-                                                $stock_borrador->lote                   = $insumo->lote;
-                                                $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
-                                                $stock_borrador->codigo_barras          = $insumo->codigo_barras;
-                                                $stock_borrador->existencia             = 0;
-                                                $stock_borrador->existencia_unidosis    = 0;
-                                                $stock_borrador->unidosis_sueltas       = 0;
-                                                $stock_borrador->envases_parciales      = 0;
-                                                $stock_borrador->save();
-
-                                                $movimiento_insumo_br = MovimientoInsumosBorrador::find($insumo->movimiento_insumo_id);
-
-                                                $movimiento_insumo_br->movimiento_id           = $movimiento_entrada_br->id; 
-                                                $movimiento_insumo_br->stock_id                = $stock_borrador->id;
-                                                $movimiento_insumo_br->clave_insumo_medico     = $insumo->clave;
-                                                $movimiento_insumo_br->modo_salida             = "N";
-                                                $movimiento_insumo_br->cantidad                = $insumo->cantidad;
-                                                $movimiento_insumo_br->cantidad_unidosis       = $insumo->cantidad * $insumo->cantidad_x_envase;
-                                                $movimiento_insumo_br->precio_unitario         = $precio_insumo['precio_unitario'];
-                                                $movimiento_insumo_br->iva                     = $precio_insumo['iva']; 
-                                                $movimiento_insumo_br->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $insumo->cantidad;
-                                                $movimiento_insumo_br->save();
-
-                                                array_push($movimientos_insumos_grabados,$movimiento_insumo_br);
-
-
-                                            }else{
-                                                    
-
-                                                        $stock_borrador = new StockBorrador;
-                                                        $stock_borrador->almacen_id             = $almacen_id;
-                                                        $stock_borrador->clave_insumo_medico    = $insumo->clave;
-                                                        $stock_borrador->marca_id               = NULL;
-                                                        $stock_borrador->lote                   = $insumo->lote;
-                                                        $stock_borrador->fecha_caducidad        = $insumo->fecha_caducidad;
-                                                        $stock_borrador->codigo_barras          = $insumo->codigo_barras;
-                                                        $stock_borrador->existencia             = 0;
-                                                        $stock_borrador->existencia_unidosis    = 0;
-                                                        $stock_borrador->unidosis_sueltas       = 0;
-                                                        $stock_borrador->envases_parciales      = 0;
-                                                        $stock_borrador->save();
-
-                                                        $movimiento_insumo_br = new MovimientoInsumosBorrador;
-                                                        $movimiento_insumo_br->movimiento_id           = $movimiento_entrada_br->id; 
-                                                        $movimiento_insumo_br->stock_id                = $stock_borrador->id;
-                                                        $movimiento_insumo_br->clave_insumo_medico     = $insumo->clave;
-                                                        $movimiento_insumo_br->modo_salida             = "N";
-                                                        $movimiento_insumo_br->cantidad                = $insumo->cantidad;
-                                                        $movimiento_insumo_br->cantidad_unidosis       = $insumo->cantidad * $insumo->cantidad_x_envase;
-                                                        $movimiento_insumo_br->precio_unitario         = $precio_insumo['precio_unitario'];
-                                                        $movimiento_insumo_br->iva                     = $precio_insumo['iva']; 
-                                                        $movimiento_insumo_br->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $insumo->cantidad;
-                                                        $movimiento_insumo_br->save();
-
-                                                    array_push($movimientos_insumos_grabados,$movimiento_insumo_br);
-
-                                                 }/// si trae   id de stock borrador
-
-                                            ///****************************************************************************************************
-                                            ///****************************************************************************************************
-                                       // }
-                                }
+                                    // }
+                            }
                         }
                     }  // si existe la propiedad insumos 
-
 
                     /////    VALIDAR DUPLICADOS
                     $movs_insumos = MovimientoInsumosBorrador::where('movimiento_id',$movimiento_entrada_br->id)->get();
                     
-                    if($movs_insumos)
-                    {
-                        foreach($movs_insumos as $mi_db)
-                        {   
+                    if($movs_insumos){
+                        foreach($movs_insumos as $mi_db){
                             $mi_db  = (object) $mi_db;
                             $borrar = true;
                             
-                            foreach($movimientos_insumos_grabados as $mi_gra)
-                            {
+                            foreach($movimientos_insumos_grabados as $mi_gra){
                                 $mi_gra = (object) $mi_gra;
 
                                 if($mi_db->id == $mi_gra->id) /// si el movimiento insumo de la base existe en los grabados. no se borra
@@ -1017,112 +971,88 @@ class EntradaAlmacenController extends Controller
                                 }
                             }
 
-                            if($borrar == true)
-                            {
+                            if($borrar == true){
                                 $mi_delete = MovimientoInsumosBorrador::find($mi_db->id);
                                 $sb_delete = StockBorrador::find($mi_db->stock_id);
                                 $sb_delete->delete();
                                 $mi_delete->delete();
                             }
-
                         }
                     }else{
-                            /// borrar las 2 tablas insumos borrador y stock borrador del movimiento borrador
-                         }
-
-
-
-
+                        /// borrar las 2 tablas insumos borrador y stock borrador del movimiento borrador
+                    }
                 ////*****************************************************************************************************************************
                 $success = true;
                 } catch (\Exception $e){
                     DB::rollback();
                     return Response::json(["status" => 500, 'error' => $e->getMessage()], 500);
-                } 
+                }
+
                 if ($success){
-                                DB::commit();
-                                $movimiento_entrada_br->actualizar = true;
-                                return Response::json(array("status" => 201,"messages" => "Borrador creado","data" => $movimiento_entrada_br), 201);
-                             }else{
-                                    DB::rollback();
-                                    return Response::json(array("status" => 409,"messages" => "Conflicto al guardar borrador"), 409);
-                                  }
+                    DB::commit();
+                    $movimiento_entrada_br->actualizar = true;
+                    return Response::json(array("status" => 201,"messages" => "Borrador creado","data" => $movimiento_entrada_br), 201);
+                }else{
+                    DB::rollback();
+                    return Response::json(array("status" => 409,"messages" => "Conflicto al guardar borrador"), 409);
+                }
 
             }  // fin if status = BR
 
-
-
-
-
-
             $validacion = $this->ValidarMovimiento("", NULL, Input::json()->all(),$almacen_id);
-            if(is_array($validacion))
-            {
+            if(is_array($validacion)){
                 return Response::json(['error' => $validacion], HttpResponse::HTTP_CONFLICT);
             }
 
-
-            if(property_exists($datos, "insumos"))
-            {
-                    if(count($datos->insumos) > 0 )
-                    {
-                        $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
-                        foreach ($detalle as $key => $value)
-                            {
-                                $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
-                                if($validacion_insumos != "")
-                                    {
-                                        array_push($errors, $validacion_insumos);
-                                    }
-                            }
-                    }else{
-                            array_push($errors, array(array('insumos' => array('no_items_insumos'))));
-                         }
-                    
-             }else{
-                    array_push($errors, array(array('insumos' => array('no_existe_insumos'))));
-                  }
-
-                if( count($errors) > 0 )
-                {
-                    return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
-                } 
-
-                DB::beginTransaction();
-                try{
-                        $movimiento_entrada = new Movimiento;
-                        $movimiento_entrada = Movimiento::find($id);
-                        $success = $this->validarTransaccionEntradaUpdate($datos, $movimiento_entrada,$almacen_id);
-
-                    } catch (\Exception $e) {
-                                                DB::rollback();
-                                                return Response::json(["status" => 500, 'error' => "ERROR AL EJECUTAR TRANSACCIÓN. ".$e->getMessage()], 500);
-                                            } 
-                if($success)
-                {
-                    $movs_insumos_borrador = MovimientoInsumosBorrador::where('movimiento_id',$movimiento_entrada->id)->get();
-                    foreach($movs_insumos_borrador as $mi_borrador)
-                    {
-                        $mi_borrador = (object) $mi_borrador;
-                        $si_borrador = StockBorrador::find($mi_borrador->stock_id);
-                        if($si_borrador)
-                        {
-                            $si_borrador->delete();
-                            $mi_borrador->delete();
+            if(property_exists($datos, "insumos")){
+                if(count($datos->insumos) > 0 ){
+                    $detalle = array_filter($datos->insumos, function($v){return $v !== null;});
+                    foreach ($detalle as $key => $value){
+                        $validacion_insumos = $this->ValidarInsumos($key, NULL, $value, $tipo, $datos->fecha_movimiento);
+                        if($validacion_insumos != ""){
+                            array_push($errors, $validacion_insumos);
                         }
                     }
-
-                    DB::commit();
-                    return Response::json(array("status" => 201,"messages" => "Creado","data" => $movimiento_entrada), 201);
                 }else{
-                        DB::rollback();
-                        return Response::json(array("status" => 409,"messages" => "Conflicto"), 409);
-                     }
-        
-///*************************************************************************************************************************************
+                    array_push($errors, array(array('insumos' => array('no_items_insumos'))));
+                }    
+            }else{
+                array_push($errors, array(array('insumos' => array('no_existe_insumos'))));
+            }
 
+            if( count($errors) > 0 ){
+                return Response::json(['error' => $errors], HttpResponse::HTTP_CONFLICT);
+            } 
 
- 
+            DB::beginTransaction();
+            try{
+                $movimiento_entrada = new Movimiento;
+                $movimiento_entrada = Movimiento::find($id);
+                $success = $this->validarTransaccionEntradaUpdate($datos, $movimiento_entrada,$almacen_id);
+            } catch (\Exception $e) {
+                DB::rollback();
+                return Response::json(["status" => 500, 'error' => "ERROR AL EJECUTAR TRANSACCIÓN. ".$e->getMessage()], 500);
+            } 
+            
+            if($success){
+                $movs_insumos_borrador = MovimientoInsumosBorrador::where('movimiento_id',$movimiento_entrada->id)->get();
+                foreach($movs_insumos_borrador as $mi_borrador){
+                    $mi_borrador = (object) $mi_borrador;
+                    $si_borrador = StockBorrador::find($mi_borrador->stock_id);
+                    if($si_borrador)
+                    {
+                        $si_borrador->delete();
+                        $mi_borrador->delete();
+                    }
+                }
+
+                DB::commit();
+                return Response::json(array("status" => 201,"messages" => "Creado","data" => $movimiento_entrada), 201);
+            }else{
+                DB::rollback();
+                return Response::json(array("status" => 409,"messages" => "Conflicto"), 409);
+            }
+            ///*************************************************************************************************************************************
     }///  FIN UPDATE FUNCTION
      
 
@@ -1269,10 +1199,6 @@ class EntradaAlmacenController extends Controller
 ///***************************************************************************************************************************
 ///                  M O V I M I E N T O         E  N  T  R  A  D  A
 ///***************************************************************************************************************************
-
-
-   
-
     private function validarTransaccionEntrada($datos, $movimiento_entrada,$almacen_id){
 		$success = false;
         //comprobar que el servidor id no me lo envian por parametro, si no poner el servidor por default de la configuracion local, si no seleccionar el servidor del parametro
@@ -1289,33 +1215,28 @@ class EntradaAlmacenController extends Controller
         $movimiento_entrada->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion") ? $datos->observaciones_cancelacion : '';
 
         // si se guarda el maestro tratar de guardar el detalle  
-        if( $movimiento_entrada->save() )
-        {
+        if( $movimiento_entrada->save() ){
             $success = true;
 
-            if(property_exists($datos,"movimiento_metadato"))
-            {
+            if(property_exists($datos,"movimiento_metadato")){
                 $metadatos = new MovimientoMetadato;
                 $metadatos->movimiento_id  = $movimiento_entrada->id;
                 $metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
                 $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
 
-
-                $metadatos->save();   
+                $metadatos->save();
             }
 
             //verificar si existe contacto, en caso de que exista proceder a guardarlo
             if(property_exists($datos, "insumos")){
-                 $detalle = array_filter($datos->insumos, function($v){return $v !== NULL;});
+                $detalle = array_filter($datos->insumos, function($v){return $v !== NULL;});
 
-
-                 foreach ($detalle as $key => $value)
-                {
-                     if($value != NULL)
-                     {
-                         if(is_array($value))
+                foreach ($detalle as $key => $value){
+                    if($value != NULL){
+                        if(is_array($value)){
                             $value = (object) $value;
-
+                        }
+                        
                         $precio_insumo = $this->conseguirPrecio($value->clave);
 
                         //*************************************************************************************
@@ -1323,8 +1244,7 @@ class EntradaAlmacenController extends Controller
                         $negacion = NegacionInsumo::where('almacen_id',$almacen_id)
                                                 ->where('clave_insumo_medico',$value->clave)
                                                 ->first();
-                        if($negacion)
-                        {
+                        if($negacion){
                             $negacion->delete();
                         }
                         //*************************************************************************************
@@ -1332,6 +1252,7 @@ class EntradaAlmacenController extends Controller
                         $item_stock = new Stock;
 
                         $item_stock->almacen_id             = $almacen_id;
+                        $item_stock->programa_id            = $datos->programa_id;
                         $item_stock->clave_insumo_medico    = $value->clave;
                         $item_stock->marca_id               = NULL;
                         $item_stock->lote                   = $value->lote;
@@ -1341,61 +1262,55 @@ class EntradaAlmacenController extends Controller
                         $item_stock->existencia_unidosis    = ( $value->cantidad_x_envase * $value->cantidad );
 
                         $item_stock_check = Stock::where('clave_insumo_medico',$value->clave)
+                                                 ->where('programa_id',$datos->programa_id)
                                                  ->where('lote',$value->lote)
                                                  ->where('fecha_caducidad',$value->fecha_caducidad)
                                                  ->where('codigo_barras',$value->codigo_barras)
                                                  ->where('almacen_id',$almacen_id)->first();
-                        if($item_stock_check)
-                        {
+                        if($item_stock_check){
                             $item_stock_check->existencia           = $item_stock_check->existencia + $value->cantidad;
                             $item_stock_check->existencia_unidosis  = $item_stock_check->existencia_unidosis + ( $value->cantidad_x_envase * $value->cantidad );
                             
-                            if( $item_stock_check->save() )
-                            {
-                                    $item_detalles = new MovimientoInsumos;
+                            if( $item_stock_check->save() ){
+                                $item_detalles = new MovimientoInsumos;
 
-                                    $item_detalles->movimiento_id           = $movimiento_entrada->id; 
-                                    $item_detalles->stock_id                = $item_stock_check->id;
-                                    $item_detalles->clave_insumo_medico     = $value->clave;
+                                $item_detalles->movimiento_id           = $movimiento_entrada->id; 
+                                $item_detalles->stock_id                = $item_stock_check->id;
+                                $item_detalles->clave_insumo_medico     = $value->clave;
 
-                                    $item_detalles->modo_salida             = "N";
-                                    $item_detalles->cantidad                = $value->cantidad;
-                                    $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
+                                $item_detalles->modo_salida             = "N";
+                                $item_detalles->cantidad                = $value->cantidad;
+                                $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
 
-                                    $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                                    $item_detalles->iva                     = $precio_insumo['iva']; 
-                                    $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
+                                $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
+                                $item_detalles->iva                     = $precio_insumo['iva']; 
+                                $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
 
-                                    $item_detalles->save(); 
+                                $item_detalles->save(); 
                             }else{   
-                                    return Response::json(['error' => $validacion_insumos], HttpResponse::HTTP_CONFLICT);
-                                }
-
+                                return Response::json(['error' => $validacion_insumos], HttpResponse::HTTP_CONFLICT);
+                            }
                         }else{
-                                    if($item_stock->save())
-                                    {
-                                        $item_detalles = new MovimientoInsumos;
+                            if($item_stock->save()){
+                                $item_detalles = new MovimientoInsumos;
 
-                                        $item_detalles->movimiento_id           = $movimiento_entrada->id; 
-                                        $item_detalles->stock_id                = $item_stock->id;
-                                        $item_detalles->clave_insumo_medico     = $value->clave;
+                                $item_detalles->movimiento_id           = $movimiento_entrada->id; 
+                                $item_detalles->stock_id                = $item_stock->id;
+                                $item_detalles->clave_insumo_medico     = $value->clave;
 
-                                        $item_detalles->modo_salida             = "N";
-                                        $item_detalles->cantidad                = $item_stock->existencia;
-                                        $item_detalles->cantidad_unidosis       = $item_stock->existencia_unidosis;
+                                $item_detalles->modo_salida             = "N";
+                                $item_detalles->cantidad                = $item_stock->existencia;
+                                $item_detalles->cantidad_unidosis       = $item_stock->existencia_unidosis;
 
-                                        $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                                        $item_detalles->iva                     = $precio_insumo['iva']; 
-                                        $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $item_stock->existencia;
+                                $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
+                                $item_detalles->iva                     = $precio_insumo['iva']; 
+                                $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $item_stock->existencia;
 
-                                        $item_detalles->save();
-
-                                    }else{
-                                            return Response::json(['error' => $validacion_insumos], HttpResponse::HTTP_CONFLICT);
-                                         }
-                             }
-
-                            
+                                $item_detalles->save();
+                            }else{
+                                return Response::json(['error' => $validacion_insumos], HttpResponse::HTTP_CONFLICT);
+                            }
+                        }   
                     }
                 }
             }               
@@ -1408,8 +1323,6 @@ class EntradaAlmacenController extends Controller
 ///***************************************************************************************************************************
 ///     M O V I M I E N T O         E  N  T  R  A  D  A      U  P  D  A  T  E 
 ///***************************************************************************************************************************
-
-
     private function validarTransaccionEntradaUpdate($datos, $movimiento_entrada,$almacen_id){
 		$success = false;
         //comprobar que el servidor id no me lo envian por parametro, si no poner el servidor por default de la configuracion local, si no seleccionar el servidor del parametro
@@ -1426,32 +1339,27 @@ class EntradaAlmacenController extends Controller
         $movimiento_entrada->observaciones_cancelacion    =  property_exists($datos, "observaciones_cancelacion") ? $datos->observaciones_cancelacion : '';
 
         // si se guarda el maestro tratar de guardar el detalle  
-        if( $movimiento_entrada->save() )
-        {
+        if( $movimiento_entrada->save() ){
             $success = true;
 
-            if(property_exists($datos,"movimiento_metadato"))
-            { 
+            if(property_exists($datos,"movimiento_metadato")){ 
                 $metadatos = MovimientoMetadato::where('movimiento_id',$movimiento_entrada->id)->first();
                 $metadatos->movimiento_id  = $movimiento_entrada->id;
                 $metadatos->servicio_id    = $datos->movimiento_metadato['servicio_id'];
                 $metadatos->persona_recibe = $datos->movimiento_metadato['persona_recibe'];
-
 
                 $metadatos->save();   
             }
 
             //verificar si existe contacto, en caso de que exista proceder a guardarlo
             if(property_exists($datos, "insumos")){
-                 $detalle = array_filter($datos->insumos, function($v){return $v !== NULL;});
+                $detalle = array_filter($datos->insumos, function($v){return $v !== NULL;});
 
-
-                 foreach ($detalle as $key => $value)
-                {
-                     if($value != NULL)
-                     {
-                         if(is_array($value))
+                foreach ($detalle as $key => $value){
+                    if($value != NULL){
+                        if(is_array($value)){
                             $value = (object) $value;
+                        }
 
                         $precio_insumo = $this->conseguirPrecio($value->clave);
 
@@ -1460,20 +1368,73 @@ class EntradaAlmacenController extends Controller
                         $negacion = NegacionInsumo::where('almacen_id',$almacen_id)
                                                 ->where('clave_insumo_medico',$value->clave)
                                                 ->first();
-                        if($negacion)
-                        {
+                        if($negacion){
                             $negacion->delete();
                         }
                         //*************************************************************************************
-                        //*************************************************************************************
 
                         $objeto_insumo = $value;
-                        //  si trae id : buscarlo y actualizarlo
-                        if($objeto_insumo->stock_id != NULL)
-                        {
 
+                        $item_stock_check = Stock::where('clave_insumo_medico',$value->clave)
+                                            ->where('lote',$value->lote)
+                                            ->where('fecha_caducidad',$value->fecha_caducidad)
+                                            ->where('codigo_barras',$value->codigo_barras)
+                                            ->where('programa_id',$datos->programa_id)
+                                            ->where('almacen_id',$almacen_id)->first();
+                        
+                        //throw new \Exception("stock_id = ".$item_stock_check->id);
+                        if($item_stock_check){
+                            $item_stock_check->existencia           = $item_stock_check->existencia + $value->cantidad;
+                            $item_stock_check->existencia_unidosis  = $item_stock_check->existencia_unidosis + ( $value->cantidad_x_envase * $value->cantidad );
+                            $item_stock_check->save();
+                            
+                            $item_detalles = new MovimientoInsumos;
+
+                            $item_detalles->movimiento_id           = $movimiento_entrada->id; 
+                            $item_detalles->stock_id                = $item_stock_check->id;
+                            $item_detalles->clave_insumo_medico     = $value->clave;
+                            $item_detalles->modo_salida             = "N";
+                            $item_detalles->cantidad                = $value->cantidad;
+                            $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
+                            $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
+                            $item_detalles->iva                     = $precio_insumo['iva']; 
+                            $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
+                            $item_detalles->save(); 
+                            
+                        }else{
+                            $item_stock = new Stock;
+
+                            $item_stock->almacen_id             = $almacen_id;
+                            $item_stock->programa_id            = $datos->programa_id;
+                            $item_stock->clave_insumo_medico    = $value->clave;
+                            $item_stock->marca_id               = NULL;
+                            $item_stock->lote                   = $value->lote;
+                            $item_stock->fecha_caducidad        = $value->fecha_caducidad;
+                            $item_stock->codigo_barras          = $value->codigo_barras;
+                            $item_stock->existencia             = $value->cantidad;
+                            $item_stock->existencia_unidosis    = ( $value->cantidad_x_envase * $value->cantidad );
+                            $item_stock->save();
+            
+                            $item_detalles = new MovimientoInsumos;
+
+                            $item_detalles->movimiento_id           = $movimiento_entrada->id; 
+                            $item_detalles->stock_id                = $item_stock->id;
+                            $item_detalles->clave_insumo_medico     = $value->clave;
+                            $item_detalles->modo_salida             = "N";
+                            $item_detalles->cantidad                = $value->cantidad;
+                            $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
+                            $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
+                            $item_detalles->iva                     = $precio_insumo['iva']; 
+                            $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
+
+                            $item_detalles->save(); 
+                        }
+                        /*
+                        //  si trae id : buscarlo y actualizarlo
+                        if($objeto_insumo->stock_id != NULL){
                             $item_stock_ok = new Stock;
                             $item_stock_ok->almacen_id             = $almacen_id;
+                            $item_stock_ok->programa_id            = $datos->programa_id;
                             $item_stock_ok->clave_insumo_medico    = $value->clave;
                             $item_stock_ok->marca_id               = NULL;
                             $item_stock_ok->lote                   = $value->lote;
@@ -1497,67 +1458,13 @@ class EntradaAlmacenController extends Controller
                             $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
 
                             $item_detalles->save(); 
+                        }else{    
+                        }///  fin si no trae id
+                        */
 
-                        }else {
-                                    $item_stock_check = Stock::where('clave_insumo_medico',$value->clave)
-                                                    ->where('lote',$value->lote)
-                                                    ->where('fecha_caducidad',$value->fecha_caducidad)
-                                                    ->where('codigo_barras',$value->codigo_barras)
-                                                    ->where('almacen_id',$almacen_id)->first();
-
-                                    if($item_stock_check)
-                                    {
-                                        $item_stock_check->existencia           = $item_stock_check->existencia + $value->cantidad;
-                                        $item_stock_check->existencia_unidosis  = $item_stock_check->existencia_unidosis + ( $value->cantidad_x_envase * $value->cantidad );
-                                        $item_stock_check->save();
-                                        
-                                        $item_detalles = new MovimientoInsumos;
-
-                                        $item_detalles->movimiento_id           = $movimiento_entrada->id; 
-                                        $item_detalles->stock_id                = $item_stock_check->id;
-                                        $item_detalles->clave_insumo_medico     = $value->clave;
-                                        $item_detalles->modo_salida             = "N";
-                                        $item_detalles->cantidad                = $value->cantidad;
-                                        $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
-                                        $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                                        $item_detalles->iva                     = $precio_insumo['iva']; 
-                                        $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
-                                        $item_detalles->save(); 
-                                        
-                                    }else{
-                                            $item_stock = new Stock;
-
-                                            $item_stock->almacen_id             = $almacen_id;
-                                            $item_stock->clave_insumo_medico    = $value->clave;
-                                            $item_stock->marca_id               = NULL;
-                                            $item_stock->lote                   = $value->lote;
-                                            $item_stock->fecha_caducidad        = $value->fecha_caducidad;
-                                            $item_stock->codigo_barras          = $value->codigo_barras;
-                                            $item_stock->existencia             = $value->cantidad;
-                                            $item_stock->existencia_unidosis    = ( $value->cantidad_x_envase * $value->cantidad );
-                                            $item_stock->save();
-                            
-                                            $item_detalles = new MovimientoInsumos;
-
-                                            $item_detalles->movimiento_id           = $movimiento_entrada->id; 
-                                            $item_detalles->stock_id                = $item_stock->id;
-                                            $item_detalles->clave_insumo_medico     = $value->clave;
-                                            $item_detalles->modo_salida             = "N";
-                                            $item_detalles->cantidad                = $value->cantidad;
-                                            $item_detalles->cantidad_unidosis       = $value->cantidad * $value->cantidad_x_envase;
-                                            $item_detalles->precio_unitario         = $precio_insumo['precio_unitario'];
-                                            $item_detalles->iva                     = $precio_insumo['iva']; 
-                                            $item_detalles->precio_total            = ( $precio_insumo['precio_unitario'] + $precio_insumo['iva'] ) * $value->cantidad;
-
-                                            $item_detalles->save(); 
-
-                                         }
-
-                              }///  fin si no trae id
-                           
                     }  /// diferente de NULL EL VALUE
                 }
-            }               
+            }
         }
         
         return $success;
