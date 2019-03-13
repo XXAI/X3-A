@@ -10,7 +10,9 @@ use App\Http\Requests;
 use App\Models\PresupuestoEjercicio, App\Models\PresupuestoUnidadMedica,  App\Models\UnidadMedica, App\Models\Jurisdiccion;
 use App\Models\PresupuestoMovimientoEjercicio, App\Models\PresupuestoMovimientoUnidadMedica;
 
-use App\Models\PedidoOrdinario, App\Models\PedidoOrdinarioUnidadMedica;
+use App\Models\PedidoOrdinario, App\Models\PedidoOrdinarioUnidadMedica, App\Models\Pedido;
+
+use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Input;
 use \Validator,\Hash, \Response, \DB;
@@ -58,7 +60,7 @@ class PedidosOrdinariosController extends Controller
         return Response::json([ 'data' => $presupuesto],200);
     }
 
-    public function aumentarPresupuesto(Request $request, $id)
+    public function modificarPresupuesto(Request $request, $id)
     {
         //AKIRA PENDIENTE
         $pedidoOrdinario = PedidoOrdinario::find($id);
@@ -68,26 +70,475 @@ class PedidosOrdinariosController extends Controller
         }
 
         $input = Input::all();
+        DB::beginTransaction();
+        try{
+            if(isset($input["pedido_ordinario_unidad_medica"])){
+                $poum = PedidoOrdinarioUnidadMedica::find($input["pedido_ordinario_unidad_medica"]["id"]);
+                $presupuesto = PresupuestoUnidadMedica::where('presupuesto_id',$pedidoOrdinario->presupuesto_ejercicio_id)->where('clues',$poum->clues)->first();
 
-        if(isset($input["pedido_ordinario_unidad_medica"])){
-            $pedidoOrdinarioUnidadMedica = PedidoOrdinarioUnidadMedica::find($input["pedido_ordinario_unidad_medica"]["id"]);
+                if(!$poum){
+                    return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+                }
 
-            if(!$pedidoOrdinarioUnidadMedica){
-                return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+                if($poum->status == "CA"){
+                    return Response::json(['error' => "No se puede modificar el presupuesto de un pedido cancelado."], HttpResponse::HTTP_NOT_FOUND);
+                }
+
+                if(!$presupuesto){
+                    return Response::json(['error' => "No hay presupuesto."], HttpResponse::HTTP_NOT_FOUND);
+                }
+
+                
+
+                if($poum->pedido_ordinario_id != $pedidoOrdinario->id){
+                    return Response::json(['error' => "El pedido ordinario no corresponde al de la unidad médica."], HttpResponse::HTTP_NOT_FOUND);
+                }
+
+                $causes_diff = 0;
+                $no_causes_diff = 0;
+                $modificado = false;
+
+                if($input["pedido_ordinario_unidad_medica"]["causes_nuevo"]  >= 0){
+                    $diff = $input["pedido_ordinario_unidad_medica"]["causes_nuevo"] - $poum->causes_modificado;
+                        
+                    if( $diff > 0 && $presupuesto->causes_disponible >  $diff){
+                        // Aumentar
+                        $modificado = true;
+                        $presupuesto->causes_disponible -= $diff;
+                        $presupuesto->causes_comprometido += $diff;
+
+                        $poum->causes_modificado = $input["pedido_ordinario_unidad_medica"]["causes_nuevo"];
+                        $poum->causes_disponible =  $input["pedido_ordinario_unidad_medica"]["causes_nuevo"];
+                    } else if( $diff < 0 ){
+
+                        // Liberar
+                        $modificado = true;
+                        $presupuesto->causes_disponible += abs( $diff);
+                        $presupuesto->causes_comprometido -= abs( $diff);
+
+                        $poum->causes_modificado = $input["pedido_ordinario_unidad_medica"]["causes_nuevo"];
+                        $poum->causes_disponible = $input["pedido_ordinario_unidad_medica"]["causes_nuevo"];
+                    }
+                } 
+
+
+                if($input["pedido_ordinario_unidad_medica"]["no_causes_nuevo"] >= 0 ){
+                    $diff = $input["pedido_ordinario_unidad_medica"]["no_causes_nuevo"] - $poum->no_causes_modificado;
+                        
+                    if( $diff > 0 && $presupuesto->no_causes_disponible >  $diff){
+                        $modificado = true;
+                        $presupuesto->no_causes_disponible -= $diff;
+                        $presupuesto->no_causes_comprometido += $diff;
+
+                        $poum->no_causes_modificado = $input["pedido_ordinario_unidad_medica"]["no_causes_nuevo"];
+                        $poum->no_causes_disponible =  $input["pedido_ordinario_unidad_medica"]["no_causes_nuevo"];
+                    } else if( $diff < 0){
+                        $modificado = true;
+
+                        $presupuesto->no_causes_disponible += abs( $diff);
+                        $presupuesto->no_causes_comprometido -= abs( $diff);
+
+                        $poum->no_causes_modificado = $input["pedido_ordinario_unidad_medica"]["no_causes_nuevo"];
+                        $poum->no_causes_disponible = $input["pedido_ordinario_unidad_medica"]["no_causes_nuevo"];
+                    }
+                }
+
+                if($modificado && $poum->status != "CA"){                            
+                    $poum->save();
+                    $presupuesto->save();
+                }
+
+                DB::commit();
+
+                return Response::json(['data' => ['poum' => $poum, 'presupuesto' => $presupuesto ]], HttpResponse::HTTP_OK);
+                // Aumentar presupuesto especifico
+
+                
+               
+                
+            } else {
+                //Aumentar el presupuesto a todos
+                $input_pedidos = $input["pedidos"];
+                if(count($input_pedidos) == 0){
+                    return Response::json(['error' => "No se seleccionaron pedidos."], HttpResponse::HTTP_CONFLICT);
+                }
+                $pedidosOrdinariosUnidadesMedicas = PedidoOrdinarioUnidadMedica::where('pedido_ordinario_id',$id)->whereIn('id',$input["pedidos"]);
+
+                $aumentar = false;
+                $liberar = false;
+
+                if(isset($input["aumentar"]) && $input["aumentar"]== true){
+                    $aumentar = true;
+                    $pedidosOrdinariosUnidadesMedicas = $pedidosOrdinariosUnidadesMedicas->where(function ($query){
+                        $query->where('status','!=','FI')->where('status','!=','CA');
+                    })->where(function ($query){
+                        $query->where('causes_capturado','>','causes_modificado')->orWhere('no_causes_capturado','>','no_causes_modificado');
+                    })->get();
+                    
+                } else if(isset($input["liberar"]) && $input["liberar"]== true){
+                    $liberar = true;
+                    $pedidosOrdinariosUnidadesMedicas = $pedidosOrdinariosUnidadesMedicas->where(function ($query){
+                        $query->where('status','=','FI');
+                    })->where(function ($query){
+                        $query->where('causes_disponible','>','0')->orWhere('no_causes_disponible','>','0');
+                    })->get();
+                } else {
+                    return Response::json(['error' => "No se especificó el tipo de modificación."], HttpResponse::HTTP_CONFLICT);
+                }
+                $sin_modificar = [];
+                $presupuestos = [];
+                foreach($pedidosOrdinariosUnidadesMedicas as $poum){
+                    $presupuesto = PresupuestoUnidadMedica::where('presupuesto_id',$pedidoOrdinario->presupuesto_ejercicio_id)->where('clues',$poum->clues)->first();
+                    if($presupuesto){                       
+                        
+                        $modificado = false;
+                        if($aumentar){
+                            $causes_diff = $poum->causes_capturado - $poum->causes_modificado;
+                            $no_causes_diff = $poum->no_causes_capturado - $poum->no_causes_modificado;
+
+                            if( $causes_diff > 0 && $presupuesto->causes_disponible >  $causes_diff){
+                                $modificado = true;
+                                $presupuesto->causes_disponible -= $causes_diff;
+                                $presupuesto->causes_comprometido += $causes_diff;
+
+                                $poum->causes_modificado = $poum->causes_capturado;
+                                $poum->causes_disponible =  $poum->causes_capturado;
+                            }
+
+                            if( $no_causes_diff > 0 && $presupuesto->no_causes_disponible >  $no_causes_diff){
+                                $modificado = true;
+                                $presupuesto->no_causes_disponible -= $no_causes_diff;
+                                $presupuesto->no_causes_comprometido += $no_causes_diff;
+
+                                $poum->no_causes_modificado = $poum->no_causes_capturado;
+                                $poum->no_causes_disponible = $poum->no_causes_capturado;
+                            }
+                        } else {
+                            if($poum->causes_disponible > 0){
+                                $modificado = true;
+                                $presupuesto->causes_disponible += $poum->causes_disponible;
+                                $presupuesto->causes_comprometido -= $poum->causes_disponible;
+
+                                $poum->causes_modificado -= $poum->causes_disponible;
+                                $poum->causes_disponible =  0;
+                            }
+
+                            if($poum->no_causes_disponible > 0){
+                                $modificado = true;
+                                $presupuesto->no_causes_disponible += $poum->no_causes_disponible;
+                                $presupuesto->no_causes_comprometido -= $poum->no_causes_disponible;
+
+                                $poum->no_causes_modificado -= $poum->no_causes_disponible;
+                                $poum->no_causes_disponible =  0;
+                            }
+                        }
+                
+                        //$modificado =false;
+                        //$presupuestos [] = $presupuesto;
+
+                        if($modificado && $poum->status != "CA"){                            
+                            $poum->save();
+                            $presupuesto->save();
+                        } else {
+                            $sin_modificar[] = $poum;
+                        }
+                    }                
+                }
+                DB::commit();
+                return Response::json(['data' =>[ 'sin_modificar' => $sin_modificar/*, 'poum' =>$pedidosOrdinariosUnidadesMedicas, 'presupuestos' => $presupuestos*/ ]],HttpResponse::HTTP_OK);
             }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
 
-            
 
-            if($pedidoOrdinarioUnidadMedica->pedido_ordinario_id != $pedidoOrdinario->id){
-                return Response::json(['error' => "El pedido ordinario no corresponde al de la unidad médica."], HttpResponse::HTTP_NOT_FOUND);
-            }
-            // Aumentar presupuesto especifico
-            return Response::json(['data' => "presupeusto específico ajustado."], HttpResponse::HTTP_OK);
-        } else {
-            //Aumentar el presupuesto a todos
-            return Response::json(['data' => "Todos los presupuestos ezxcedidos ajustados."],HttpResponse::HTTP_OK);
-        }
+
+       
+       /* $precios = $object->precios;
+        foreach($precios as $precio){
+            $precio->tipo;
+            $precio->insumo;
+        }*/
+       
         
+        $object =  $object->load("pedidosOrdinariosUnidadesMedicas.unidadMedica");
+
+        return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
+    }
+    public function verPedido(Request $request, $id){
+        $pedido = Pedido::find($id);
+
+        if($pedido){
+            return Response::json(['data' =>$pedido],HttpResponse::HTTP_OK);
+        } else {
+            return Response::json(['error' => "Pedido no existe"],404);
+        }
+    }
+
+
+    public function regresarACaptura(Request $request, $id)
+    {
+        $pedidoOrdinario = PedidoOrdinario::find($id);
+
+        if(!$pedidoOrdinario){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+        $input = Input::all();
+        DB::beginTransaction();
+        try{
+            if(isset($input['pedidos'])){
+                
+                $pedidosOrdinariosUnidadesMedicas = PedidoOrdinarioUnidadMedica::whereIn('id',$input['pedidos'])->get();
+                $sin_modificar = [];
+                
+                foreach($pedidosOrdinariosUnidadesMedicas as $poum){
+
+                   
+                    $modificado = false;
+                       
+                    if($poum->status == "FI" ){
+
+                        $modificar = false;
+                        if($poum->pedido_id){
+                            
+                            $pedido = $poum->pedido;
+                            
+                            if($pedido->status == "PS" || $pedido->status == "EX"){
+                                $modificar = true;
+                                $poum->causes_disponible += $poum->causes_comprometido;                                  
+                                $poum->causes_comprometido = 0;
+                                
+                                $poum->no_causes_disponible += $poum->no_causes_comprometido;                                  
+                                $poum->no_causes_comprometido = 0; 
+
+                                $ahora = strtotime("now");                
+                                $expiracion = strtotime($poum->fecha_expiracion);
+                            
+                                if($ahora > $expiracion){                                        
+                                    $poum->status = "EX";
+                                } else {
+                                    $poum->status = "EP";
+                                }       
+                                $poum->save();
+
+                                
+                                $pedido->status = "BR";    
+                                $pedido->save();
+                            } 
+                        }
+                    }
+                    
+                    if(!$modificar){
+                        $sin_modificar[] = $poum;
+                    }    
+
+                    
+                }
+                DB::commit();
+                return Response::json(['data' =>[ 'sin_modificar' => $sin_modificar ]],HttpResponse::HTTP_OK);
+            } else {
+                throw new \Exception("No se especificaron los pedidos a cancelar");
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+
+
+
+       
+       /* $precios = $object->precios;
+        foreach($precios as $precio){
+            $precio->tipo;
+            $precio->insumo;
+        }*/
+       
+        
+        $object =  $object->load("pedidosOrdinariosUnidadesMedicas.unidadMedica");
+
+        return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
+    }
+
+    public function cancelar(Request $request, $id)
+    {
+        $pedidoOrdinario = PedidoOrdinario::find($id);
+
+        if(!$pedidoOrdinario){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+        $input = Input::all();
+        DB::beginTransaction();
+        try{
+            if(isset($input['pedidos'])){
+                
+                $pedidosOrdinariosUnidadesMedicas = PedidoOrdinarioUnidadMedica::whereIn('id',$input['pedidos'])->get();
+                $sin_modificar = [];
+                $presupuestos = [];
+                
+                foreach($pedidosOrdinariosUnidadesMedicas as $poum){
+
+                    $presupuesto = PresupuestoUnidadMedica::where('presupuesto_id',$pedidoOrdinario->presupuesto_ejercicio_id)->where('clues',$poum->clues)->first();                 
+                    $modificado = false;
+
+                    if($presupuesto ){                          
+                        if($poum->status != "CA" ){
+                            $causes_devolver = $poum->causes_modificado - $poum->causes_devengado;
+                            $no_causes_devolver = $poum->no_causes_modificado - $poum->causes_devengado;
+
+                            $presupuesto->causes_disponible += $causes_devolver;
+                            $presupuesto->causes_comprometido -= $causes_devolver;
+
+                            $presupuesto->no_causes_disponible += $no_causes_devolver;
+                            $presupuesto->no_causes_comprometido -= $no_causes_devolver;
+
+                            $modificar = true;
+                            if($poum->pedido_id){
+                                $pedido = $poum->pedido;
+                                
+                                if($pedido->status != "FI"){
+                                    $pedido->status = "EX-CA";
+                                    $pedido->fecha_cancelacion = Carbon::now();
+                                    $pedido->save();
+                                } else {
+                                    $modificar = false;
+                                }
+                            }
+                        }
+                        
+                        if($modificar){
+                            $poum->status = "CA";
+                            $presupuestos[] = $presupuesto;
+                            $presupuesto->save();
+                            $poum->save();
+                        } else {
+                            $sin_modificar[] = $poum;
+                        }    
+
+                    }  
+                }
+                DB::commit();
+                return Response::json(['data' =>[ 'sin_modificar' => $sin_modificar, 'presupuestos' => $presupuestos ]],HttpResponse::HTTP_OK);
+            } else {
+                throw new \Exception("No se especificaron los pedidos a cancelar");
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+
+
+
+       
+       /* $precios = $object->precios;
+        foreach($precios as $precio){
+            $precio->tipo;
+            $precio->insumo;
+        }*/
+       
+        
+        $object =  $object->load("pedidosOrdinariosUnidadesMedicas.unidadMedica");
+
+        return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
+    }
+
+    public function anularCancelacion(Request $request, $id)
+    {
+        $pedidoOrdinario = PedidoOrdinario::find($id);
+
+        if(!$pedidoOrdinario){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+        $input = Input::all();
+        DB::beginTransaction();
+        try{
+            if(isset($input['pedidos'])){
+                
+                $pedidosOrdinariosUnidadesMedicas = PedidoOrdinarioUnidadMedica::whereIn('id',$input['pedidos'])->get();
+                $sin_modificar = [];
+                $presupuestos = [];
+                
+                foreach($pedidosOrdinariosUnidadesMedicas as $poum){
+                    $presupuesto = PresupuestoUnidadMedica::where('presupuesto_id',$pedidoOrdinario->presupuesto_ejercicio_id)->where('clues',$poum->clues)->first();                 
+                    $modificado = false;
+
+                    if($presupuesto ){                          
+                        
+                        if($poum->status == "CA" ){
+
+                            $causes_recuperar = $poum->causes_modificado - $poum->causes_devengado;
+                            $no_causes_recuperar = $poum->no_causes_modificado - $poum->causes_devengado;
+
+                            $presupuesto->causes_disponible -= $causes_recuperar;
+                            $presupuesto->causes_comprometido += $causes_recuperar;
+
+                            $presupuesto->no_causes_disponible -= $no_causes_recuperar;
+                            $presupuesto->no_causes_comprometido += $no_causes_recuperar;
+
+                            $modificar = true;
+                            if($poum->pedido_id){
+                                $pedido = $poum->pedido;                             
+                                
+                                if($pedido->folio == null){
+                                    $pedido->status = "BR";
+                                    $poum->status = "EP";
+                                } else {
+
+                                    $poum->status = "FI";
+
+                                    $ahora = strtotime("now");                
+                                    $expiracion = strtotime($pedido->fecha_expiracion);
+                                
+                                    if($ahora > $expiracion){                                        
+                                        $pedido->status = "EX";
+                                    } else {
+                                        $pedido->status = "PS";
+                                    }                                    
+                                }
+                               
+                                $pedido->fecha_cancelacion = null;                              
+
+
+                                if($pedido->status != "FI"){
+                                    
+                                    $pedido->save();
+                                } else {
+                                    $modificar = false;
+                                }
+                            } else {
+                                //Checar expiracion;
+                                $ahora = strtotime("now");                
+                                $expiracion = strtotime($poum->fecha_expiracion);
+
+                                if($ahora > $expiracion){
+                                    $poum->status = "EX";
+                                } else {
+                                    $poum->status = "S/P";                                   
+                                }                                
+                            }
+                        }
+                        if($modificar){
+                            $presupuestos[] = $presupuesto;
+                            $presupuesto->save();
+                            $poum->save();
+                        } else {
+                            $sin_modificar[] = $poum;
+                        }    
+
+                    }  
+                }
+                DB::commit();
+                return Response::json(['data' =>[ 'sin_modificar' => $sin_modificar, 'presupuestos' => $presupuestos ]],HttpResponse::HTTP_OK);
+            } else {
+                throw new \Exception("No se especificaron los pedidos a cancelar");
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
 
 
 
@@ -120,7 +571,7 @@ class PedidosOrdinariosController extends Controller
         }*/
        
         
-        $object =  $object->load("pedidosOrdinariosUnidadesMedicas.unidadMedica");
+        $object =  $object->load("pedidosOrdinariosUnidadesMedicas.unidadMedica","presupuesto.presupuestoUnidadesMedicas");
 
         return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
     }
@@ -180,7 +631,7 @@ class PedidosOrdinariosController extends Controller
                         "causes_disponible" => $item["causes_autorizado"],
                         "no_causes_autorizado" => $item["no_causes_autorizado"],
                         "no_causes_modificado" => $item["no_causes_autorizado"],
-                        "no_causes_disponible" => $item["causes_autorizado"],
+                        "no_causes_disponible" => $item["no_causes_autorizado"],
                     ]);
                     $presupuesto_unidad_medica = PresupuestoUnidadMedica::where('presupuesto_id',$presupuesto->id)->where("clues",$item["clues"])->first();
 
@@ -222,6 +673,136 @@ class PedidosOrdinariosController extends Controller
                 DB::rollback();
             return Response::json(['error' => "No hay presupuesto"], HttpResponse::HTTP_CONFLICT);
             }
+
+           
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
+    }
+
+    public function update(Request $request, $id){
+        $mensajes = [            
+            'required'      => "required",
+            'numeric'       => "numeric",
+            'integer'       => "integer",
+            'unique'        => "unique",
+            'min'           => "min",
+            'date'           => "date"
+        ];
+
+        $reglas = [
+            //'id'            => 'required|unique:usuarios,id,'.$id,            
+            'descripcion'           => 'required',
+            'fecha'        => 'required|date',
+            'fecha_expiracion'     => 'required|date'
+        ];
+
+        $input = Input::only('descripcion','fecha',"fecha_expiracion","pedidos_ordinarios_unidades_medicas");
+
+        $pedido_ordinario = PedidoOrdinario::find($id);
+
+        if(!$pedido_ordinario){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+
+        $v = Validator::make($input, $reglas, $mensajes);
+
+        if ($v->fails()) {
+            $errors =  $v->errors();           
+            return Response::json(['error' =>$errors], HttpResponse::HTTP_CONFLICT);
+        }
+
+        DB::beginTransaction();
+        try{
+
+           
+                
+                
+                $input['fecha_expiracion'] =  date("Y-m-d H:i:s", strtotime($input["fecha_expiracion"]));
+
+
+                $cambiarDescripcion = false;
+                $cambiarFechaPedido = false;
+                $cambiarFechaExpiracion = false;
+                
+                if($pedido_ordinario->descripcion  != $input['descripcion']){
+                    $cambiarDescripcion = true;
+                }
+
+                
+
+
+                $pedido_ordinario->descripcion  = $input['descripcion'];
+                
+                $fecha_anterior = $pedido_ordinario->fecha;
+                $pedido_ordinario->fecha  = $input['fecha'];
+                $fecha_expiracion_anterior =  $pedido_ordinario->fecha_expiracion;
+                $pedido_ordinario->fecha_expiracion  = $input['fecha_expiracion'];
+                $pedido_ordinario->save();
+
+                if($pedido_ordinario->fecha  != $fecha_anterior){
+                    $cambiarFechaPedido = true;
+                }
+
+                if($pedido_ordinario->fecha_expiracion  != $fecha_expiracion_anterior){
+                    $cambiarFechaExpiracion = true;
+                }
+
+                // Cambiar estatus de pedidos ordinarios unidades medicas
+                $ahora = strtotime("now");
+                 
+                $expiracion = strtotime($pedido_ordinario->fecha_expiracion);
+
+
+                $expirado = false;
+                if($ahora > $expiracion){
+                    $expirado = true;
+                }
+
+                if($expirado || $cambiarDescripcion || $cambiarFechaPedido || $cambiarFechaExpiracion){
+                    $poum = $pedido_ordinario->pedidosOrdinariosUnidadesMedicas;
+                    foreach($poum as $item){
+
+                        if($expirado && $item->status != "FI" && $item->status != "CA"){
+                            $item->status = "EX";
+                            $item->save();
+                        } else  if($cambiarFechaExpiracion && !$expirado && $item->status != "FI" && $item->status != "CA"){
+                            if($item->pedido_id != null){
+                                $item->status = "EP";
+                            } else {
+                                $item->status = "S/P";
+                            }
+                            $item->save();
+                        }
+
+                        if($item->pedido_id != null && ($cambiarFechaPedido || $cambiarDescripcion)){
+                            $pedido = $item->pedido;
+                           
+                            if($cambiarDescripcion){
+                                $pedido->descripcion = $pedido_ordinario->descripcion;
+                            }
+
+                            if($cambiarFechaPedido){
+                                $pedido->fecha = $pedido_ordinario->fecha;
+                                $pedido->fecha_expiracion = strtotime("+20 days", strtotime($pedido->fecha));
+                            }
+
+                            if($cambiarFechaPedido || $cambiarDescripcion){
+                                $pedido->save();
+                            }
+                            
+                        } 
+                    }
+                }
+               
+
+                DB::commit();
+                return Response::json([ 'data' => $pedido_ordinario, "fecha" =>$pedido_ordinario->fecha, "cambiar_fecha" =>$cambiarFechaPedido],200);
+                
+            
 
            
 
