@@ -742,6 +742,8 @@ class PedidoController extends Controller{
             if($tipo_pedido == "PO"){
                 $pedido_ordinario_unidad_medica->causes_capturado =  round($total_monto['causes'],2) + round($total_monto['material_curacion'],2);
                 $pedido_ordinario_unidad_medica->no_causes_capturado =  round($total_monto['no_causes'],2);
+
+
                 $pedido_ordinario_unidad_medica->save();
             }
 
@@ -911,6 +913,9 @@ class PedidoController extends Controller{
                     DB::rollBack();
                     return Response::json(['error' => 'El presupuesto es insuficiente para este pedido, los cambios no se guardaron.', 'data'=>[$pedido_ordinario_unidad_medica,$total_monto]], 500);
                 }else{
+                    if($parametros['datos']['status'] == 'PS'){
+                        $pedido_ordinario_unidad_medica->status = 'FI';
+                    }
                     $pedido_ordinario_unidad_medica->save();
                 }
             }

@@ -214,7 +214,11 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::post('pedidos-ordinarios/procesar-excel',                        'PedidosOrdinariosController@cargarExcel');
         Route::get('pedidos-ordinarios/formato-carga-pedido-ordinario-excel',   'PedidosOrdinariosController@descargarFormato');
         Route::get('pedidos-ordinarios/presupuesto',                            'PedidosOrdinariosController@presupuesto');
-        Route::put('pedidos-ordinarios/aumentar-presupuesto/{id}',              'PedidosOrdinariosController@aumentarPresupuesto');
+        Route::get('pedidos-ordinarios/pedido/{id}',                            'PedidosOrdinariosController@verPedido');
+        Route::put('pedidos-ordinarios/modificar-presupuesto/{id}',             'PedidosOrdinariosController@modificarPresupuesto');
+        Route::put('pedidos-ordinarios/regresar-captura/{id}',                 'PedidosOrdinariosController@regresarACaptura');
+        Route::put('pedidos-ordinarios/cancelar/{id}',                          'PedidosOrdinariosController@cancelar');
+        Route::put('pedidos-ordinarios/anular-cancelacion/{id}',                'PedidosOrdinariosController@anularCancelacion');
         Route::resource('pedidos-ordinarios',                                   'PedidosOrdinariosController',['only' => ['index', 'show', 'store','update','destroy']]);
         
         // Hacer bien el metodo

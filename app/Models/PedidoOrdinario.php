@@ -21,6 +21,10 @@ class PedidoOrdinario extends BaseModel
     public function pedidosOrdinariosUnidadesMedicas(){
         return $this->hasMany('App\Models\PedidoOrdinarioUnidadMedica','pedido_ordinario_id');
     }
+
+    public function presupuesto(){
+        return $this->belongsTo('App\Models\PresupuestoEjercicio','presupuesto_ejercicio_id','id');
+    }
     /*
     
     public function insumos(){
