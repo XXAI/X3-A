@@ -10,7 +10,7 @@ use App\Http\Requests;
 use App\Models\PresupuestoEjercicio, App\Models\PresupuestoUnidadMedica,  App\Models\UnidadMedica, App\Models\Jurisdiccion;
 use App\Models\PresupuestoMovimientoEjercicio, App\Models\PresupuestoMovimientoUnidadMedica;
 
-use App\Models\PedidoOrdinario, App\Models\PedidoOrdinarioUnidadMedica, App\Models\Pedido;
+use App\Models\PedidoOrdinario, App\Models\PedidoOrdinarioUnidadMedica, App\Models\Pedido, App\Models\PedidoInsumo;
 
 use Carbon\Carbon;
 
@@ -36,6 +36,31 @@ class PedidosOrdinariosController extends Controller
             $items = $items->where('pedidos_ordinarios.descripcion','LIKE',"%".$parametros['q']."%")->orWhere('pedidos_ordinarios.id','LIKE',"%".$parametros['q']."%");
        }
 
+        if(isset($parametros['page'])){
+
+            $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
+            $items = $items->paginate($resultadosPorPagina);
+        } else {
+            $items = $items->get();
+        }
+       
+        return Response::json([ 'data' => $items],200);
+    }
+
+    public function solicitudes(Request $request)
+    {   $parametros = Input::only('q','page','per_page');
+        
+        $items =  Pedido::select('*')->where('tipo_pedido_id','PXT')->where('status','PA')->orderBy('id','desc');
+                    //->leftJoin('proveedores','contratos.proveedor_id','=','proveedores.id');        
+
+        if ($parametros['q']) {
+            $items = $items->where(function($query) use ($parametros){
+                $query->where('pedidos.descripcion','LIKE',"%".$parametros['q']."%")->orWhere('pedidos.folio','LIKE',"%".$parametros['q']."%");
+            });
+           // $items = $items->where('pedidos.descripcion','LIKE',"%".$parametros['q']."%")->orWhere('pedidos.folio','LIKE',"%".$parametros['q']."%");
+       }
+
+       $items = $items->with('unidadMedica');
         if(isset($parametros['page'])){
 
             $resultadosPorPagina = isset($parametros["per_page"])? $parametros["per_page"] : 20;
@@ -263,6 +288,159 @@ class PedidosOrdinariosController extends Controller
        
         
         $object =  $object->load("pedidosOrdinariosUnidadesMedicas.unidadMedica");
+
+        return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
+    }
+
+    // Aprobar pedidos extraordinarios
+    public function aprobarPresupuesto(Request $request, $id)
+    {
+        //AKIRA PENDIENTE
+        $pedido = Pedido::find($id);
+
+        if(!$pedido){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+    
+
+        $input = Input::all();
+        DB::beginTransaction();
+        try{
+            $presupuesto =  PresupuestoEjercicio::where('activo','1')->first();
+
+            if(!$presupuesto){
+                return Response::json(['error' => "No hay presupuesto."], HttpResponse::HTTP_NOT_FOUND);
+            }
+
+            $presupuesto_unidad_medica = PresupuestoUnidadMedica::where('presupuesto_id',$presupuesto->id)->where('clues',$pedido->clues)->first();
+
+            if(!$presupuesto_unidad_medica){
+                return Response::json(['error' => "No hay presupuesto para esta unidad médica."], HttpResponse::HTTP_NOT_FOUND);
+            }
+
+            if($pedido->status  != 'PA'){
+                return Response::json(['error' => "El estatus del pedido no permite aprobar presupuesto."], HttpResponse::HTTP_CONFLICT);
+            }
+
+            
+
+            $mensajes = [            
+                'required'      => "required",
+                'numeric'       => "numeric",
+                'min'           => "min"
+            ];
+    
+            $reglas = [
+                'causes_autorizado' => 'required|numeric|min:0',
+                'no_causes_autorizado' => 'required|numeric|min:0'
+            ];
+    
+            $input = Input::only("causes_autorizado","no_causes_autorizado");
+    
+            $v = Validator::make($input, $reglas, $mensajes);
+    
+            if ($v->fails()) {
+                $errors =  $v->errors();           
+                return Response::json(['error' =>$errors], HttpResponse::HTTP_CONFLICT);
+            }
+
+
+
+            
+            $errors = [];
+            $error = false;
+            $causes_autorizado = 0;
+            $pedido_extraordinario = PedidoOrdinario::create([
+                "presupuesto_ejercicio_id" => $presupuesto->id,
+                "tipo_pedido_id" => "PXT",
+                "descripcion" => $pedido->descripcion,
+                "fecha" => $pedido->fecha
+            ]);
+
+
+            $insumos = PedidoInsumo::select(DB::raw('insumos_medicos.clave, SUM(pedidos_insumos.monto_solicitado) as monto_solicitado, SUM(pedidos_insumos.cantidad_solicitada) as cantidad_solicitada, insumos_medicos.tipo, insumos_medicos.es_causes'))->where('pedido_id', $id)->leftJoin('insumos_medicos','insumos_medicos.clave','=','pedidos_insumos.insumo_medico_clave')->groupBy('insumos_medicos.clave')->get();
+
+            $capturado_causes = 0;
+            $capturado_no_causes = 0;      
+
+            foreach($insumos as $insumo){
+                if($insumo->tipo == "MC"){
+                    $capturado_causes += $insumo->monto_solicitado * 1.16;
+                } else {
+                    if($insumo->es_causes){
+                        $capturado_causes += $insumo->monto_solicitado;
+                    } else {
+                        $capturado_no_causes += $insumo->monto_solicitado;
+                    }
+                }
+            }
+
+            $pedido_extraordinario_unidad_medica_obj = [
+                "pedido_ordinario_id" => $pedido_extraordinario->id, 
+                "pedido_id" => $pedido->id,
+                "clues" =>$pedido->clues,
+                "status" => "EP",
+                "causes_autorizado" => 0,
+                "causes_modificado" => 0,
+                "causes_disponible" => 0,
+                "causes_capturado" => $capturado_causes,
+                "no_causes_autorizado" => 0,
+                "no_causes_modificado" => 0,
+                "no_causes_disponible" => 0,
+                "no_causes_capturado" => $capturado_no_causes,
+            ];
+                
+            
+
+            if($input["causes_autorizado"]  >= 0){
+                $diff = $presupuesto_unidad_medica->causes_disponible - $input["causes_autorizado"];
+
+                if($diff < 0){ 
+                    $error = true;
+                    $errors["causes_autorizado"] = ["budget"];
+                } else {
+                    $pedido_extraordinario_unidad_medica_obj["causes_autorizado"] = $input["causes_autorizado"];
+                    $pedido_extraordinario_unidad_medica_obj["causes_modificado"] = $input["causes_autorizado"];
+                    $pedido_extraordinario_unidad_medica_obj["causes_disponible"] = $input["causes_autorizado"];
+                    $presupuesto_unidad_medica->causes_comprometido += $input["causes_autorizado"];
+                    $presupuesto_unidad_medica->causes_disponible -= $input["causes_autorizado"];
+                }
+            } 
+
+            if($input["no_causes_autorizado"]  >= 0){
+                $diff = $presupuesto_unidad_medica->no_causes_disponible - $input["no_causes_autorizado"];
+
+                if($diff < 0){ 
+                    $error = true;
+                    $errors["no_causes_autorizado"] = ["budget"];
+                } else {
+                    $pedido_extraordinario_unidad_medica_obj["no_causes_autorizado"] = $input["no_causes_autorizado"];
+                    $pedido_extraordinario_unidad_medica_obj["no_causes_modificado"] = $input["no_causes_autorizado"];
+                    $pedido_extraordinario_unidad_medica_obj["no_causes_disponible"] = $input["no_causes_autorizado"];
+                    $presupuesto_unidad_medica->no_causes_comprometido += $input["no_causes_autorizado"];
+                    $presupuesto_unidad_medica->no_causes_disponible -= $input["no_causes_autorizado"];
+                }
+            } 
+
+            if(!$error){  
+                $pedido_extraordinario_unidad_medica =  PedidoOrdinarioUnidadMedica::create($pedido_extraordinario_unidad_medica_obj);      
+                $presupuesto_unidad_medica->save();
+                $pedido->status = "BRA";
+                $pedido->presupuesto_ejercicio_id =  $presupuesto->id;
+                $pedido->save();
+                DB::commit();
+                //DB::rollback();
+                return Response::json(['data' => $pedido], HttpResponse::HTTP_OK);
+            } else {
+                DB::rollback();
+                return Response::json(['error' =>$errors], HttpResponse::HTTP_CONFLICT);
+            }
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            return Response::json(['error' => $e->getMessage()], HttpResponse::HTTP_CONFLICT);
+        } 
 
         return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
     }
@@ -572,6 +750,63 @@ class PedidosOrdinariosController extends Controller
        
         
         $object =  $object->load("pedidosOrdinariosUnidadesMedicas.unidadMedica","presupuesto.presupuestoUnidadesMedicas");
+
+        return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
+    }
+
+    public function verSolicitud(Request $request, $id)
+    {
+        $object = Pedido::find($id);
+
+        if(!$object){
+            return Response::json(['error' => "No se encuentra el recurso que esta buscando."], HttpResponse::HTTP_NOT_FOUND);
+        }
+
+        $insumos = PedidoInsumo::select(DB::raw('insumos_medicos.clave, SUM(pedidos_insumos.monto_solicitado) as monto_solicitado, SUM(pedidos_insumos.cantidad_solicitada) as cantidad_solicitada, insumos_medicos.tipo, insumos_medicos.es_causes'))->where('pedido_id', $id)->leftJoin('insumos_medicos','insumos_medicos.clave','=','pedidos_insumos.insumo_medico_clave')->groupBy('insumos_medicos.clave')->get();
+
+        $total_insumos_causes = 0;
+        $total_insumos_no_causes = 0;
+        $total_monto_causes = 0;
+        $total_monto_no_causes = 0;
+
+        $total_claves_causes = 0;
+        $total_claves_no_causes = 0;        
+
+        foreach($insumos as $insumo){
+            if($insumo->tipo == "MC"){
+                $total_monto_causes += $insumo->monto_solicitado * 1.16;
+                $total_insumos_causes += $insumo->cantidad_solicitada;
+                $total_claves_causes++;
+            } else {
+                if($insumo->es_causes){
+                    $total_monto_causes += $insumo->monto_solicitado;
+                    $total_insumos_causes += $insumo->cantidad_solicitada;
+                    $total_claves_causes++;
+                } else {
+                    $total_monto_no_causes += $insumo->monto_solicitado;
+                    $total_insumos_no_causes += $insumo->cantidad_solicitada;
+                    $total_claves_no_causes++;
+                }
+            }
+        }
+
+        $object->total_insumos_causes = $total_insumos_causes;
+        $object->total_insumos_no_causes = $total_insumos_no_causes;
+
+        $object->total_monto_causes = $total_monto_causes;
+        $object->total_monto_no_causes = $total_monto_no_causes;
+
+        $object->total_claves_causes = $total_claves_causes;
+        $object->total_claves_no_causes = $total_claves_no_causes;
+        $presupuesto = PresupuestoEjercicio::where('activo', 1)->first();
+        if($presupuesto){
+            $pum = PresupuestoUnidadMedica::where('clues', $object->clues)->where('presupuesto_id', $presupuesto->id)->first();
+            $object->presupuesto = $pum;
+        } else {
+            $object->presupuesto = null;
+        }
+        $object->unidadMedica;
+        
 
         return Response::json([ 'data' => $object ], HttpResponse::HTTP_OK);
     }
