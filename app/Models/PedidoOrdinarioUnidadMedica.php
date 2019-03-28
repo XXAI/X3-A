@@ -22,11 +22,13 @@ class PedidoOrdinarioUnidadMedica extends BaseModel
         "causes_comprometido",
         "causes_devengado",
         "causes_disponible",
+        "causes_capturado",
         "no_causes_autorizado",
         "no_causes_modificado",
         "no_causes_comprometido",
         "no_causes_devengado",
-        "no_causes_disponible"
+        "no_causes_disponible",
+        "no_causes_capturado",
     ];
     
     protected $casts = [
@@ -38,12 +40,13 @@ class PedidoOrdinarioUnidadMedica extends BaseModel
         "causes_comprometido"=>"double",
         "causes_devengado"=>"double",
         "causes_disponible"=>"double",
+        "causes_capturado"=>"double",
         "no_causes_autorizado"=>"double",
         "no_causes_modificado"=>"double",
         "no_causes_comprometido"=>"double",
-        "no_causes_comprometido"=>"double",
         "no_causes_devengado"=>"double",
-        "no_causes_disponible"=>"double"
+        "no_causes_disponible"=>"double",
+        "no_causes_capturado"=>"double",
     ];
 
     protected $table = 'pedidos_ordinarios_unidades_medicas';
@@ -54,5 +57,9 @@ class PedidoOrdinarioUnidadMedica extends BaseModel
 
     public function pedidoOrdinario(){
         return $this->belongsTo('App\Models\PedidoOrdinario','pedido_ordinario_id','id');
+    }
+
+    public function pedido(){
+        return $this->hasOne('App\Models\Pedido','id','pedido_id');
     }
 }
