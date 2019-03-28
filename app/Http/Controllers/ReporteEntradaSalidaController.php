@@ -36,6 +36,7 @@ class ReporteEntradaSalidaController extends Controller
                                     ->where("movimientos.status", "=", 'FI')
                                     ->where("movimientos.almacen_id", "=", $almacen->id)
                                     ->whereNull("movimientos.deleted_at")
+                                    ->whereNull("movimiento_insumos.deleted_at")
                                     ->orderBy("movimientos.fecha_movimiento", "asc", "insumos_medicos.clave", "insumos_medicos.clave", "tipos_movimientos.tipo")
                                     ->select("movimientos.id", "movimientos.fecha_movimiento", "tipos_movimientos.nombre", "tipos_movimientos.tipo", "movimiento_insumos.cantidad", "movimiento_insumos.cantidad_unidosis", "insumos_medicos.clave", "insumos_medicos.descripcion", "movimiento_insumos.precio_unitario", "movimiento_insumos.iva", "movimiento_insumos.precio_total" );
             
