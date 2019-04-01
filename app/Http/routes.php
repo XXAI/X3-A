@@ -334,10 +334,13 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('stock-insumo-medico',               'StockController@stockInsumoMedico');
 
         Route::resource('reporte-estrada-salida',           'ReporteEntradaSalidaController',    ['only' => ['index', "show"]]);//Villa
+        
         Route::get('reporte-estrada-salida/catalogos',      'ReporteEntradaSalidaController@catalogo');//Villa
+        
     });
 
-    
+    Route::get('reporte-excel-movimiento',                  'ReporteEntradaSalidaController@generarMovimientoUnicoExcel'); //Villa
+    Route::get('reporte-excel-movimiento-es',               'ReporteEntradaSalidaController@generarMovimientosExcel'); //Villa
     Route::get('generar-excel-pedido/{id}',                 'PedidoController@generarExcel');
     Route::get('generar-excel-pedido-jurisdiccional/{id}',  'PedidoJurisdiccionalController@generarExcel');
 
