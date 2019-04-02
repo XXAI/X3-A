@@ -61,6 +61,20 @@ class PedidosStatsController extends Controller{
                 count(
                     case when status = "BR" and tipo_pedido_id = "PO" then 1 else null end
                 ) as ordinarios_borradores ,
+                
+                count(
+                    case when tipo_pedido_id = "PXT" then 1 else null end
+                ) as extraordinarios ,
+                count(
+                    case when status = "BR" and tipo_pedido_id = "PXT" then 1 else null end
+                ) as extraordinarios_borradores ,
+                count(
+                    case when status = "PA" and tipo_pedido_id = "PXT" then 1 else null end
+                ) as extraordinarios_por_aprobar ,
+                count(
+                    case when status = "BRA" and tipo_pedido_id = "PXT" then 1 else null end
+                ) as extraordinarios_aprobados,
+
                 count(
                     case when status = "BR" then 1 else null end
                 ) as borradores,

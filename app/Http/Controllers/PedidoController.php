@@ -275,7 +275,7 @@ class PedidoController extends Controller{
         
         if($pedido->tipo_pedido_id != 'PJS'){
             
-            if($pedido->status == 'BR'){
+            if($pedido->status == 'BR' || $pedido->status == 'BRA'){
                 $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","proveedor","presupuesto","presupuestoApartado");
             }else{
                 $pedido = $pedido->load("insumos.tipoInsumo","insumos.insumosConDescripcion.informacion","insumos.insumosConDescripcion.generico.grupos","almacenSolicitante.unidadMedica","almacenProveedor","proveedor","presupuesto","encargadoAlmacen","director","recepciones.entrada.insumos","acta","acta.proveedor","acta.proveedor.contratoActivo","acta.director","acta.administrador","acta.personaEncargadaAlmacen","acta.unidadMedica","acta.pedidos");
@@ -295,9 +295,10 @@ class PedidoController extends Controller{
             }
         }
         // ############################################
-        if($pedido->tipo_pedido_id == 'PO'){
+        if($pedido->tipo_pedido_id == 'PO' ||$pedido->tipo_pedido_id == 'PXT'){
             $pedido->pedidoOrdinarioUnidadMedica;
         }
+        
         return Response::json([ 'data' => $pedido],200);
     }
 
@@ -376,14 +377,27 @@ class PedidoController extends Controller{
             return Response::json(['error' => 'No se encontró el almacen solicitante'], 500);
         }
         
+        //Volvemos cualquier cosa pedido extraordinario
+        $presupuesto_ejercicio = null;
+        if($tipo_pedido != 'PO'){
+            //Siempre y cuando haya un presupuesto activo
+            $presupuesto_ejercicio = PresupuestoEjercicio::where('activo',1)->first();
+
+            if($presupuesto_ejercicio){
+                $tipo_pedido = 'PXT';
+            }
+        }
+
         //$parametros['datos']['almacen_solicitante'] = $almacen->id;
         $parametros['datos']['clues'] = $almacen->externo == 1 ? $almacen->clues_perteneciente : $almacen->clues;
         $parametros['datos']['status'] = 'BR'; //estatus de borrador
         $parametros['datos']['tipo_pedido_id'] = $tipo_pedido; //tipo de pedido Pedido de Abastecimiento
         if(isset($parametros['datos']['pedido_ordinario_unidad_medica_id'])){
             $parametros['datos']['presupuesto_ejercicio_id'] = $pedido_ordinario_unidad_medica->pedidoOrdinario->presupuesto_ejercicio_id;
-        } else {
-            $parametros['datos']['presupuesto_id'] = $presupuesto->id; //Harima: Al crear el pedido, lo creamos sobre el presupuesto activo
+        } else  if($tipo_pedido == 'PXT'){
+            $parametros['datos']['presupuesto_ejercicio_id'] = $presupuesto_ejercicio->id;
+        } else{
+            $parametros['datos']['presupuesto_id'] = $presupuesto->id; //Harima: Al crear el pedido, lo creamos sobre el presupuesto activo           
         }
         
 
@@ -562,6 +576,8 @@ class PedidoController extends Controller{
             }elseif($almacen_solicitante->nivel_almacen == 2){
                 $parametros['datos']['status'] = 'SD'; //Estatus solicitado
             }
+        }elseif($parametros['datos']['status'] == 'SOLICITAR_APROBACION'){
+            $parametros['datos']['status'] = 'PA';
         }else{
             $parametros['datos']['status'] = 'BR';
         }
@@ -581,7 +597,12 @@ class PedidoController extends Controller{
             if($pedido->tipo_pedido_id == 'PO'){
                 $parametros['datos']['tipo_pedido_id'] = 'PO';
             }
-            if($pedido->status != 'BR'){
+
+            if($pedido->tipo_pedido_id == 'PXT'){
+                $parametros['datos']['tipo_pedido_id'] = 'PXT';
+            }
+
+            if($pedido->status != 'BR' && $pedido->status != 'BRA'){
                 return Response::json(['error' => 'El pedido ya no puede editarse.'], 500);
             }
 
@@ -618,9 +639,9 @@ class PedidoController extends Controller{
             // porque estos cambian el tipo de pedido en la edición
             // y un pedido ordinario no se debe cambiar de tipo
             $pedido_ordinario_unidad_medica ;
-            if($pedido->tipo_pedido_id == "PO"){
-                $parametros['datos']['tipo_pedido_id'] = "PO";
-                $tipo_pedido= "PO";
+            if($pedido->tipo_pedido_id == "PO" || $pedido->tipo_pedido_id == "PXT"){
+                $parametros['datos']['tipo_pedido_id'] = $pedido->tipo_pedido_id;
+                $tipo_pedido= $pedido->tipo_pedido_id;
 
                 $pedido_ordinario_unidad_medica = PedidoOrdinarioUnidadMedica::where('pedido_id',$pedido->id)->first();
                 if(!$pedido_ordinario_unidad_medica){
@@ -628,9 +649,9 @@ class PedidoController extends Controller{
                     return Response::json(['error' => 'No existe el pedido ordinario y no se pueden modificar saldos'], 500);
                 }
             }
-
+           
             $pedido->update($parametros['datos']);
-
+           
             $arreglo_insumos = Array();
             
             //Aqui comienza:
@@ -739,11 +760,9 @@ class PedidoController extends Controller{
             $pedido->total_monto_solicitado = round($total_monto['causes'],2) + round($total_monto['no_causes'],2) + round($total_monto['material_curacion'],2);
             $pedido->save();
 
-            if($tipo_pedido == "PO"){
+            if($tipo_pedido == "PO" || $tipo_pedido == "PXT"){
                 $pedido_ordinario_unidad_medica->causes_capturado =  round($total_monto['causes'],2) + round($total_monto['material_curacion'],2);
                 $pedido_ordinario_unidad_medica->no_causes_capturado =  round($total_monto['no_causes'],2);
-
-
                 $pedido_ordinario_unidad_medica->save();
             }
 
@@ -784,7 +803,7 @@ class PedidoController extends Controller{
                                             ->first();
                 if(!$presupuesto_unidad){
                     DB::rollBack();
-                    return Response::json(['error' => 'No existe presupuesto asignado al mes y/o año del pedido'], 500);
+                    return Response::json(['error' => 'No existe presupuesto asignado al mes y/o año del pedido'.$pedido->tipo_pedido_id], 500);
                 }
                 
                 $presupuesto_unidad->causes_comprometido = $presupuesto_unidad->causes_comprometido + round($total_monto['causes'],2);
@@ -882,7 +901,7 @@ class PedidoController extends Controller{
                 ];
 
                 $historial = HistorialMovimientoTransferencia::create($historial_datos);
-            } else if($pedido->status != 'BR' && $pedido->tipo_pedido_id == 'PO'){
+            } else if($pedido->status != 'BR' && $pedido->status != 'BRA' && ($pedido->tipo_pedido_id == 'PO' || $pedido->tipo_pedido_id == 'PXT' )){
 
                 if($pedido->total_monto_solicitado == $pedido->total_monto_recibido){
                     $pedido->status = 'FI';

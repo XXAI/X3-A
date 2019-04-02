@@ -26,15 +26,24 @@ class PedidosOrdinariosController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request)
-    {   $parametros = Input::only('q','page','per_page');
+    {   $parametros = Input::only('q','tipo','page','per_page');
         
-        $items =  PedidoOrdinario::select('pedidos_ordinarios.*')->orderBy('id','desc');
+        $items =  PedidoOrdinario::select(DB::raw('
+                    pedidos_ordinarios.*,
+                    (select count(id) from pedidos_ordinarios_unidades_medicas where pedidos_ordinarios_unidades_medicas.pedido_ordinario_id = pedidos_ordinarios.id) as total_unidades_medicas,
+                    (select count(id) from pedidos_ordinarios_unidades_medicas where pedidos_ordinarios_unidades_medicas.pedido_ordinario_id = pedidos_ordinarios.id and pedidos_ordinarios_unidades_medicas.status="FI" ) as capturas_unidades_medicas
+                '))->orderBy('id','desc');
                     //->leftJoin('proveedores','contratos.proveedor_id','=','proveedores.id');        
 
         if ($parametros['q']) {
-            
-            $items = $items->where('pedidos_ordinarios.descripcion','LIKE',"%".$parametros['q']."%")->orWhere('pedidos_ordinarios.id','LIKE',"%".$parametros['q']."%");
+           $items =  $items->where(function($query) use ($parametros){
+                $query->where('pedidos_ordinarios.descripcion','LIKE',"%".$parametros['q']."%")->orWhere('pedidos_ordinarios.id','LIKE',"%".$parametros['q']."%");
+            });
        }
+
+       if ($parametros['tipo'] && $parametros["tipo"] != "") {            
+            $items = $items->where('pedidos_ordinarios.tipo_pedido_id',$parametros["tipo"]);
+        }
 
         if(isset($parametros['page'])){
 
@@ -845,7 +854,7 @@ class PedidosOrdinariosController extends Controller
 
             if($presupuesto){
                 
-                
+                $inputs["tipo_pedido_id"] = "PO";
                 $inputs['fecha_expiracion'] =  date("Y-m-d H:i:s", strtotime($inputs["fecha_expiracion"]));
                
                 $inputs['presupuesto_ejercicio_id'] = $presupuesto->id;
@@ -920,6 +929,7 @@ class PedidosOrdinariosController extends Controller
     public function update(Request $request, $id){
         $mensajes = [            
             'required'      => "required",
+            'required_if'      => "required",
             'numeric'       => "numeric",
             'integer'       => "integer",
             'unique'        => "unique",
@@ -931,10 +941,10 @@ class PedidosOrdinariosController extends Controller
             //'id'            => 'required|unique:usuarios,id,'.$id,            
             'descripcion'           => 'required',
             'fecha'        => 'required|date',
-            'fecha_expiracion'     => 'required|date'
+            'fecha_expiracion'     => 'requiredIf:tipo_pedido_id,PO|date'
         ];
 
-        $input = Input::only('descripcion','fecha',"fecha_expiracion","pedidos_ordinarios_unidades_medicas");
+        $input = Input::only('descripcion','tipo_pedido_id','fecha',"fecha_expiracion","pedidos_ordinarios_unidades_medicas");
 
         $pedido_ordinario = PedidoOrdinario::find($id);
 
@@ -974,15 +984,18 @@ class PedidosOrdinariosController extends Controller
                 
                 $fecha_anterior = $pedido_ordinario->fecha;
                 $pedido_ordinario->fecha  = $input['fecha'];
+
                 $fecha_expiracion_anterior =  $pedido_ordinario->fecha_expiracion;
                 $pedido_ordinario->fecha_expiracion  = $input['fecha_expiracion'];
+               
+               
                 $pedido_ordinario->save();
 
                 if($pedido_ordinario->fecha  != $fecha_anterior){
                     $cambiarFechaPedido = true;
                 }
 
-                if($pedido_ordinario->fecha_expiracion  != $fecha_expiracion_anterior){
+                if($pedido_ordinario->fecha_expiracion  != $fecha_expiracion_anterior && $pedido_ordinario->tipo_pedido_id == 'PO'){
                     $cambiarFechaExpiracion = true;
                 }
 
@@ -993,7 +1006,7 @@ class PedidosOrdinariosController extends Controller
 
 
                 $expirado = false;
-                if($ahora > $expiracion){
+                if($ahora > $expiracion &&  $pedido_ordinario->tipo_pedido_id == 'PO'){
                     $expirado = true;
                 }
 
@@ -1022,7 +1035,9 @@ class PedidosOrdinariosController extends Controller
 
                             if($cambiarFechaPedido){
                                 $pedido->fecha = $pedido_ordinario->fecha;
-                                $pedido->fecha_expiracion = strtotime("+20 days", strtotime($pedido->fecha));
+                                if($pedido_ordinario->tipo_pedido_id == 'PO'){
+                                    $pedido->fecha_expiracion = strtotime("+20 days", strtotime($pedido->fecha));
+                                }
                             }
 
                             if($cambiarFechaPedido || $cambiarDescripcion){
