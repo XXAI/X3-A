@@ -29,6 +29,7 @@ class PedidoOrdinarioUnidadMedica extends BaseModel
         "no_causes_devengado",
         "no_causes_disponible",
         "no_causes_capturado",
+        "status"
     ];
     
     protected $casts = [
@@ -47,6 +48,7 @@ class PedidoOrdinarioUnidadMedica extends BaseModel
         "no_causes_devengado"=>"double",
         "no_causes_disponible"=>"double",
         "no_causes_capturado"=>"double",
+        "status"=>"string"
     ];
 
     protected $table = 'pedidos_ordinarios_unidades_medicas';

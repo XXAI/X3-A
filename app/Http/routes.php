@@ -216,10 +216,15 @@ Route::group(['middleware' => 'jwt'], function () {
         Route::get('pedidos-ordinarios/presupuesto',                            'PedidosOrdinariosController@presupuesto');
         Route::get('pedidos-ordinarios/pedido/{id}',                            'PedidosOrdinariosController@verPedido');
         Route::put('pedidos-ordinarios/modificar-presupuesto/{id}',             'PedidosOrdinariosController@modificarPresupuesto');
-        Route::put('pedidos-ordinarios/regresar-captura/{id}',                 'PedidosOrdinariosController@regresarACaptura');
+        Route::put('pedidos-ordinarios/regresar-captura/{id}',                  'PedidosOrdinariosController@regresarACaptura');
         Route::put('pedidos-ordinarios/cancelar/{id}',                          'PedidosOrdinariosController@cancelar');
         Route::put('pedidos-ordinarios/anular-cancelacion/{id}',                'PedidosOrdinariosController@anularCancelacion');
         Route::resource('pedidos-ordinarios',                                   'PedidosOrdinariosController',['only' => ['index', 'show', 'store','update','destroy']]);
+
+        Route::get('pedidos-extraordinarios/solicitudes',                        'PedidosOrdinariosController@solicitudes');
+        Route::get('pedidos-extraordinarios/solicitudes/{id}',                   'PedidosOrdinariosController@verSolicitud');
+        Route::put('pedidos-extraordinarios/aprobar-presupuesto/{id}',           'PedidosOrdinariosController@aprobarPresupuesto');
+        
         
         // Hacer bien el metodo
         Route::get('presupuesto/historial/ajustes',                     'PresupuestoController@historial');
