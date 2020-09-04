@@ -1241,7 +1241,7 @@ private function validarLote($request)
 
     public function descargarFormato(Request $request){
 
-        Excel::create("Formato de carga de Inventario Inicial SIAL", function($excel) {
+        Excel::create("Formato de carga de Inventario Inicial SSADII", function($excel) {
 
 
             $excel->sheet('Med. y Mat. de Curacion', function($sheet)  {

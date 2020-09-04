@@ -441,7 +441,7 @@ class InsumosMedicosController extends Controller
         $medicamentos = Insumo::where("tipo","ME")->with("medicamento","medicamento.UnidadMedida","medicamento.PresentacionMedicamento","medicamento.ViaAdministracion")->get();
         $material_curacion = Insumo::where("tipo","MC")->with("materialCuracion","materialCuracion.UnidadMedida")->get();
         
-        Excel::create("Insumos médicos SIAL - ".date('Y-m-d'), function($excel) use($medicamentos, $material_curacion) {
+        Excel::create("Insumos médicos SSADII - ".date('Y-m-d'), function($excel) use($medicamentos, $material_curacion) {
 
 
             $excel->sheet('Medicamentos', function($sheet) use($medicamentos) {
@@ -539,7 +539,7 @@ class InsumosMedicosController extends Controller
         $viasAdministracion = ViasAdministracion::all();
 
         
-        Excel::create("Formato de carga de Insumos médicos SIAL", function($excel) use($unidadesMedida, $presentaciones, $viasAdministracion) {
+        Excel::create("Formato de carga de Insumos médicos SSADII", function($excel) use($unidadesMedida, $presentaciones, $viasAdministracion) {
 
 
             $excel->sheet('Medicamentos', function($sheet)  {

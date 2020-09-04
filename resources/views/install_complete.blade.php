@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>Instalación SIAL</title>
+	<title>Instalación SSADII</title>
 	<style>
 		/*! normalize.css v3.0.2 | MIT License | git.io/normalize */
 

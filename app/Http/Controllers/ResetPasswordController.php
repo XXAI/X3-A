@@ -212,7 +212,7 @@ class ResetPasswordController extends Controller
 
 
 			Mail::send('emails.reset-password', ['usuario' => $usuario, 'reset_url' => $input['reset_url']], function ($m) use ($usuario) {
-				$m->from('informatica.salud.chiapas@gmail.com', 'SIAL');
+				$m->from('informatica.salud.chiapas@gmail.com', 'SSADII');
 	
 				$m->to($usuario->email, $usuario->nombre)->subject('Reestablecer contraseña');
 			});

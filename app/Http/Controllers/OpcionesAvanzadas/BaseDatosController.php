@@ -17,7 +17,7 @@ class BaseDatosController extends Controller
     public function exportar(Request $request){
         try{
 			Storage::makeDirectory("db/backup");
-			$filename = "sial.".date('Ymd.His').".sql";			
+			$filename = "ssadii.".date('Ymd.His').".sql";			
 
 			$base_path = base_path();
 			Storage::put('db/credenciales.cnf',"[client]");

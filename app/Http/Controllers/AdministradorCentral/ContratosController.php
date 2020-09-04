@@ -301,7 +301,7 @@ class ContratosController extends Controller
         $insumos = Insumo::all();
 
         
-        Excel::create("Formato de carga de lista de precios para contratos de proveedores SIAL", function($excel) use($tiposInsumo, $insumos) {
+        Excel::create("Formato de carga de lista de precios para contratos de proveedores SSADII", function($excel) use($tiposInsumo, $insumos) {
 
 
             $excel->sheet('Precios', function($sheet)  {

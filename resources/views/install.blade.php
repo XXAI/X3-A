@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>Instalación SIAL</title>
+	<title>Instalación SSADII</title>
 	<style>
 		/*! normalize.css v3.0.2 | MIT License | git.io/normalize */
 
@@ -891,7 +891,7 @@
 <body>
 	<div class="container">
 		<br>
-		<h1>Instalación del SIAL</h1>
+		<h1>Instalación del SSADII</h1>
 		<p>Este procedimiento solo se ejecutará una vez, proceda si está seguro.</p>
 		<h2>Paso 1:<small>Creación de la base de datos y llenado de catalogos.</small> </h2>
 		<form action="./instalar" onsubmit="cargando()">
